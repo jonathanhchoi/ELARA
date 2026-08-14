@@ -1,0 +1,45 @@
+# User-supplied data and run-local raw material. These rules are not a security
+# boundary; inspect Git status and history before handling restricted material.
+project/inputs/*
+!project/inputs/README.md
+project/runs/
+project/tmp/
+project/cache/
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Python/test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Editor and operating-system noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# Local validator scratch output
+tests/tmp/
+tests/.tmp/
+
+# Study-specific materials are intentionally outside the public ELARA package.
+/benchmarks/
+/SUBAGENT_DATA_GENERATION_AND_VALIDATION.md
+/block
+/.artifact-work/
+
+# Deterministic demo output
+/build/

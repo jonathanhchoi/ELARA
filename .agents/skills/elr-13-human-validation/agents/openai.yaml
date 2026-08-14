@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 13 Human Validation"
+  short_description: "Validate model codes against human coders"
+  default_prompt: "Use $elr-13-human-validation for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

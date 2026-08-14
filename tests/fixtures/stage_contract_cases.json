@@ -1,0 +1,31 @@
+{
+  "shared_expectations": {
+    "missing_prerequisite_status": "waiting_for_user",
+    "state_unchanged_before_execution": true,
+    "plan_phase_writes": false,
+    "rerun_overwrites_prior_version": false,
+    "resume_source": "project/PROJECT_STATE.md"
+  },
+  "cases": [
+    {"stage_id":"00-initialize","interaction_profile":"normal","human_gate":"project-charter-approval","next_stage":"01-conceive","recorded_failure_route":"00-initialize"},
+    {"stage_id":"01-conceive","interaction_profile":"plan_then_execute","human_gate":"project-selection","next_stage":"02-preemption-review","recorded_failure_route":"00-initialize"},
+    {"stage_id":"02-preemption-review","interaction_profile":"execute","human_gate":"preemption-disposition","next_stage":"03-feasibility-audit","recorded_failure_route":"01-conceive"},
+    {"stage_id":"03-feasibility-audit","interaction_profile":"execute","human_gate":"feasibility-go-no-go","next_stage":"04-methods-design","recorded_failure_route":"02-preemption-review"},
+    {"stage_id":"04-methods-design","interaction_profile":"plan_then_execute","human_gate":"methods-plan-approval","next_stage":"05-codebook-and-schema","recorded_failure_route":"03-feasibility-audit"},
+    {"stage_id":"05-codebook-and-schema","interaction_profile":"plan_then_execute","human_gate":"codebook-schema-approval","next_stage":"06-data-authorization","recorded_failure_route":"04-methods-design"},
+    {"stage_id":"06-data-authorization","interaction_profile":"normal","human_gate":"data-authorization","next_stage":"07-adversarial-review","recorded_failure_route":"05-codebook-and-schema"},
+    {"stage_id":"07-adversarial-review","interaction_profile":"plan_then_execute","human_gate":"design-freeze","next_stage":"08-pilot","recorded_failure_route":"06-data-authorization"},
+    {"stage_id":"08-pilot","interaction_profile":"plan_then_execute","human_gate":"pilot-acceptance","next_stage":"09-freeze-and-preregister","recorded_failure_route":"05-codebook-and-schema"},
+    {"stage_id":"09-freeze-and-preregister","interaction_profile":"plan_then_execute","human_gate":"preregistration-confirmation","next_stage":"10-corpus-acquisition","recorded_failure_route":"08-pilot"},
+    {"stage_id":"10-corpus-acquisition","interaction_profile":"execute","human_gate":"material-corpus-deviation","next_stage":"11-scale-up","recorded_failure_route":"09-freeze-and-preregister"},
+    {"stage_id":"11-scale-up","interaction_profile":"execute","human_gate":null,"next_stage":"12-interpretive-verification","recorded_failure_route":"10-corpus-acquisition"},
+    {"stage_id":"12-interpretive-verification","interaction_profile":"execute","human_gate":null,"next_stage":"13-human-validation","recorded_failure_route":"11-scale-up"},
+    {"stage_id":"13-human-validation","interaction_profile":"plan_then_execute","human_gate":"validation-disposition","next_stage":"14-analysis-and-correction","recorded_failure_route":"08-pilot"},
+    {"stage_id":"14-analysis-and-correction","interaction_profile":"plan_then_execute","human_gate":null,"next_stage":"15-robustness","recorded_failure_route":"13-human-validation"},
+    {"stage_id":"15-robustness","interaction_profile":"execute","human_gate":null,"next_stage":"16-replication-package","recorded_failure_route":"14-analysis-and-correction"},
+    {"stage_id":"16-replication-package","interaction_profile":"execute","human_gate":null,"next_stage":"17-integrate-manuscript","recorded_failure_route":"15-robustness"},
+    {"stage_id":"17-integrate-manuscript","interaction_profile":"plan_then_execute","human_gate":"manuscript-edit-permission","next_stage":"18-cite-check","recorded_failure_route":"16-replication-package"},
+    {"stage_id":"18-cite-check","interaction_profile":"execute","human_gate":null,"next_stage":"19-revise-and-respond","recorded_failure_route":"17-integrate-manuscript"},
+    {"stage_id":"19-revise-and-respond","interaction_profile":"plan_then_execute","human_gate":"manuscript-edit-permission","next_stage":null,"recorded_failure_route":"18-cite-check"}
+  ]
+}

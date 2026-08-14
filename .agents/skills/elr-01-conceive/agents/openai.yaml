@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 01 Conceive"
+  short_description: "Conceive and select a research project"
+  default_prompt: "Use $elr-01-conceive for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

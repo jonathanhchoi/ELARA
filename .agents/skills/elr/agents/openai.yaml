@@ -1,0 +1,6 @@
+interface:
+  display_name: "Empirical Legal Research"
+  short_description: "Start or resume the research workflow"
+  default_prompt: "Use $elr for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: true

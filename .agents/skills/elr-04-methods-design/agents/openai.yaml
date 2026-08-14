@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 04 Methods Design"
+  short_description: "Design the empirical research methods"
+  default_prompt: "Use $elr-04-methods-design for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 05 Codebook and Schema"
+  short_description: "Create the codebook schema and unit space"
+  default_prompt: "Use $elr-05-codebook-and-schema for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

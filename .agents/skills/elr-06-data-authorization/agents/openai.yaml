@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 06 Data Authorization"
+  short_description: "Record data permission and authorization"
+  default_prompt: "Use $elr-06-data-authorization for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

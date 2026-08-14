@@ -1,0 +1,4 @@
+unit_id,federal_assignment,coder,status
+u01,true,researcher_fixture,coded
+u04,true,researcher_fixture,coded
+u06,false,researcher_fixture,coded

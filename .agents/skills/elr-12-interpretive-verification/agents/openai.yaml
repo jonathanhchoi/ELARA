@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 12 Verify"
+  short_description: "Verify whether evidence supports every code"
+  default_prompt: "Use $elr-12-interpretive-verification for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,8 @@
+{"unit_id":"u01","federal_assignment":true,"institution":"Congress","exact_quote":"All legislative Powers herein granted shall be vested in a Congress of the United States","status":"coded"}
+{"unit_id":"u02","federal_assignment":true,"institution":"House","exact_quote":"The House of Representatives shall be composed of Members chosen every second Year","status":"coded"}
+{"unit_id":"u03","federal_assignment":true,"institution":"Senate","exact_quote":"The Senate of the United States shall be composed of two Senators from each State","status":"coded"}
+{"unit_id":"u04","federal_assignment":true,"institution":"President","exact_quote":"The executive Power shall be vested in a President of the United States of America","status":"coded"}
+{"unit_id":"u05","federal_assignment":true,"institution":"Court","exact_quote":"The judicial Power of the United States shall be vested in one supreme Court","status":"coded"}
+{"unit_id":"u06","federal_assignment":false,"institution":"States","exact_quote":"Full Faith and Credit shall be given in each State","status":"coded"}
+{"unit_id":"u07","federal_assignment":false,"institution":"States","exact_quote":"the Judges in every State shall be bound thereby","status":"coded"}
+{"unit_id":"u08","federal_assignment":true,"institution":"Federal officials","exact_quote":"The Senators and Representatives before mentioned","status":"coded"}

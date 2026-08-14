@@ -1,0 +1,9 @@
+ordinal,unit_id,file,period,pilot,source_url,public_domain
+1,u01,corpus/u01_article_i_section_1.txt,early,true,https://www.archives.gov/founding-docs/constitution-transcript,true
+2,u02,corpus/u02_article_i_section_2.txt,early,false,https://www.archives.gov/founding-docs/constitution-transcript,true
+3,u03,corpus/u03_article_i_section_3.txt,early,false,https://www.archives.gov/founding-docs/constitution-transcript,true
+4,u04,corpus/u04_article_ii_section_1.txt,early,true,https://www.archives.gov/founding-docs/constitution-transcript,true
+5,u05,corpus/u05_article_iii_section_1.txt,later,false,https://www.archives.gov/founding-docs/constitution-transcript,true
+6,u06,corpus/u06_article_iv_section_1.txt,later,true,https://www.archives.gov/founding-docs/constitution-transcript,true
+7,u07,corpus/u07_article_vi_clause_2.txt,later,false,https://www.archives.gov/founding-docs/constitution-transcript,true
+8,u08,corpus/u08_article_vi_clause_3.txt,later,false,https://www.archives.gov/founding-docs/constitution-transcript,true

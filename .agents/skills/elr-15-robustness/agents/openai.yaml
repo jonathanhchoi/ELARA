@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 15 Robustness"
+  short_description: "Run prompt and model robustness checks"
+  default_prompt: "Use $elr-15-robustness for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

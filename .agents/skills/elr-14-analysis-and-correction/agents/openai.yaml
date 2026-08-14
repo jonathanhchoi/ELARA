@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 14 Analyze"
+  short_description: "Analyze results and correct measurement error"
+  default_prompt: "Use $elr-14-analysis-and-correction for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

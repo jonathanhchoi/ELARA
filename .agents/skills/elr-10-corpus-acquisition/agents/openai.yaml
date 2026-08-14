@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 10 Corpus Acquisition"
+  short_description: "Acquire and verify the research corpus"
+  default_prompt: "Use $elr-10-corpus-acquisition for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

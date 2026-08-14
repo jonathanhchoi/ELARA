@@ -1,0 +1,62 @@
+{
+  "analysis": {
+    "corrected_share": 0.9375,
+    "early_later_difference": 0.75,
+    "early_share": 1.0,
+    "later_share": 0.25,
+    "n": 8,
+    "negative": 3,
+    "observed_share": 0.625,
+    "positive": 5
+  },
+  "corpus_acquisition": {
+    "files_present": 8,
+    "gap_count": 0,
+    "manifest_units": 8,
+    "public_domain_units": 8,
+    "unique_units": 8
+  },
+  "human_validation": {
+    "accuracy": 0.75,
+    "f1": 0.8,
+    "false_negative": 1,
+    "false_positive": 0,
+    "n": 4,
+    "precision": 1.0,
+    "recall": 0.666667,
+    "true_negative": 1,
+    "true_positive": 2
+  },
+  "interpretive_verification": {
+    "audited": 8,
+    "supported": 8,
+    "unsupported": 0
+  },
+  "pilot": {
+    "human_agreement_count": 3,
+    "human_agreement_rate": 1.0,
+    "n": 3,
+    "quote_pass": 3,
+    "schema_pass": 3
+  },
+  "robustness": {
+    "absolute_coefficient_difference": 0.25,
+    "absolute_share_difference": 0.125,
+    "agreement_count": 7,
+    "agreement_rate": 0.875,
+    "disagreement_count": 1,
+    "model_b_early_later_difference": 0.5,
+    "model_b_positive": 6,
+    "model_b_share": 0.75,
+    "n": 8
+  },
+  "scale_up": {
+    "attempted": 8,
+    "failed": 0,
+    "outstanding": 0,
+    "quote_pass": 8,
+    "schema_pass": 8,
+    "succeeded": 8,
+    "unusable": 0
+  }
+}

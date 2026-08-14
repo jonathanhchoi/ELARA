@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 07 Adversarial Review"
+  short_description: "Stress-test and freeze the research design"
+  default_prompt: "Use $elr-07-adversarial-review for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

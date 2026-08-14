@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 00 Initialize"
+  short_description: "Initialize an empirical legal research project"
+  default_prompt: "Use $elr-00-initialize for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

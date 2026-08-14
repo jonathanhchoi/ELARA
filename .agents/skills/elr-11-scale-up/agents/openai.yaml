@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 11 Scale Up"
+  short_description: "Run resumable quality-checked coding at scale"
+  default_prompt: "Use $elr-11-scale-up for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

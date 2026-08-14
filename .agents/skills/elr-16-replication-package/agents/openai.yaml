@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 16 Replication Package"
+  short_description: "Assemble and independently verify replication"
+  default_prompt: "Use $elr-16-replication-package for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

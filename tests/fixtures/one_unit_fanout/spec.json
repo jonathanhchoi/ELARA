@@ -1,0 +1,26 @@
+{
+  "contract_version": "1.0",
+  "run_id": "one-unit-forward-test",
+  "assignment_kind": "document_classification",
+  "frozen_inputs": [
+    {
+      "role": "instructions",
+      "path": "instructions.md"
+    },
+    {
+      "role": "result_schema",
+      "path": "schema.json"
+    }
+  ],
+  "units": [
+    {
+      "unit_id": "fixture-alpha",
+      "assignment_id": "fixture-alpha-attempt001",
+      "attempt": 1,
+      "payload": {
+        "token": "alpha",
+        "worker_rule": "This is an explicit one-unit kit validation fixture. Leave project state unchanged and write only the allowed return path."
+      }
+    }
+  ]
+}

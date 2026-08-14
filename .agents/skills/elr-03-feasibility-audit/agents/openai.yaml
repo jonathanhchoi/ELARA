@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 03 Feasibility Audit"
+  short_description: "Audit project feasibility with live probes"
+  default_prompt: "Use $elr-03-feasibility-audit for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

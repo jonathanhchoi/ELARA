@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "unit_id",
+    "has_shall",
+    "assigned_institution",
+    "exact_quote",
+    "status"
+  ],
+  "properties": {
+    "unit_id": {"type": "string"},
+    "has_shall": {"type": "boolean"},
+    "assigned_institution": {
+      "enum": ["Congress", "President", "uncertain"]
+    },
+    "exact_quote": {"type": "string"},
+    "status": {
+      "enum": ["coded", "source_unusable", "uncertain"]
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 02 Preemption Review"
+  short_description: "Run an evidence-grounded preemption review"
+  default_prompt: "Use $elr-02-preemption-review for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

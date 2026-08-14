@@ -1,0 +1,5 @@
+unit_id,federal_assignment,coder,status
+u02,true,independent_fixture_coder,coded
+u05,true,independent_fixture_coder,coded
+u07,false,independent_fixture_coder,coded
+u08,true,independent_fixture_coder,coded

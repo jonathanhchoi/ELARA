@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELARA Code Observations"
+  short_description: "Code each observation in an isolated subagent"
+  default_prompt: "Use $elr-code-observations on the frozen assignment manifest."
+policy:
+  allow_implicit_invocation: false

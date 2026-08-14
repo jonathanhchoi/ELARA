@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "unit_id",
+    "federal_assignment",
+    "institution",
+    "exact_quote",
+    "status"
+  ],
+  "properties": {
+    "unit_id": {"type": "string"},
+    "federal_assignment": {"type": "boolean"},
+    "institution": {
+      "enum": [
+        "Congress",
+        "House",
+        "Senate",
+        "President",
+        "Court",
+        "States",
+        "Federal officials"
+      ]
+    },
+    "exact_quote": {"type": "string", "minLength": 1},
+    "status": {"enum": ["coded", "uncertain", "source_unusable"]}
+  },
+  "additionalProperties": false
+}

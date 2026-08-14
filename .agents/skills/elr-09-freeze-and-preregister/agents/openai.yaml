@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELR 09 Preregister"
+  short_description: "Freeze artifacts and prepare preregistration"
+  default_prompt: "Use $elr-09-freeze-and-preregister for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

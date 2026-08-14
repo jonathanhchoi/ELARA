@@ -1,0 +1,7 @@
+
+interface:
+  display_name: "ELARA 17 Integrate Manuscript"
+  short_description: "Integrate verified results into a researcher draft"
+  default_prompt: "Use $elr-17-integrate-manuscript for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false
