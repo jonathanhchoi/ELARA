@@ -43,7 +43,21 @@ a cloud-synced folder.
 Use one clean copy for one research project. Start another project from another
 clean copy.
 
-### 2. Open the repository root
+### 2. Install the validator and run the preflight
+
+With Python 3.10 or newer, run from the repository root:
+
+```text
+python -m pip install -r requirements.txt
+python scripts/doctor.py
+```
+
+(`py` may replace `python` on Windows.) The doctor detects installed agent
+hosts, checks their versions, validates the kit and its dependency, and runs a
+temporary one-unit `prepare`/`submit`/`status`/`merge` exercise. The exercise
+uses no model and no network. Resolve every reported failure before continuing.
+
+### 3. Open the repository root
 
 Choose either platform.
 
@@ -74,7 +88,7 @@ both `AGENTS.md` and the hidden platform folder. A double-nested ZIP extraction
 is the most common cause. Accept the workspace trust prompt, update older
 installations, and use the platform's diagnostic command if needed.
 
-### 3. Add your materials
+### 4. Add your materials
 
 Read `project/inputs/README.md`, then place papers, research notes, seed
 citations, data dictionaries, and authorized source files in `project/inputs/`.
@@ -150,8 +164,10 @@ See `PIPELINE.md` for the stage-by-stage map and failure routes.
 ELARA assigns one observation or coding unit to each fresh worker context. A
 coding unit may contain one document or several related documents, as defined by
 the approved codebook and unit-space manifest. Document boundaries do not
-silently determine the observation unit. Workers write to unique paths; a serial
-controller validates and merges their returns.
+silently determine the observation unit. Each worker sends its return envelope
+through the deterministic controller's `submit` command; the controller validates
+the sealed assignment, schema, IDs, and unique path before creating the return,
+refuses overwrites, and later merges returns serially.
 
 ## Modes and approvals
 
@@ -196,6 +212,7 @@ in `workflow/shared/`.
 AGENTS.md                       Shared constitution and state router
 CLAUDE.md                       Claude-specific adapter
 PIPELINE.md                     Human-readable workflow map
+requirements.txt                Bounded Python runtime dependency
 workflow/stages/NN-*.md         Canonical sequential stage prompts
 workflow/shared/                Guardrails and artifact/fan-out contracts
 workflow/templates/             Preregistration skeleton
@@ -210,18 +227,43 @@ tests/                          Package-maintenance tests and public fixtures
 There is deliberately no `benchmarks/` directory and no validation-study archive
 in this repository.
 
-## Verify your download
+## Preflight options
 
-With Python 3.10 or newer:
+Require a particular host, both hosts, or perform package maintenance without a
+host check:
 
 ```text
-python scripts/doctor.py
+python scripts/doctor.py --platform codex
+python scripts/doctor.py --platform claude
+python scripts/doctor.py --platform all
+python scripts/doctor.py --platform none
 ```
 
-(`py scripts/doctor.py` on Windows if needed.) The command verifies the stage
-inventory, generated skill wrappers, and state template and prints PASS or FAIL.
-Python is required for the deterministic fan-out controller and optional
-validators, not for the earliest interactive design stages.
+`--platform none` is for maintainers and does not establish that an agent host is
+ready. Stage 00 can capture a machine-readable, secret-free capability record:
+
+```text
+python scripts/doctor.py --json
+```
+
+Python and `jsonschema` are required for the deterministic fan-out controller
+and validators, not for the earliest interactive design discussion.
+
+## Plugins, MCP servers, and hooks
+
+ELARA deliberately installs no third-party plugin, MCP server, credential, or
+repository hook. Research databases, storage systems, browsers, reference
+managers, and provider APIs differ by project and may expose licensed or
+restricted material. Add an integration only after Stage 06 authorizes the exact
+source, action, account, model route, and data exposure; record its name, version,
+permissions, and limitations in the active access snapshot and run manifest.
+
+For large observation runs, use host permission rules or explicitly trusted
+deterministic hooks, where supported, to deny web, unrelated MCP tools, sibling
+return reads, and writes outside the assigned path. ELARA's strict `submit`
+command validates and creates canonical returns but is not itself a host sandbox.
+An optional plugin may distribute future ELARA updates, but one clean repository
+copy remains the authoritative, stateful workspace for one project.
 
 ## Cost and requirements
 
@@ -230,11 +272,11 @@ project-specific cost and time estimates before expensive work begins. Nothing
 beyond conception and feasibility proceeds until the researcher approves the
 feasibility decision.
 
-ELARA requires macOS, Windows, or Linux; Codex or Claude Code with
-repository-local skill support; internet access for installation and retrieval;
-adequate local storage; and lawful and ethical authorization for the selected
-data and model route. A stage checks any additional tool it needs before relying
-on it.
+ELARA requires macOS, Windows, or Linux; Python 3.10 or newer with the packages
+in `requirements.txt`; Codex or Claude Code with repository-local skill support;
+internet access for installation and retrieval; adequate local storage; and
+lawful and ethical authorization for the selected data and model route. A stage
+checks any additional tool it needs before relying on it.
 
 ## License
 

@@ -182,9 +182,10 @@ class RunReconciliationTests(unittest.TestCase):
 
 class DoctorTests(unittest.TestCase):
     def test_doctor_passes_on_the_real_kit(self) -> None:
-        result = run_script("doctor.py")
+        result = run_script("doctor.py", "--platform", "none")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("PASS", result.stdout)
+        self.assertIn("offline one-unit fan-out smoke passed", result.stdout)
 
 
 class PreregistrationTemplateTests(unittest.TestCase):

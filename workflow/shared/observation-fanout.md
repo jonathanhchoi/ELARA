@@ -31,11 +31,20 @@ requires them. A shared filesystem is not statistical independence; workers must
 read sibling assignments, worker returns, aggregates, or ledgers, and this residual limitation must
 be reported when the platform cannot enforce filesystem isolation.
 
-The worker may write only its unique return file. It must preserve the assignment and unit IDs,
-attempt number, terminal status, structured result or typed error, and observable provenance. It
-must return only a short operational receipt to the orchestrator, never the substantive label.
-Workers never merge data, update shared ledgers, edit code, change state, retry themselves, or
-decide that a failed unit should be dropped.
+The worker must not write its return path directly. It constructs one return envelope in memory and
+sends that JSON on standard input to `python scripts/unit_fanout.py submit --run-dir <run-dir>
+--assignment-id <assignment-id>`. The controller revalidates the sealed manifest, assignment hash,
+IDs, schema, and unique path before creating the file, refuses every overwrite, and emits only an
+operational receipt. The envelope must preserve the assignment and unit IDs, attempt number,
+terminal status, structured result or typed error, and observable provenance. The worker returns
+only that short operational receipt to the orchestrator, never the substantive label. Workers never
+merge data, update shared ledgers, edit code, change state, retry themselves, or decide that a failed
+unit should be dropped.
+
+Strict submission prevents an invalid or duplicate envelope from becoming the canonical return; it
+does not by itself sandbox the host. Use platform permissions or trusted deterministic hooks to deny
+web, unrelated MCP tools, sibling reads, and out-of-scope writes where the platform can enforce
+them. If those controls are unavailable, retain and disclose the residual shared-filesystem limit.
 
 ## Codex adapter
 
@@ -48,7 +57,8 @@ Discover the session's actual subagent capacity; do not assume a portable defaul
 available number of workers, wait for the whole bounded wave, validate returns from files, update
 the ledger serially, and repeat. Never reuse a worker context for another unit. Goal mode supplies
 persistence and completion criteria; the manifest and ledger, not conversation memory, determine
-what remains.
+what remains. Each Codex worker uses the controller's `submit` command rather than writing the
+return path directly.
 
 ## Claude Code adapter
 

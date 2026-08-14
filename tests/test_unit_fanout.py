@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -12,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from unit_fanout import FanoutError, merge, prepare, retry, status  # noqa: E402
+from unit_fanout import FanoutError, merge, prepare, retry, status, submit  # noqa: E402
 
 
 class UnitFanoutTests(unittest.TestCase):
@@ -103,6 +104,78 @@ class UnitFanoutTests(unittest.TestCase):
                 output.relative_to(run.resolve())
                 output_paths.add(output)
             self.assertEqual(len(output_paths), 4)
+
+    def test_strict_submit_validates_creates_once_and_returns_blinded_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run = root / "run"
+            manifest = prepare(self.make_spec(root, 1), run)
+            assignment_path = Path(manifest["assignments"][0]["assignment_path"])
+            returned, return_path = self.base_return(assignment_path)
+
+            receipt = submit(run, returned["assignment_id"], returned)
+
+            self.assertTrue(return_path.is_file())
+            self.assertEqual(receipt["assignment_id"], returned["assignment_id"])
+            self.assertEqual(receipt["unit_id"], returned["unit_id"])
+            self.assertEqual(receipt["status"], "succeeded")
+            self.assertEqual(receipt["output_path"], str(return_path.resolve()))
+            self.assertNotIn("result", receipt)
+            self.assertNotIn("label", receipt)
+            self.assertEqual(status(run)["terminal"], 1)
+
+            with self.assertRaisesRegex(FanoutError, "refusing to overwrite"):
+                submit(run, returned["assignment_id"], returned)
+
+    def test_strict_submit_rejects_invalid_result_without_persisting_or_leaking_it(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run = root / "run"
+            manifest = prepare(self.make_spec(root, 1), run)
+            assignment_path = Path(manifest["assignments"][0]["assignment_path"])
+            returned, return_path = self.base_return(assignment_path)
+            secret = "TOP_SECRET_INVALID_LABEL_ZQX"
+            returned["result"] = {"label": secret}
+
+            with self.assertRaises(FanoutError) as raised:
+                submit(run, returned["assignment_id"], returned)
+
+            self.assertFalse(return_path.exists())
+            self.assertNotIn(secret, str(raised.exception))
+            self.assertIn("enum constraint failed", str(raised.exception))
+
+    def test_submit_cli_accepts_json_on_stdin_and_prints_only_operational_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run = root / "run"
+            manifest = prepare(self.make_spec(root, 1), run)
+            assignment_path = Path(manifest["assignments"][0]["assignment_path"])
+            returned, return_path = self.base_return(assignment_path)
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "unit_fanout.py"),
+                    "submit",
+                    "--run-dir",
+                    str(run),
+                    "--assignment-id",
+                    returned["assignment_id"],
+                ],
+                input=json.dumps(returned),
+                text=True,
+                capture_output=True,
+                timeout=30,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            receipt = json.loads(completed.stdout)
+            self.assertTrue(return_path.is_file())
+            self.assertEqual(receipt["assignment_id"], returned["assignment_id"])
+            self.assertEqual(receipt["status"], "succeeded")
+            self.assertNotIn("result", receipt)
+            self.assertNotIn("label", receipt)
 
     def test_random_completion_order_merges_in_manifest_order(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

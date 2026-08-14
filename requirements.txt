@@ -1,0 +1,4 @@
+# Runtime dependency for JSON Schema validation in the deterministic fan-out
+# controller. Keep the supported major version bounded so a fresh ELARA clone
+# uses the same validator API exercised in CI.
+jsonschema>=4.18,<5

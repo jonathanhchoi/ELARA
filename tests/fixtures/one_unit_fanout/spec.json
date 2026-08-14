@@ -19,7 +19,7 @@
       "attempt": 1,
       "payload": {
         "token": "alpha",
-        "worker_rule": "This is an explicit one-unit kit validation fixture. Leave project state unchanged and write only the allowed return path."
+        "worker_rule": "This is an explicit one-unit kit validation fixture. Leave project state unchanged, submit the return envelope through scripts/unit_fanout.py submit, and do not write the allowed return path directly."
       }
     }
   ]

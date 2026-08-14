@@ -62,13 +62,16 @@ const receipts = await pipeline(discovered.assignments, assignmentPath =>
 ${assignmentPath}
 
 Verify its frozen hashes. Do not inspect sibling assignments, worker returns, aggregates, or
-ledgers. Perform only that assignment, write only its allowed worker-return path, and return an
-operational receipt without the substantive label.`,
+ledgers. Perform only that assignment. Construct the return envelope in memory and submit it on
+standard input with:
+python scripts/unit_fanout.py submit --run-dir "${workflowArgs.run_dir}" --assignment-id "<assignment_id from the assignment>"
+Do not write the worker-return path directly. Return the command's operational receipt without the
+substantive label.`,
     {
       label: assignmentPath.split(/[\\/]/).pop(),
       schema: {
         type: 'object',
-        required: ['assignment_id', 'unit_id', 'status', 'output_path'],
+        required: ['assignment_id', 'unit_id', 'status', 'output_path', 'sha256'],
         properties: {
           assignment_id: { type: 'string' },
           unit_id: { type: 'string' },
@@ -87,6 +90,7 @@ operational receipt without the substantive label.`,
             ],
           },
           output_path: { type: 'string' },
+          sha256: { type: 'string' },
         },
         additionalProperties: false,
       },

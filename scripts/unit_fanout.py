@@ -12,6 +12,9 @@ Contract invariants:
   ``absent_legacy_run``).
 - Blinding: status output is operational only, and validator error strings are
   sanitized so label values never leak.
+- Strict submission: ``submit`` validates a worker envelope before creating its
+  assigned return path and refuses every overwrite. Workers do not need to edit
+  the shared run directory directly.
 - Retry policy: ``retry`` issues the one linked second attempt (at most
   ``MAX_ATTEMPTS`` = 2 attempts per slot) and archives the superseded return for audit.
 - Section 10 reconciliation: ``merge`` writes a ``merge_receipt.json`` so merged counts and
@@ -36,6 +39,7 @@ CONTRACT_VERSION = "1.0"
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$")
 ATTEMPT_SUFFIX = re.compile(r"^(?P<base>.+?)-attempt(?P<number>\d{3,})$")
 MAX_ATTEMPTS = 2
+MAX_SUBMISSION_BYTES = 10 * 1024 * 1024
 SUCCESS_STATUS = "succeeded"
 FAILURE_STATUSES = {
     "schema_failed",
@@ -451,6 +455,100 @@ def validate_return(assignment: dict[str, Any], returned: Any) -> list[str]:
     return errors
 
 
+def submit(
+    run_dir: Path, assignment_id: str, returned: Any
+) -> dict[str, Any]:
+    """Validate and create one worker return without ever overwriting a file.
+
+    The active sealed manifest, frozen assignment hash, schema, identifiers, and
+    unique return path are checked before bytes are written. The create-exclusive
+    file operation is intentionally fail-closed: simultaneous or repeated
+    submissions for the same assignment cannot replace the first return.
+    """
+    run_dir = run_dir.resolve()
+    assignment_id = _safe_identifier(assignment_id, "assignment_id")
+    manifest = verify_run_integrity(run_dir)
+    matches = [
+        row for row in manifest["assignments"] if row["assignment_id"] == assignment_id
+    ]
+    if len(matches) != 1:
+        raise FanoutError(
+            f"assignment_id is not in the active manifest: {assignment_id}"
+        )
+    row = matches[0]
+    assignment = load_json(Path(row["assignment_path"]))
+    return_path = Path(row["return_path"]).resolve()
+    assignment_return_path = Path(assignment["allowed_write_path"]).resolve()
+    returns_dir = (run_dir / "worker_returns").resolve()
+    if return_path != assignment_return_path:
+        raise FanoutError("manifest and assignment disagree about the worker return path")
+    if not _inside(return_path, returns_dir) or return_path.parent != returns_dir:
+        raise FanoutError(f"worker return path is outside its strict directory: {return_path}")
+    if return_path.name in FORBIDDEN_RETURN_NAMES:
+        raise FanoutError(f"unsafe worker return path: {return_path}")
+    if return_path.exists():
+        raise FanoutError(f"refusing to overwrite worker return: {return_path}")
+
+    errors = validate_return(assignment, returned)
+    if errors:
+        raise FanoutError(
+            "worker return rejected ("
+            + str(len(errors))
+            + " error(s)): "
+            + "; ".join(errors)
+        )
+
+    text = json.dumps(returned, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    try:
+        with return_path.open("x", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except FileExistsError as exc:
+        raise FanoutError(f"refusing to overwrite worker return: {return_path}") from exc
+
+    # Re-read through the same parser so a reported receipt is evidence that the
+    # on-disk return, not merely the in-memory candidate, is valid JSON.
+    persisted = load_json(return_path)
+    persisted_errors = validate_return(assignment, persisted)
+    if persisted_errors:
+        raise FanoutError(
+            "persisted worker return failed post-write validation: "
+            + "; ".join(persisted_errors)
+        )
+    return {
+        "assignment_id": assignment["assignment_id"],
+        "unit_id": assignment["unit_id"],
+        "status": persisted["status"],
+        "output_path": str(return_path),
+        "sha256": sha256_file(return_path),
+    }
+
+
+def _read_submission_input(source: str) -> Any:
+    """Read a bounded UTF-8 JSON submission without echoing its contents on error."""
+    if source == "-":
+        data = sys.stdin.buffer.read(MAX_SUBMISSION_BYTES + 1)
+        label = "standard input"
+    else:
+        path = Path(source)
+        try:
+            if path.stat().st_size > MAX_SUBMISSION_BYTES:
+                raise FanoutError(
+                    f"worker submission exceeds {MAX_SUBMISSION_BYTES} bytes"
+                )
+            data = path.read_bytes()
+        except OSError as exc:
+            raise FanoutError(f"cannot read worker submission file: {path}") from exc
+        label = str(path)
+    if len(data) > MAX_SUBMISSION_BYTES:
+        raise FanoutError(f"worker submission exceeds {MAX_SUBMISSION_BYTES} bytes")
+    try:
+        return json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise FanoutError(f"worker submission from {label} is not valid UTF-8 JSON") from exc
+
+
 def status(run_dir: Path, *, include_pending: bool = False) -> dict[str, Any]:
     """Report operational counts only while outcomes remain blinded.
 
@@ -736,6 +834,17 @@ def main(argv: list[str] | None = None) -> int:
     status_parser.add_argument("--run-dir", type=Path, required=True)
     status_parser.add_argument("--include-pending", action="store_true")
 
+    submit_parser = subparsers.add_parser(
+        "submit", help="validate and create one assigned worker return"
+    )
+    submit_parser.add_argument("--run-dir", type=Path, required=True)
+    submit_parser.add_argument("--assignment-id", required=True)
+    submit_parser.add_argument(
+        "--input",
+        default="-",
+        help="UTF-8 JSON candidate path, or - (the default) to read standard input",
+    )
+
     retry_parser = subparsers.add_parser("retry")
     retry_parser.add_argument("--run-dir", type=Path, required=True)
     retry_parser.add_argument("--assignment-id", required=True)
@@ -764,14 +873,22 @@ def main(argv: list[str] | None = None) -> int:
             }
         elif args.command == "status":
             result = status(args.run_dir, include_pending=args.include_pending)
+        elif args.command == "submit":
+            result = submit(
+                args.run_dir,
+                args.assignment_id,
+                _read_submission_input(args.input),
+            )
         elif args.command == "retry":
             result = retry(
                 args.run_dir,
                 args.assignment_id,
                 downstream_failure_reason=args.downstream_failure_reason,
             )
-        else:
+        elif args.command == "merge":
             result = merge(args.run_dir, args.output)
+        else:  # argparse requires and constrains the command; defensive fail-closed guard
+            raise FanoutError(f"unsupported command: {args.command}")
     except FanoutError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
