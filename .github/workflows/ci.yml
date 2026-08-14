@@ -1,4 +1,4 @@
-# Maintainer-facing continuous integration for the kit's stdlib-only tooling.
+# Maintainer-facing continuous integration for ELARA's Python tooling.
 # Researchers never need this; they run scripts/doctor.py locally instead.
 name: CI
 
@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install test dependency
+        run: python -m pip install "jsonschema>=4,<5"
       - name: Validate the workflow contract
         run: python scripts/validate_workflow.py
       - name: Check generated skill wrappers
