@@ -7,6 +7,8 @@ description: "Run ELR stage 17-integrate-manuscript: Integrate validated results
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`, and
    `workflow/shared/artifact-contract.md` completely.
+   Then read `workflow/shared/manuscript-editing-contract.md` and the active publication profile pinned in
+   `project/PROJECT_STATE.md` (`project/PUBLICATION_PROFILE_vNNN.md`), if any.
 2. Read `workflow/stages/17-integrate-manuscript.md` completely and follow it as the single source of substantive
    instructions for this stage.
 3. Confirm that the stage is current and its prerequisites and approvals are satisfied.

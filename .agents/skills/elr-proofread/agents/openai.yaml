@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELARA Proofread"
+  short_description: "Flag proofreading issues; fix only clear errors"
+  default_prompt: "Use $elr-proofread on the current manuscript version."
+policy:
+  allow_implicit_invocation: false

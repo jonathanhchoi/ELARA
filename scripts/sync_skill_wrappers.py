@@ -13,6 +13,60 @@ from workflow_lib import FrontmatterError, load_stages, repository_root, skill_n
 
 OBSERVATION_SKILL = "elr-code-observations"
 
+# Manuscript stages also read the manuscript-editing contract and the active
+# publication profile. The profile is loaded only here, on demand, never from
+# AGENTS.md or CLAUDE.md, so style rules stay out of coding and analysis runs.
+MANUSCRIPT_CONTRACT = "workflow/shared/manuscript-editing-contract.md"
+MANUSCRIPT_STAGE_IDS = ("17-integrate-manuscript", "19-revise-and-respond")
+MANUSCRIPT_EXTRA_READ = (
+    f"   Then read `{MANUSCRIPT_CONTRACT}` and the active publication profile pinned in\n"
+    "   `project/PROJECT_STATE.md` (`project/PUBLICATION_PROFILE_vNNN.md`), if any.\n"
+)
+
+# Optional manuscript utilities. Each maps to a canonical file under
+# workflow/utilities/ and a stage it routes through, so the wrapper still names
+# the canonical stage that governs what happens after the utility runs.
+UTILITY_SKILLS = {
+    "elr-add-citations": {
+        "canonical": "workflow/utilities/add-citations.md",
+        "route": "workflow/stages/18-cite-check.md",
+        "description": (
+            "Research, retrieve, and add only the citations the researcher marked as needed, "
+            "in the publication profile's citation style, then route the new manuscript "
+            "version through the audit-only Stage 18. Use when the researcher asks to add or "
+            "supply citations for specific passages."
+        ),
+        "display_name": "ELARA Add Citations",
+        "short_description": "Add only requested, retrieved citations",
+        "default_prompt": "Use $elr-add-citations for the marked passages in the current manuscript.",
+    },
+    "elr-proofread": {
+        "canonical": "workflow/utilities/proofread.md",
+        "route": "workflow/stages/19-revise-and-respond.md",
+        "description": (
+            "Proofread the manuscript against the publication profile and report typos, grammar, "
+            "clarity, tone, style tells, internal consistency, and venue compliance without "
+            "rewriting; fix only uncontroversial errors when permitted. Use when the researcher "
+            "asks for a proofread, a consistency check, or a venue-format check."
+        ),
+        "display_name": "ELARA Proofread",
+        "short_description": "Flag proofreading issues; fix only clear errors",
+        "default_prompt": "Use $elr-proofread on the current manuscript version.",
+    },
+    "elr-apply-markup": {
+        "canonical": "workflow/utilities/apply-markup.md",
+        "route": "workflow/stages/19-revise-and-respond.md",
+        "description": (
+            "Transcribe the researcher's hand markup on a PDF into a reviewable edit list, stop "
+            "for approval, then apply exactly the approved edits to a versioned manuscript copy. "
+            "Use when the researcher supplies a marked-up PDF."
+        ),
+        "display_name": "ELARA Apply Markup",
+        "short_description": "Transcribe hand markup, then apply approved edits",
+        "default_prompt": "Use $elr-apply-markup on the marked-up PDF under project/inputs/manuscript/markup/.",
+    },
+}
+
 
 def stage_description(title: str, stage_id: str) -> str:
     return (
@@ -21,7 +75,9 @@ def stage_description(title: str, stage_id: str) -> str:
     )
 
 
-def wrapper_text(name: str, description: str, canonical: str, *, claude: bool) -> str:
+def wrapper_text(
+    name: str, description: str, canonical: str, *, claude: bool, extra_read: str = ""
+) -> str:
     extra = "disable-model-invocation: true\n" if claude else ""
     return f'''---
 name: {json.dumps(name)}
@@ -32,7 +88,7 @@ description: {json.dumps(description)}
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`, and
    `workflow/shared/artifact-contract.md` completely.
-2. Read `{canonical}` completely and follow it as the single source of substantive
+{extra_read}2. Read `{canonical}` completely and follow it as the single source of substantive
    instructions for this stage.
 3. Confirm that the stage is current and its prerequisites and approvals are satisfied.
    If it is not current, stop unless the researcher explicitly authorized a recovery route.
@@ -42,24 +98,67 @@ description: {json.dumps(description)}
 '''
 
 
+def utility_wrapper_text(name: str, spec: dict[str, str], *, claude: bool) -> str:
+    extra = "disable-model-invocation: true\n" if claude else ""
+    return f'''---
+name: {json.dumps(name)}
+description: {json.dumps(spec["description"])}
+{extra}---
+
+# Run {name}
+
+1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
+   `workflow/shared/artifact-contract.md`, and `{MANUSCRIPT_CONTRACT}` completely,
+   then the active publication profile pinned in `project/PROJECT_STATE.md`
+   (`project/PUBLICATION_PROFILE_vNNN.md`), if any.
+2. Read `{spec["canonical"]}` completely and follow it as the single source of
+   substantive instructions for this utility.
+3. This is an optional manuscript utility, not a pipeline stage: never change `current_stage`,
+   and append the run ledger and decisions only as the canonical file directs.
+4. Honor the utility's phases. Do not edit any manuscript file before the researcher grants
+   the permission the canonical file names; a skill cannot switch Plan or Goal mode by itself.
+5. Afterwards follow the route the canonical file names (`{spec["route"]}`) rather than
+   treating the utility's output as final.
+'''
+
+
+def utility_openai_yaml(name: str, spec: dict[str, str]) -> str:
+    return f'''interface:
+  display_name: {json.dumps(spec["display_name"])}
+  short_description: {json.dumps(spec["short_description"])}
+  default_prompt: {json.dumps(spec["default_prompt"])}
+policy:
+  allow_implicit_invocation: false
+'''
+
+
 def router_text() -> str:
     # The router deliberately omits disable-model-invocation so /elr stays
     # model-invocable; only the per-stage wrappers are researcher-invoked.
     return '''---
 name: "elr"
-description: "Start, resume, or report status for the empirical legal research pipeline. Use when the researcher says start, resume, continue, next, status, or asks which workflow stage to run."
+description: "Start a new project, adopt an existing one, resume, report status, or explain the empirical legal research pipeline. Use when the researcher says start, adopt, resume, continue, next, status, help, or tour, or asks which workflow stage to run."
 ---
 
 # Route the empirical legal research workflow
 
 1. Read `AGENTS.md`, `PIPELINE.md`, and `project/PROJECT_STATE.md` completely.
-2. If no initialized state exists, read and follow `workflow/stages/00-initialize.md`.
-3. If state is `awaiting_approval` or `waiting_for_user`, report the exact gate or input and
+2. `help` or `tour`: without touching any file, give the orientation in
+   `workflow/stages/00-initialize.md` (what ELARA does and does not do, the six steps, gates,
+   the commands, the publication profile), say where this project stands, and stop.
+   `status`: without touching any file, report the current stage and status, approvals and
+   their basis (verified or researcher-asserted), active artifact versions, the last run, and
+   outstanding researcher inputs, then stop.
+3. `start` on an uninitialized template: read and follow `workflow/stages/00-initialize.md`,
+   fresh path, beginning with its orientation. `adopt`, or an uninitialized template with
+   materials under `project/inputs/existing/`: follow the same file's adoption path.
+4. If state is `awaiting_approval` or `waiting_for_user`, report the exact gate or input and
    stop. Never infer approval from silence or from an earlier, different decision.
-4. Otherwise read the canonical file named by `current_stage`, verify its prerequisites,
-   and follow it. If the required Plan or Goal mode is not active, give the researcher the
-   exact mode command and stage invocation instead of imitating that mode.
-5. Run only one bounded stage at a time. Do not use one Goal for the whole pipeline.
+5. Otherwise (`resume`, `continue`, `next`) read the canonical file named by `current_stage`,
+   verify its prerequisites (imported artifacts and researcher-asserted approvals recorded
+   at adoption satisfy them), and follow it. If the required Plan or Goal mode is not active,
+   give the researcher the exact mode command and stage invocation instead of imitating it.
+6. Run only one bounded stage at a time. Do not use one Goal for the whole pipeline.
 '''
 
 
@@ -128,12 +227,18 @@ def expected_files(root: Path) -> dict[Path, str]:
         name = skill_name(stage_id)
         description = stage_description(meta["title"], stage_id)
         canonical = path.relative_to(root).as_posix()
+        extra_read = MANUSCRIPT_EXTRA_READ if stage_id in MANUSCRIPT_STAGE_IDS else ""
         files[codex_root / name / "SKILL.md"] = wrapper_text(
-            name, description, canonical, claude=False
+            name, description, canonical, claude=False, extra_read=extra_read
         )
         files[claude_root / name / "SKILL.md"] = wrapper_text(
-            name, description, canonical, claude=True
+            name, description, canonical, claude=True, extra_read=extra_read
         )
+
+    for name, spec in UTILITY_SKILLS.items():
+        files[codex_root / name / "SKILL.md"] = utility_wrapper_text(name, spec, claude=False)
+        files[claude_root / name / "SKILL.md"] = utility_wrapper_text(name, spec, claude=True)
+        files[codex_root / name / "agents" / "openai.yaml"] = utility_openai_yaml(name, spec)
 
     return files
 

@@ -44,7 +44,7 @@ This is a long-running audit stage. In Codex, `/goal` may be used with this obje
 6. Build `interpretive_recoding_queue_vNNN.csv` from every unsupported, ambiguous, or failed audit, retaining the original unit and observation IDs, finding, reasoning, source locator, and required route. Do not modify `coding_dataset_vNNN.jsonl`.
 7. Review patterns by variable, label, source type, period, batch, and coding attempt. A concentrated failure may indicate a cascade or instrument defect. Report the pattern and route it rather than changing the audit standard after seeing results.
 8. Send queued observations to Stage 11 for fresh recoding under the same frozen instrument. If the instrument itself must change, route through Stage 05, Stage 08, and Stage 09. New codes receive new IDs and supersession links, after which this entire stage must audit the active set again.
-9. Have a fresh reviewer sample supported as well as flagged findings against full source context and confirm coverage construction. Preserve disagreements in the report.
+9. Have a fresh reviewer (per `workflow/shared/fresh-review.md`) sample supported as well as flagged findings against full source context and confirm coverage construction. Preserve disagreements in the report.
 
 ## Artifacts
 

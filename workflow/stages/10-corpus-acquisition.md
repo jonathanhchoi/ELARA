@@ -46,7 +46,7 @@ This is a long-running execution stage. In Codex or current Claude Code, `/goal`
 7. Give every rostered unit exactly one terminal acquisition status, including acquired, not found after documented search, inaccessible, unauthorized, unusable, duplicate under the frozen rule, not applicable, or unresolved conflict. For every non-acquired status, state what was attempted, what was found, and why it failed.
 8. Build the corpus manifest and provenance manifest deterministically from the unit roster and logs. Counts must reconcile to the frozen denominator. Identify coverage by every preregistered subgroup and distinguish “searched and found nothing” from “not searched.”
 9. If a source conflict cannot be resolved by the frozen rule, or acquisition would materially change scope, coverage, measurement, authorization, or the preregistered analysis, append a deviation proposal without changing the corpus definition and stop at the gate. Route authorization changes to Stage 06, design or unit-space changes through Stage 05 and the dependent approval stages, and preregistration amendments to Stage 09.
-10. Have a fresh reviewer sample source identities, checksums, transformations, duplicate decisions, gap records, and manifest-to-disk links. Preserve the review result and correct only by appending a superseding record or creating a new artifact version.
+10. Have a fresh reviewer (per `workflow/shared/fresh-review.md`) sample source identities, checksums, transformations, duplicate decisions, gap records, and manifest-to-disk links. Preserve the review result and correct only by appending a superseding record or creating a new artifact version.
 
 ## Artifacts
 

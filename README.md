@@ -19,6 +19,21 @@ that require independent model judgments also provide
 `$elr-code-observations` and `/elr-code-observations`, which implement the same
 one-unit assignment and serial-validation contract.
 
+## Two ways in
+
+- **New project:** follow the five-minute start below and run `$elr start`
+  (Codex) or `/elr start` (Claude Code).
+- **Existing project** — you already have a question, a literature review, a
+  codebook, coded data, results, a draft, or a referee letter: follow steps 1–3
+  below, put your existing materials in `project/inputs/existing/`, and run
+  `$elr adopt` / `/elr adopt`. Stage 00 inventories what you have, asks which
+  decisions you vouch for, imports your files as versioned artifacts, and lands
+  the pipeline at the first stage that still needs to run — or, if all you have
+  is a draft, hands you straight to the cite-check and manuscript utilities. See
+  "Adopting an existing project" below.
+- **Lost at any point:** `$elr help` / `/elr help` explains what ELARA is, where
+  this project stands, and what to type next.
+
 ## Five-minute start
 
 ### 1. Get a clean copy
@@ -109,7 +124,21 @@ place licensed, confidential, sealed, privileged, or personal data in the
 workspace—or send it to a hosted model—until the applicable authorization is
 confirmed. ELARA has a hard data-authorization gate before corpus processing.
 
-### 4. Resume at any time
+### What to expect in your first session
+
+Stage 00 opens with a short orientation, checks the environment, and interviews
+you one question at a time (project name and contribution; whether to brainstorm
+a question or bring your own; scope; restrictions; databases, models, and budget;
+anything that must stay off hosted models; optionally the venue you are writing
+for). "Don't know" is a valid answer and is recorded as an open question. It then
+drafts a project charter and stops: approving the charter is the first gate.
+Every later stage ends the same way, at a decision that is yours, and nothing
+advances on silence. `$elr status` / `/elr status` says where you are;
+`$elr resume` / `/elr resume` picks up wherever you left off, in a new session,
+because the state lives in `project/PROJECT_STATE.md`, not in the chat. Stages
+02, 03, and 11 run long; start them and walk away.
+
+### 5. Resume at any time
 
 Open the same repository root and use:
 
@@ -121,6 +150,37 @@ $elr resume       # Codex
 `$elr status` and `/elr status` report the current stage, approvals, active
 artifact versions, last-run counts, and outstanding researcher inputs. The
 router reads `project/PROJECT_STATE.md` rather than relying on chat history.
+
+## Adopting an existing project
+
+You do not have to start from a blank question. Put whatever exists under
+`project/inputs/existing/` (a memo, a literature review, a codebook or prompt,
+coded data, analysis code and results, a draft, referee letters — anything too
+large to copy can be named by path) and run `$elr adopt` / `/elr adopt`. Stage
+00 walks a checklist of what you have, proposes a preset, imports your files
+unchanged into `project/artifacts/imported_v001/`, pins them as the artifacts
+later stages will use, records the gates you vouch for as approvals with basis
+`researcher-asserted` (any gate can be asserted — the point is to make your
+existing judgment usable, not to re-litigate it), writes an adoption map saying
+what each stage has, and lands the pipeline at the first stage that still needs
+to run. Keep your original project folder as it is; the ELARA copy is the
+auditable workspace and reads from the imported copies.
+
+| Preset | You have | ELARA lands at |
+|---|---|---|
+| Question only | a chosen question and contribution | `02-preemption-review` (Stage 01 skipped) |
+| Design in hand | methods, a codebook, schema, or prompt | `06-data-authorization`, or `07`/`08` if you assert authorization (and adversarial review) |
+| Data in hand | coded data, with or without a codebook | `12-interpretive-verification`, or `13`/`14` if you assert a verification (and human validation) |
+| Results in hand | analysis code and results | `16-replication-package`, or `17-integrate-manuscript` if you assert a package |
+| Publication only | a draft, perhaps a referee letter | `17-integrate-manuscript` if results are to be integrated, else `18-cite-check`; the utilities work at once |
+
+Adoption cannot supply a few facts after the fact, and the adoption map says so
+where they apply: if analyses ran before any preregistration (or none exists),
+they are labeled not preregistered unless you import a dated record; if you
+cannot list which units were used to tune the prompt or codebook, Stage 13
+reports its sample as not held out; work you already audited is re-audited when
+Stages 12 or 18 run. None of this blocks the pipeline; it changes what the
+reports say ELARA verified.
 
 ## Try a ten-minute demo first (optional)
 
@@ -158,6 +218,31 @@ an outline into a paper; the researcher supplies a substantive draft and retains
 control over the thesis, framing, organization, and voice.
 
 See `PIPELINE.md` for the stage-by-stage map and failure routes.
+
+## Manuscript work: the publication profile and utilities
+
+Voice, venue, and formatting are the researcher's. Before Stage 17, copy
+`workflow/templates/publication_profile_template.md` to
+`project/PUBLICATION_PROFILE_v001.md`, fill in the venue and audience, tone and
+exemplars, whether to match your existing voice, prohibited constructions and
+punctuation preferences, citation style, and the QA and deliverables you want
+(compile and inspect every page, change log, redline, number of review passes),
+and pin it in `project/PROJECT_STATE.md` as `publication_profile`. To change it,
+save a new version and repin. Stages 17 and 19 and the utilities below read the
+active profile on demand and record its version and hash; it governs prose only
+and cannot relax a guardrail or gate. If no profile exists, those stages ask
+before writing prose.
+
+Three optional utilities cover manuscript tasks that are not pipeline stages
+(`$elr-...` in Codex, `/elr-...` in Claude Code): `elr-add-citations` retrieves
+and adds only the citations you marked, in the profile's citation style, then
+routes the new version through the audit-only Stage 18; `elr-proofread` reports
+typos, grammar, clarity, tone, style tells, internal consistency, and venue
+compliance and fixes only clear errors when you permit it; `elr-apply-markup`
+transcribes a hand-marked PDF into an edit list, stops for your review, then
+applies exactly the approved edits. Their canonical instructions are in
+`workflow/utilities/`; the shared invariants for any manuscript edit are in
+`workflow/shared/manuscript-editing-contract.md`.
 
 ## Coding units and parallel work
 
@@ -214,8 +299,9 @@ CLAUDE.md                       Claude-specific adapter
 PIPELINE.md                     Human-readable workflow map
 requirements.txt                Bounded Python runtime dependency
 workflow/stages/NN-*.md         Canonical sequential stage prompts
-workflow/shared/                Guardrails and artifact/fan-out contracts
-workflow/templates/             Preregistration skeleton
+workflow/utilities/             Optional manuscript utilities (add citations, proofread, apply markup)
+workflow/shared/                Guardrails, artifact/fan-out/manuscript contracts, fresh-review protocol
+workflow/templates/             Preregistration skeleton and publication profile template
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
 .claude/workflows/              Claude one-unit fan-out workflow

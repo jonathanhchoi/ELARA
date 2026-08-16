@@ -44,7 +44,7 @@ This is a long-running audit stage. In Codex or current Claude Code, `/goal` may
 6. Assign each pair a documented disposition such as supported, supported with qualification, pinpoint or metadata error, source mismatch, quotation error, proposition unsupported, authority or version concern, or unverified because the actual source was unavailable. Include a concise explanation, pinpoint, and short supporting quotation where lawful.
 7. Check internal citation integrity: missing bibliography entries, orphaned entries, duplicate or inconsistent keys, broken cross-references, citations attached to the wrong clause, citation-needed claims, quotation and source mismatches, and inconsistent short forms. Report only; do not fix.
 8. Log every search and failed access attempt. If the source cannot be obtained, identify the exact document, database, route, and query the researcher should use. Never turn an unverified item into a verified one based on plausibility.
-9. Have a fresh reviewer reopen every severe finding and a sample from each other disposition, validate source identity and supporting text, and challenge claims marked supported. Preserve reviewer disagreements and resolve only the audit classification, not the manuscript.
+9. Have a fresh reviewer (per `workflow/shared/fresh-review.md`) reopen every severe finding and a sample from each other disposition, validate source identity and supporting text, and challenge claims marked supported. Preserve reviewer disagreements and resolve only the audit classification, not the manuscript.
 10. Reconcile the final audit to the inventory and create a prioritized report organized by manuscript location and problem type. State clearly that findings remain unfixed.
 
 ## Artifacts

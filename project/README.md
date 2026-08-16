@@ -7,10 +7,14 @@ read those files but write only their declared outputs here.
 ## Start
 
 1. Read `inputs/README.md` and place the materials you want inventoried in
-   `inputs/`.
-2. From the repository root, run `$elr start` in Codex or `/elr start` in Claude.
-3. Review the stage 00 project charter and input inventory. The pipeline will not
-   proceed until you approve the charter.
+   `inputs/`. If you are bringing an existing project (a question, a codebook,
+   coded data, results, a draft), put those materials in `inputs/existing/`.
+2. From the repository root, run `$elr start` in Codex or `/elr start` in Claude
+   for a new project, or `$elr adopt` / `/elr adopt` for an existing one.
+   `$elr help` / `/elr help` explains the workflow at any time.
+3. Review the stage 00 project charter and input inventory (and, on the
+   adoption path, the adoption map and the approvals you asserted). The
+   pipeline will not proceed until you approve the charter.
 
 Do not populate `PROJECT_STATE.md` by hand to skip initialization. The router
 uses its front matter to resume safely in a fresh session.
@@ -24,6 +28,8 @@ uses its front matter to resume safely in a fresh session.
 | `RUN_LEDGER.md` | Started, checkpoint, completed, failed, and interrupted run events with exact counts | Append only |
 | `DEVIATIONS.md` | Departures, amendments, and their dispositions | Append only |
 | `inputs/` | User-supplied source material | Immutable after stage 00 inventory |
+| `PUBLICATION_PROFILE_vNNN.md` | Your venue, audience, tone, voice, prohibited constructions, citation style, and manuscript QA preferences, from `workflow/templates/publication_profile_template.md`; pinned in state as `publication_profile` and read by Stages 17 and 19 and the manuscript utilities | New `_vNNN` version for every change; governs prose only |
+| `artifacts/imported_vNNN/`, `artifacts/adoption_map_vNNN.md` | Adoption path only: unchanged copies of your existing files, pinned as the artifacts later stages use, and the stage-by-stage map of what they satisfy | Immutable once written; new version for a later import |
 | `runs/<run_id>/` | Prompts, raw responses, parsed responses, logs, and run-local evidence | Unique and immutable after close |
 | stage-declared paths | Versioned plans, manifests, data, analyses, audits, and packages | New `_vNNN` version for every rerun or correction |
 

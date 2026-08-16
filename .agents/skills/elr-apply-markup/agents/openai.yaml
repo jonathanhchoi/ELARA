@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELARA Apply Markup"
+  short_description: "Transcribe hand markup, then apply approved edits"
+  default_prompt: "Use $elr-apply-markup on the marked-up PDF under project/inputs/manuscript/markup/."
+policy:
+  allow_implicit_invocation: false

@@ -5,6 +5,16 @@ inventories them. Examples include prior papers, a project memo, seed citations,
 data dictionaries, pre-existing code, and corpus files you are authorized to
 process.
 
+If you are bringing an existing project into ELARA (`$elr adopt` / `/elr adopt`),
+put the work already done in `existing/`: the question memo, literature review,
+codebook or prompt, coded data, analysis code and results, replication package,
+draft, and referee letters. Stage 00 inventories and hashes them here, then copies
+the usable ones unchanged into `project/artifacts/imported_vNNN/` and pins them as
+the artifacts later stages use. Anything too large to copy can be named by path in
+the interview and is inventoried by path and hash. Manuscript drafts for Stage 17
+or the manuscript utilities go in `manuscript/`; a marked-up PDF for
+`elr-apply-markup` goes in `manuscript/markup/`.
+
 ## Before adding a file
 
 - Use a stable, descriptive filename. Avoid names that differ only by letter

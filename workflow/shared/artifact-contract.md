@@ -129,6 +129,11 @@ An approval record must include:
 
 - gate ID and decision (`approved`, `conditionally-approved`, `rejected`, or
   `invalidated`);
+- basis: `verified` when the gate's stage ran under ELARA and its artifacts were
+  verified, or `researcher-asserted` when the approval was recorded on the
+  adoption path of Stage 00 on the researcher's word, resting on imported
+  artifacts. Any gate may be researcher-asserted; the basis is recorded so that
+  reports and the replication package can say which checks ELARA performed;
 - decision ID linking to the append-only decision log;
 - exact artifact paths and SHA-256 hashes reviewed;
 - run ID, researcher identity label as provided, and UTC decision time;

@@ -83,7 +83,8 @@ label frequencies or other outcomes that could affect stopping or repair decisio
 Resume from validated terminal return files plus the durable ledger. Treat an absent, malformed,
 or unvalidated return as outstanding. When all assignments are terminal, reconcile the roster,
 attempts, failures, hashes, and unique output paths; merge deterministically in manifest order;
-and have a fresh reviewer inspect the chain from source to assignment to return to aggregate.
+and have a fresh reviewer (per `fresh-review.md` in this directory) inspect the chain from source to
+assignment to return to aggregate.
 
 ## Provenance and limits
 

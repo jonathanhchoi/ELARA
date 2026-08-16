@@ -6,8 +6,8 @@ core: false
 interaction_profile: "plan_then_execute"
 long_running: false
 prerequisites: ["16-replication-package"]
-required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/replication_package_vNNN/", "project/artifacts/replication_rebuild_report_vNNN.md", "project/artifacts/analysis_results_vNNN/", "project/artifacts/analysis_report_vNNN.md", "project/artifacts/robustness_results_vNNN/", "project/artifacts/robustness_report_vNNN.md", "project/artifacts/human_validation_report_vNNN.md", "researcher-supplied substantive manuscript under project/inputs/manuscript/"]
-declared_outputs: ["project/artifacts/manuscript_edit_plan_vNNN.md", "project/artifacts/manuscript_vNNN/", "project/artifacts/manuscript_change_log_vNNN.md", "project/artifacts/manuscript_consistency_report_vNNN.md", "project/runs/<run_id>/build_and_render_logs/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
+required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/replication_package_vNNN/", "project/artifacts/replication_rebuild_report_vNNN.md", "project/artifacts/analysis_results_vNNN/", "project/artifacts/analysis_report_vNNN.md", "project/artifacts/robustness_results_vNNN/", "project/artifacts/robustness_report_vNNN.md", "project/artifacts/human_validation_report_vNNN.md", "researcher-supplied substantive manuscript under project/inputs/manuscript/", "project/PUBLICATION_PROFILE_vNNN.md (optional; the active publication profile created from workflow/templates/publication_profile_template.md)"]
+declared_outputs: ["project/PUBLICATION_PROFILE_vNNN.md", "project/artifacts/manuscript_edit_plan_vNNN.md", "project/artifacts/manuscript_vNNN/", "project/artifacts/manuscript_change_log_vNNN.md", "project/artifacts/manuscript_consistency_report_vNNN.md", "project/runs/<run_id>/build_and_render_logs/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
 human_gate: "manuscript-edit-permission"
 next_stage: "18-cite-check"
 failure_routes: ["14-analysis-and-correction", "15-robustness", "16-replication-package", "17-integrate-manuscript"]
@@ -19,12 +19,13 @@ Optionally integrate validated results into a substantive first draft supplied b
 
 ## Prerequisite checks
 
-Read `AGENTS.md` and route this stage from `project/PROJECT_STATE.md` before doing any work; the standing rules and exact active versions control every check below.
+Read `AGENTS.md` and route this stage from `project/PROJECT_STATE.md` before doing any work; the standing rules and exact active versions control every check below. Read and follow `workflow/shared/manuscript-editing-contract.md` throughout this stage.
 
 1. Confirm the Stage 16 core is complete and resolve the exact active package, validation, analysis, and robustness versions. The clean replication rebuild must cover every result proposed for integration.
 2. Inspect the actual researcher-supplied manuscript, bibliography, figures, build system, and local instructions read-only. Identify its thesis, organization, voice, audience, entry file, generated components, unresolved notes, existing results discussion, and working-tree or checkpoint constraints.
 3. Confirm that the supplied manuscript is a substantive first draft rather than an outline, notes, or a request to generate the paper. If no substantive draft exists, stop and ask the researcher to write and supply it; do not create prose or a plan artifact.
 4. Restate the exact integration or revision scope. Confirm that inputs under `project/inputs/` will remain immutable and that a versioned working copy can be built under declared outputs. If the source or scope is ambiguous, stop for clarification. If a relevant result is not validated and reproduced, route upstream before planning prose.
+5. Resolve the active publication profile (`active_artifacts.publication_profile`, a `project/PUBLICATION_PROFILE_vNNN.md`) and read it. If none is active, ask the researcher in Plan Mode either to create one from `workflow/templates/publication_profile_template.md`, to answer the template's questions so the profile can be written as `project/PUBLICATION_PROFILE_vNNN.md` at execution start and pinned, or to record a decision to proceed by matching the existing draft's voice only. Do not invent venue, audience, tone, exemplars, or QA requirements.
 
 ## Researcher decisions
 
@@ -36,17 +37,17 @@ Begin in Plan Mode. Do not write any project file during Plan Mode. Present a se
 
 ## Work
 
-1. After explicit permission, allocate a unique run ID and output versions, persist the approved plan, record exact input hashes, copy the supplied manuscript and required build files into `manuscript_vNNN/`, set the stage running, and append a ledger start. Never edit the file under `project/inputs/` or an earlier manuscript version.
+1. After explicit permission, allocate a unique run ID and output versions, persist the approved plan, record exact input hashes — including the active publication profile's path, version, and SHA-256 hash, or the recorded decision to proceed without one — copy the supplied manuscript and required build files into `manuscript_vNNN/`, set the stage running, and append a ledger start. If the researcher answered the profile questions in Plan Mode, write `project/PUBLICATION_PROFILE_vNNN.md` from the template now, pin it in state, and record its hash before any prose changes. Never edit the file under `project/inputs/` or an earlier manuscript version.
 2. Find the least disruptive existing location for each approved result. Modify only the authorized discussion and its necessary abstract, introduction, conclusion, table, figure, disclosure, or cross-reference consequences. Do not invent a new outline, thesis, literature discussion, or normative argument.
 3. Pull every number, sample count, estimate, interval, table, and figure from the active machine-readable results and script-output manifest. Use generated tables and figures where possible. Never retype from memory, reverse-engineer a value from a plot, or substitute a preliminary result.
 4. Describe human validation, interpretive verification, measurement-error correction, prompt and second-model robustness, coverage, deviations, and remaining limitations accurately. Do not call a provisional, unvalidated, fragile, or restricted result final, representative, or causal unless the approved design supports that characterization.
-5. Match the existing sentence structure, vocabulary, formality, citation practices, and rhetorical style. Preserve existing language wherever it already makes the point; change only what is necessary for the approved task. Keep main findings accessible to legal readers and technical implementation details where the manuscript already places them.
+5. Write under the active publication profile (venue, audience, tone, exemplars, voice-matching choice, prohibited constructions and punctuation, placement of technical material, citation style) with the contract's precedence rule; where the profile is silent, match the existing sentence structure, vocabulary, formality, citation practices, and rhetorical style. Preserve existing language wherever it already makes the point; change only what is necessary for the approved task. Keep main findings accessible to legal readers and technical implementation details where the manuscript already places them.
 6. Keep the abstract, introduction, methods, results, limitations, conclusion, appendices, tables, and figures mutually consistent. Update dependent numbers and descriptions together. Do not change legal terminology, quotations, canonical language, defined labels, or hypotheses merely for stylistic variation.
 7. Reuse only citations already supported by retrieved sources. Mark a needed but unverified authority as an explicit citation-needed finding for Stage 18; never fabricate a case, article, quotation, pinpoint, or bibliography entry.
 8. Add only the approved LLM-use, data-access, preregistration, validation, and replication disclosures, including restrictions and archive access instructions. Do not claim public availability before the researcher has actually published an archive.
-9. Compile or render the manuscript using its real build system. Inspect logs and the rendered artifact for broken references, missing figures, overflow, encoding, bibliography, table, and pagination problems. Fix only issues within approved scope.
+9. Compile or render the manuscript using its real build system. Inspect logs and the rendered artifact for broken references, missing figures, overflow, encoding, bibliography, table, and pagination problems, and inspect every rendered page individually when the profile requires it. Fix only issues within approved scope.
 10. Build a preregistration concordance inside the consistency report: a machine-checkable crosswalk from every preregistered hypothesis and estimand ID to the table, figure, or section that reports it, or a stated omission reason approved by the researcher.
-11. Conduct two separate self-reviews: first trace claims and numbers to artifacts; then compare the versioned manuscript against the immutable source and approved plan. Create a complete change log naming every altered file and substantive edit, including any requested change not made and why.
+11. Conduct two separate self-reviews: first trace claims and numbers to artifacts; then compare the versioned manuscript against the immutable source and approved plan. Create a complete change log naming every altered file and substantive edit, including any requested change not made and why, plus a diff against the immutable source and a redline (for example `latexdiff`) when the profile asks for one.
 
 ## Artifacts
 
@@ -61,6 +62,7 @@ The edit plan fixes authorized scope before prose changes. `manuscript_vNNN/` co
 - Confirm the existing thesis, organization, voice, and legal terminology are preserved, no first-draft prose or unsupported substantive claim was introduced, and requested minimal-change constraints were followed.
 - Compile or render from the versioned directory, inspect the output, and confirm references, citations, figures, tables, and build dependencies resolve as documented.
 - Confirm no citation was invented, all unresolved authorities are flagged for Stage 18, the source manuscript remains unchanged, and no prior artifact was overwritten.
+- Confirm the run manifest records the publication profile version and hash (or the recorded decision to proceed without one), and that the profile's prohibited constructions, punctuation preferences, QA steps, and deliverables were honored.
 
 ## State transition
 

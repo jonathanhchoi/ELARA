@@ -43,6 +43,44 @@ steps. A stage's `paper_steps` field records the crosswalk above.
 approved project charter may record a decision to skip it and route from Stage
 00 to Stage 02.
 
+## Router commands
+
+| Command | What happens |
+|---|---|
+| `start` | Stage 00, fresh path: orientation, environment check, one-question-at-a-time interview, charter, first gate. |
+| `adopt` | Stage 00, adoption path: inventory existing materials under `project/inputs/existing/`, choose a preset, import files as versioned artifacts, record researcher-asserted approvals, write the adoption map, land at the first stage that still needs to run. |
+| `resume`, `continue`, `next` | Read `PROJECT_STATE.md`, verify the current stage's prerequisites, and run it. |
+| `status` | Report stage, status, approvals, active versions, and outstanding inputs. |
+| `help`, `tour` | Orientation and current position; no file changes. |
+
+## Adopting an existing project
+
+Stage 00's adoption path lets a researcher bring in work already done. Imported
+files are copied unchanged into `project/artifacts/imported_vNNN/`, hashed, and
+pinned in `active_artifacts` under the logical names downstream stages resolve.
+Any gate may be recorded as approved with basis `researcher-asserted`; the
+adoption map (`project/artifacts/adoption_map_vNNN.md`) records, for every
+stage, whether it has, partially has, lacks, or was not run by ELARA, and one
+standing `DEVIATIONS.md` entry says where ELARA's own verification begins.
+Later stages treat pinned imports and asserted approvals as satisfying their
+prerequisites, verify what they can, build missing derivatives as versioned
+artifacts, and record the rest as limitations.
+
+| Preset | Landing stage |
+|---|---|
+| Question only | `02-preemption-review` |
+| Design in hand | `06-data-authorization` (or `07`/`08` if authorization and review are asserted) |
+| Data in hand | `12-interpretive-verification` (or `13`/`14` if verification and validation are asserted) |
+| Results in hand | `16-replication-package` (or `17-integrate-manuscript` if a package is asserted) |
+| Publication only | `17-integrate-manuscript` or `18-cite-check`; Stages 01–16 recorded as not run by ELARA; manuscript utilities available at once |
+
+Facts adoption cannot supply are recorded rather than assumed: preregistration
+timing (analyses that predate any preregistration are labeled not preregistered
+unless a dated record is imported), held-out purity (an unlisted tuning set
+makes the Stage 13 sample "not held out"), audit separation (prior audits are
+recorded as prior audits; Stages 12 and 18 re-audit), and an unknown coder model
+version.
+
 ## Interaction profiles
 
 | Profile | Handoff |
@@ -83,6 +121,30 @@ setting never waives a human gate, data restriction, or artifact-version rule.
 A coding unit may contain one document or several related documents, as fixed by
 the codebook and unit-space manifest. Stage 11 assigns one such unit—not
 necessarily one document—to each fresh worker context.
+
+## Manuscript utilities and the publication profile
+
+Stages 17–19 and three optional utilities work on the researcher's manuscript
+under `workflow/shared/manuscript-editing-contract.md` (fixed invariants: no
+first-draft authorship, permission before edits, versioned copies, numbers only
+from results, no citations from memory, build and two review passes, complete
+change disclosure, post-edit citation audit) and the researcher's **publication
+profile** (`project/PUBLICATION_PROFILE_vNNN.md`, created from
+`workflow/templates/publication_profile_template.md`, pinned in state as
+`publication_profile`, and hashed into each manuscript run). The profile owns
+venue, audience, tone, exemplars, voice matching, prohibited constructions,
+punctuation, citation style, and QA and deliverable requirements; it governs
+prose only and cannot relax any guardrail or gate. It is read on demand by these
+stages and utilities, never imported into `AGENTS.md` or `CLAUDE.md`.
+
+| Utility | Canonical file | What it does | Then |
+|---|---|---|---|
+| `elr-add-citations` | `workflow/utilities/add-citations.md` | Retrieves, reads, and adds only the citations the researcher marked, in the profile's citation style | audit-only Stage 18 |
+| `elr-proofread` | `workflow/utilities/proofread.md` | Reports typos, grammar, clarity, tone, style tells, internal consistency, and venue compliance; fixes only clear errors when permitted | accepted items to Stage 19 |
+| `elr-apply-markup` | `workflow/utilities/apply-markup.md` | Transcribes a hand-marked PDF into a reviewable edit list, stops, then applies exactly the approved edits | Stage 18 if citations changed |
+
+Utilities never change `current_stage`; they append the run ledger and decisions
+and produce versioned outputs like any stage.
 
 ## Hard-gate protocol
 

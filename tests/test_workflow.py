@@ -47,6 +47,119 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertLess(len(content.splitlines()), 30)
                 self.assertIn("workflow/stages/", content)
 
+    def test_manuscript_stages_reference_contract_and_publication_profile(self) -> None:
+        template = ROOT / "workflow" / "templates" / "publication_profile_template.md"
+        contract = ROOT / "workflow" / "shared" / "manuscript-editing-contract.md"
+        self.assertTrue(template.is_file())
+        self.assertTrue(contract.is_file())
+        template_text = template.read_text(encoding="utf-8")
+        self.assertIn("project/PUBLICATION_PROFILE_v001.md", template_text)
+        self.assertIn("cannot relax", template_text)
+        contract_text = contract.read_text(encoding="utf-8")
+        self.assertIn("publication profile", contract_text.lower())
+        self.assertIn("first draft", contract_text)
+        stages = {meta["stage_id"]: body for _, meta, body in load_stages(ROOT)}
+        for stage_id in ("17-integrate-manuscript", "19-revise-and-respond"):
+            body = stages[stage_id]
+            self.assertIn("workflow/shared/manuscript-editing-contract.md", body, stage_id)
+            self.assertIn("PUBLICATION_PROFILE_vNNN.md", body, stage_id)
+            self.assertIn("hash", body.lower(), stage_id)
+        # Stage 00 may offer to create the profile; no coding or analysis stage reads it.
+        for stage_id, body in stages.items():
+            if stage_id in ("00-initialize", "17-integrate-manuscript", "19-revise-and-respond"):
+                continue
+            self.assertNotIn("PUBLICATION_PROFILE", body, stage_id)
+        for platform in (".agents", ".claude"):
+            for stage_id in ("17-integrate-manuscript", "19-revise-and-respond"):
+                wrapper = ROOT / platform / "skills" / f"elr-{stage_id}" / "SKILL.md"
+                self.assertIn("manuscript-editing-contract.md", wrapper.read_text(encoding="utf-8"))
+        # The profile is loaded on demand only; never from the always-on instructions.
+        for always_on in ("AGENTS.md", "CLAUDE.md"):
+            text = (ROOT / always_on).read_text(encoding="utf-8")
+            self.assertNotIn("@project/PUBLICATION_PROFILE", text)
+
+    def test_manuscript_utilities_have_canonical_files_and_wrappers(self) -> None:
+        from sync_skill_wrappers import UTILITY_SKILLS
+
+        self.assertEqual(
+            set(UTILITY_SKILLS), {"elr-add-citations", "elr-proofread", "elr-apply-markup"}
+        )
+        for name, spec in UTILITY_SKILLS.items():
+            canonical = ROOT / spec["canonical"]
+            self.assertTrue(canonical.is_file(), canonical)
+            text = canonical.read_text(encoding="utf-8")
+            self.assertIn("workflow/shared/manuscript-editing-contract.md", text)
+            self.assertIn("Do not change `current_stage`", text)
+            self.assertIn("manuscript-edit-permission", text)
+            self.assertTrue((ROOT / spec["route"]).is_file(), spec["route"])
+            for platform in (".agents", ".claude"):
+                wrapper = ROOT / platform / "skills" / name / "SKILL.md"
+                wrapper_text = wrapper.read_text(encoding="utf-8")
+                self.assertIn(spec["canonical"], wrapper_text)
+                self.assertIn(spec["route"], wrapper_text)
+                self.assertLess(len(wrapper_text.splitlines()), 30)
+            yaml = ROOT / ".agents" / "skills" / name / "agents" / "openai.yaml"
+            self.assertIn("allow_implicit_invocation: false", yaml.read_text(encoding="utf-8"))
+
+    def test_fresh_review_protocol_is_shared(self) -> None:
+        protocol = ROOT / "workflow" / "shared" / "fresh-review.md"
+        self.assertTrue(protocol.is_file())
+        guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(encoding="utf-8")
+        self.assertIn("workflow/shared/fresh-review.md", guardrails)
+        referencing = [
+            meta["stage_id"]
+            for _, meta, body in load_stages(ROOT)
+            if "workflow/shared/fresh-review.md" in body
+        ]
+        for stage_id in ("02-preemption-review", "12-interpretive-verification", "18-cite-check"):
+            self.assertIn(stage_id, referencing)
+
+    def test_stage_00_has_orientation_and_adoption_path(self) -> None:
+        path, meta, body = next(
+            entry for entry in load_stages(ROOT) if entry[1]["stage_id"] == "00-initialize"
+        )
+        lowered = body.lower()
+        self.assertIn("## orientation", lowered)
+        self.assertIn("one question at a time", lowered)
+        self.assertIn("don't know", lowered)
+        self.assertIn("adoption path", lowered)
+        self.assertIn("adoption map", lowered)
+        self.assertIn("researcher-asserted", lowered)
+        for preset in ("question only", "design in hand", "data in hand", "results in hand", "publication only"):
+            self.assertIn(preset, lowered, preset)
+        for output in (
+            "project/artifacts/adoption_map_vNNN.md",
+            "project/artifacts/imported_vNNN/",
+            "project/PUBLICATION_PROFILE_vNNN.md",
+        ):
+            self.assertIn(output, meta["declared_outputs"], output)
+        # Adoption cannot silently launder these facts.
+        self.assertIn("not preregistered", lowered)
+        self.assertIn("not held out", lowered)
+
+    def test_router_names_start_adopt_resume_status_help(self) -> None:
+        for platform in (".agents", ".claude"):
+            text = (ROOT / platform / "skills" / "elr" / "SKILL.md").read_text(encoding="utf-8")
+            for verb in ("`start`", "`adopt`", "`resume`", "`status`", "`help`"):
+                self.assertIn(verb, text, (platform, verb))
+            self.assertIn("researcher-asserted", text)
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("researcher-asserted", agents)
+        readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+        self.assertIn("elr adopt", readme)
+        self.assertIn("elr help", readme)
+        self.assertIn("what to expect in your first session", readme)
+        pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8").lower()
+        self.assertIn("adopting an existing project", pipeline)
+        contract = (ROOT / "workflow" / "shared" / "artifact-contract.md").read_text(encoding="utf-8")
+        self.assertIn("researcher-asserted", contract)
+
+    def test_scale_up_forbids_multiple_units_not_multiple_documents(self) -> None:
+        body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "11-scale-up")
+        self.assertIn("Never pack multiple coding units into one prompt", body)
+        self.assertNotIn("Never pack multiple documents or units into one prompt", body)
+        self.assertIn("several related documents", body)
+
     def test_fresh_state_is_safe(self) -> None:
         state, _ = parse_frontmatter(ROOT / "project" / "PROJECT_STATE.md")
         self.assertEqual(state["current_stage"], "00-initialize")

@@ -12,12 +12,19 @@ very fast research assistant whose work is verified, never trusted.
 3. Read the canonical file in `workflow/stages/` named by `current_stage`.
    Canonical stage files control prerequisites, inputs, outputs, gates, failure
    routes, and the next stage; native skills are only wrappers.
-4. Route the clean initial template to `00-initialize`. If state is missing or
-   malformed but project history exists, stop and report a state-recovery issue;
-   never erase history by reinitializing. If state says `awaiting_approval` or
-   `waiting_for_user`, request the recorded input and do not advance. If it says
-   `failed`, use the current stage's `failure_routes`.
-5. Treat `interaction_profile` as a handoff, not an automatic mode switch:
+4. Route the clean initial template to `00-initialize` (its fresh path for a new
+   project, its adoption path when the researcher says `adopt` or brings existing
+   work). If state is missing or malformed but project history exists, stop and
+   report a state-recovery issue; never erase history by reinitializing. If state
+   says `awaiting_approval` or `waiting_for_user`, request the recorded input and
+   do not advance. If it says `failed`, use the current stage's `failure_routes`.
+5. In an adopted project, artifacts imported at Stage 00 and pinned in
+   `active_artifacts` satisfy a stage's required inputs, and approvals recorded
+   with basis `researcher-asserted` satisfy its gate prerequisites. Verify what
+   can be verified (hashes, counts, formats), build any missing derivative as a
+   versioned artifact, and record what cannot be verified as a limitation; do not
+   refuse to run because an earlier stage was not run by ELARA.
+6. Treat `interaction_profile` as a handoff, not an automatic mode switch:
    `normal` is interactive; `plan` produces no file changes; `execute` uses a
    bounded task unless `long_running: true`; `plan_then_execute` stops after a
    decision-complete plan and waits for an explicit execution handoff. For
@@ -101,6 +108,11 @@ explicitly asks to develop the kit itself.
 - Code is not done until it runs on a sample and its output is inspected. A stage
   is not done until every declared artifact and invariant is verified. Finish any
   file-editing task with a self-review and a complete, accurate list of changes.
+- Manuscript work (Stages 17–19 and the optional utilities in
+  `workflow/utilities/`) follows `workflow/shared/manuscript-editing-contract.md`
+  and the researcher's publication profile (`project/PUBLICATION_PROFILE_vNNN.md`),
+  which those stages read on demand. The profile governs prose and deliverable
+  format only; it cannot relax any rule here or in `workflow/shared/`.
 
 The complete operational rules live in `workflow/shared/`; `PIPELINE.md` is the
 human-readable map of stages, modes, gates, and failure loops.
