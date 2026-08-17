@@ -5,15 +5,18 @@ inventories them. Examples include prior papers, a project memo, seed citations,
 data dictionaries, pre-existing code, and corpus files you are authorized to
 process.
 
-If you are bringing an existing project into ELARA (`$elr adopt` / `/elr adopt`),
-put the work already done in `existing/`: the question memo, literature review,
-codebook or prompt, coded data, analysis code and results, replication package,
-draft, and referee letters. Stage 00 inventories and hashes them here, then copies
-the usable ones unchanged into `project/artifacts/imported_vNNN/` and pins them as
-the artifacts later stages use. Anything too large to copy can be named by path in
-the interview and is inventoried by path and hash. Manuscript drafts for Stage 17
-or the manuscript utilities go in `manuscript/`; a marked-up PDF for
-`elr-apply-markup` goes in `manuscript/markup/`.
+If you are bringing an existing project into ELARA (`$elr adopt` / `/elr adopt`,
+or a tool from `$elr menu` / `/elr menu`), the work already done — the question
+memo, literature review, codebook or prompt, coded data, analysis code and
+results, replication package, draft, and referee letters — can go in `existing/`,
+or stay wherever it already is (in the folder ELARA was installed into, which
+`project/BOOTSTRAP.md` lists, or at a path you name). Stage 00 inventories and
+hashes it in place, then copies the usable files unchanged into
+`project/artifacts/imported_vNNN/` and pins them as the artifacts later stages
+use; your originals are never moved or edited. Anything too large to copy is
+inventoried by path and hash. Manuscript drafts for Stage 17 or the manuscript
+utilities can go in `manuscript/`; a marked-up PDF for `elr-apply-markup` in
+`manuscript/markup/` — or, again, stay where they are.
 
 ## Before adding a file
 

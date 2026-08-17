@@ -8,10 +8,14 @@ read those files but write only their declared outputs here.
 
 1. Read `inputs/README.md` and place the materials you want inventoried in
    `inputs/`. If you are bringing an existing project (a question, a codebook,
-   coded data, results, a draft), put those materials in `inputs/existing/`.
+   coded data, results, a draft), you may put those materials in
+   `inputs/existing/` — or leave them where they already are in the folder ELARA
+   was installed into, or name their path; nothing has to move.
 2. From the repository root, run `$elr start` in Codex or `/elr start` in Claude
-   for a new project, or `$elr adopt` / `/elr adopt` for an existing one.
-   `$elr help` / `/elr help` explains the workflow at any time.
+   for a new project, `$elr adopt` / `/elr adopt` for an existing one, or
+   `$elr menu` / `/elr menu` to pick a specific tool. `$elr help` / `/elr help`
+   explains the workflow at any time. (If ELARA was installed by the paste-in
+   message in the root README, the assistant has already started this for you.)
 3. Review the stage 00 project charter and input inventory (and, on the
    adoption path, the adoption map and the approvals you asserted). The
    pipeline will not proceed until you approve the charter.
@@ -23,7 +27,8 @@ uses its front matter to resume safely in a fresh session.
 
 | Path | Purpose | Mutation rule |
 |---|---|---|
-| `PROJECT_STATE.md` | Current stage, status, active versions, approvals, and next user inputs | Mutable router; update only through verified transitions |
+| `PROJECT_STATE.md` | Current stage, status, active versions, approvals, and next user inputs; its body records the usage mode (whole pipeline or specific tools) | Mutable router; update only through verified transitions |
+| `BOOTSTRAP.md` | The installer's report: how the kit was installed, what the folder already contained, which Python to use, the doctor's result | Written by `scripts/bootstrap.py`; a new section per run |
 | `DECISIONS.md` | Researcher choices and version-pinned gate dispositions | Append only |
 | `RUN_LEDGER.md` | Started, checkpoint, completed, failed, and interrupted run events with exact counts | Append only |
 | `DEVIATIONS.md` | Departures, amendments, and their dispositions | Append only |

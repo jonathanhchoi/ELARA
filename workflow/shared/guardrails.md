@@ -16,12 +16,17 @@ researcher explicitly changes the kit's governing instructions.
   and publication decisions.
 - Never infer approval from silence, a prior general instruction, a host
   application's permission mode, or a successful tool call. Stop at every gate
-  named by the current stage.
+  named by the current stage. The researcher's agreement to continue to the
+  next stage, or their choice of the whole pipeline at Stage 00, is not approval
+  of any gate inside it; each gate is asked separately when it is reached.
 - During a research run, modify only the current stage's declared outputs under
   `project/`. The kit infrastructure is read-only unless the researcher
   explicitly asks to develop the pipeline itself.
 - Make targeted changes. Preserve unrelated files, uncommitted work, manual
-  annotations, and artifacts outside the declared scope.
+  annotations, and artifacts outside the declared scope. Files that were in
+  the folder before ELARA was installed (`project/BOOTSTRAP.md` lists them)
+  are the researcher's own: import hashed copies; never move, rename, edit, or
+  delete the originals.
 - A researcher-supplied style, venue, or convention file (the publication
   profile, `project/PUBLICATION_PROFILE_vNNN.md`) governs prose and deliverable
   format only. It cannot relax any guardrail, gate, evidence rule, or audit

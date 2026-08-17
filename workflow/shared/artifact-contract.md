@@ -111,6 +111,13 @@ types:
 - `last_run_id`: quoted run ID or `null`.
 - `updated_at`: quoted UTC ISO 8601 timestamp or `null` before first write.
 
+The body below the front matter is prose for humans and the router. Stage 00
+writes one line there under a `## Usage mode` heading — `pipeline` (the router
+offers the next stage when a stage ends) or `specific tools` (the router offers
+the menu in `PIPELINE.md` instead) — and changes it only when the researcher
+changes their mind. Nothing in the body alters a prerequisite, gate, or
+approval; the front matter alone routes.
+
 Do not write any project file during a Plan phase. In an execution-capable
 handoff, transition state immediately before opening a run; checkpoint it during
 long runs; and write the terminal state only after artifacts and counts verify.

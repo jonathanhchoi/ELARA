@@ -45,6 +45,7 @@ DISCOVERY_SURFACES = (
     "README.md",
     "PIPELINE.md",
     "requirements.txt",
+    "scripts/bootstrap.py",
     "workflow/shared/guardrails.md",
     "workflow/shared/artifact-contract.md",
     "workflow/shared/observation-fanout.md",

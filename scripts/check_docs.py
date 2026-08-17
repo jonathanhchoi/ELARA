@@ -19,9 +19,13 @@ FORBIDDEN_PLACEHOLDERS = (
 )
 
 # The content scan covers only surfaces the kit ships and maintains. Everything
-# else under project/ is researcher content (inputs, artifacts, runs, corpus)
-# and must never fail kit validation, whatever its encoding or formatting.
+# else — researcher content under project/ (inputs, artifacts, runs, corpus) and,
+# when the kit is installed into a researcher's own folder by
+# scripts/bootstrap.py, the researcher's own notes, drafts, and README at the
+# root — must never fail kit validation, whatever its encoding or formatting.
 KIT_MARKDOWN_DIRECTORIES = ("workflow", ".agents", ".claude", "tests", "scripts")
+KIT_TOP_LEVEL_FILES = ("AGENTS.md", "CLAUDE.md", "PIPELINE.md")
+KIT_README_TITLE = "# ELARA: Empirical Legal Analysis with Research Agents"
 KIT_PROJECT_FILES = (
     "project/README.md",
     "project/inputs/README.md",
@@ -32,8 +36,26 @@ KIT_PROJECT_FILES = (
 )
 
 
+def _kit_readmes(root: Path) -> list[Path]:
+    """The kit README, wherever bootstrap put it: README.md when that is the kit's own file,
+    ELARA_README.md when the researcher's README.md was kept."""
+    paths: list[Path] = []
+    readme = root / "README.md"
+    if readme.is_file():
+        try:
+            if readme.read_text(encoding="utf-8-sig").lstrip().startswith(KIT_README_TITLE):
+                paths.append(readme)
+        except UnicodeDecodeError:
+            pass
+    alias = root / "ELARA_README.md"
+    if alias.is_file():
+        paths.append(alias)
+    return paths
+
+
 def _kit_markdown(root: Path) -> list[Path]:
-    paths = sorted(root.glob("*.md"))
+    paths = [root / name for name in KIT_TOP_LEVEL_FILES]
+    paths.extend(_kit_readmes(root))
     for directory in KIT_MARKDOWN_DIRECTORIES:
         paths.extend(sorted(path for path in (root / directory).rglob("*.md")))
     paths.extend(root / relative for relative in KIT_PROJECT_FILES)
@@ -101,8 +123,10 @@ def validate_docs(root: Path) -> list[str]:
             if not resolved.exists():
                 errors.append(f"{path}: broken local link {match.group(1)!r}")
 
-    skill_paths = sorted((root / ".agents" / "skills").glob("*/SKILL.md"))
-    skill_paths += sorted((root / ".claude" / "skills").glob("*/SKILL.md"))
+    # Only the kit's own elr* skills are checked; a researcher's other skills in
+    # the same folder are theirs.
+    skill_paths = sorted((root / ".agents" / "skills").glob("elr*/SKILL.md"))
+    skill_paths += sorted((root / ".claude" / "skills").glob("elr*/SKILL.md"))
     for path in skill_paths:
         meta, skill_errors = _skill_frontmatter(path)
         errors.extend(skill_errors)

@@ -361,6 +361,8 @@ def validate_repository(root: Path) -> list[str]:
         "project/RUN_LEDGER.md",
         "project/DEVIATIONS.md",
         "project/inputs/README.md",
+        "scripts/bootstrap.py",
+        "scripts/doctor.py",
     ):
         if not (root / required).exists():
             errors.append(f"missing {required}")

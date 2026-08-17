@@ -1,24 +1,37 @@
 ---
 name: "elr"
-description: "Start a new project, adopt an existing one, resume, report status, or explain the empirical legal research pipeline. Use when the researcher says start, adopt, resume, continue, next, status, help, or tour, or asks which workflow stage to run."
+description: "Start a new project, adopt an existing one, show the menu of tools, resume, report status, or explain the empirical legal research pipeline. Use when the researcher says start, adopt, menu, tools, resume, continue, next, status, help, or tour, asks what ELARA can do, or asks which workflow stage to run."
 ---
 
 # Route the empirical legal research workflow
 
-1. Read `AGENTS.md`, `PIPELINE.md`, and `project/PROJECT_STATE.md` completely.
+1. Read `AGENTS.md`, `PIPELINE.md`, and `project/PROJECT_STATE.md` completely (front matter and
+   body, which records the usage mode), and `project/BOOTSTRAP.md` if it exists. Speak in plain
+   language to a legal scholar who may never have used a terminal, and run every command yourself.
 2. `help` or `tour`: without touching any file, give the orientation in
    `workflow/stages/00-initialize.md` (what ELARA does and does not do, the six steps, gates,
-   the commands, the publication profile), say where this project stands, and stop.
-   `status`: without touching any file, report the current stage and status, approvals and
-   their basis (verified or researcher-asserted), active artifact versions, the last run, and
-   outstanding researcher inputs, then stop.
+   the commands, the menu, the publication profile), say where this project stands, and stop.
+   `status`: without touching any file, report the current stage and status, the usage mode,
+   approvals and their basis (verified or researcher-asserted), active artifact versions, the
+   last run, and outstanding researcher inputs, then stop.
 3. `start` on an uninitialized template: read and follow `workflow/stages/00-initialize.md`,
-   fresh path, beginning with its orientation. `adopt`, or an uninitialized template with
-   materials under `project/inputs/existing/`: follow the same file's adoption path.
-4. If state is `awaiting_approval` or `waiting_for_user`, report the exact gate or input and
+   fresh path, beginning with its orientation and the usage-mode question (whole pipeline or
+   specific tools). `adopt`, or an uninitialized template with existing materials (under
+   `project/inputs/existing/`, listed in `project/BOOTSTRAP.md`, or described by the
+   researcher): follow the same file's adoption path.
+4. `menu` or `tools`, or a named stage or utility: present the menu in `PIPELINE.md` in plain
+   language and run what the researcher picks. If its prerequisites are not recorded, first
+   satisfy them through Stage 00's adoption path (import what exists, record
+   researcher-asserted approvals, note limitations), then run it; a utility never changes
+   `current_stage`; an earlier stage runs as a versioned recovery route.
+5. If state is `awaiting_approval` or `waiting_for_user`, report the exact gate or input and
    stop. Never infer approval from silence or from an earlier, different decision.
-5. Otherwise (`resume`, `continue`, `next`) read the canonical file named by `current_stage`,
+6. Otherwise (`resume`, `continue`, `next`) read the canonical file named by `current_stage`,
    verify its prerequisites (imported artifacts and researcher-asserted approvals recorded
    at adoption satisfy them), and follow it. If the required Plan or Goal mode is not active,
    give the researcher the exact mode command and stage invocation instead of imitating it.
-6. Run only one bounded stage at a time. Do not use one Goal for the whole pipeline.
+7. When a stage ends with no gate or input pending, summarize plainly what was produced and
+   what comes next, then offer it: the next stage in `pipeline` mode (run it on the
+   researcher's agreement, in this session), the menu in `specific tools` mode. Agreement to
+   continue is not gate approval. Run only one bounded stage at a time; never one Goal for
+   the whole pipeline.

@@ -1,0 +1,283 @@
+"""Tests for scripts/bootstrap.py: installing the kit into a researcher's folder."""
+
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+import zipfile
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+sys.path.insert(0, str(SCRIPTS))
+
+from validate_workflow import validate_repository  # noqa: E402
+
+
+def run_bootstrap(*arguments: str, cwd: Path, script: Path | None = None) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(script or (SCRIPTS / "bootstrap.py")), *arguments],
+        cwd=cwd,
+        text=True,
+        capture_output=True,
+        timeout=600,
+        check=False,
+    )
+
+
+def install(target: Path, *extra: str, script: Path | None = None, cwd: Path | None = None) -> dict:
+    if cwd is None:
+        cwd = target if target.is_dir() else target.parent
+        cwd.mkdir(parents=True, exist_ok=True)
+    completed = run_bootstrap(
+        "--into", str(target), "--source", str(ROOT), "--no-install", "--json", *extra,
+        cwd=cwd,
+        script=script,
+    )
+    try:
+        summary = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:  # pragma: no cover - diagnostic aid
+        raise AssertionError(
+            "bootstrap did not print JSON\nstdout:\n" + completed.stdout + "\nstderr:\n" + completed.stderr
+        ) from exc
+    summary["_returncode"] = completed.returncode
+    summary["_stderr"] = completed.stderr
+    return summary
+
+
+class FreshInstallTests(unittest.TestCase):
+    def test_installs_into_empty_folder_and_passes_the_doctor(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            target.mkdir()
+            summary = install(target)
+            self.assertTrue(summary["ok"], summary)
+            self.assertEqual(summary["_returncode"], 0, summary["_stderr"])
+            self.assertEqual(summary["existing_materials"], [])
+            self.assertEqual(summary["kept"], [])
+            self.assertEqual(summary["merged"], [])
+            self.assertGreater(summary["files"]["installed"], 100)
+            for relative in (
+                "AGENTS.md",
+                "CLAUDE.md",
+                "PIPELINE.md",
+                "README.md",
+                "LICENSE",
+                "requirements.txt",
+                ".gitignore",
+                "scripts/bootstrap.py",
+                "scripts/doctor.py",
+                "workflow/stages/00-initialize.md",
+                ".agents/skills/elr/SKILL.md",
+                ".claude/skills/elr/SKILL.md",
+                "project/PROJECT_STATE.md",
+                "project/BOOTSTRAP.md",
+                "tests/fixtures/one_unit_fanout/spec.json",
+            ):
+                self.assertTrue((target / relative).is_file(), relative)
+            # Maintainer-only surfaces never travel into a project folder.
+            self.assertFalse((target / ".github").exists())
+            self.assertTrue(summary["doctor"]["ok"], summary["doctor"])
+            self.assertEqual(validate_repository(target), [])
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertIn("## Bootstrap run ", report)
+            self.assertIn("Next steps for the assistant", report)
+            self.assertIn("00-initialize.md", report)
+            self.assertIn("whole pipeline or use specific tools", report)
+            self.assertIn("```json", report)
+
+    def test_second_run_changes_nothing_and_appends_a_report_section(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            target.mkdir()
+            install(target)
+            summary = install(target)
+            self.assertTrue(summary["ok"], summary)
+            self.assertTrue(summary["already_installed"])
+            self.assertEqual(summary["files"]["installed"], 0)
+            self.assertEqual(summary["files"]["updated"], 0)
+            self.assertEqual(summary["merged"], [])
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertEqual(report.count("## Bootstrap run "), 2)
+            self.assertEqual(report.count("# ELARA bootstrap report"), 1)
+
+    def test_installs_from_a_github_style_zip_archive(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "ELARA-main.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
+                for path in ROOT.rglob("*"):
+                    if path.is_file() and ".git" not in path.parts and "__pycache__" not in path.parts:
+                        bundle.write(path, Path("ELARA-main") / path.relative_to(ROOT))
+            target = Path(tmp) / "nested" / "paper"
+            completed = run_bootstrap(
+                "--into", str(target), "--source", str(archive), "--no-install", "--json", cwd=Path(tmp)
+            )
+            summary = json.loads(completed.stdout)
+            self.assertTrue(summary["ok"], summary)
+            self.assertEqual(summary["source"]["kind"], "archive")
+            self.assertTrue((target / "AGENTS.md").is_file())
+            self.assertEqual(validate_repository(target), [])
+
+    def test_running_inside_a_kit_copy_only_checks_it(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            kit = Path(tmp) / "kit"
+            install(kit)
+            (kit / "project" / "BOOTSTRAP.md").unlink()
+            completed = run_bootstrap("--no-install", "--json", cwd=kit, script=kit / "scripts" / "bootstrap.py")
+            summary = json.loads(completed.stdout)
+            self.assertTrue(summary["ok"], summary)
+            self.assertEqual(summary["source"]["kind"], "local copy")
+            self.assertEqual(summary["files"]["installed"], 0)
+            self.assertGreater(summary["files"]["unchanged"], 100)
+            self.assertTrue((kit / "project" / "BOOTSTRAP.md").is_file())
+
+
+class ExistingFolderTests(unittest.TestCase):
+    def _populate(self, target: Path) -> None:
+        target.mkdir(parents=True)
+        (target / "README.md").write_text("# My paper\n\n[broken](nope.md)\n```\nunbalanced\n", encoding="utf-8")
+        (target / ".gitignore").write_text("*.aux\n*.log\n", encoding="utf-8")
+        (target / "requirements.txt").write_text("pandas>=2\n", encoding="utf-8")
+        (target / "CLAUDE.md").write_text("# Paper notes\nAlways cite Bluebook.\n", encoding="utf-8")
+        (target / "AGENTS.md").write_text("Use British spelling.\n", encoding="utf-8")
+        (target / "notes.md").write_text("```\nunbalanced fence in my own notes\n", encoding="utf-8")
+        (target / "draft.docx").write_bytes(b"not really a docx")
+        (target / "data").mkdir()
+        (target / "data" / "cases.csv").write_text("id,outcome\n1,affirmed\n", encoding="utf-8")
+        (target / ".claude" / "skills" / "my-own-skill").mkdir(parents=True)
+        (target / ".claude" / "skills" / "my-own-skill" / "SKILL.md").write_text(
+            "---\nname: something-else\n---\nmine\n", encoding="utf-8"
+        )
+
+    def test_never_overwrites_and_reports_what_was_there(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            self._populate(target)
+            before = {
+                relative: (target / relative).read_bytes()
+                for relative in ("README.md", "notes.md", "draft.docx", "data/cases.csv")
+            }
+            summary = install(target)
+            self.assertTrue(summary["ok"], summary)
+            for relative, content in before.items():
+                self.assertEqual((target / relative).read_bytes(), content, relative)
+            names = {record["name"] for record in summary["existing_materials"]}
+            self.assertEqual(
+                names,
+                {"README.md", ".gitignore", "requirements.txt", "CLAUDE.md", "AGENTS.md", "notes.md", "draft.docx", "data", ".claude"},
+            )
+            data_record = next(record for record in summary["existing_materials"] if record["name"] == "data")
+            self.assertEqual(data_record["kind"], "folder")
+            self.assertEqual(data_record["files"], 1)
+            # The kit README and LICENSE live under alternate names; the researcher's stay put.
+            self.assertTrue((target / "ELARA_README.md").is_file())
+            self.assertTrue(any(item.startswith("README.md -> ELARA_README.md") for item in summary["kept"]))
+            self.assertTrue((target / "LICENSE").is_file())  # installed: no collision
+            # .gitignore and requirements.txt gained the kit's lines in one marked block.
+            gitignore = (target / ".gitignore").read_text(encoding="utf-8")
+            self.assertTrue(gitignore.startswith("*.aux\n*.log\n"))
+            self.assertIn("# >>> ELARA", gitignore)
+            self.assertIn("project/runs/", gitignore)
+            requirements = (target / "requirements.txt").read_text(encoding="utf-8")
+            self.assertTrue(requirements.startswith("pandas>=2\n"))
+            self.assertIn("jsonschema", requirements)
+            # AGENTS.md and CLAUDE.md: kit block first, researcher's text after it.
+            agents = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertTrue(agents.startswith("<!-- elara:begin"))
+            self.assertIn("# ELARA: Empirical Legal Analysis with Research Agents", agents)
+            self.assertTrue(agents.rstrip().endswith("Use British spelling."))
+            claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+            self.assertTrue(claude.startswith("@AGENTS.md\n<!-- elara:begin"))
+            self.assertIn("Claude Code adapter", claude)
+            self.assertTrue(claude.rstrip().endswith("Always cite Bluebook."))
+            # The researcher's own notes, README, and skills do not fail the kit's checks.
+            self.assertTrue(summary["doctor"]["ok"], summary["doctor"])
+            self.assertEqual(validate_repository(target), [])
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertIn("`draft.docx`", report)
+            self.assertIn("`data/`", report)
+            self.assertIn("adoption path", report)
+
+    def test_rerun_is_idempotent_and_update_refreshes_only_kit_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            self._populate(target)
+            install(target)
+            first = {
+                relative: (target / relative).read_bytes()
+                for relative in ("AGENTS.md", "CLAUDE.md", ".gitignore", "requirements.txt", "README.md", "ELARA_README.md")
+            }
+            summary = install(target)
+            self.assertTrue(summary["ok"], summary)
+            self.assertEqual(summary["files"]["installed"], 0)
+            self.assertEqual(summary["merged"], [])
+            for relative, content in first.items():
+                self.assertEqual((target / relative).read_bytes(), content, relative)
+            # Simulate an older kit file and a locally edited stage; --update refreshes both,
+            # never the project state, the researcher's files, or their text in merged files.
+            (target / "PIPELINE.md").write_text("old kit map\n", encoding="utf-8")
+            (target / "workflow" / "stages" / "18-cite-check.md").write_text("old\n", encoding="utf-8")
+            state = target / "project" / "PROJECT_STATE.md"
+            state_text = state.read_text(encoding="utf-8").replace("project_slug: null", 'project_slug: "mine"')
+            state.write_text(state_text, encoding="utf-8")
+            summary = install(target)  # without --update: kept, reported
+            self.assertEqual(summary["files"]["updated"], 0)
+            self.assertTrue(any(item.startswith("PIPELINE.md") for item in summary["kept"]))
+            summary = install(target, "--update")
+            self.assertGreaterEqual(summary["files"]["updated"], 2)
+            self.assertEqual(
+                (target / "PIPELINE.md").read_bytes(), (ROOT / "PIPELINE.md").read_bytes()
+            )
+            self.assertEqual(state.read_text(encoding="utf-8"), state_text)
+            self.assertEqual((target / "README.md").read_bytes(), first["README.md"])
+            claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+            self.assertEqual(claude.count("<!-- elara:begin"), 1)
+            self.assertTrue(claude.rstrip().endswith("Always cite Bluebook."))
+
+    def test_loose_downloaded_script_removes_itself_and_temporary_kit_is_not_material(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            target.mkdir()
+            (target / "draft.docx").write_bytes(b"draft")
+            loose = target / "bootstrap.py"
+            shutil.copy2(SCRIPTS / "bootstrap.py", loose)
+            kit_copy = target / ".elara-kit"
+            shutil.copytree(ROOT, kit_copy, ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache"))
+            completed = run_bootstrap(
+                "--into", str(target), "--source", str(kit_copy), "--no-install", "--json",
+                cwd=target, script=loose,
+            )
+            summary = json.loads(completed.stdout)
+            self.assertTrue(summary["ok"], summary)
+            self.assertFalse(loose.exists())
+            self.assertEqual(summary["removed_loose_script"], "bootstrap.py")
+            self.assertEqual([record["name"] for record in summary["existing_materials"]], ["draft.docx"])
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertIn(".elara-kit", report)
+            self.assertIn("delete that folder", report)
+
+    def test_refuses_an_initialized_kit_copy_as_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "used"
+            install(source)
+            state = source / "project" / "PROJECT_STATE.md"
+            state.write_text(
+                state.read_text(encoding="utf-8").replace("project_slug: null", 'project_slug: "used"'),
+                encoding="utf-8",
+            )
+            target = Path(tmp) / "fresh"
+            completed = run_bootstrap(
+                "--into", str(target), "--source", str(source), "--no-install", "--json", cwd=Path(tmp)
+            )
+            self.assertEqual(completed.returncode, 2, completed.stdout)
+            self.assertIn("initialized project", json.loads(completed.stdout)["error"])
+            self.assertFalse((target / "AGENTS.md").exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -10,8 +10,11 @@ disable-model-invocation: true
    `workflow/shared/artifact-contract.md` completely.
 2. Read `workflow/stages/15-robustness.md` completely and follow it as the single source of substantive
    instructions for this stage.
-3. Confirm that the stage is current and its prerequisites and approvals are satisfied.
-   If it is not current, stop unless the researcher explicitly authorized a recovery route.
+3. Confirm that the stage is current and its prerequisites and approvals are satisfied
+   (imported artifacts and researcher-asserted approvals count). If it is not current and the
+   researcher chose it explicitly (this skill, the menu, or by name), first satisfy its
+   prerequisites through Stage 00's adoption path, then run it; otherwise stop.
 4. Honor the stage's mode handoff. A skill cannot switch Plan or Goal mode by itself.
 5. Do not cross the stage's human gate. Update state and append the run ledger only as the
-   canonical stage directs.
+   canonical stage directs. At the end, summarize plainly and offer the next step per the
+   usage mode recorded in `project/PROJECT_STATE.md`.

@@ -1,11 +1,83 @@
 # ELARA: Empirical Legal Analysis with Research Agents
 
 ELARA is the ready-to-use companion package for *ELARA: A Framework for
-Empirical Legal Research with AI Agents* by Jonathan H. Choi. It gives Codex and
-Claude Code a shared, stateful workflow for conducting a new empirical legal
-research project from project selection through a verified replication package,
-with optional tools for integrating results into a researcher-written manuscript,
-checking citations, and revising in response to feedback.
+Empirical Legal Research with AI Agents* by Jonathan H. Choi. It turns Claude
+Code or Codex into a research assistant that takes one empirical legal research
+project from question to verified replication package — and, if you want,
+through putting the results into your draft, cite-checking it, and revising it —
+one step at a time, stopping at every decision that is yours.
+
+You do not need to know Git, Python, or the command line. The assistant does the
+setup and runs every command; you answer questions and make the calls.
+
+## Start here
+
+1. **Open Claude Code or Codex in the folder where you want to work.** An empty
+   folder for a new project, or the folder that already holds your draft, data,
+   or notes — nothing has to be moved. (In a terminal: `cd` into the folder and
+   run `claude` or `codex`; in the desktop apps, open that folder.)
+2. **Paste this message and press Enter:**
+
+   > Please set up ELARA (https://github.com/jonathanhchoi/ELARA), a workflow kit
+   > for empirical legal research, in this folder and walk me through it. Do it
+   > like this: (1) fetch the kit into a temporary subfolder with
+   > `git clone --depth 1 https://github.com/jonathanhchoi/ELARA.git .elara-kit`
+   > (if git is unavailable, download the repository ZIP and unzip it as
+   > `.elara-kit`); (2) run `python .elara-kit/scripts/bootstrap.py --into .`
+   > (try `python3` or `py` if `python` fails; if Python 3.10 or newer is
+   > missing, help me install it first) — it installs ELARA here without
+   > overwriting my files and checks the setup; (3) delete `.elara-kit`;
+   > (4) follow the NEXT STEPS the script prints: read AGENTS.md, then go through
+   > workflow/stages/00-initialize.md from its Orientation section, in plain
+   > language, one question at a time; ask me whether I want to go through the
+   > whole pipeline or use specific tools, and show me the choices. Do not delete
+   > or overwrite anything of mine.
+
+3. **Answer the questions.** That is the whole setup.
+
+**What happens next.** The assistant installs the kit into your folder (your own
+files are left exactly where they are), checks that Python and the one package
+ELARA needs are present, and explains in a few paragraphs what ELARA does and
+does not do. It then asks whether you want the **whole pipeline** — every step
+in order, from research question to verified replication package, with the
+optional publication steps at the end — or **specific tools** now, and shows you
+the menu (choose a question, check for preemption, assess feasibility and cost,
+design methods, write a codebook, authorize data, adversarial review, pilot,
+preregister, assemble the corpus, code it, verify the coding, validate against
+human coders, analyze with measurement-error correction, robustness, replication
+package, integrate results into your draft, cite-check, revise for referees, add
+citations, proofread, apply hand-marked edits). Then it interviews you, one
+question at a time, drafts a short project charter, and stops for your approval.
+From there it carries you from step to step: at the end of each one it says what
+it produced and what comes next, and waits for you to say go. Every real
+decision — the question, the design, whether the data may be used, the codebook,
+the pilot, preregistration, what to change in your draft — is put to you
+explicitly; nothing advances on silence. If you already have work (a question, a
+codebook, coded data, results, a draft, a referee letter), say so: it is imported
+as it is, and you land at the first step that still needs doing.
+
+**Coming back later.** Open the same folder in Claude Code or Codex and type
+`/elr resume` (Claude Code) or `$elr resume` (Codex) — or just say "continue".
+Everything the assistant needs is in the folder, not in the chat. `/elr menu`
+shows the tools, `/elr status` says where things stand, and `/elr help`
+explains it all again. If `/elr` is not recognized the first time, restart the
+app in that folder once; commands load at start.
+
+**Two cautions.** Keep the project folder on your own disk rather than in a
+cloud-synced location (Google Drive, OneDrive, Dropbox) if you can: sync
+services can interfere with the audit logs and copy restricted material to the
+cloud. And do not put licensed, confidential, sealed, privileged, or personal
+material anywhere the assistant can read it until ELARA's data-authorization
+step has been through the license, consent, and IRB or ethics questions with
+you; the assistant will not send such material to a hosted model before then.
+
+Everything below is the longer, hands-on route for people who prefer to install
+things themselves or want to know exactly what the kit contains. You do not
+need it to use ELARA.
+
+---
+
+## The longer path
 
 This repository contains only reusable materials for a new project: canonical
 workflow instructions, platform adapters, blank project templates, validators,
@@ -19,20 +91,23 @@ that require independent model judgments also provide
 `$elr-code-observations` and `/elr-code-observations`, which implement the same
 one-unit assignment and serial-validation contract.
 
-## Two ways in
+### Three ways in
 
-- **New project:** follow the five-minute start below and run `$elr start`
-  (Codex) or `/elr start` (Claude Code).
-- **Existing project** — you already have a question, a literature review, a
-  codebook, coded data, results, a draft, or a referee letter: follow steps 1–3
-  below, put your existing materials in `project/inputs/existing/`, and run
-  `$elr adopt` / `/elr adopt`. Stage 00 inventories what you have, asks which
-  decisions you vouch for, imports your files as versioned artifacts, and lands
-  the pipeline at the first stage that still needs to run — or, if all you have
-  is a draft, hands you straight to the cite-check and manuscript utilities. See
-  "Adopting an existing project" below.
+- **The paste-in message above** installs ELARA into whatever folder the
+  assistant is open in and starts the guided setup. It clones the repository
+  because that works whether the repository is private or public. Once the
+  repository is public, an even shorter message also works: *"Download
+  https://raw.githubusercontent.com/jonathanhchoi/ELARA/main/scripts/bootstrap.py
+  into this folder, run it with Python 3, and follow the NEXT STEPS it prints."*
+  The script then fetches the kit itself.
+- **Install by hand:** follow the five-minute start below and run `$elr start`
+  (Codex) or `/elr start` (Claude Code) for a new project, or `$elr adopt` /
+  `/elr adopt` for one you already have (see "Adopting an existing project").
+  `python scripts/bootstrap.py` run from inside a downloaded kit does the same
+  checks the paste-in route does and writes the same `project/BOOTSTRAP.md`.
 - **Lost at any point:** `$elr help` / `/elr help` explains what ELARA is, where
-  this project stands, and what to type next.
+  this project stands, and what to type next; `$elr menu` / `/elr menu` lists
+  the tools.
 
 ## Five-minute start
 
@@ -71,6 +146,9 @@ python scripts/doctor.py
 hosts, checks their versions, validates the kit and its dependency, and runs a
 temporary one-unit `prepare`/`submit`/`status`/`merge` exercise. The exercise
 uses no model and no network. Resolve every reported failure before continuing.
+`python scripts/bootstrap.py` does both steps at once (it installs the
+dependency, falling back to a `.venv` if the system Python is locked down, runs
+the doctor, and writes `project/BOOTSTRAP.md`).
 
 ### 3. Open the repository root
 
@@ -126,17 +204,20 @@ confirmed. ELARA has a hard data-authorization gate before corpus processing.
 
 ### What to expect in your first session
 
-Stage 00 opens with a short orientation, checks the environment, and interviews
-you one question at a time (project name and contribution; whether to brainstorm
-a question or bring your own; scope; restrictions; databases, models, and budget;
-anything that must stay off hosted models; optionally the venue you are writing
-for). "Don't know" is a valid answer and is recorded as an open question. It then
-drafts a project charter and stops: approving the charter is the first gate.
-Every later stage ends the same way, at a decision that is yours, and nothing
-advances on silence. `$elr status` / `/elr status` says where you are;
-`$elr resume` / `/elr resume` picks up wherever you left off, in a new session,
-because the state lives in `project/PROJECT_STATE.md`, not in the chat. Stages
-02, 03, and 11 run long; start them and walk away.
+Stage 00 opens with a short orientation, checks the environment, asks whether
+you want the whole pipeline or specific tools (and shows the menu), and
+interviews you one question at a time (project name and contribution; whether to
+brainstorm a question or bring your own; scope; restrictions; databases, models,
+and budget; anything that must stay off hosted models; optionally the venue you
+are writing for). "Don't know" is a valid answer and is recorded as an open
+question. It then drafts a project charter and stops: approving the charter is
+the first gate. Every later stage ends the same way, at a decision that is
+yours, and nothing advances on silence; between gates the assistant summarizes
+what it did and offers the next step, and goes on when you say so. `$elr status`
+/ `/elr status` says where you are; `$elr resume` / `/elr resume` picks up
+wherever you left off, in a new session, because the state lives in
+`project/PROJECT_STATE.md`, not in the chat. Stages 02, 03, and 11 run long;
+start them and walk away.
 
 ### 5. Resume at any time
 
@@ -147,24 +228,27 @@ $elr resume       # Codex
 /elr resume       # Claude Code
 ```
 
-`$elr status` and `/elr status` report the current stage, approvals, active
-artifact versions, last-run counts, and outstanding researcher inputs. The
-router reads `project/PROJECT_STATE.md` rather than relying on chat history.
+`$elr status` and `/elr status` report the current stage, usage mode,
+approvals, active artifact versions, last-run counts, and outstanding
+researcher inputs; `$elr menu` / `/elr menu` lists the tools. The router reads
+`project/PROJECT_STATE.md` rather than relying on chat history.
 
 ## Adopting an existing project
 
-You do not have to start from a blank question. Put whatever exists under
-`project/inputs/existing/` (a memo, a literature review, a codebook or prompt,
-coded data, analysis code and results, a draft, referee letters — anything too
-large to copy can be named by path) and run `$elr adopt` / `/elr adopt`. Stage
-00 walks a checklist of what you have, proposes a preset, imports your files
-unchanged into `project/artifacts/imported_v001/`, pins them as the artifacts
-later stages will use, records the gates you vouch for as approvals with basis
+You do not have to start from a blank question. Whatever exists (a memo, a
+literature review, a codebook or prompt, coded data, analysis code and results,
+a draft, referee letters) can stay wherever it is — in the folder ELARA was
+installed into, under `project/inputs/existing/`, or at a path you name for
+anything too large to copy — and you run `$elr adopt` / `/elr adopt` (or pick a
+tool from `$elr menu` / `/elr menu`). Stage 00 walks a checklist of what you
+have, proposes a preset or the tool you picked, imports your files unchanged
+into `project/artifacts/imported_v001/`, pins them as the artifacts later stages
+will use, records the gates you vouch for as approvals with basis
 `researcher-asserted` (any gate can be asserted — the point is to make your
 existing judgment usable, not to re-litigate it), writes an adoption map saying
 what each stage has, and lands the pipeline at the first stage that still needs
-to run. Keep your original project folder as it is; the ELARA copy is the
-auditable workspace and reads from the imported copies.
+to run. Your originals are never moved, renamed, or edited; ELARA reads from
+the imported copies.
 
 | Preset | You have | ELARA lands at |
 |---|---|---|
@@ -296,7 +380,7 @@ in `workflow/shared/`.
 ```text
 AGENTS.md                       Shared constitution and state router
 CLAUDE.md                       Claude-specific adapter
-PIPELINE.md                     Human-readable workflow map
+PIPELINE.md                     Human-readable workflow map, router commands, and the menu of tools
 requirements.txt                Bounded Python runtime dependency
 workflow/stages/NN-*.md         Canonical sequential stage prompts
 workflow/utilities/             Optional manuscript utilities (add citations, proofread, apply markup)
@@ -305,10 +389,24 @@ workflow/templates/             Preregistration skeleton and publication profile
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
 .claude/workflows/              Claude one-unit fan-out workflow
-project/                        Blank state, input, log, and output structure
+project/                        Blank state, input, log, and output structure (project/BOOTSTRAP.md is the installer's report)
+scripts/bootstrap.py            Installs the kit into the folder you work in and checks it
 scripts/                        Standalone validators and fan-out controller
 tests/                          Package-maintenance tests and public fixtures
 ```
+
+### Installing into an existing folder
+
+`scripts/bootstrap.py` copies the kit into a folder without overwriting anything
+already there. If the folder has its own `README.md` or `LICENSE`, the kit's are
+installed as `ELARA_README.md` and `LICENSE.ELARA`; an existing `.gitignore` or
+`requirements.txt` gets the kit's missing lines appended in a marked block; an
+existing `AGENTS.md` or `CLAUDE.md` gets the kit's text placed first, in a marked
+block, with yours after it. Everything that was in the folder is listed in
+`project/BOOTSTRAP.md` so that Stage 00 can offer to import it. Run it again
+with `--update` to refresh the kit's own files from GitHub after a new release
+(project state, ledgers, and your files are never touched); the doctor and the
+validators ignore files that are not the kit's.
 
 There is deliberately no `benchmarks/` directory and no validation-study archive
 in this repository.

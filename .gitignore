@@ -14,7 +14,8 @@ project/cache/
 *.key
 credentials.json
 
-# Python/test caches
+# Python/test caches and the optional virtual environment scripts/bootstrap.py may create
+.venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -34,6 +35,9 @@ Desktop.ini
 # Local validator scratch output
 tests/tmp/
 tests/.tmp/
+
+# Temporary kit copy used only to install ELARA into a project folder
+.elara-kit/
 
 # Study-specific materials are intentionally outside the public ELARA package.
 /benchmarks/

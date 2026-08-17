@@ -136,23 +136,63 @@ class WorkflowContractTests(unittest.TestCase):
         # Adoption cannot silently launder these facts.
         self.assertIn("not preregistered", lowered)
         self.assertIn("not held out", lowered)
+        # The usage-mode question and the installer's report.
+        self.assertIn("## usage mode", lowered)
+        self.assertIn("whole pipeline", lowered)
+        self.assertIn("specific tools", lowered)
+        self.assertIn("project/bootstrap.md", lowered)
+        self.assertIn("never ask the researcher to move or rename anything", lowered)
 
-    def test_router_names_start_adopt_resume_status_help(self) -> None:
+    def test_router_names_start_adopt_menu_resume_status_help(self) -> None:
         for platform in (".agents", ".claude"):
             text = (ROOT / platform / "skills" / "elr" / "SKILL.md").read_text(encoding="utf-8")
-            for verb in ("`start`", "`adopt`", "`resume`", "`status`", "`help`"):
+            for verb in ("`start`", "`adopt`", "`menu`", "`resume`", "`status`", "`help`"):
                 self.assertIn(verb, text, (platform, verb))
             self.assertIn("researcher-asserted", text)
+            self.assertIn("project/BOOTSTRAP.md", text)
+            self.assertIn("`pipeline` mode", text)
+            self.assertIn("`specific tools` mode", text)
+            self.assertIn("not gate approval", text)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("researcher-asserted", agents)
+        self.assertIn("## Working with the researcher", agents)
+        self.assertIn("usage mode", agents)
+        self.assertIn("do not stop silently", agents)
         readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+        self.assertIn("## start here", readme)
+        self.assertIn("paste this message", readme)
+        self.assertIn("scripts/bootstrap.py --into .", readme)
+        self.assertIn("git clone --depth 1 https://github.com/jonathanhchoi/elara.git .elara-kit", readme)
+        self.assertIn("whole pipeline", readme)
+        self.assertIn("specific tools", readme)
         self.assertIn("elr adopt", readme)
+        self.assertIn("elr menu", readme)
         self.assertIn("elr help", readme)
         self.assertIn("what to expect in your first session", readme)
         pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8").lower()
         self.assertIn("adopting an existing project", pipeline)
+        self.assertIn("what elara can do: the menu", pipeline)
+        self.assertIn("| `menu`, `tools` |", pipeline)
+        for stage_id in EXPECTED_STAGE_IDS[1:]:
+            self.assertIn(f"`elr-{stage_id}`", pipeline, stage_id)
+        for utility in ("elr-add-citations", "elr-proofread", "elr-apply-markup"):
+            self.assertIn(f"| `{utility}` |", pipeline, utility)
         contract = (ROOT / "workflow" / "shared" / "artifact-contract.md").read_text(encoding="utf-8")
         self.assertIn("researcher-asserted", contract)
+        self.assertIn("## Usage mode", contract)
+        guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(encoding="utf-8")
+        self.assertIn("agreement to continue", guardrails)
+        self.assertIn("project/BOOTSTRAP.md", guardrails)
+
+    def test_stage_wrappers_allow_explicitly_chosen_stages(self) -> None:
+        checked = 0
+        for path, content in expected_files(ROOT).items():
+            name = path.parent.name
+            if path.name == "SKILL.md" and name.startswith("elr-") and name[4:6].isdigit():
+                self.assertIn("adoption path", content, path)
+                self.assertIn("usage mode", content, path)
+                checked += 1
+        self.assertEqual(checked, 2 * len(EXPECTED_STAGE_IDS))
 
     def test_scale_up_forbids_multiple_units_not_multiple_documents(self) -> None:
         body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "11-scale-up")

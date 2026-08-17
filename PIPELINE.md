@@ -47,17 +47,98 @@ approved project charter may record a decision to skip it and route from Stage
 
 | Command | What happens |
 |---|---|
-| `start` | Stage 00, fresh path: orientation, environment check, one-question-at-a-time interview, charter, first gate. |
-| `adopt` | Stage 00, adoption path: inventory existing materials under `project/inputs/existing/`, choose a preset, import files as versioned artifacts, record researcher-asserted approvals, write the adoption map, land at the first stage that still needs to run. |
-| `resume`, `continue`, `next` | Read `PROJECT_STATE.md`, verify the current stage's prerequisites, and run it. |
-| `status` | Report stage, status, approvals, active versions, and outstanding inputs. |
+| `start` | Stage 00, fresh path: orientation, environment check, the usage-mode question (whole pipeline or specific tools, with the menu below), a one-question-at-a-time interview, the charter, and the first gate. |
+| `adopt` | Stage 00, adoption path: inventory existing materials wherever they are (under `project/inputs/existing/`, elsewhere in the folder, or at a named path), choose a preset or a specific tool, import files as versioned artifacts, record researcher-asserted approvals, write the adoption map, and land at the first stage that still needs to run. |
+| `menu`, `tools` | Show the menu below in plain language and run what the researcher picks, importing and asserting whatever that tool needs first. |
+| `resume`, `continue`, `next` | Read `PROJECT_STATE.md`, verify the current stage's prerequisites, run it, and at its end summarize what happened and offer the next step (the next stage in pipeline mode, the menu in specific-tools mode). |
+| `status` | Report stage, status, usage mode, approvals, active versions, and outstanding inputs. |
 | `help`, `tour` | Orientation and current position; no file changes. |
+
+Every command is available as `$elr <command>` in Codex and `/elr <command>` in
+Claude Code, and the router also understands the same words in an ordinary
+sentence ("let's continue", "show me the menu", "where are we?").
+
+## Two ways to use ELARA: the whole pipeline or specific tools
+
+Right after the orientation, Stage 00 asks one question: does the researcher
+want to follow the **whole pipeline** — every stage in order, from question to
+verified replication package, with the optional publication stages at the end —
+or use **specific tools** now? The answer is the project's *usage mode*. Stage
+00 records it in the body of `project/PROJECT_STATE.md` under a `## Usage mode`
+heading (`pipeline` or `specific tools`), in the charter, and as a decision.
+The researcher can change it at any time by saying so; the router records the
+change the same way.
+
+- **Pipeline mode.** The assistant walks the researcher through each stage. When
+  a stage finishes and no gate or input is pending, it summarizes in plain
+  language what was produced and where it is, says what the next stage will do
+  and roughly how long it takes, and offers to continue. On the researcher's
+  agreement it runs the next stage in the same session — still one bounded stage
+  at a time, never one long-running mode for the whole pipeline. Agreement to
+  continue is not approval of any gate: every gate is still put to the
+  researcher separately, and silence never advances anything.
+- **Specific-tools mode.** The researcher picks from the menu below. Stage 00
+  runs its adoption path aimed at that tool: it asks only for the materials the
+  tool needs, imports them, records researcher-asserted approvals for the gates
+  before it, and lands there. When the tool finishes, the router offers the menu
+  again rather than the next stage. `current_stage` records where the pipeline
+  would continue if the researcher ever switches to pipeline mode.
+
+In either mode, a stage or utility the researcher names explicitly — from the
+menu, in a sentence, or by its own skill — is authorized to run even if it is
+not the current stage: the router first satisfies its prerequisites through
+Stage 00's adoption path (importing what exists, recording researcher-asserted
+approvals, noting what could not be verified) and then runs it. An earlier stage
+run again is a recovery route and creates new versions under the dependency
+rules in `workflow/shared/artifact-contract.md`.
+
+## What ELARA can do: the menu
+
+The router presents this list in plain language when asked for the `menu`, when
+the researcher chooses specific tools at Stage 00, and whenever it is unclear
+what to run next. Each tool is a canonical stage or utility; the last column is
+what the researcher needs to bring (or point to) so that the tool can start.
+
+| If you want to… | Tool | Bring |
+|---|---|---|
+| Find and choose a research question | Stage 01, `elr-01-conceive` | prior papers, a CV, or notes (optional) |
+| Find out whether your idea has already been done | Stage 02, `elr-02-preemption-review` | your question and claimed contribution |
+| Find out whether it is feasible, and what it would cost | Stage 03, `elr-03-feasibility-audit` | your question, intended data, and method |
+| Design the methods (hypotheses, sample, measurement, analysis plan) | Stage 04, `elr-04-methods-design` | your question |
+| Write the codebook, coding schema, and coding prompt | Stage 05, `elr-05-codebook-and-schema` | the methods plan, or a description of what should be coded |
+| Check whether you may use the data (license, terms, IRB or ethics) | Stage 06, `elr-06-data-authorization` | your sources |
+| Get an adversarial review of the design before freezing it | Stage 07, `elr-07-adversarial-review` | the design and codebook |
+| Pilot the coding on a sample | Stage 08, `elr-08-pilot` | the codebook and sample documents |
+| Freeze the design and preregister | Stage 09, `elr-09-freeze-and-preregister` | the approved design |
+| Assemble the corpus | Stage 10, `elr-10-corpus-acquisition` | authorized sources |
+| Code the full corpus | Stage 11, `elr-11-scale-up` | the frozen codebook and the corpus |
+| Check the coding against the underlying text | Stage 12, `elr-12-interpretive-verification` | coded data with evidence quotes |
+| Run a blinded human validation study | Stage 13, `elr-13-human-validation` | coded data (and human coders) |
+| Analyze, correcting for measurement error | Stage 14, `elr-14-analysis-and-correction` | coded data (and validation results) |
+| Test robustness to prompts and models | Stage 15, `elr-15-robustness` | the analysis |
+| Build a replication package | Stage 16, `elr-16-replication-package` | code, data, and results |
+| Put results into your draft | Stage 17, `elr-17-integrate-manuscript` | your draft and the results |
+| Cite-check a draft | Stage 18, `elr-18-cite-check` | your draft |
+| Revise in response to referee or editor comments | Stage 19, `elr-19-revise-and-respond` | your draft and the comments |
+| Add citations you marked as needed | `elr-add-citations` | your draft with the passages marked |
+| Proofread | `elr-proofread` | your draft |
+| Apply your hand-marked edits from a PDF | `elr-apply-markup` | the marked-up PDF |
+
+Materials may stay wherever they are: in `project/inputs/`, elsewhere in this
+folder (bootstrap lists what it found in `project/BOOTSTRAP.md`), or at a path
+the researcher names. Stage 00 inventories them by path and hash and copies the
+usable ones, unchanged, into `project/artifacts/imported_vNNN/`; nobody has to
+move or rename a file. Tools that presuppose earlier stages record what they
+could not verify (for example, that a codebook was not piloted under ELARA) as
+limitations rather than refusing to run.
 
 ## Adopting an existing project
 
-Stage 00's adoption path lets a researcher bring in work already done. Imported
-files are copied unchanged into `project/artifacts/imported_vNNN/`, hashed, and
-pinned in `active_artifacts` under the logical names downstream stages resolve.
+Stage 00's adoption path lets a researcher bring in work already done, wherever
+it sits (in `project/inputs/existing/`, elsewhere in the folder ELARA was
+installed into, or at a named path). Imported files are copied unchanged into
+`project/artifacts/imported_vNNN/`, hashed, and pinned in `active_artifacts`
+under the logical names downstream stages resolve.
 Any gate may be recorded as approved with basis `researcher-asserted`; the
 adoption map (`project/artifacts/adoption_map_vNNN.md`) records, for every
 stage, whether it has, partially has, lacks, or was not run by ELARA, and one
@@ -202,5 +283,9 @@ through every dependent artifact.
 
 `project/DECISIONS.md`, `project/RUN_LEDGER.md`, and
 `project/DEVIATIONS.md` are append-only. State may point to newer versions, but
-history is never rewritten. See `workflow/shared/artifact-contract.md` for exact
-naming and invalidation rules.
+history is never rewritten. The body of `PROJECT_STATE.md`, below the front
+matter, carries the `## Usage mode` line (`pipeline` or `specific tools`) that
+Stage 00 writes and the router reads. `project/BOOTSTRAP.md`, when present, is
+the installer's report: how the kit was installed, what the folder already held,
+which Python to use, and the doctor's result. See
+`workflow/shared/artifact-contract.md` for exact naming and invalidation rules.
