@@ -13,11 +13,11 @@ codebook, pilot, preregistration, and manuscript edits.
 You don't need to know Git, Python, or the command line. The assistant handles
 the setup and runs the commands. You answer its questions and make the calls.
 
-## How do I get started?
+## Start here
 
 1. Open Claude Code or Codex in the folder where you want to work. This can be
    an empty folder or one that already contains your draft, data, or notes.
-2. Paste the message below and press Enter.
+2. Paste this message and press Enter.
 
    ```text
    Please set up ELARA (https://github.com/jonathanhchoi/ELARA), a workflow kit
@@ -184,7 +184,7 @@ Before starting, be ready to describe the following items.
 `Don't know` is a valid answer. ELARA records it as an open question rather than
 filling the gap with a silent default.
 
-### 5. Start the project
+### 5. What to expect in your first session
 
 Use `$elr start` in Codex or `/elr start` in Claude Code. The first session
 checks the environment and asks whether you want the pipeline or specific tools.
