@@ -46,6 +46,54 @@ does not by itself sandbox the host. Use platform permissions or trusted determi
 web, unrelated MCP tools, sibling reads, and out-of-scope writes where the platform can enforce
 them. If those controls are unavailable, retain and disclose the residual shared-filesystem limit.
 
+## Worker tool surface, time boxes, and crash-resume (every parallelized stage)
+
+This section binds every stage that fans work out to parallel workers — the coding and audit
+fan-outs above and equally the Stage 02 search waves, source retrieval, citation chains, cite-checks,
+and fresh reviews. It exists because of an incident, not a hypothesis: on 2026-08-17 a background
+search worker launched as an all-tools default agent met a 403 bot wall on SSRN, opened the page in
+the Claude desktop app's in-app browser, and the app's GPU process crashed eight seconds later,
+killing every session and worker and corrupting a file mid-write; relaunched identically, it did the
+same thing again.
+
+1. **Fixed, minimal tool surface, enforced by the platform.** Two worker types ship with the kit:
+   `elr-worker` (coding/audit: read the assignment and source, run the controller's `submit`; no
+   web, no writes to the run directory) and `elr-research-worker` (search/retrieval/review: web fetch
+   and search plus read/write of its own output path). Neither can reach an interactive surface — the
+   host's in-app browser, computer use, desktop or other MCP tools, sub-agent spawning, user prompts,
+   task or scheduling tools. On Claude Code they are `.claude/agents/elr-worker.md` and
+   `.claude/agents/elr-research-worker.md` (`tools:` allowlist, `disallowedTools: mcp__*`); launch
+   workers with that `subagent_type`/`agentType`, never `general-purpose`. Note that Claude Code
+   loads a project's first `.claude/agents/` directory only at session start: after installing or
+   updating the kit into a folder that had none, restart once before fanning out. On Codex, give
+   workers the same restricted instructions and use whatever tool restriction the platform offers;
+   record the residual limitation if none is available.
+2. **Bot walls, paywalls, and rate limits are typed access gaps.** A worker that meets a 401/403/429,
+   CAPTCHA, "verifying you are human" page, or login wall records `{url, status_or_message,
+   timestamp_utc}` and moves on — one retry at most for a 429, no spoofing, no other surface. The
+   parent aggregates gaps into the stage's access-limitations record and manual search packet.
+   Sites known to sit behind bot walls (SSRN's `papers.ssrn.com`, HeinOnline, Westlaw, Lexis, JSTOR,
+   Google Scholar) are reached only through open APIs and indexes (OpenAlex, CrossRef, Semantic
+   Scholar, repository OAI/JSON endpoints, web-search snippets) or through the researcher's own
+   authenticated session, never by a worker.
+3. **Time boxes and timeouts.** Every worker gets a time box (default 12 minutes for a search or
+   retrieval unit, 10 for a coding unit); every network call inside it carries a hard timeout (about
+   60 s; 90 s for a full-text download); workers never sleep, poll, or wait more than about 30 s in
+   total.
+4. **Crash-resume from disk.** The parent keeps a fan-out manifest under the run directory (one row
+   per assignment: id, kind, prompt or assignment file, unique output path, attempt, launch time,
+   status, note), workers write their outputs incrementally under the run directory (a partial
+   return is marked `complete: false` and is not merged), and every brief, prompt, and merged
+   aggregate lives under the run directory too — never in the assistant's session scratchpad, which
+   changes with the session. Before each launch the parent runs a watchdog pass: a worker overdue by
+   the time box plus a margin (default 15 minutes) is stopped, marked `timed_out`, and relaunched as
+   a new attempt; after a bounded number of attempts (default 3) the assignment is recorded as
+   failed and surfaced in the review's limitations, never silently dropped.
+5. **Bounded concurrency and checkpoints.** Launch at most six workers at once (fewer when a shared
+   rate-limited API is on every worker's route), wait for a wave, validate returns from files, merge
+   serially, append a ledger checkpoint with exact counts, then launch the next wave. Writes to the
+   manifest, merged aggregates, ledgers, and state are atomic (temporary file, then replace).
+
 ## Codex adapter
 
 Use Goal mode for a long run. If Goal mode is not active, stop and give the researcher this handoff,
@@ -66,11 +114,15 @@ Claude Code v2.1.154 or later can run the project workflow
 `.claude/workflows/elr-observation-fanout.js`. Invoke the `/elr-code-observations` skill to validate
 the handoff, then run `/elr-observation-fanout` with a structured `run_dir` argument. Quote paths
 containing spaces; use `fixture: true` only for an explicit kit validation fixture. The workflow uses one discovery agent,
-then `pipeline()` with one agent per pending assignment, then an operational verifier. The workflow
+then `pipeline()` with one agent per pending assignment, then an operational verifier, every one of
+them launched as the `elr-worker` subagent type so the tool surface is enforced by the platform. The workflow
 runtime may run at most 16 agents concurrently and 1,000 total per run; a 500-unit job fits the
 documented total cap but should still be piloted for cost and permission behavior. Resume evidence
 comes from completed return files because workflow replay is only guaranteed within the same
-Claude session.
+Claude session. Research fan-outs that are not one-unit codings (Stage 02 searches and citation
+chains, retrieval, cite-checks, fresh reviews) use the Agent tool directly with
+`subagent_type: "elr-research-worker"`, one assignment per call, under the manifest, watchdog, and
+concurrency rules of the section above.
 
 ## Serial validation and resumption
 

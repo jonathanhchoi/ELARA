@@ -44,3 +44,16 @@ of asking.
 Dynamic workflows require Claude Code v2.1.154 or later. The workflow script coordinates only:
 agents read and write files. Every worker receives one immutable assignment and one unique output
 path; only the parent validates, merges, and edits shared ledgers.
+
+Workers of any kind run as the kit's restricted subagent types, never as `general-purpose`:
+`elr-worker` (`.claude/agents/elr-worker.md`; coding and audit units, no web) and
+`elr-research-worker` (`.claude/agents/elr-research-worker.md`; searches, retrieval, citation
+chains, cite-checks, fresh reviews — web fetch and search, nothing interactive). The workflow
+script sets `agentType: 'elr-worker'`; direct Agent-tool launches set the matching
+`subagent_type`. Claude Code loads a project's first `.claude/agents/` directory only at session
+start, so after installing or updating the kit into a folder that had none, restart once before
+fanning out. The desktop app's in-app Browser, computer use, Chrome, and other MCP tools are
+interactive surfaces for the researcher's own session; a worker must never reach them (one that
+did, on a bot-challenge page, crashed the desktop app twice on 2026-08-17). Fan-out manifests,
+briefs, and worker returns live under the run directory, never in the session scratchpad; see
+`workflow/shared/observation-fanout.md`, "Worker tool surface, time boxes, and crash-resume".

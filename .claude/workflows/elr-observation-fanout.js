@@ -20,9 +20,12 @@ if (typeof workflowArgs !== 'object' || workflowArgs === null || typeof workflow
   throw new Error('Pass { run_dir: "<allocated-run-directory>" }.')
 }
 
-// Optional model/effort passthrough: when present in the parsed args they are added to
-// every agent() call's options; when absent the options omit them entirely.
-const agentOptions = {}
+// Every agent in this workflow runs as the kit's restricted worker type (`.claude/agents/elr-worker.md`:
+// Read/Bash/Glob/Grep only; no web, no interactive, browser, desktop, or MCP tools). The tool surface is
+// then enforced by the platform rather than by prompt — see workflow/shared/observation-fanout.md,
+// "Worker tool surface, time boxes, and crash-resume". Optional model/effort passthrough: when present
+// in the parsed args they are added to every agent() call's options; when absent the options omit them.
+const agentOptions = { agentType: 'elr-worker' }
 if (workflowArgs.model !== undefined && workflowArgs.model !== null) {
   agentOptions.model = workflowArgs.model
 }

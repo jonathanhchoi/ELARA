@@ -186,6 +186,34 @@ class DoctorTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("PASS", result.stdout)
         self.assertIn("offline one-unit fan-out smoke passed", result.stdout)
+        self.assertIn("restricted worker subagent definitions present", result.stdout)
+
+    def test_doctor_fails_when_a_worker_definition_loses_its_tool_restriction(self) -> None:
+        # A worker that inherits the host's interactive tools can crash the host (2026-08-17
+        # incident); the doctor must fail closed on a missing or unrestricted definition.
+        from doctor import _worker_agent_failures  # noqa: PLC0415
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw) / "kit"
+            copy_kit(ROOT, root)
+            self.assertEqual(_worker_agent_failures(root), [])
+            research = root / ".claude" / "agents" / "elr-research-worker.md"
+            text = research.read_text(encoding="utf-8")
+            research.write_text(text.replace("disallowedTools: mcp__*,", "disallowedTools:"), encoding="utf-8")
+            failures = _worker_agent_failures(root)
+            self.assertTrue(any("mcp__*" in failure for failure in failures), failures)
+            coding = root / ".claude" / "agents" / "elr-worker.md"
+            text = coding.read_text(encoding="utf-8")
+            coding.write_text(text.replace("tools: Read, Bash, Glob, Grep", "tools: Read, Bash, WebFetch"), encoding="utf-8")
+            failures = _worker_agent_failures(root)
+            self.assertTrue(any("grants web tools" in failure for failure in failures), failures)
+            coding.unlink()
+            result = subprocess.run(
+                [sys.executable, str(root / "scripts" / "doctor.py"), "--platform", "none", "--skip-smoke", "--root", str(root)],
+                text=True, capture_output=True, timeout=120, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("missing .claude/agents/elr-worker.md", result.stdout + result.stderr)
 
 
 class PreregistrationTemplateTests(unittest.TestCase):

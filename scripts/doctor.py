@@ -59,6 +59,17 @@ DISCOVERY_SURFACES = (
     ".claude/skills/elr/SKILL.md",
     ".claude/skills/elr-code-observations/SKILL.md",
     ".claude/workflows/elr-observation-fanout.js",
+    ".claude/agents/elr-worker.md",
+    ".claude/agents/elr-research-worker.md",
+)
+
+# The restricted worker subagent types every fan-out must use (see
+# workflow/shared/observation-fanout.md, "Worker tool surface"). Each file's front matter must
+# carry a `tools:` allowlist and a `disallowedTools:` line that removes every MCP tool; a worker
+# that inherits the host's interactive tools can crash the host (observed 2026-08-17).
+WORKER_AGENT_FILES = (
+    ".claude/agents/elr-worker.md",
+    ".claude/agents/elr-research-worker.md",
 )
 
 EXPECTED_STAGE_COUNT = 20
@@ -227,6 +238,35 @@ def _offline_fanout_smoke(root):
     }
 
 
+def _worker_agent_failures(root):
+    """Check that the restricted worker subagent definitions still restrict what they must."""
+    failures = []
+    for relative in WORKER_AGENT_FILES:
+        path = root / relative
+        if not path.is_file():
+            continue  # already reported as a missing discovery surface
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeDecodeError) as exc:
+            failures.append(relative + " is unreadable: " + str(exc))
+            continue
+        head = text.split("---", 2)
+        front = head[1] if len(head) >= 3 else ""
+        tools_line = next((line for line in front.splitlines() if line.strip().startswith("tools:")), "")
+        deny_line = next(
+            (line for line in front.splitlines() if line.strip().startswith("disallowedTools:")), ""
+        )
+        if not tools_line.split(":", 1)[-1].strip():
+            failures.append(relative + " has no `tools:` allowlist in its front matter")
+        elif "mcp__" in tools_line:
+            failures.append(relative + " allowlists an MCP tool in `tools:`")
+        if "mcp__*" not in deny_line:
+            failures.append(relative + " does not carry `disallowedTools: mcp__*`")
+        if relative.endswith("elr-worker.md") and re.search(r"\bWeb(Fetch|Search)\b", tools_line):
+            failures.append(relative + " grants web tools to the coding worker")
+    return failures
+
+
 def build_report(root, platform="auto", smoke=True):
     """Return a complete machine-readable preflight report."""
     root = root.resolve()
@@ -235,6 +275,8 @@ def build_report(root, platform="auto", smoke=True):
         alternatives = relative if isinstance(relative, tuple) else (relative,)
         if not any((root / candidate).is_file() for candidate in alternatives):
             failures.append("missing " + " or ".join(alternatives))
+    worker_agent_failures = _worker_agent_failures(root)
+    failures.extend(worker_agent_failures)
     stage_count = len(sorted((root / "workflow" / "stages").glob("[0-9][0-9]-*.md")))
     if stage_count != EXPECTED_STAGE_COUNT:
         failures.append(
@@ -300,6 +342,7 @@ def build_report(root, platform="auto", smoke=True):
             ) else "failed",
             "stage_count": stage_count,
             "repository_contract": "passed" if not repository_failures else "failed",
+            "worker_agent_definitions": "passed" if not worker_agent_failures else "failed",
             "offline_fanout_smoke": smoke_report,
         },
         "failures": failures,
@@ -332,6 +375,10 @@ def _print_human_report(report):
         print("CHECK: offline one-unit fan-out smoke passed")
     else:
         print("CHECK: offline one-unit fan-out smoke failed")
+    if report["checks"].get("worker_agent_definitions") == "passed":
+        print("CHECK: restricted worker subagent definitions present (elr-worker, elr-research-worker)")
+    else:
+        print("CHECK: restricted worker subagent definitions missing or unrestricted")
 
     if report["failures"]:
         print("FAIL: this installation has " + str(len(report["failures"])) + " problem(s):")

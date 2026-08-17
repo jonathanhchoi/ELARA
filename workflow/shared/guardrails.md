@@ -139,6 +139,28 @@ researcher explicitly changes the kit's governing instructions.
   serial writer to validate and merge them.
 - Reject duplicate, missing, misidentified, or out-of-schema unit returns before
   aggregation. Record retries as new attempts rather than erasing failures.
+- Give every worker a fixed, minimal tool surface, enforced by the platform
+  where it can be (the kit ships `.claude/agents/elr-worker.md` and
+  `elr-research-worker.md` for Claude Code): coding and audit workers get no
+  web; research workers get web fetch and search; no worker ever gets an
+  interactive surface — the host's in-app browser, computer use, desktop or
+  other MCP tools, sub-agent spawning, or user prompts. Those surfaces belong to
+  the researcher's own session, and a worker that reaches one can take the host
+  down (a browser preview opened by a worker on a bot-challenge page crashed
+  the Claude desktop app twice on 2026-08-17). Never launch a worker as an
+  all-tools default agent.
+- A worker that meets a 401/403/429, CAPTCHA, bot challenge, or login wall
+  records a typed access gap (URL, status, time) and moves on; it never retries
+  more than once, spoofs, or escalates to another surface. The parent turns the
+  gaps into the stage's access-limitations record and manual search packet.
+- Every parallel wave is bounded and resumable from disk: a fan-out manifest
+  under the run directory (assignment, attempt, launch time, unique output path,
+  status), worker outputs written incrementally under the run directory (never
+  the assistant's session-specific scratchpad), a per-worker time box, a parent
+  watchdog that marks an overdue worker timed out and relaunches it as a new
+  attempt (bounded attempts), a concurrency ceiling (default six), and a ledger
+  checkpoint with exact counts after each wave. This applies to every
+  parallelized stage — searches and retrieval as much as coding.
 
 ## 8. Audit separation and correction
 
