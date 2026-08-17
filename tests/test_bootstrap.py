@@ -77,9 +77,17 @@ class FreshInstallTests(unittest.TestCase):
                 ".claude/skills/elr/SKILL.md",
                 "project/PROJECT_STATE.md",
                 "project/BOOTSTRAP.md",
+                "project/ELARA_MANIFEST.json",
                 "tests/fixtures/one_unit_fanout/spec.json",
             ):
                 self.assertTrue((target / relative).is_file(), relative)
+            manifest = json.loads((target / "project" / "ELARA_MANIFEST.json").read_text(encoding="utf-8"))
+            self.assertIn("scripts/doctor.py", manifest["kit_paths"])
+            self.assertIn("project/PROJECT_STATE.md", manifest["project_paths"])
+            self.assertEqual(manifest["researcher_paths"], [])
+            self.assertEqual(manifest["researcher_files_in_kit_folders"], {})
+            self.assertEqual(summary["shared_folders"], [])
+            self.assertEqual(summary["essential_conflicts"], [])
             # Maintainer-only surfaces never travel into a project folder.
             self.assertFalse((target / ".github").exists())
             self.assertTrue(summary["doctor"]["ok"], summary["doctor"])
@@ -288,6 +296,84 @@ class ExistingFolderTests(unittest.TestCase):
             self.assertTrue(summary["ok"], summary)
             self.assertIsNone(summary["temporary_source_removed"])
             self.assertTrue(kit_copy.exists())
+
+    def test_manifest_names_kit_shared_and_researcher_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            (target / "scripts").mkdir(parents=True)
+            (target / "scripts" / "analyze.py").write_text("print('mine')\n", encoding="utf-8")
+            # The researcher's own file sits exactly where the kit keeps its doctor.
+            (target / "scripts" / "doctor.py").write_text("# my own doctor\n", encoding="utf-8")
+            (target / ".claude" / "skills" / "my-own-skill").mkdir(parents=True)
+            (target / ".claude" / "skills" / "my-own-skill" / "SKILL.md").write_text(
+                "---\nname: something-else\n---\nmine\n", encoding="utf-8"
+            )
+            (target / ".gitignore").write_text("*.aux\n", encoding="utf-8")
+            summary = install(target)
+            manifest_path = target / "project" / "ELARA_MANIFEST.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertIn("scripts/bootstrap.py", manifest["kit_paths"])
+            self.assertIn("workflow/stages/00-initialize.md", manifest["kit_paths"])
+            self.assertNotIn("scripts/doctor.py", manifest["kit_paths"])
+            self.assertIn(".gitignore", manifest["shared_paths"])
+            self.assertIn("project/PROJECT_STATE.md", manifest["project_paths"])
+            self.assertEqual(manifest["researcher_paths"], ["scripts/doctor.py"])
+            self.assertEqual(
+                manifest["researcher_files_in_kit_folders"],
+                {
+                    ".claude": [".claude/skills/my-own-skill/SKILL.md"],
+                    "scripts": ["scripts/analyze.py", "scripts/doctor.py"],
+                },
+            )
+            # The researcher's file at a kit path is untouched and reported as theirs.
+            self.assertEqual((target / "scripts" / "doctor.py").read_text(encoding="utf-8"), "# my own doctor\n")
+            self.assertTrue(any(item.startswith("scripts/doctor.py (yours") for item in summary["kept"]))
+            self.assertEqual(summary["researcher_paths"], ["scripts/doctor.py"])
+            shared = {record["folder"]: record for record in summary["shared_folders"]}
+            self.assertEqual(shared["scripts"]["yours"], ["scripts/analyze.py", "scripts/doctor.py"])
+            self.assertEqual(shared[".claude"]["yours"], [".claude/skills/my-own-skill/SKILL.md"])
+            self.assertGreater(shared["scripts"]["kit_files"], 5)
+            # A researcher file where ELARA needs its own is a plainly reported conflict, and
+            # the researcher's script is never run as if it were the kit's doctor.
+            self.assertEqual(summary["essential_conflicts"], ["scripts/doctor.py"])
+            self.assertFalse(summary["ok"])
+            self.assertFalse(summary["doctor"]["ok"])
+            self.assertTrue(any("your own file" in failure for failure in summary["doctor"]["failures"]))
+            self.assertTrue(any("incomplete in this folder" in warning for warning in summary["warnings"]))
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertIn("### Folders you already had that the kit also uses", report)
+            self.assertIn("`scripts/analyze.py`", report)
+            self.assertIn("ELARA_MANIFEST.json", report)
+            self.assertIn("ELARA is incomplete in this folder", report)
+            # --update refreshes kit files but never the researcher's file at a kit path.
+            (target / "PIPELINE.md").write_text("old\n", encoding="utf-8")
+            summary = install(target, "--update")
+            self.assertEqual((target / "scripts" / "doctor.py").read_text(encoding="utf-8"), "# my own doctor\n")
+            self.assertEqual((target / "PIPELINE.md").read_bytes(), (ROOT / "PIPELINE.md").read_bytes())
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["researcher_paths"], ["scripts/doctor.py"])
+            self.assertEqual(summary["essential_conflicts"], ["scripts/doctor.py"])
+
+    def test_folder_counts_past_the_cap_are_reported_as_more_than(self) -> None:
+        import bootstrap
+
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            (target / "data").mkdir()
+            for index in range(5):
+                (target / "data" / f"{index}.txt").write_text("x", encoding="utf-8")
+            (target / "small").mkdir()
+            (target / "small" / "one.txt").write_text("x", encoding="utf-8")
+            original = bootstrap.FOLDER_COUNT_CAP
+            bootstrap.FOLDER_COUNT_CAP = 3
+            try:
+                records = {record["name"]: record for record in bootstrap.snapshot_existing(target, set())}
+            finally:
+                bootstrap.FOLDER_COUNT_CAP = original
+            self.assertEqual(records["data"]["files"], 3)
+            self.assertTrue(records["data"]["files_truncated"])
+            self.assertEqual(records["small"]["files"], 1)
+            self.assertFalse(records["small"]["files_truncated"])
 
     def test_refuses_an_initialized_kit_copy_as_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

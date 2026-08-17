@@ -379,11 +379,15 @@ the folder already has a `README.md` or `LICENSE`, ELARA installs its versions a
 first in an existing `AGENTS.md` or `CLAUDE.md`, also in a marked block, and
 leaves your text after it.
 
-The installer lists every preexisting file in `project/BOOTSTRAP.md`. Stage 00
-uses that list when it offers to import existing work. Run the installer again
-with `--update` to refresh ELARA's own files from GitHub. It does not change
-project state, ledgers, or your files. The doctor and validators ignore files
-that are not part of the kit.
+The installer lists what the folder already held in `project/BOOTSTRAP.md`, by
+name for any file of yours inside a folder the kit also uses (such as
+`scripts/`), and writes `project/ELARA_MANIFEST.json`, which records which files
+are the kit's, which are shared, and which were yours. A file of yours that sits
+exactly where a kit file would go is left alone, and `--update` never touches
+it. Stage 00 uses that list when it offers to import existing work. Run the
+installer again with `--update` to refresh ELARA's own files from GitHub. It
+does not change project state, ledgers, or your files. The doctor and
+validators ignore files that are not part of the kit.
 
 ## What else can the preflight check?
 

@@ -10,10 +10,13 @@ The script copies the kit into the target folder without overwriting anything
 that is already there, merges the few files that must be shared (.gitignore,
 requirements.txt, and any AGENTS.md or CLAUDE.md the folder already has),
 installs the kit's one Python dependency, runs scripts/doctor.py, writes
-project/BOOTSTRAP.md, removes a temporary `.elara-kit` copy it was run from,
-and prints what the assistant should do next. It needs only the Python standard
-library. When it is run from inside a kit copy it installs from that copy;
-otherwise it downloads the kit from GitHub.
+project/BOOTSTRAP.md (the report) and project/ELARA_MANIFEST.json (which
+files are the kit's, which are shared, and which were the researcher's before
+the kit arrived), removes a temporary `.elara-kit` copy it was run from, and
+prints what the assistant should do next. `--dry-run` shows the whole plan
+without writing, installing, or removing anything. It needs only the Python
+standard library. When it is run from inside a kit copy it installs from that
+copy; otherwise it downloads the kit from GitHub.
 
 Like scripts/doctor.py, this file avoids newer Python syntax (no f-strings, no
 modern type annotations) so that an old interpreter can still parse it far
@@ -57,7 +60,23 @@ ARCHIVE_URLS = (
 )
 KIT_TITLE = "# ELARA: Empirical Legal Analysis with Research Agents"
 REPORT_RELATIVE = "project/BOOTSTRAP.md"
+MANIFEST_RELATIVE = "project/ELARA_MANIFEST.json"
+MANIFEST_SCHEMA_VERSION = "1.0"
 LOOSE_SCRIPT_NAMES = ("bootstrap.py", "elara_bootstrap.py")
+
+# Stop counting a pre-existing folder's files past this many; the report then
+# says "more than" rather than printing the cap as if it were exact.
+FOLDER_COUNT_CAP = 5000
+# At most this many of the researcher's files are listed by name for a folder
+# the kit also uses (the rest are counted); the manifest is not a file index.
+SHARED_FOLDER_LIST_CAP = 500
+# Folders whose contents the kit governs by contract rather than by ownership
+# (stages write there); they are not listed in the shared-folder breakdown.
+SHARED_FOLDER_SKIP = {"project"}
+# Kit files ELARA needs in order to run at all. A file of the researcher's at one
+# of these paths is left alone, and the report says ELARA is incomplete here.
+ESSENTIAL_PREFIXES = ("scripts/", "workflow/", ".agents/", ".claude/")
+ESSENTIAL_FILES = {"PIPELINE.md"}
 
 # Never copied into a project folder.
 EXCLUDED_DIRECTORIES = {".git", "__pycache__", ".pytest_cache", ".github", ".venv", "build"}
@@ -508,14 +527,17 @@ def snapshot_existing(target, ignore_names):
         record = {"name": name, "kind": "folder" if entry.is_dir() else "file"}
         if entry.is_dir():
             count = 0
+            truncated = False
             for _directory, subdirectories, filenames in os.walk(str(entry)):
                 subdirectories[:] = [
                     sub for sub in subdirectories if sub not in EXCLUDED_DIRECTORIES
                 ]
                 count += len(filenames)
-                if count > 5000:
+                if count > FOLDER_COUNT_CAP:
+                    truncated = True
                     break
-            record["files"] = count
+            record["files"] = FOLDER_COUNT_CAP if truncated else count
+            record["files_truncated"] = truncated
         else:
             try:
                 record["bytes"] = entry.stat().st_size
@@ -525,11 +547,126 @@ def snapshot_existing(target, ignore_names):
     return entries
 
 
-def install(source, target, update):
-    """Copy the kit into target. Returns the per-file outcome lists."""
-    source = Path(source)
+def kit_top_level(source):
+    """The top-level folder and file names the kit installs (e.g. scripts, workflow, AGENTS.md)."""
+    return set(relative.split("/", 1)[0] for relative, _absolute in kit_files(source))
+
+
+def shared_folder_snapshot(target, kit_top, ignore_names):
+    """List the files already inside each top-level folder the kit also uses.
+
+    Returns {folder name: {"files": [relative POSIX paths], "truncated": bool}} for
+    every folder of the target that shares its name with a kit folder (scripts/,
+    tests/, .claude/, ...). Taken before installation, so the report and the
+    manifest can say by name which files in such a folder are the researcher's.
+    """
     target = Path(target)
-    outcome = {
+    if not target.exists():
+        return {}
+    shared = {}
+    for entry in sorted(target.iterdir(), key=lambda p: p.name.lower()):
+        name = entry.name
+        if not entry.is_dir() or name in ignore_names or name in SHARED_FOLDER_SKIP:
+            continue
+        if name not in kit_top:
+            continue
+        files = []
+        truncated = False
+        for directory, subdirectories, filenames in os.walk(str(entry)):
+            subdirectories[:] = sorted(
+                sub for sub in subdirectories if sub not in EXCLUDED_DIRECTORIES
+            )
+            for filename in sorted(filenames):
+                if len(files) >= SHARED_FOLDER_LIST_CAP:
+                    truncated = True
+                    break
+                files.append((Path(directory) / filename).relative_to(target).as_posix())
+            if truncated:
+                break
+        shared[name] = {"files": files, "truncated": truncated}
+    return shared
+
+
+def describe_shared_folders(shared_before, files):
+    """Split each shared folder's contents into the researcher's files and the kit's."""
+    kit_owned = set(files["kit_paths"]) | set(files["shared_paths"]) | set(files["project_paths"])
+    kit_owned.update((REPORT_RELATIVE, MANIFEST_RELATIVE))
+    described = []
+    for folder in sorted(shared_before):
+        record = shared_before[folder]
+        yours = [path for path in record["files"] if path not in kit_owned]
+        prefix = folder + "/"
+        described.append({
+            "folder": folder,
+            "yours": yours,
+            "yours_truncated": bool(record["truncated"]),
+            "kit_files": sum(1 for path in files["kit_paths"] if path.startswith(prefix)),
+        })
+    return described
+
+
+def essential_conflicts(researcher_paths):
+    """The researcher's files that sit exactly where ELARA keeps a file it needs to run."""
+    return sorted(
+        path for path in set(researcher_paths)
+        if path in ESSENTIAL_FILES or path.startswith(ESSENTIAL_PREFIXES)
+    )
+
+
+def essential_conflict_warning(conflicts):
+    return (
+        "These files of yours sit exactly where ELARA keeps files it needs in order to run: "
+        + ", ".join(conflicts)
+        + ". They were left untouched and ELARA's own copies were not installed, so ELARA is "
+        "incomplete in this folder. The clean fix is to install ELARA into a different folder "
+        "(a new, empty one is simplest) and let Stage 00 import your materials from here by "
+        "path; nothing of yours has to move. Alternatively, rename those files yourself and run "
+        "the installer again."
+    )
+
+
+def read_manifest(target):
+    """Return the manifest the previous bootstrap run wrote, or None if there is none."""
+    path = Path(target) / MANIFEST_RELATIVE
+    if not path.is_file():
+        return None
+    try:
+        manifest = json.loads(read_text(path))
+    except (ValueError, OSError):
+        return None
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("kit_paths"), list):
+        return None
+    return manifest
+
+
+def build_manifest(summary):
+    """The ownership record: which files in the folder are the kit's, shared, or the researcher's."""
+    files = summary["files"]
+    return {
+        "schema_version": MANIFEST_SCHEMA_VERSION,
+        "written": summary["timestamp"],
+        "kit_version": summary.get("kit_version"),
+        "kit_source": summary["source"],
+        "kit_paths": sorted(set(files["kit_paths"])),
+        "shared_paths": sorted(set(files["shared_paths"])),
+        "project_paths": sorted(set(files["project_paths"])),
+        "researcher_paths": sorted(set(files["researcher_paths"])),
+        "researcher_files_in_kit_folders": {
+            record["folder"]: record["yours"] for record in summary.get("shared_folders") or []
+        },
+        "note": (
+            "Written by scripts/bootstrap.py on every run. kit_paths are ELARA's own files "
+            "(refreshed only by --update). shared_paths hold the kit's lines and the researcher's "
+            "(.gitignore, requirements.txt, a merged AGENTS.md or CLAUDE.md). project_paths are "
+            "state and ledgers the project fills in. researcher_paths are the researcher's files "
+            "that sit where a kit file would go; they are never replaced, not even by --update. "
+            "Any other file in this folder is not the kit's."
+        ),
+    }
+
+
+def empty_outcome(researcher_paths=()):
+    return {
         "installed": [],
         "unchanged": [],
         "kept": [],
@@ -537,10 +674,48 @@ def install(source, target, update):
         "merged": [],
         "updated": [],
         "prepended": [],
+        # Where every kit file ended up, by installed name (see build_manifest).
+        "kit_paths": [],
+        "shared_paths": [],
+        "project_paths": [],
+        "researcher_paths": sorted(set(researcher_paths)),
     }
+
+
+def install(source, target, update, already_installed=False, researcher_paths=()):
+    """Copy the kit into target. Returns the per-file outcome lists.
+
+    Besides the outcome lists, the result records ownership: ``kit_paths`` are
+    the kit's own files by installed name, ``shared_paths`` hold both the kit's
+    lines and the researcher's, ``project_paths`` are the state and ledgers the
+    project fills in, and ``researcher_paths`` are files of the researcher's
+    that sit where a kit file would go. Those last are never replaced, not even
+    by --update: on a first install into a folder that is not yet a kit copy,
+    whatever already sits at a kit path is the researcher's, and the previous
+    manifest carries that knowledge into later runs.
+    """
+    source = Path(source)
+    target = Path(target)
+    outcome = empty_outcome(researcher_paths)
+    theirs = set(researcher_paths)
+
+    def owned(relative, kind="kit"):
+        outcome[kind + "_paths"].append(relative)
+
+    def keep_researcher_file(relative):
+        theirs.add(relative)
+        outcome["researcher_paths"] = sorted(theirs)
+        outcome["kept"].append(
+            relative + " (yours: it was here before the kit; the kit's version of this file "
+            "is not installed, and --update will not touch it)"
+        )
+
     for relative, absolute in kit_files(source):
         destination = target / relative
         kit_bytes = absolute.read_bytes()
+        if relative in theirs and destination.exists():
+            keep_researcher_file(relative)
+            continue
         if not destination.exists():
             if relative in ALIASES and (target / ALIASES[relative]).exists():
                 # The researcher's own file was replaced or removed since the
@@ -549,23 +724,26 @@ def install(source, target, update):
                 relative = ALIASES[relative]
                 if destination.read_bytes() == kit_bytes:
                     outcome["unchanged"].append(relative)
-                    continue
-                if update:
+                elif update:
                     destination.write_bytes(kit_bytes)
                     outcome["updated"].append(relative)
                 else:
                     outcome["kept"].append(relative + " (differs from this kit version; --update refreshes it)")
+                owned(relative)
                 continue
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(kit_bytes)
             outcome["installed"].append(relative)
+            owned(relative, "project" if relative in PROJECT_OWNED else "kit")
             continue
         existing_bytes = destination.read_bytes()
         if existing_bytes == kit_bytes:
             outcome["unchanged"].append(relative)
+            owned(relative, "project" if relative in PROJECT_OWNED else "kit")
             continue
         if relative in PROJECT_OWNED:
             outcome["kept"].append(relative + " (project state or ledger; never replaced)")
+            owned(relative, "project")
             continue
         if relative in MERGED:
             existing_text = existing_bytes.decode("utf-8", errors="replace")
@@ -579,6 +757,7 @@ def install(source, target, update):
                 outcome["merged"].append(relative + " (+" + str(len(added)) + " line(s))")
             else:
                 outcome["unchanged"].append(relative + " (already contains the kit's lines)")
+            owned(relative, "shared")
             continue
         existing_text = existing_bytes.decode("utf-8", errors="replace")
         kit_text = kit_bytes.decode("utf-8", errors="replace")
@@ -589,6 +768,7 @@ def install(source, target, update):
                     outcome["updated"].append(relative)
                 else:
                     outcome["kept"].append(relative + " (an earlier kit version; --update refreshes it)")
+                owned(relative)
                 continue
             merged_text, how = merge_agents(existing_text, kit_text, update)
             if how == "already merged":
@@ -596,6 +776,7 @@ def install(source, target, update):
             else:
                 write_text(destination, merged_text)
                 outcome["prepended"].append(relative + " (" + how + "; your text follows the ELARA block)")
+            owned(relative, "shared")
             continue
         if relative == "CLAUDE.md":
             if is_kit_claude(existing_text):
@@ -604,6 +785,7 @@ def install(source, target, update):
                     outcome["updated"].append(relative)
                 else:
                     outcome["kept"].append(relative + " (an earlier kit version; --update refreshes it)")
+                owned(relative)
                 continue
             merged_text, how = merge_claude(existing_text, kit_text, update)
             if how == "already merged":
@@ -611,6 +793,7 @@ def install(source, target, update):
             else:
                 write_text(destination, merged_text)
                 outcome["prepended"].append(relative + " (" + how + "; your text follows the ELARA block)")
+            owned(relative, "shared")
             continue
         if relative in ALIASES:
             if relative == "README.md" and is_kit_readme(existing_text):
@@ -619,24 +802,34 @@ def install(source, target, update):
                     outcome["updated"].append(relative)
                 else:
                     outcome["kept"].append(relative + " (an earlier kit version; --update refreshes it)")
+                owned(relative)
                 continue
             alias = target / ALIASES[relative]
             if alias.exists() and alias.read_bytes() == kit_bytes:
                 outcome["unchanged"].append(ALIASES[relative])
+                owned(ALIASES[relative])
                 continue
             if alias.exists() and not update:
                 outcome["kept"].append(ALIASES[relative] + " (differs from this kit version; --update refreshes it)")
+                owned(ALIASES[relative])
                 continue
             alias.write_bytes(kit_bytes)
             outcome["aliased"].append(relative + " -> " + ALIASES[relative] + " (your " + relative + " was left alone)")
+            owned(ALIASES[relative])
             continue
         # Every other kit-owned file (workflow/, scripts/, tests/, .agents/, .claude/,
         # PIPELINE.md, project READMEs, ...): refreshed only with --update.
+        if not already_installed:
+            # First install into a folder that is not a kit copy: whatever already
+            # sits at this path is the researcher's, not an older kit file.
+            keep_researcher_file(relative)
+            continue
         if update:
             destination.write_bytes(kit_bytes)
             outcome["updated"].append(relative)
         else:
             outcome["kept"].append(relative + " (differs from this kit version; --update refreshes it)")
+        owned(relative)
     return outcome
 
 
@@ -776,11 +969,31 @@ def next_steps(summary):
     )
     existing = summary.get("existing_materials") or []
     if existing:
-        steps.append(
+        step = (
             str(len(existing))
             + " item(s) were already in this folder before ELARA was installed (listed in this report). "
             "Ask whether they belong to the project; if so, use Stage 00's adoption path and do not ask "
             "the researcher to move or rename anything."
+        )
+        shared = [record for record in summary.get("shared_folders") or [] if record["yours"]]
+        if shared:
+            step += (
+                " Their files inside folders the kit also uses ("
+                + ", ".join("`" + record["folder"] + "/`" for record in shared)
+                + ") are listed by name above and in `" + MANIFEST_RELATIVE + "`; those are theirs, "
+                "not the kit's."
+            )
+        steps.append(step)
+    conflicts = summary.get("essential_conflicts") or []
+    if conflicts:
+        steps.append(
+            str(len(conflicts))
+            + " file(s) of the researcher's sit at paths ELARA needs in order to run ("
+            + ", ".join(conflicts)
+            + "; see Warnings). ELARA is incomplete in this folder. Explain that plainly and "
+            "recommend installing ELARA into a different folder (a new, empty one is simplest) "
+            "and importing the materials from here by path at Stage 00; never move or rename "
+            "their files without asking."
         )
     dependency = summary.get("dependency") or {}
     if dependency.get("status") in ("missing", "failed"):
@@ -854,6 +1067,11 @@ def render_report(summary):
     lines.append("- Installed: " + str(len(files["installed"])))
     lines.append("- Unchanged: " + str(len(files["unchanged"])))
     lines.append("- Updated: " + str(len(files["updated"])))
+    lines.append(
+        "- Which files are the kit's, which are shared, and which were yours before the kit "
+        "arrived: `" + MANIFEST_RELATIVE + "` (rewritten on every run; anything not listed "
+        "there is not the kit's)"
+    )
     lines.append("")
     lines.append("Kept as yours (the kit's version was installed under another name or not at all):")
     lines.append(format_list(files["aliased"] + files["kept"]))
@@ -875,13 +1093,40 @@ def render_report(summary):
         lines.append("")
         for record in existing[:200]:
             if record["kind"] == "folder":
-                lines.append("- `" + record["name"] + "/` (folder, " + str(record.get("files")) + " file(s))")
+                count = ("more than " if record.get("files_truncated") else "") + str(record.get("files"))
+                lines.append("- `" + record["name"] + "/` (folder, " + count + " file(s))")
             else:
                 lines.append("- `" + record["name"] + "` (" + str(record.get("bytes")) + " bytes)")
         if len(existing) > 200:
             lines.append("- ... and " + str(len(existing) - 200) + " more")
     else:
         lines.append("- nothing (empty folder): this is a fresh project unless the researcher says otherwise")
+    lines.append("")
+    lines.append("### Folders you already had that the kit also uses")
+    lines.append("")
+    shared = summary.get("shared_folders") or []
+    if shared:
+        lines.append(
+            "The kit keeps its own files in these folders next to yours. Yours are listed by name "
+            "so nobody has to guess later; everything else in them is the kit's (`"
+            + MANIFEST_RELATIVE + "` lists every kit path)."
+        )
+        lines.append("")
+        for record in shared:
+            yours = record["yours"]
+            shown = ", ".join("`" + path + "`" for path in yours[:50])
+            more = len(yours) - 50
+            if more > 0:
+                shown += ", and " + str(more) + " more"
+            if record.get("yours_truncated"):
+                shown += " (list cut off at " + str(SHARED_FOLDER_LIST_CAP) + " files)"
+            lines.append(
+                "- `" + record["folder"] + "/`: " + str(len(yours)) + " file(s) of yours"
+                + (": " + shown if yours else "")
+                + "; " + str(record["kit_files"]) + " kit file(s)"
+            )
+    else:
+        lines.append("- none")
     lines.append("")
     lines.append("### Environment")
     lines.append("")
@@ -905,7 +1150,8 @@ def render_report(summary):
     if doctor.get("skipped"):
         lines.append("- skipped")
     else:
-        lines.append("- Command: `" + doctor["command"] + "`")
+        if doctor.get("command"):
+            lines.append("- Command: `" + doctor["command"] + "`")
         lines.append("- Result: " + ("PASS" if doctor["ok"] else "FAIL"))
         if doctor["failures"]:
             lines.append(format_list(doctor["failures"]))
@@ -938,10 +1184,18 @@ def machine_summary(summary):
         "kit_version": summary.get("kit_version"),
         "update": summary["update"],
         "already_installed": summary.get("already_installed", False),
-        "files": {key: len(value) for key, value in summary["files"].items()},
+        "files": {
+            key: len(value)
+            for key, value in summary["files"].items()
+            if not key.endswith("_paths")
+        },
         "kept": summary["files"]["kept"] + summary["files"]["aliased"],
         "merged": summary["files"]["merged"] + summary["files"]["prepended"],
+        "researcher_paths": sorted(set(summary["files"]["researcher_paths"])),
+        "essential_conflicts": summary.get("essential_conflicts") or [],
+        "manifest_path": MANIFEST_RELATIVE,
         "existing_materials": summary.get("existing_materials") or [],
+        "shared_folders": summary.get("shared_folders") or [],
         "python": summary["python"],
         "python_for_kit": summary["python_for_kit"],
         "dependency": {
@@ -996,6 +1250,16 @@ def print_human(summary):
         print("               - " + item)
     existing = summary.get("existing_materials") or []
     print("  Already here: " + (str(len(existing)) + " item(s) (see " + REPORT_RELATIVE + ")" if existing else "nothing; empty folder"))
+    shared = [record for record in summary.get("shared_folders") or [] if record["yours"]]
+    if shared:
+        print(
+            "  Shared folders: "
+            + ", ".join(
+                record["folder"] + "/ (" + str(len(record["yours"])) + " of yours)" for record in shared
+            )
+            + " (each file named in " + REPORT_RELATIVE + ")"
+        )
+    print("  Manifest:    " + MANIFEST_RELATIVE + " (which files are the kit's, shared, or yours)")
     print("  Python:      " + summary["python"]["version"] + " (" + summary["python"]["executable"] + ")")
     dependency = summary["dependency"]
     print("  jsonschema:  " + str(dependency.get("status")) + (" via " + dependency["how"] if dependency.get("how") else ""))
@@ -1052,21 +1316,31 @@ def bootstrap(args):
             ignore_names.add(source.name)
             temporary_source = source.name
         already_installed = is_kit_root(target)
+        previous_manifest = read_manifest(target)
+        kit_top = kit_top_level(source)
         existing_materials = snapshot_existing(target, ignore_names)
+        shared_before = shared_folder_snapshot(target, kit_top, ignore_names)
         if already_installed:
             # Report only what is not part of the kit itself.
-            kit_top = set(relative.split("/", 1)[0] for relative, _absolute in kit_files(source))
             existing_materials = [
                 record for record in existing_materials
                 if record["name"] not in kit_top and record["name"] not in ALIASES.values()
             ]
         if target == source:
             # "python scripts/bootstrap.py" inside a downloaded kit: nothing to copy.
-            files = {"installed": [], "unchanged": [], "kept": [], "aliased": [], "merged": [], "updated": [], "prepended": []}
-            files["unchanged"] = [relative for relative, _absolute in kit_files(source)]
+            files = empty_outcome()
+            for relative, _absolute in kit_files(source):
+                files["unchanged"].append(relative)
+                files["project_paths" if relative in PROJECT_OWNED else "kit_paths"].append(relative)
         else:
             target.mkdir(parents=True, exist_ok=True)
-            files = install(source, target, args.update)
+            files = install(
+                source,
+                target,
+                args.update,
+                already_installed=already_installed,
+                researcher_paths=(previous_manifest or {}).get("researcher_paths") or [],
+            )
         summary = {
             "timestamp": utc_now(),
             "target": str(target),
@@ -1078,6 +1352,7 @@ def bootstrap(args):
             "already_installed": already_installed,
             "files": files,
             "existing_materials": existing_materials,
+            "shared_folders": describe_shared_folders(shared_before, files),
             "python": {
                 "executable": sys.executable,
                 "version": ".".join(str(part) for part in sys.version_info[:3]),
@@ -1089,11 +1364,27 @@ def bootstrap(args):
     warning = cloud_sync_warning(target)
     if warning:
         summary["warnings"].append(warning)
+    conflicts = essential_conflicts(files["researcher_paths"])
+    summary["essential_conflicts"] = conflicts
+    if conflicts:
+        summary["warnings"].append(essential_conflict_warning(conflicts))
     dependency = ensure_dependency(target, sys.executable, args.no_install)
     summary["dependency"] = dependency
     summary["python_for_kit"] = dependency.get("python") or sys.executable
     if args.skip_doctor:
         summary["doctor"] = {"skipped": True, "ok": False, "failures": [], "command": None}
+    elif "scripts/doctor.py" in conflicts:
+        # Never run a file of the researcher's as if it were the kit's doctor.
+        summary["doctor"] = {
+            "skipped": False,
+            "ok": False,
+            "failures": [
+                "scripts/doctor.py here is your own file, not ELARA's, so ELARA's preflight "
+                "check could not run in this folder"
+            ],
+            "command": None,
+            "report": None,
+        }
     else:
         summary["doctor"] = run_doctor(target, summary["python_for_kit"])
         summary["doctor"]["skipped"] = False
@@ -1110,6 +1401,11 @@ def bootstrap(args):
         summary["temporary_source_removed"] = remove_tree(target / temporary_source)
     report_path = append_report(target, render_report(summary))
     summary["report_path"] = str(report_path)
+    write_text(
+        target / MANIFEST_RELATIVE,
+        json.dumps(build_manifest(summary), indent=2, sort_keys=True) + "\n",
+    )
+    summary["manifest_path"] = MANIFEST_RELATIVE
     if loose is not None and loose.parent == target and not args.keep:
         try:
             loose.unlink()
@@ -1138,7 +1434,7 @@ def main():
     parser.add_argument(
         "--update",
         action="store_true",
-        help="refresh kit-owned files that differ from this kit version (never project state or ledgers)",
+        help="refresh kit-owned files that differ from this kit version (never project state, ledgers, or a file that was yours before the kit)",
     )
     parser.add_argument(
         "--no-install",

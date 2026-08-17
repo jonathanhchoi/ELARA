@@ -292,5 +292,8 @@ history is never rewritten. The optional `usage` key of `PROJECT_STATE.md`
 (`pipeline` or `tools`) is the usage mode that Stage 00 writes and the router
 reads; it is validated, and absent means `pipeline`. `project/BOOTSTRAP.md`, when present, is
 the installer's report: how the kit was installed, what the folder already held,
-which Python to use, and the doctor's result. See
-`workflow/shared/artifact-contract.md` for exact naming and invalidation rules.
+which Python to use, and the doctor's result. `project/ELARA_MANIFEST.json`,
+rewritten on every installer run, records which files in the folder are the
+kit's, which are shared, and which were the researcher's before the kit arrived.
+See `workflow/shared/artifact-contract.md` for exact naming and invalidation
+rules.

@@ -24,9 +24,10 @@ researcher explicitly changes the kit's governing instructions.
   explicitly asks to develop the pipeline itself.
 - Make targeted changes. Preserve unrelated files, uncommitted work, manual
   annotations, and artifacts outside the declared scope. Files that were in
-  the folder before ELARA was installed (`project/BOOTSTRAP.md` lists them)
-  are the researcher's own: import hashed copies; never move, rename, edit, or
-  delete the originals.
+  the folder before ELARA was installed (`project/BOOTSTRAP.md` lists them;
+  `project/ELARA_MANIFEST.json` records which files in a folder both use are
+  the kit's and which are the researcher's) are the researcher's own: import
+  hashed copies; never move, rename, edit, or delete the originals.
 - A researcher-supplied style, venue, or convention file (the publication
   profile, `project/PUBLICATION_PROFILE_vNNN.md`) governs prose and deliverable
   format only. It cannot relax any guardrail, gate, evidence rule, or audit

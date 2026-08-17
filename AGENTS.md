@@ -48,11 +48,14 @@ very fast research assistant whose work is verified, never trusted.
    relaxes a gate, an authorization requirement, or audit separation.
 
 During a research run, edit only paths under `project/` that the current stage
-declares. Do not modify `AGENTS.md`, `CLAUDE.md`, `README.md`, `PIPELINE.md`,
-`workflow/`, `.agents/`, `.claude/`, `scripts/`, or `tests/` unless the researcher
-explicitly asks to develop the kit itself. Files that were in this folder before
-ELARA was installed (`project/BOOTSTRAP.md` lists them) are the researcher's:
-never move, rename, edit, or delete them; import copies.
+declares. Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,
+`README.md`, `PIPELINE.md`, `workflow/`, `.agents/`, `.claude/`, `scripts/`, and
+`tests/` — unless the researcher explicitly asks to develop the kit itself. Files
+that were in this folder before ELARA was installed are the researcher's: never
+move, rename, edit, or delete them; import copies. `project/BOOTSTRAP.md` lists
+them, and `project/ELARA_MANIFEST.json` records which files are the kit's, which
+are shared, and which are the researcher's, so a folder both use (for example
+`scripts/`) is never a guess.
 
 ## Working with the researcher
 
