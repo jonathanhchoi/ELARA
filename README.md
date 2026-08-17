@@ -1,432 +1,394 @@
 # ELARA: Empirical Legal Analysis with Research Agents
 
-ELARA is the ready-to-use companion package for *ELARA: A Framework for
-Empirical Legal Research with AI Agents* by Jonathan H. Choi. It turns Claude
-Code or Codex into a research assistant that takes one empirical legal research
-project from question to verified replication package — and, if you want,
-through putting the results into your draft, cite-checking it, and revising it —
-one step at a time, stopping at every decision that is yours.
+ELARA is the companion package for *ELARA: A Framework for Empirical Legal
+Research with AI Agents* by Jonathan H. Choi. It turns Claude Code or Codex into
+a research assistant for empirical legal work. The assistant can help you move
+from a research question to a verified replication package. Optional tools can
+also integrate results into a draft, check citations, and assist with revisions.
 
-You do not need to know Git, Python, or the command line. The assistant does the
-setup and runs every command; you answer questions and make the calls.
+You remain responsible for the research decisions. ELARA stops for your
+approval at each important choice, including the question, design, data use,
+codebook, pilot, preregistration, and manuscript edits.
 
-## Start here
+You don't need to know Git, Python, or the command line. The assistant handles
+the setup and runs the commands. You answer its questions and make the calls.
 
-1. **Open Claude Code or Codex in the folder where you want to work.** An empty
-   folder for a new project, or the folder that already holds your draft, data,
-   or notes — nothing has to be moved. (In a terminal: `cd` into the folder and
-   run `claude` or `codex`; in the desktop apps, open that folder.)
-2. **Paste this message and press Enter** (the copy button at the top right of
-   the box copies it):
+## How do I get started?
+
+1. Open Claude Code or Codex in the folder where you want to work. This can be
+   an empty folder or one that already contains your draft, data, or notes.
+2. Paste the message below and press Enter.
 
    ```text
-   Please set up ELARA (https://github.com/jonathanhchoi/ELARA), a workflow kit for
-   empirical legal research, in this folder and walk me through it. Do it like this:
-   (1) fetch the kit into a temporary subfolder with
-   `git clone --depth 1 https://github.com/jonathanhchoi/ELARA.git .elara-kit`
-   (if git is unavailable, download the repository ZIP and unzip it as `.elara-kit`);
-   (2) run `python .elara-kit/scripts/bootstrap.py --into .` (try `python3` or `py`
-   if `python` fails; if Python 3.10 or newer is missing, help me install it first) —
-   it installs ELARA here without overwriting my files, checks the setup, and removes
-   the temporary subfolder; (3) follow the NEXT STEPS the script prints: read AGENTS.md,
-   then go through workflow/stages/00-initialize.md from its Orientation section, in
-   plain language, one question at a time; ask me whether I want to go through the
-   whole pipeline or use specific tools, and show me the choices. Do not delete or
-   overwrite anything of mine.
+   Please set up ELARA (https://github.com/jonathanhchoi/ELARA), a workflow kit
+   for empirical legal research, in this folder and walk me through it. Follow
+   these steps.
+
+   1. Fetch the kit into a temporary subfolder by running
+      `git clone --depth 1 https://github.com/jonathanhchoi/ELARA.git .elara-kit`.
+      If Git is unavailable, download the repository ZIP and unzip it as
+      `.elara-kit`.
+   2. Run `python .elara-kit/scripts/bootstrap.py --into .`. Try `python3` or
+      `py` if `python` fails. If Python 3.10 or newer is missing, help me install
+      it first. The script should install ELARA here without overwriting my
+      files, check the setup, and remove the temporary subfolder.
+   3. Follow the NEXT STEPS printed by the script. Read `AGENTS.md`, then begin
+      with the Orientation in `workflow/stages/00-initialize.md`. Explain things
+      in plain language and ask one question at a time. Ask whether I want the
+      whole pipeline or specific tools, and show me the choices.
+
+   Do not delete or overwrite any of my files.
    ```
 
-3. **Say yes** if it asks permission to run those commands, then **answer the
-   questions.** That is the whole setup. One folder is one project; for another
-   project, use another folder.
+3. Approve the commands if the app asks, then answer the questions. Use a
+   different folder for each project.
 
-**What happens next.** The assistant installs the kit into your folder (your own
-files are left exactly where they are), checks that Python and the one package
-ELARA needs are present, and explains in a few paragraphs what ELARA does and
-does not do. It then asks whether you want the **whole pipeline** — every step
-in order, from research question to verified replication package, with the
-optional publication steps at the end — or **specific tools** now, and shows you
-the menu (choose a question, check for preemption, assess feasibility and cost,
-design methods, write a codebook, authorize data, adversarial review, pilot,
-preregister, assemble the corpus, code it, verify the coding, validate against
-human coders, analyze with measurement-error correction, robustness, replication
-package, integrate results into your draft, cite-check, revise for referees, add
-citations, proofread, apply hand-marked edits). Then it interviews you, one
-question at a time, drafts a short project charter, and stops for your approval.
-From there it carries you from step to step: at the end of each one it says what
-it produced and what comes next, and waits for you to say go. Every real
-decision — the question, the design, whether the data may be used, the codebook,
-the pilot, preregistration, what to change in your draft — is put to you
-explicitly; nothing advances on silence. If you already have work (a question, a
-codebook, coded data, results, a draft, a referee letter), say so: it is imported
-as it is, and you land at the first step that still needs doing.
+If the repository is public, a shorter instruction also works. Ask the
+assistant to download
+`https://raw.githubusercontent.com/jonathanhchoi/ELARA/main/scripts/bootstrap.py`,
+run it with Python 3, and follow the `NEXT STEPS` it prints.
 
-**Coming back later.** Open the same folder in Claude Code or Codex and type
-`/elr resume` (Claude Code) or `$elr resume` (Codex) — or just say "continue".
-Everything the assistant needs is in the folder, not in the chat. `/elr menu`
-shows the tools, `/elr status` says where things stand, and `/elr help`
-explains it all again. If `/elr` is not recognized the first time, restart the
-app in that folder once; commands load at start.
+## What happens after setup?
 
-**Two cautions.** Keep the project folder on your own disk rather than in a
-cloud-synced location (Google Drive, OneDrive, Dropbox) if you can: sync
-services can interfere with the audit logs and copy restricted material to the
-cloud. And do not put licensed, confidential, sealed, privileged, or personal
-material anywhere the assistant can read it until ELARA's data-authorization
-step has been through the license, consent, and IRB or ethics questions with
-you; the assistant will not send such material to a hosted model before then.
+The assistant installs the kit without moving your files. It checks Python and
+the one required package, then gives you a short explanation of what ELARA can
+and can't do.
 
-Everything below is the longer, hands-on route for people who prefer to install
-things themselves or want to know exactly what the kit contains. You do not
-need it to use ELARA.
+Next, it asks whether you want the whole pipeline or a specific tool. The whole
+pipeline proceeds in order from project selection through replication, with
+optional publication steps at the end. The tools menu lets you go directly to
+tasks such as a preemption review, feasibility audit, methods design, codebook,
+human validation, manuscript integration, citation checking, or proofreading.
+See [PIPELINE.md](PIPELINE.md) for the complete menu.
 
----
+ELARA then asks one question at a time and drafts a short project charter. It
+stops for your approval before continuing. At the end of each later step, it
+explains what it produced and what comes next. It proceeds when you agree, but
+agreement to continue never substitutes for approval at a formal gate.
 
-## The longer path
+If you already have a question, codebook, dataset, analysis, draft, or referee
+letter, tell the assistant. It will import copies of that work and begin at the
+first step that still needs attention.
 
-This repository contains only reusable materials for a new project: canonical
+### How do I come back later?
+
+Open the same folder and type `/elr resume` in Claude Code or `$elr resume` in
+Codex. You can also say `continue`. ELARA keeps its state in the project folder
+rather than relying on the chat history.
+
+Use `$elr status` or `/elr status` to see where the project stands. Use
+`$elr menu` or `/elr menu` to see the tools, and `$elr help` or `/elr help` for
+an explanation of what to do next. If the command is not recognized after
+installation, restart the app once in that folder. Repository-local commands
+load when the app starts.
+
+### Two cautions before you begin
+
+Keep the project in a local folder if you can. Google Drive, OneDrive, Dropbox,
+and similar services can interfere with append-only logs, restore superseded
+files, and copy restricted material to cloud storage.
+
+Do not place licensed, confidential, sealed, privileged, or personal material
+where the assistant can read it until ELARA has completed the data-authorization
+step with you. That step addresses licenses, consent, confidentiality, and the
+applicable IRB or ethics rules. ELARA will not send restricted material to a
+hosted model before the planned route is approved.
+
+## What if I prefer to install it myself?
+
+The guided setup above is the simplest route. The following instructions are
+for readers who prefer to install the kit by hand or inspect its components.
+
+This repository contains the reusable parts of ELARA. These include the
 workflow instructions, platform adapters, blank project templates, validators,
-and public-domain test fixtures. It intentionally excludes the paper's validation
-study data, prompts, model calls, code, run records, and results. Those materials
-are not required to use ELARA.
+and public-domain test fixtures. The repository doesn't include the data,
+prompts, model calls, code, run records, or results from the paper's validation
+study. You don't need those materials to use the kit.
 
-Canonical stages live in `workflow/stages/`. `$elr` in Codex and `/elr` in
-Claude Code route to the same files using `project/PROJECT_STATE.md`. Stages
-that require independent model judgments also provide
-`$elr-code-observations` and `/elr-code-observations`, which implement the same
-one-unit assignment and serial-validation contract.
-
-### Three ways in
-
-- **The paste-in message above** installs ELARA into whatever folder the
-  assistant is open in and starts the guided setup. It clones the repository
-  because that works whether the repository is private or public. Once the
-  repository is public, an even shorter message also works: *"Download
-  https://raw.githubusercontent.com/jonathanhchoi/ELARA/main/scripts/bootstrap.py
-  into this folder, run it with Python 3, and follow the NEXT STEPS it prints."*
-  The script then fetches the kit itself.
-- **Install by hand:** follow the five-minute start below and run `$elr start`
-  (Codex) or `/elr start` (Claude Code) for a new project, or `$elr adopt` /
-  `/elr adopt` for one you already have (see "Adopting an existing project").
-  `python scripts/bootstrap.py` run from inside a downloaded kit does the same
-  checks the paste-in route does and writes the same `project/BOOTSTRAP.md`.
-- **Lost at any point:** `$elr help` / `/elr help` explains what ELARA is, where
-  this project stands, and what to type next; `$elr menu` / `/elr menu` lists
-  the tools.
-
-## Five-minute start
+Canonical instructions live in `workflow/stages/`. The `$elr` command in Codex
+and `/elr` in Claude Code route to those same files using
+`project/PROJECT_STATE.md`. Stages that need independent model judgments also
+provide `$elr-code-observations` and `/elr-code-observations`. Both use the same
+one-unit assignment and serial-validation procedure.
 
 ### 1. Get a clean copy
 
 Download the repository ZIP from
-[`jonathanhchoi/ELARA`](https://github.com/jonathanhchoi/ELARA), or clone it:
+[`jonathanhchoi/ELARA`](https://github.com/jonathanhchoi/ELARA), or clone it.
 
 ```text
 git clone https://github.com/jonathanhchoi/ELARA.git
 ```
 
-On Windows, if you download a ZIP, right-click it and choose **Extract All** so
-the hidden `.claude` and `.agents` folders and the rest of the directory
-structure are preserved.
+On Windows, right-click a downloaded ZIP and choose **Extract All**. This
+preserves the hidden `.claude` and `.agents` folders and the rest of the
+directory structure.
 
-Keep the working copy in a **local, non-synced folder**. Cloud-synced locations
-such as Google Drive, OneDrive, and Dropbox can interfere with append-only logs,
-resurrect superseded files, and copy restricted source material into cloud
-storage. Stage 00 can initialize local Git change tracking; skip that step inside
-a cloud-synced folder.
+Keep the working copy in a local, non-synced folder. Stage 00 can initialize
+local Git change tracking, but you should skip that option in a cloud-synced
+folder. Use one clean copy for each research project.
 
-Use one clean copy for one research project. Start another project from another
-clean copy.
+### 2. Run the preflight
 
-### 2. Install the validator and run the preflight
-
-With Python 3.10 or newer, run from the repository root:
+ELARA requires Python 3.10 or newer. From the repository root, run the following
+commands.
 
 ```text
 python -m pip install -r requirements.txt
 python scripts/doctor.py
 ```
 
-(`py` may replace `python` on Windows.) The doctor detects installed agent
-hosts, checks their versions, validates the kit and its dependency, and runs a
-temporary one-unit `prepare`/`submit`/`status`/`merge` exercise. The exercise
+On Windows, `py` may replace `python`. The doctor detects installed agent hosts,
+checks their versions, validates the kit and its dependency, and performs a
+temporary one-unit `prepare`/`submit`/`status`/`merge` exercise. This exercise
 uses no model and no network. Resolve every reported failure before continuing.
-`python scripts/bootstrap.py` does both steps at once (it installs the
-dependency, falling back to a `.venv` if the system Python is locked down, runs
-the doctor, and writes `project/BOOTSTRAP.md`).
+
+You can instead run `python scripts/bootstrap.py`. It installs the dependency,
+uses a `.venv` if the system Python is locked down, runs the doctor, and writes
+`project/BOOTSTRAP.md`.
 
 ### 3. Open the repository root
 
-Choose either platform.
+For Codex, install or open a supported surface using the
+[official documentation](https://developers.openai.com/codex/). Open the folder
+that directly contains `AGENTS.md`. Ask the agent to list the repository-local
+skills and confirm that `$elr` is available, then run `$elr start`.
 
-**Codex**
+For Claude Code, follow the
+[official installation guide](https://code.claude.com/docs/en/installation).
+Open a terminal in the repository root and run `claude`. Type `/skills` and
+confirm that `/elr` appears, then run `/elr start`. Claude Code v2.1.154 or later
+is required for the saved dynamic workflow used in Stage 11.
 
-1. Install or open a supported Codex surface using the
-   [official Codex documentation](https://developers.openai.com/codex/).
-2. Open the folder containing `AGENTS.md` as the workspace.
-3. Ask: `List the repository-local skills and confirm that $elr is available.`
-4. Run `$elr start`.
-
-**Claude Code**
-
-Install Claude Code using its
-[official setup guide](https://code.claude.com/docs/en/installation), then open
-a terminal in the repository root and run:
-
-```text
-claude
-```
-
-Type `/skills` and confirm that `/elr` is present, then run `/elr start`.
-Claude Code v2.1.154 or later is required for the saved Stage 11 dynamic
-workflow.
-
-If a skill does not appear, confirm that the folder you opened directly contains
-both `AGENTS.md` and the hidden platform folder. A double-nested ZIP extraction
-is the most common cause. Accept the workspace trust prompt, update older
+If a skill does not appear, make sure the folder you opened directly contains
+both `AGENTS.md` and the hidden folder for your platform. A double-nested ZIP
+extraction is a common cause. Accept the workspace trust prompt, update older
 installations, and use the platform's diagnostic command if needed.
 
 ### 4. Add your materials
 
-Read `project/inputs/README.md`, then place papers, research notes, seed
-citations, data dictionaries, and authorized source files in `project/inputs/`.
-Stage 00 inventories and hashes those inputs. After inventory, add corrections
-or replacements under new names instead of overwriting files.
+Read `project/inputs/README.md`. Then place papers, notes, seed citations, data
+dictionaries, and authorized source files in `project/inputs/`. Stage 00
+inventories and hashes them. After that inventory, add a correction or
+replacement under a new name instead of overwriting the earlier file.
 
-Before starting, be ready to state:
+Before starting, be ready to describe the following items.
 
-- the working project name and intended contribution;
-- whether you want the optional conception stage or already have a question;
-- the people, institutions, jurisdictions, periods, and source types in scope;
-- known license, confidentiality, terms-of-service, IRB, or ethics restrictions;
-- the databases, APIs, models, subscriptions, and budget available; and
-- anything that must never be sent to a hosted model.
+- The working project name and intended contribution
+- Whether you have a question or want help developing one
+- The people, institutions, jurisdictions, periods, and sources in scope
+- Any license, confidentiality, terms-of-service, IRB, or ethics restrictions
+- The databases, APIs, models, subscriptions, and budget available
+- Anything that must never be sent to a hosted model
 
-Unanswered items become recorded open questions, not silent defaults. Do not
-place licensed, confidential, sealed, privileged, or personal data in the
-workspace—or send it to a hosted model—until the applicable authorization is
-confirmed. ELARA has a hard data-authorization gate before corpus processing.
+`Don't know` is a valid answer. ELARA records it as an open question rather than
+filling the gap with a silent default.
 
-### What to expect in your first session
+### 5. Start the project
 
-Stage 00 opens with a short orientation, checks the environment, and asks
-whether you want the whole pipeline or specific tools (and shows the menu).
+Use `$elr start` in Codex or `/elr start` in Claude Code. The first session
+checks the environment and asks whether you want the pipeline or specific tools.
+For the pipeline, it interviews you one question at a time and drafts the
+project charter. Approving that charter is the first gate.
 
-On the whole pipeline it interviews you one question at a time (project name
-and contribution; whether to brainstorm a question or bring your own; scope;
-restrictions; databases, models, and budget; anything that must stay off hosted
-models; optionally the venue you are writing for). "Don't know" is a valid
-answer and is recorded as an open question. It then drafts a project charter and
-stops: approving the charter is the first gate. Every later stage ends the same
-way, at a decision that is yours, and nothing advances on silence; between gates
-the assistant summarizes what it did and offers the next step, and goes on when
-you say so. Stages 02, 03, and 11 run long; start them and walk away.
+For a specific tool, ELARA asks for a project name and the task. It then asks
+for the materials and prior decisions that the tool needs. If you run a stage
+out of sequence, its reports distinguish decisions you vouch for from work that
+ELARA independently verified. The menu returns when the task is done.
 
-With specific tools it asks two questions (a name for the project and what you
-want done), sets up the workspace with a short charter, asks for whatever the
-tool you chose needs — a stage run out of sequence also asks which earlier
-decisions you vouch for, and says so in its reports — and runs it. When the
-tool finishes, the menu comes back.
+Stages 02, 03, and 11 can take a long time. You can start them and return later.
 
-`$elr status` / `/elr status` says where you are; `$elr resume` / `/elr resume`
-picks up wherever you left off, in a new session, because the state lives in
-`project/PROJECT_STATE.md`, not in the chat.
+## Can I bring an existing project?
 
-### 5. Resume at any time
+Yes. Your memo, literature review, codebook, prompt, coded data, analysis,
+draft, or referee letter can remain where it is. Run `$elr adopt` or `/elr
+adopt`, or choose a tool from the menu. Large files can remain at a path you
+identify rather than being copied into the workspace.
 
-Open the same repository root and use:
+ELARA inventories the existing work and imports unchanged copies into
+`project/artifacts/imported_v001/`. It pins those copies as the active artifacts
+for later stages. It can record any gate you explicitly vouch for with the basis
+`researcher-asserted`. The resulting adoption map identifies what each stage has
+and places the project at the first stage that still needs to run. Your original
+files are never moved, renamed, or edited.
 
-```text
-$elr resume       # Codex
-/elr resume       # Claude Code
-```
-
-`$elr status` and `/elr status` report the current stage, usage mode,
-approvals, active artifact versions, last-run counts, and outstanding
-researcher inputs; `$elr menu` / `/elr menu` lists the tools. The router reads
-`project/PROJECT_STATE.md` rather than relying on chat history.
-
-## Adopting an existing project
-
-You do not have to start from a blank question. Whatever exists (a memo, a
-literature review, a codebook or prompt, coded data, analysis code and results,
-a draft, referee letters) can stay wherever it is — in the folder ELARA was
-installed into, under `project/inputs/existing/`, or at a path you name for
-anything too large to copy — and you run `$elr adopt` / `/elr adopt` (or pick a
-tool from `$elr menu` / `/elr menu`). Stage 00 walks a checklist of what you
-have, proposes a preset or the tool you picked, imports your files unchanged
-into `project/artifacts/imported_v001/`, pins them as the artifacts later stages
-will use, records the gates you vouch for as approvals with basis
-`researcher-asserted` (any gate can be asserted — the point is to make your
-existing judgment usable, not to re-litigate it), writes an adoption map saying
-what each stage has, and lands the pipeline at the first stage that still needs
-to run. Your originals are never moved, renamed, or edited; ELARA reads from
-the imported copies.
-
-| Preset | You have | ELARA lands at |
+| Preset | You have | ELARA begins at |
 |---|---|---|
-| Question only | a chosen question and contribution | `02-preemption-review` (Stage 01 skipped) |
-| Design in hand | methods, a codebook, schema, or prompt | `06-data-authorization`, or `07`/`08` if you assert authorization (and adversarial review) |
-| Data in hand | coded data, with or without a codebook | `12-interpretive-verification`, or `13`/`14` if you assert a verification (and human validation) |
-| Results in hand | analysis code and results | `16-replication-package`, or `17-integrate-manuscript` if you assert a package |
-| Publication only | a draft, perhaps a referee letter | `17-integrate-manuscript` if results are to be integrated, else `18-cite-check`; the utilities work at once |
+| Question only | A chosen question and contribution | `02-preemption-review` after skipping Stage 01 |
+| Design in hand | Methods, a codebook, schema, or prompt | `06-data-authorization`, or `07`/`08` if you also assert authorization and adversarial review |
+| Data in hand | Coded data, with or without a codebook | `12-interpretive-verification`, or `13`/`14` if you also assert verification and human validation |
+| Results in hand | Analysis code and results | `16-replication-package`, or `17-integrate-manuscript` if you assert a package |
+| Publication only | A draft and perhaps a referee letter | `17-integrate-manuscript` for results integration, otherwise `18-cite-check`. The manuscript utilities are immediately available |
 
-Adoption cannot supply a few facts after the fact, and the adoption map says so
-where they apply: if analyses ran before any preregistration (or none exists),
-they are labeled not preregistered unless you import a dated record; if you
-cannot list which units were used to tune the prompt or codebook, Stage 13
-reports its sample as not held out; work you already audited is re-audited when
-Stages 12 or 18 run. None of this blocks the pipeline; it changes what the
-reports say ELARA verified.
+Adoption cannot reconstruct facts that were never recorded. An analysis without
+a dated preregistration remains labeled as not preregistered. A human-validation
+sample remains labeled as not held out if you cannot identify which units were
+used to tune the prompt or codebook. Work you already audited is audited again
+when Stages 12 or 18 run. These limitations don't block the pipeline, but they
+change what ELARA reports as verified.
 
-## Try a ten-minute demo first (optional)
+## Can I try a short demonstration?
 
-Use a **scratch copy of ELARA**, never the copy for a real project.
+Use a scratch copy of ELARA rather than the copy for a real project.
 
-1. **Interactive demo (uses model tokens).** Move the files from
-   `tests/fixtures/minimal_public_domain/inputs/` and its
-   `project_question.md` into `project/inputs/`, run `$elr start` or
-   `/elr start`, and answer the Stage 00 interview with the fixture's project
-   question.
-2. **Deterministic demo (free; requires Python).** Run
-   `python tests/fixtures/public_domain_e2e/rebuild.py --output build`. It
-   produces a miniature deterministic pass over Stages 08–16 without model or
-   network calls.
+1. The interactive demonstration uses model tokens. Move the files from
+   `tests/fixtures/minimal_public_domain/inputs/` and its `project_question.md`
+   into `project/inputs/`. Run `$elr start` or `/elr start`, then use the
+   fixture's project question in the interview.
+2. The deterministic demonstration is free and requires Python. Run
+   `python tests/fixtures/public_domain_e2e/rebuild.py --output build`. It makes
+   a miniature deterministic pass over Stages 08 through 16 without a model or
+   network call.
 
-Delete the scratch copy afterward. Demo outputs do not belong in a real project.
+Delete the scratch copy when you are finished. Its outputs do not belong in a
+real project.
 
-## The six paper steps
+## How does the kit correspond to the paper?
 
-ELARA's nineteen operational stages implement the six-step framework in the
-paper:
+ELARA's nineteen operational stages implement the paper's six-step framework.
 
 | Paper step | ELARA stages | Purpose |
 |---|---|---|
-| Setup | `00-initialize` | Establish the project workspace, inputs, access, and state. |
-| 1. Project viability | `01`–`03` | Select a question, review preemption, and audit feasibility. |
-| 2. Methods | `04`–`09` | Design methods, freeze the coding instrument, authorize data use, adversarially review, pilot, and preregister. |
-| 3. Data acquisition | `10`–`11` | Acquire the corpus and generate structured data. |
-| 4. Validation | `12`–`13` | Verify interpretive support and benchmark against blinded human coding. |
-| 5. Analysis, robustness, and replication | `14`–`16` | Analyze, correct for measurement error, test robustness, and build a verified replication package. |
-| 6. Publication (optional) | `17`–`19` | Integrate results into the researcher's first draft, audit citations, and revise with permission. |
+| Setup | `00-initialize` | Establish the workspace, inputs, access, and project state |
+| 1. Project viability | `01` through `03` | Select a question, review preemption, and audit feasibility |
+| 2. Methods | `04` through `09` | Design the study, freeze the coding instrument, authorize data use, review the design adversarially, pilot, and preregister |
+| 3. Data acquisition | `10` through `11` | Assemble the corpus and generate structured data |
+| 4. Validation | `12` through `13` | Verify interpretive support and benchmark against blinded human coding |
+| 5. Analysis, robustness, and replication | `14` through `16` | Analyze the data, correct for measurement error, test robustness, and build a verified replication package |
+| 6. Publication | `17` through `19` | Integrate results into the researcher's draft, audit citations, and revise with permission |
 
-Stage 17 is integration-only. ELARA will not draft the first manuscript or turn
-an outline into a paper; the researcher supplies a substantive draft and retains
-control over the thesis, framing, organization, and voice.
+The publication steps are optional. Stage 17 only integrates results into an
+existing substantive draft. ELARA won't write the first draft or turn an
+outline into a paper. The researcher retains control over the thesis, framing,
+organization, and voice.
 
-See `PIPELINE.md` for the stage-by-stage map and failure routes.
+See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
-## Manuscript work: the publication profile and utilities
+## How does ELARA handle manuscript work?
 
-Voice, venue, and formatting are the researcher's. Before Stage 17, copy
+Voice, venue, and formatting belong to the researcher. Before Stage 17, copy
 `workflow/templates/publication_profile_template.md` to
-`project/PUBLICATION_PROFILE_v001.md`, fill in the venue and audience, tone and
-exemplars, whether to match your existing voice, prohibited constructions and
-punctuation preferences, citation style, and the QA and deliverables you want
-(compile and inspect every page, change log, redline, number of review passes),
-and pin it in `project/PROJECT_STATE.md` as `publication_profile`. To change it,
-save a new version and repin. Stages 17 and 19 and the utilities below read the
-active profile on demand and record its version and hash; it governs prose only
-and cannot relax a guardrail or gate. If no profile exists, those stages ask
-before writing prose.
+`project/PUBLICATION_PROFILE_v001.md`. Use the profile to record the venue,
+audience, tone, relevant examples, citation style, and whether ELARA should
+match your existing voice. You can also state constructions or punctuation to
+avoid and specify the quality checks and deliverables you want. These may
+include compilation, inspection of every page, a change log, a redline, and a
+set number of review passes.
 
-Three optional utilities cover manuscript tasks that are not pipeline stages
-(`$elr-...` in Codex, `/elr-...` in Claude Code): `elr-add-citations` retrieves
-and adds only the citations you marked, in the profile's citation style, then
-routes the new version through the audit-only Stage 18; `elr-proofread` reports
-typos, grammar, clarity, tone, style tells, internal consistency, and venue
-compliance and fixes only clear errors when you permit it; `elr-apply-markup`
-transcribes a hand-marked PDF into an edit list, stops for your review, then
-applies exactly the approved edits. Their canonical instructions are in
-`workflow/utilities/`; the shared invariants for any manuscript edit are in
+Pin the profile in `project/PROJECT_STATE.md` as `publication_profile`. Save and
+pin a new version whenever you change it. The publication stages record the
+active profile's version and hash. The profile governs prose and deliverables,
+but it cannot relax an approval gate or shared guardrail. If no profile exists,
+ELARA asks for one before writing prose.
+
+Three optional utilities address manuscript tasks outside the sequential
+pipeline. `$elr-add-citations` retrieves and adds only the citations you marked,
+then sends the new version through the audit-only Stage 18. `$elr-proofread`
+reports issues involving grammar, clarity, tone, style, consistency, and venue
+rules. It fixes only clear errors that you permit. `$elr-apply-markup`
+transcribes a hand-marked PDF into an edit list, stops for your review, and then
+applies only the approved edits. Claude Code uses the same command names with a
+leading slash.
+
+The canonical utility instructions are in `workflow/utilities/`. The shared
+rules for manuscript edits are in
 `workflow/shared/manuscript-editing-contract.md`.
 
-## Coding units and parallel work
+## How does parallel coding work?
 
-ELARA assigns one observation or coding unit to each fresh worker context. A
-coding unit may contain one document or several related documents, as defined by
-the approved codebook and unit-space manifest. Document boundaries do not
-silently determine the observation unit. Each worker sends its return envelope
-through the deterministic controller's `submit` command; the controller validates
-the sealed assignment, schema, IDs, and unique path before creating the return,
-refuses overwrites, and later merges returns serially.
+ELARA gives one observation or coding unit to each fresh worker context. The
+approved codebook and unit-space manifest define the coding unit, which may
+contain one document or several related documents. File boundaries do not
+silently determine the unit of observation.
 
-## Modes and approvals
+Each worker submits its response through the deterministic controller. The
+controller checks the sealed assignment, schema, identifiers, and unique output
+path before creating the canonical return. It refuses overwrites and merges
+validated returns serially.
 
-Each stage declares an `interaction_profile`:
+## What are the interaction modes and approval rules?
 
-- `normal`: gather an interactive researcher decision;
-- `plan`: inspect and plan without file changes;
-- `execute`: perform a bounded approved task, using a durable long-running mode
-  for stages marked `long_running: true`; and
-- `plan_then_execute`: complete a read-only plan, stop for approval, and execute
-  only after an explicit handoff.
+Each stage declares an `interaction_profile`.
 
-ELARA never silently crosses project selection, feasibility, data authorization,
-methods or codebook approval, pilot acceptance, preregistration, blind
-adjudication, or manuscript-edit permission. Silence is not approval.
+- `normal` gathers an interactive researcher decision.
+- `plan` inspects the project and proposes a plan without changing files.
+- `execute` performs one bounded approved task. It uses a durable mode when the
+  stage is marked `long_running: true`.
+- `plan_then_execute` completes a read-only plan and stops. Work begins only
+  after an explicit handoff.
 
-## Ground rules
+ELARA never silently crosses project selection, feasibility, data
+authorization, methods or codebook approval, pilot acceptance, preregistration,
+blind adjudication, or permission to edit a manuscript. Silence is not
+approval.
 
-- Analyze supplied or actually retrieved text; never invent cases, citations,
-  quotations, doctrine, data, or design decisions from memory.
-- Use fixed schemas, quote anchors where feasible, explicit evidence paths for
-  relational or synthesized labels, and an `uncertain` escape valve.
-- Preserve inputs, raw prompts, raw outputs, approvals, and audit history.
-  Reruns create new timestamped and `_vNNN` artifacts.
-- Reconcile exact attempted, succeeded, failed, unusable, and outstanding counts.
-  Missing or unusable units become typed gap rows, not silent exclusions.
-- Retrieve and read sources before relying on them. Record provenance and
-  supporting evidence; report unavailable sources as unavailable.
-- Keep audit stages separate from correction stages.
-- Reserve questions, framing, design, gates, adjudication, amendments, and
-  publication decisions for the researcher.
-- Treat named techniques and numeric defaults as dated choices to recheck at
-  design time; treat authorization, gates, blinding, quarantine, preregistration,
-  and audit separation as invariants.
+## What ground rules does ELARA follow?
 
-The complete shared constitution is in `AGENTS.md`; artifact and audit rules are
-in `workflow/shared/`.
+- Analyze text you supplied or material that was actually retrieved. Never
+  invent cases, citations, quotations, doctrine, data, or design decisions from
+  memory.
+- Use fixed schemas and quote anchors where feasible. Use explicit evidence
+  paths for relational or synthesized labels, and include an `uncertain` escape
+  valve.
+- Preserve inputs, raw prompts, raw outputs, approvals, and audit history. A
+  rerun creates a new timestamped or `_vNNN` artifact.
+- Reconcile exact attempted, succeeded, failed, unusable, and outstanding
+  counts. Record missing or unusable units as typed gaps rather than excluding
+  them silently.
+- Retrieve and read a source before relying on it. Record its provenance and
+  supporting evidence, and report an unavailable source as unavailable.
+- Keep an audit separate from the correction it may prompt.
+- Leave research questions, framing, design, gates, adjudication, amendments,
+  and publication decisions to the researcher.
+- Recheck named techniques and numeric defaults when designing a project. Treat
+  authorization, gates, blinding, quarantine, preregistration, and audit
+  separation as fixed safeguards.
 
-## Repository map
+The complete shared rules are in [AGENTS.md](AGENTS.md). Artifact and audit
+requirements are in `workflow/shared/`.
+
+## What is in the repository?
 
 ```text
-AGENTS.md                       Shared constitution and state router
+AGENTS.md                       Shared rules and state router
 CLAUDE.md                       Claude-specific adapter
-PIPELINE.md                     Human-readable workflow map, router commands, and the menu of tools
-requirements.txt                Bounded Python runtime dependency
-workflow/stages/NN-*.md         Canonical sequential stage prompts
-workflow/utilities/             Optional manuscript utilities (add citations, proofread, apply markup)
-workflow/shared/                Guardrails, artifact/fan-out/manuscript contracts, fresh-review protocol
-workflow/templates/             Preregistration skeleton and publication profile template
+PIPELINE.md                     Workflow map, router commands, and tools menu
+requirements.txt                Bounded Python dependency
+workflow/stages/NN-*.md         Canonical sequential stage instructions
+workflow/utilities/             Optional manuscript utilities
+workflow/shared/                Guardrails and artifact, fan-out, and manuscript contracts
+workflow/templates/             Preregistration and publication-profile templates
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
 .claude/workflows/              Claude one-unit fan-out workflow
-project/                        Blank state, input, log, and output structure (project/BOOTSTRAP.md is the installer's report)
-scripts/bootstrap.py            Installs the kit into the folder you work in and checks it
-scripts/                        Standalone validators and fan-out controller
-tests/                          Package-maintenance tests and public fixtures
+project/                        Blank project state, inputs, logs, and outputs
+scripts/bootstrap.py            Safe installer and setup check
+scripts/                        Validators and fan-out controller
+tests/                          Maintenance tests and public fixtures
 ```
 
-### Installing into an existing folder
+There is no `benchmarks/` directory or validation-study archive in this
+repository.
 
-`scripts/bootstrap.py` copies the kit into a folder without overwriting anything
-already there. If the folder has its own `README.md` or `LICENSE`, the kit's are
-installed as `ELARA_README.md` and `LICENSE.ELARA`; an existing `.gitignore` or
-`requirements.txt` gets the kit's missing lines appended in a marked block; an
-existing `AGENTS.md` or `CLAUDE.md` gets the kit's text placed first, in a marked
-block, with yours after it. Everything that was in the folder is listed in
-`project/BOOTSTRAP.md` so that Stage 00 can offer to import it. Run it again
-with `--update` to refresh the kit's own files from GitHub after a new release
-(project state, ledgers, and your files are never touched); the doctor and the
-validators ignore files that are not the kit's.
+### What happens when I install into an existing folder?
 
-There is deliberately no `benchmarks/` directory and no validation-study archive
-in this repository.
+`scripts/bootstrap.py` copies the kit without overwriting an existing file. If
+the folder already has a `README.md` or `LICENSE`, ELARA installs its versions as
+`ELARA_README.md` and `LICENSE.ELARA`. It appends missing lines from its own
+`.gitignore` or `requirements.txt` in a marked block. It places the ELARA text
+first in an existing `AGENTS.md` or `CLAUDE.md`, also in a marked block, and
+leaves your text after it.
 
-## Preflight options
+The installer lists every preexisting file in `project/BOOTSTRAP.md`. Stage 00
+uses that list when it offers to import existing work. Run the installer again
+with `--update` to refresh ELARA's own files from GitHub. It does not change
+project state, ledgers, or your files. The doctor and validators ignore files
+that are not part of the kit.
 
-Require a particular host, both hosts, or perform package maintenance without a
-host check:
+## What else can the preflight check?
+
+You can require a particular host, check both hosts, or run package-maintenance
+checks without testing a host.
 
 ```text
 python scripts/doctor.py --platform codex
@@ -435,44 +397,48 @@ python scripts/doctor.py --platform all
 python scripts/doctor.py --platform none
 ```
 
-`--platform none` is for maintainers and does not establish that an agent host is
-ready. Stage 00 can capture a machine-readable, secret-free capability record:
+The `--platform none` option is for maintainers. It doesn't establish that an
+agent host is ready. Stage 00 can also save a machine-readable capability record
+that contains no secrets.
 
 ```text
 python scripts/doctor.py --json
 ```
 
 Python and `jsonschema` are required for the deterministic fan-out controller
-and validators, not for the earliest interactive design discussion.
+and validators. They aren't required for the earliest design discussion.
 
-## Plugins, MCP servers, and hooks
+## What about plugins, MCP servers, and hooks?
 
-ELARA deliberately installs no third-party plugin, MCP server, credential, or
-repository hook. Research databases, storage systems, browsers, reference
-managers, and provider APIs differ by project and may expose licensed or
-restricted material. Add an integration only after Stage 06 authorizes the exact
-source, action, account, model route, and data exposure; record its name, version,
-permissions, and limitations in the active access snapshot and run manifest.
+ELARA installs no third-party plugin, MCP server, credential, or repository
+hook. Projects use different databases, storage systems, browsers, reference
+managers, and provider APIs. These tools may also expose licensed or restricted
+material.
 
-For large observation runs, use host permission rules or explicitly trusted
-deterministic hooks, where supported, to deny web, unrelated MCP tools, sibling
-return reads, and writes outside the assigned path. ELARA's strict `submit`
-command validates and creates canonical returns but is not itself a host sandbox.
-An optional plugin may distribute future ELARA updates, but one clean repository
-copy remains the authoritative, stateful workspace for one project.
+Add an integration only after Stage 06 authorizes the exact source, action,
+account, model route, and data exposure. Record its name, version, permissions,
+and limitations in the active access snapshot and run manifest.
 
-## Cost and requirements
+For a large coding run, use host permission rules or trusted deterministic
+hooks where supported. These controls should prevent web access, unrelated MCP
+use, sibling-return reads, and writes outside the assigned path. The strict
+`submit` command validates and creates canonical returns, but it isn't a host
+sandbox. An optional plugin may distribute later ELARA updates. A clean
+repository copy remains the authoritative workspace for one project.
 
-Stage 00 records a spending limit and Stage 03 obtains current prices and builds
-project-specific cost and time estimates before expensive work begins. Nothing
-beyond conception and feasibility proceeds until the researcher approves the
-feasibility decision.
+## What does ELARA cost, and what does it require?
 
-ELARA requires macOS, Windows, or Linux; Python 3.10 or newer with the packages
-in `requirements.txt`; Codex or Claude Code with repository-local skill support;
-internet access for installation and retrieval; adequate local storage; and
-lawful and ethical authorization for the selected data and model route. A stage
-checks any additional tool it needs before relying on it.
+Stage 00 records a spending limit. Stage 03 retrieves current prices and makes
+project-specific estimates of cost and time before expensive work begins.
+Nothing beyond conception and feasibility proceeds until the researcher
+approves the feasibility decision.
+
+ELARA runs on macOS, Windows, and Linux. It requires Python 3.10 or newer with
+the packages in `requirements.txt`, plus Codex or Claude Code with
+repository-local skill support. Installation and research retrieval require
+internet access. A project also needs adequate local storage and lawful,
+ethical authorization for its data and model route. Each stage checks any
+additional tool before relying on it.
 
 ## License
 
