@@ -10,9 +10,10 @@ The script copies the kit into the target folder without overwriting anything
 that is already there, merges the few files that must be shared (.gitignore,
 requirements.txt, and any AGENTS.md or CLAUDE.md the folder already has),
 installs the kit's one Python dependency, runs scripts/doctor.py, writes
-project/BOOTSTRAP.md, and prints what the assistant should do next. It needs
-only the Python standard library. When it is run from inside a kit copy it
-installs from that copy; otherwise it downloads the kit from GitHub.
+project/BOOTSTRAP.md, removes a temporary `.elara-kit` copy it was run from,
+and prints what the assistant should do next. It needs only the Python standard
+library. When it is run from inside a kit copy it installs from that copy;
+otherwise it downloads the kit from GitHub.
 
 Like scripts/doctor.py, this file avoids newer Python syntax (no f-strings, no
 modern type annotations) so that an old interpreter can still parse it far
@@ -39,6 +40,7 @@ import json  # noqa: E402
 import os  # noqa: E402
 import platform  # noqa: E402
 import shutil  # noqa: E402
+import stat  # noqa: E402
 import subprocess  # noqa: E402
 import tempfile  # noqa: E402
 import zipfile  # noqa: E402
@@ -113,6 +115,30 @@ class BootstrapError(Exception):
 
 def utc_now():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _force_writable(function, path, _excinfo):
+    # Git checkouts contain read-only pack files, which shutil.rmtree cannot
+    # delete on Windows without clearing the flag first.
+    os.chmod(path, stat.S_IWRITE)
+    function(path)
+
+
+def remove_tree(path):
+    """Delete a directory tree, including read-only files; return True on success."""
+    try:
+        if sys.version_info >= (3, 12):
+            shutil.rmtree(path, onexc=_force_writable)
+        else:
+            shutil.rmtree(path, onerror=_force_writable)
+    except OSError:
+        return False
+    return not Path(path).exists()
+
+
+def is_temporary_kit_name(name):
+    """A kit copy cloned or unzipped just to install from, by the README's convention."""
+    return str(name).startswith(".elara")
 
 
 def is_kit_root(path):
@@ -765,10 +791,16 @@ def next_steps(summary):
         )
     steps.append("Use this Python for ELARA scripts: " + str(summary.get("python_for_kit")))
     if summary.get("temporary_source"):
-        steps.append(
-            "The kit copy at ./" + str(summary["temporary_source"]) + " was only needed for installation; "
-            "delete that folder now (everything is installed here)."
-        )
+        if summary.get("temporary_source_removed"):
+            steps.append(
+                "The temporary kit copy ./" + str(summary["temporary_source"]) + " was only needed for "
+                "installation and has been removed; everything is installed here."
+            )
+        else:
+            steps.append(
+                "The kit copy at ./" + str(summary["temporary_source"]) + " was only needed for installation; "
+                "delete that folder now (everything is installed here)."
+            )
     doctor = summary.get("doctor") or {}
     if doctor and not doctor.get("skipped") and not doctor.get("ok"):
         steps.append(
@@ -925,6 +957,8 @@ def machine_summary(summary):
             "failures": doctor.get("failures") or [],
         },
         "report_path": REPORT_RELATIVE,
+        "temporary_source": summary.get("temporary_source"),
+        "temporary_source_removed": summary.get("temporary_source_removed"),
         "ok": summary["ok"],
     }
 
@@ -989,6 +1023,9 @@ def print_human(summary):
     if summary.get("removed_loose_script"):
         print("")
         print("  (The downloaded bootstrap script " + summary["removed_loose_script"] + " removed itself; a copy lives at scripts/bootstrap.py.)")
+    if summary.get("temporary_source_removed"):
+        print("")
+        print("  (The temporary kit copy ./" + str(summary["temporary_source"]) + " was removed; everything is installed here.)")
 
 
 # --------------------------------------------------------------------------- main
@@ -1064,6 +1101,13 @@ def bootstrap(args):
         (summary["doctor"].get("skipped") or summary["doctor"].get("ok"))
         and dependency.get("status") in ("present", "installed")
     )
+    # A kit copy cloned or unzipped inside the project folder under the README's
+    # `.elara-kit` convention was only needed to install from: remove it now, so
+    # the researcher's folder holds one ELARA and nobody has to delete anything.
+    # A copy under any other name (a full clone the researcher may want) stays.
+    summary["temporary_source_removed"] = None
+    if temporary_source and not args.keep and is_temporary_kit_name(temporary_source):
+        summary["temporary_source_removed"] = remove_tree(target / temporary_source)
     report_path = append_report(target, render_report(summary))
     summary["report_path"] = str(report_path)
     if loose is not None and loose.parent == target and not args.keep:
@@ -1109,7 +1153,7 @@ def main():
     parser.add_argument(
         "--keep",
         action="store_true",
-        help="keep a downloaded loose copy of this script instead of removing it after installation",
+        help="keep a downloaded loose copy of this script, and a temporary .elara-kit copy, instead of removing them after installation",
     )
     parser.add_argument(
         "--json",

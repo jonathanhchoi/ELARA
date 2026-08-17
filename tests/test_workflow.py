@@ -179,20 +179,67 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn(f"| `{utility}` |", pipeline, utility)
         contract = (ROOT / "workflow" / "shared" / "artifact-contract.md").read_text(encoding="utf-8")
         self.assertIn("researcher-asserted", contract)
-        self.assertIn("## Usage mode", contract)
+        self.assertIn("`usage` (optional)", contract)
+        self.assertNotIn("## Usage mode", contract, "usage mode lives in the front matter, not the state body")
         guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(encoding="utf-8")
         self.assertIn("agreement to continue", guardrails)
         self.assertIn("project/BOOTSTRAP.md", guardrails)
 
     def test_stage_wrappers_allow_explicitly_chosen_stages(self) -> None:
+        from sync_skill_wrappers import UTILITY_SKILLS
+
         checked = 0
         for path, content in expected_files(ROOT).items():
             name = path.parent.name
             if path.name == "SKILL.md" and name.startswith("elr-") and name[4:6].isdigit():
                 self.assertIn("adoption path", content, path)
                 self.assertIn("usage mode", content, path)
+                self.assertIn("`project_slug` is null", content, path)
                 checked += 1
+            elif path.name == "SKILL.md" and name in UTILITY_SKILLS:
+                # A utility on a fresh template first runs the two-question setup.
+                self.assertIn("`project_slug` is null", content, path)
+                self.assertIn("workflow/stages/00-initialize.md", content, path)
         self.assertEqual(checked, 2 * len(EXPECTED_STAGE_IDS))
+
+    def test_state_usage_key_is_optional_and_validated(self) -> None:
+        template = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+        self.assertIn('usage: "pipeline"', template)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "project").mkdir()
+            state = root / "project" / "PROJECT_STATE.md"
+            # A schema-1.0 state file without the key still validates.
+            state.write_text(template.replace('usage: "pipeline"\n', ""), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            initialized = template.replace("project_slug: null", 'project_slug: "fixture"').replace(
+                "updated_at: null", 'updated_at: "2026-08-16T00:00:00Z"'
+            )
+            state.write_text(initialized.replace('usage: "pipeline"', 'usage: "tools"'), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            state.write_text(initialized.replace('usage: "pipeline"', 'usage: "specific tools"'), encoding="utf-8")
+            errors = validate_state(root)
+            self.assertTrue(any("usage must be one of" in error for error in errors), errors)
+            state.write_text(initialized.replace('usage: "pipeline"', 'mode: "tools"'), encoding="utf-8")
+            errors = validate_state(root)
+            self.assertTrue(any("public state contract" in error for error in errors), errors)
+
+    def test_stage_00_records_usage_in_front_matter_and_has_a_two_question_tools_setup(self) -> None:
+        body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "00-initialize")
+        lowered = body.lower()
+        for needle in (
+            "`usage` key",
+            "usage: pipeline",
+            "usage: tools",
+            "two questions",
+            "workspace charter",
+            "recorded verbatim",
+        ):
+            self.assertIn(needle, lowered, needle)
+        self.assertNotIn("body of project_state.md", lowered)
+        pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
+        self.assertIn("`usage` key", pipeline)
+        self.assertNotIn("## Usage mode", pipeline)
 
     def test_scale_up_forbids_multiple_units_not_multiple_documents(self) -> None:
         body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "11-scale-up")

@@ -49,9 +49,9 @@ approved project charter may record a decision to skip it and route from Stage
 |---|---|
 | `start` | Stage 00, fresh path: orientation, environment check, the usage-mode question (whole pipeline or specific tools, with the menu below), a one-question-at-a-time interview, the charter, and the first gate. |
 | `adopt` | Stage 00, adoption path: inventory existing materials wherever they are (under `project/inputs/existing/`, elsewhere in the folder, or at a named path), choose a preset or a specific tool, import files as versioned artifacts, record researcher-asserted approvals, write the adoption map, and land at the first stage that still needs to run. |
-| `menu`, `tools` | Show the menu below in plain language and run what the researcher picks, importing and asserting whatever that tool needs first. |
-| `resume`, `continue`, `next` | Read `PROJECT_STATE.md`, verify the current stage's prerequisites, run it, and at its end summarize what happened and offer the next step (the next stage in pipeline mode, the menu in specific-tools mode). |
-| `status` | Report stage, status, usage mode, approvals, active versions, and outstanding inputs. |
+| `menu`, `tools` | Show the menu below in plain language and run what the researcher picks, importing and asserting whatever that tool needs first (on a fresh template, Stage 00's two-question specific-tools setup runs first). |
+| `resume`, `continue`, `next` | In pipeline mode, read `PROJECT_STATE.md`, verify the current stage's prerequisites, run it, and at its end summarize what happened and offer the next stage. In specific-tools mode, reopen the menu with "continue the current stage" as one of the choices. |
+| `status` | Report stage, status, usage mode, approvals and their basis, active versions, and outstanding inputs. |
 | `help`, `tour` | Orientation and current position; no file changes. |
 
 Every command is available as `$elr <command>` in Codex and `/elr <command>` in
@@ -64,10 +64,11 @@ Right after the orientation, Stage 00 asks one question: does the researcher
 want to follow the **whole pipeline** — every stage in order, from question to
 verified replication package, with the optional publication stages at the end —
 or use **specific tools** now? The answer is the project's *usage mode*. Stage
-00 records it in the body of `project/PROJECT_STATE.md` under a `## Usage mode`
-heading (`pipeline` or `specific tools`), in the charter, and as a decision.
-The researcher can change it at any time by saying so; the router records the
-change the same way.
+00 records it as the `usage` key of the `project/PROJECT_STATE.md` front matter
+(`pipeline` or `tools`; a state file without the key means `pipeline`), in the
+charter, and as a decision. The researcher can change it at any time by saying
+so; the router records the change the same way. Usage mode decides only what is
+offered next; it never alters a prerequisite, gate, or approval.
 
 - **Pipeline mode.** The assistant walks the researcher through each stage. When
   a stage finishes and no gate or input is pending, it summarizes in plain
@@ -78,11 +79,15 @@ change the same way.
   continue is not approval of any gate: every gate is still put to the
   researcher separately, and silence never advances anything.
 - **Specific-tools mode.** The researcher picks from the menu below. Stage 00
-  runs its adoption path aimed at that tool: it asks only for the materials the
-  tool needs, imports them, records researcher-asserted approvals for the gates
-  before it, and lands there. When the tool finishes, the router offers the menu
-  again rather than the next stage. `current_stage` records where the pipeline
-  would continue if the researcher ever switches to pipeline mode.
+  runs its adoption path aimed at that tool, with the interview cut to two
+  questions (a name for the project and what the researcher wants done): it asks
+  only for the materials the tool needs, imports them, records
+  researcher-asserted approvals for the gates before it, writes a short
+  workspace charter, and lands there. When the tool finishes, the router offers
+  the menu again rather than the next stage, and `resume` reopens the menu.
+  `current_stage` records where the pipeline would continue if the researcher
+  ever switches to pipeline mode (a project that only ever uses the manuscript
+  utilities stays at `00-initialize`, status `ready`).
 
 In either mode, a stage or utility the researcher names explicitly — from the
 menu, in a sentence, or by its own skill — is authorized to run even if it is
@@ -283,9 +288,9 @@ through every dependent artifact.
 
 `project/DECISIONS.md`, `project/RUN_LEDGER.md`, and
 `project/DEVIATIONS.md` are append-only. State may point to newer versions, but
-history is never rewritten. The body of `PROJECT_STATE.md`, below the front
-matter, carries the `## Usage mode` line (`pipeline` or `specific tools`) that
-Stage 00 writes and the router reads. `project/BOOTSTRAP.md`, when present, is
+history is never rewritten. The optional `usage` key of `PROJECT_STATE.md`
+(`pipeline` or `tools`) is the usage mode that Stage 00 writes and the router
+reads; it is validated, and absent means `pipeline`. `project/BOOTSTRAP.md`, when present, is
 the installer's report: how the kit was installed, what the folder already held,
 which Python to use, and the doctor's result. See
 `workflow/shared/artifact-contract.md` for exact naming and invalidation rules.

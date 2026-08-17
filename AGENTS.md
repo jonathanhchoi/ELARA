@@ -16,7 +16,8 @@ very fast research assistant whose work is verified, never trusted.
    project, its adoption path when the researcher says `adopt`, brings existing
    work, or picks a specific tool from the menu in `PIPELINE.md`). Stage 00
    begins with an orientation and asks whether the researcher wants the whole
-   pipeline or specific tools; that answer is the project's usage mode. If state
+   pipeline or specific tools; that answer is the project's usage mode, recorded
+   as `usage` (`pipeline` or `tools`) in the state front matter. If state
    is missing or malformed but project history exists, stop and report a
    state-recovery issue; never erase history by reinitializing. If state says
    `awaiting_approval` or `waiting_for_user`, request the recorded input and do
@@ -41,9 +42,10 @@ very fast research assistant whose work is verified, never trusted.
    Summarize in plain language what was produced and where it is, say what comes
    next and roughly how long it takes, and offer it: in `pipeline` mode the next
    stage, which runs on the researcher's agreement in the same session, still one
-   bounded stage at a time; in `specific tools` mode the menu. Agreement to
-   continue is never approval of a gate; every gate is put to the researcher
-   separately.
+   bounded stage at a time; in `specific tools` mode (`usage: tools`) the menu,
+   which `resume` also reopens. Agreement to continue is never approval of a
+   gate; every gate is put to the researcher separately. Neither usage mode
+   relaxes a gate, an authorization requirement, or audit separation.
 
 During a research run, edit only paths under `project/` that the current stage
 declares. Do not modify `AGENTS.md`, `CLAUDE.md`, `README.md`, `PIPELINE.md`,

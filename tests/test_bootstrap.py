@@ -259,7 +259,35 @@ class ExistingFolderTests(unittest.TestCase):
             self.assertEqual([record["name"] for record in summary["existing_materials"]], ["draft.docx"])
             report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
             self.assertIn(".elara-kit", report)
+            # The temporary .elara-kit copy is removed for the researcher; nothing else is.
+            self.assertIn("has been removed", report)
+            self.assertTrue(summary["temporary_source_removed"])
+            self.assertFalse(kit_copy.exists())
+            self.assertTrue((target / "draft.docx").exists())
+            self.assertTrue((target / "AGENTS.md").exists())
+
+    def test_temporary_kit_under_another_name_is_kept_and_keep_flag_preserves_it(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            target.mkdir()
+            kit_copy = target / "ELARA"
+            shutil.copytree(ROOT, kit_copy, ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache"))
+            summary = install(target, "--source", str(kit_copy))
+            self.assertTrue(summary["ok"], summary)
+            self.assertEqual(summary["temporary_source"], "ELARA")
+            self.assertIsNone(summary["temporary_source_removed"])
+            self.assertTrue(kit_copy.exists(), "a clone under a name of the researcher's choosing is left alone")
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
             self.assertIn("delete that folder", report)
+
+            other = Path(tmp) / "paper2"
+            other.mkdir()
+            kit_copy = other / ".elara-kit"
+            shutil.copytree(ROOT, kit_copy, ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache"))
+            summary = install(other, "--source", str(kit_copy), "--keep")
+            self.assertTrue(summary["ok"], summary)
+            self.assertIsNone(summary["temporary_source_removed"])
+            self.assertTrue(kit_copy.exists())
 
     def test_refuses_an_initialized_kit_copy_as_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

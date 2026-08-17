@@ -23,7 +23,10 @@ FORBIDDEN_PLACEHOLDERS = (
 # when the kit is installed into a researcher's own folder by
 # scripts/bootstrap.py, the researcher's own notes, drafts, and README at the
 # root — must never fail kit validation, whatever its encoding or formatting.
-KIT_MARKDOWN_DIRECTORIES = ("workflow", ".agents", ".claude", "tests", "scripts")
+KIT_MARKDOWN_DIRECTORIES = ("workflow", "tests", "scripts", ".claude/workflows")
+# Only ELARA's own skill directories are kit surfaces; a researcher's other
+# skills in the same .agents/ or .claude/ tree are theirs and are not scanned.
+KIT_SKILL_ROOTS = (".agents/skills", ".claude/skills")
 KIT_TOP_LEVEL_FILES = ("AGENTS.md", "CLAUDE.md", "PIPELINE.md")
 KIT_README_TITLE = "# ELARA: Empirical Legal Analysis with Research Agents"
 KIT_PROJECT_FILES = (
@@ -53,11 +56,19 @@ def _kit_readmes(root: Path) -> list[Path]:
     return paths
 
 
+def _kit_skill_files(root: Path, pattern: str) -> list[Path]:
+    paths: list[Path] = []
+    for skills_root in KIT_SKILL_ROOTS:
+        paths.extend(sorted((root / skills_root).glob(f"elr*/{pattern}")))
+    return paths
+
+
 def _kit_markdown(root: Path) -> list[Path]:
     paths = [root / name for name in KIT_TOP_LEVEL_FILES]
     paths.extend(_kit_readmes(root))
     for directory in KIT_MARKDOWN_DIRECTORIES:
         paths.extend(sorted(path for path in (root / directory).rglob("*.md")))
+    paths.extend(_kit_skill_files(root, "**/*.md"))
     paths.extend(root / relative for relative in KIT_PROJECT_FILES)
     return [path for path in paths if path.is_file() and ".git" not in path.parts]
 
@@ -125,9 +136,7 @@ def validate_docs(root: Path) -> list[str]:
 
     # Only the kit's own elr* skills are checked; a researcher's other skills in
     # the same folder are theirs.
-    skill_paths = sorted((root / ".agents" / "skills").glob("elr*/SKILL.md"))
-    skill_paths += sorted((root / ".claude" / "skills").glob("elr*/SKILL.md"))
-    for path in skill_paths:
+    for path in _kit_skill_files(root, "SKILL.md"):
         meta, skill_errors = _skill_frontmatter(path)
         errors.extend(skill_errors)
         if meta.get("name") != path.parent.name:

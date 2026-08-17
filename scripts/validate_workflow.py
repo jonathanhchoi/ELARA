@@ -69,6 +69,10 @@ UNVERSIONED_OUTPUTS = {
     "project/DEVIATIONS.md",
 }
 
+# Optional state keys added after schema 1.0, and their allowed values.
+OPTIONAL_STATE_KEYS = {"usage"}
+STATE_USAGES = {"pipeline", "tools"}
+
 # Every numeric guard below (int(stage_id[:2]) and friends) relies on this
 # pattern having been checked first.
 STAGE_ID_RE = re.compile(r"\d{2}-[a-z0-9-]+")
@@ -264,8 +268,12 @@ def validate_state(root: Path) -> list[str]:
         "updated_at",
     }
     errors: list[str] = []
-    if set(meta) != required:
+    # `usage` (schema 1.1) is optional so that state files written under 1.0
+    # stay valid; absent means the whole pipeline.
+    if not required <= set(meta) <= required | OPTIONAL_STATE_KEYS:
         errors.append(f"{path}: state keys do not match the public state contract")
+    if "usage" in meta and meta["usage"] not in STATE_USAGES:
+        errors.append(f"{path}: usage must be one of {sorted(STATE_USAGES)}, not {meta['usage']!r}")
     if meta.get("status") not in STATE_STATUSES:
         errors.append(f"{path}: invalid status {meta.get('status')!r}")
     current_stage = meta.get("current_stage")

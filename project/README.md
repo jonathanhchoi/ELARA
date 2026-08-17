@@ -27,7 +27,7 @@ uses its front matter to resume safely in a fresh session.
 
 | Path | Purpose | Mutation rule |
 |---|---|---|
-| `PROJECT_STATE.md` | Current stage, status, active versions, approvals, and next user inputs; its body records the usage mode (whole pipeline or specific tools) | Mutable router; update only through verified transitions |
+| `PROJECT_STATE.md` | Current stage, status, active versions, approvals, and next user inputs; its `usage` key records the usage mode (`pipeline` for the whole pipeline, `tools` for specific tools) | Mutable router; update only through verified transitions |
 | `BOOTSTRAP.md` | The installer's report: how the kit was installed, what the folder already contained, which Python to use, the doctor's result | Written by `scripts/bootstrap.py`; a new section per run |
 | `DECISIONS.md` | Researcher choices and version-pinned gate dispositions | Append only |
 | `RUN_LEDGER.md` | Started, checkpoint, completed, failed, and interrupted run events with exact counts | Append only |

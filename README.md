@@ -16,24 +16,28 @@ setup and runs every command; you answer questions and make the calls.
    folder for a new project, or the folder that already holds your draft, data,
    or notes — nothing has to be moved. (In a terminal: `cd` into the folder and
    run `claude` or `codex`; in the desktop apps, open that folder.)
-2. **Paste this message and press Enter:**
+2. **Paste this message and press Enter** (the copy button at the top right of
+   the box copies it):
 
-   > Please set up ELARA (https://github.com/jonathanhchoi/ELARA), a workflow kit
-   > for empirical legal research, in this folder and walk me through it. Do it
-   > like this: (1) fetch the kit into a temporary subfolder with
-   > `git clone --depth 1 https://github.com/jonathanhchoi/ELARA.git .elara-kit`
-   > (if git is unavailable, download the repository ZIP and unzip it as
-   > `.elara-kit`); (2) run `python .elara-kit/scripts/bootstrap.py --into .`
-   > (try `python3` or `py` if `python` fails; if Python 3.10 or newer is
-   > missing, help me install it first) — it installs ELARA here without
-   > overwriting my files and checks the setup; (3) delete `.elara-kit`;
-   > (4) follow the NEXT STEPS the script prints: read AGENTS.md, then go through
-   > workflow/stages/00-initialize.md from its Orientation section, in plain
-   > language, one question at a time; ask me whether I want to go through the
-   > whole pipeline or use specific tools, and show me the choices. Do not delete
-   > or overwrite anything of mine.
+   ```text
+   Please set up ELARA (https://github.com/jonathanhchoi/ELARA), a workflow kit for
+   empirical legal research, in this folder and walk me through it. Do it like this:
+   (1) fetch the kit into a temporary subfolder with
+   `git clone --depth 1 https://github.com/jonathanhchoi/ELARA.git .elara-kit`
+   (if git is unavailable, download the repository ZIP and unzip it as `.elara-kit`);
+   (2) run `python .elara-kit/scripts/bootstrap.py --into .` (try `python3` or `py`
+   if `python` fails; if Python 3.10 or newer is missing, help me install it first) —
+   it installs ELARA here without overwriting my files, checks the setup, and removes
+   the temporary subfolder; (3) follow the NEXT STEPS the script prints: read AGENTS.md,
+   then go through workflow/stages/00-initialize.md from its Orientation section, in
+   plain language, one question at a time; ask me whether I want to go through the
+   whole pipeline or use specific tools, and show me the choices. Do not delete or
+   overwrite anything of mine.
+   ```
 
-3. **Answer the questions.** That is the whole setup.
+3. **Say yes** if it asks permission to run those commands, then **answer the
+   questions.** That is the whole setup. One folder is one project; for another
+   project, use another folder.
 
 **What happens next.** The assistant installs the kit into your folder (your own
 files are left exactly where they are), checks that Python and the one package
@@ -204,20 +208,28 @@ confirmed. ELARA has a hard data-authorization gate before corpus processing.
 
 ### What to expect in your first session
 
-Stage 00 opens with a short orientation, checks the environment, asks whether
-you want the whole pipeline or specific tools (and shows the menu), and
-interviews you one question at a time (project name and contribution; whether to
-brainstorm a question or bring your own; scope; restrictions; databases, models,
-and budget; anything that must stay off hosted models; optionally the venue you
-are writing for). "Don't know" is a valid answer and is recorded as an open
-question. It then drafts a project charter and stops: approving the charter is
-the first gate. Every later stage ends the same way, at a decision that is
-yours, and nothing advances on silence; between gates the assistant summarizes
-what it did and offers the next step, and goes on when you say so. `$elr status`
-/ `/elr status` says where you are; `$elr resume` / `/elr resume` picks up
-wherever you left off, in a new session, because the state lives in
-`project/PROJECT_STATE.md`, not in the chat. Stages 02, 03, and 11 run long;
-start them and walk away.
+Stage 00 opens with a short orientation, checks the environment, and asks
+whether you want the whole pipeline or specific tools (and shows the menu).
+
+On the whole pipeline it interviews you one question at a time (project name
+and contribution; whether to brainstorm a question or bring your own; scope;
+restrictions; databases, models, and budget; anything that must stay off hosted
+models; optionally the venue you are writing for). "Don't know" is a valid
+answer and is recorded as an open question. It then drafts a project charter and
+stops: approving the charter is the first gate. Every later stage ends the same
+way, at a decision that is yours, and nothing advances on silence; between gates
+the assistant summarizes what it did and offers the next step, and goes on when
+you say so. Stages 02, 03, and 11 run long; start them and walk away.
+
+With specific tools it asks two questions (a name for the project and what you
+want done), sets up the workspace with a short charter, asks for whatever the
+tool you chose needs — a stage run out of sequence also asks which earlier
+decisions you vouch for, and says so in its reports — and runs it. When the
+tool finishes, the menu comes back.
+
+`$elr status` / `/elr status` says where you are; `$elr resume` / `/elr resume`
+picks up wherever you left off, in a new session, because the state lives in
+`project/PROJECT_STATE.md`, not in the chat.
 
 ### 5. Resume at any time
 

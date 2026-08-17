@@ -96,9 +96,17 @@ that pinned path, not “latest” globbing or a filename guess.
 `PROJECT_STATE.md` front matter is machine-readable. Preserve these keys and
 types:
 
-- `schema_version`: quoted state-schema version.
+- `schema_version`: quoted state-schema version (`1.1` adds the optional
+  `usage` key; `1.0` files remain valid).
 - `workflow_version`: quoted pipeline release version.
 - `project_slug`: quoted stable slug or `null` before initialization.
+- `usage` (optional): the usage mode Stage 00 records after its orientation —
+  `pipeline` when the researcher follows the whole workflow stage by stage (the
+  router offers the next stage when one ends), or `tools` when the researcher
+  runs specific stages and utilities from the menu in `PIPELINE.md` on request
+  (the router offers the menu instead, and `resume` reopens it). Absent means
+  `pipeline`. Changing it later is a recorded decision. Usage mode never alters
+  a prerequisite, gate, or approval; it decides only what is offered next.
 - `current_stage`: quoted canonical stage ID.
 - `status`: one of `ready`, `running`, `awaiting_approval`,
   `waiting_for_user`, `failed`, `complete`, or `superseded`. Treat any other
@@ -111,12 +119,8 @@ types:
 - `last_run_id`: quoted run ID or `null`.
 - `updated_at`: quoted UTC ISO 8601 timestamp or `null` before first write.
 
-The body below the front matter is prose for humans and the router. Stage 00
-writes one line there under a `## Usage mode` heading — `pipeline` (the router
-offers the next stage when a stage ends) or `specific tools` (the router offers
-the menu in `PIPELINE.md` instead) — and changes it only when the researcher
-changes their mind. Nothing in the body alters a prerequisite, gate, or
-approval; the front matter alone routes.
+The body below the front matter is prose for humans; the front matter alone
+routes.
 
 Do not write any project file during a Plan phase. In an execution-capable
 handoff, transition state immediately before opening a run; checkpoint it during
