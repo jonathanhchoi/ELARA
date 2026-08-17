@@ -52,12 +52,11 @@ declares. Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,
 `PIPELINE.md`, the kit README (`ELARA_README.md` in a project folder;
 `README.md` in a plain clone of the kit), `workflow/`, `.agents/`, `.claude/`,
 `scripts/`, and `tests/` — unless the researcher explicitly asks to develop the
-kit itself. Files
-that were in this folder before ELARA was installed are the researcher's: never
-move, rename, edit, or delete them; import copies. `project/BOOTSTRAP.md` lists
-them, and `project/ELARA_MANIFEST.json` records which files are the kit's, which
-are shared, and which are the researcher's, so a folder both use (for example
-`scripts/`) is never a guess.
+kit itself. Files that were in this folder before ELARA was installed are the
+researcher's: never move, rename, edit, or delete them; import copies.
+`project/BOOTSTRAP.md` lists them, and `project/ELARA_MANIFEST.json` records
+which files are the kit's, which are shared, and which are the researcher's, so
+a folder both use (for example `scripts/`) is never a guess.
 
 ## Working with the researcher
 
