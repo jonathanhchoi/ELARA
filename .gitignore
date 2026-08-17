@@ -43,3 +43,6 @@ tests/.tmp/
 
 # Deterministic demo output
 /build/
+
+# Temporary download used by scripts/install.py (removed after a clean install)
+/.elara-src/

@@ -96,9 +96,17 @@ that pinned path, not “latest” globbing or a filename guess.
 `PROJECT_STATE.md` front matter is machine-readable. Preserve these keys and
 types:
 
-- `schema_version`: quoted state-schema version.
+- `schema_version`: quoted state-schema version (`1.1` adds the optional
+  `usage` key; `1.0` files remain valid).
 - `workflow_version`: quoted pipeline release version.
 - `project_slug`: quoted stable slug or `null` before initialization.
+- `usage` (optional): `pipeline` when the researcher follows the whole workflow
+  stage by stage, or `tools` when the researcher runs specific stages and
+  utilities from `workflow/shared/tool-menu.md` on request. Absent means
+  `pipeline`. Stage 00 sets it; changing it later is a recorded decision. In a
+  `tools` project, a completed stage still records its normal transition, but
+  handoffs and `resume` return to the menu instead of starting the next stage,
+  and stages are set up out of sequence through Stage 00's tools path.
 - `current_stage`: quoted canonical stage ID.
 - `status`: one of `ready`, `running`, `awaiting_approval`,
   `waiting_for_user`, `failed`, `complete`, or `superseded`. Treat any other

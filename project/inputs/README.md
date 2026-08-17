@@ -6,14 +6,17 @@ data dictionaries, pre-existing code, and corpus files you are authorized to
 process.
 
 If you are bringing an existing project into ELARA (`$elr adopt` / `/elr adopt`),
-put the work already done in `existing/`: the question memo, literature review,
-codebook or prompt, coded data, analysis code and results, replication package,
-draft, and referee letters. Stage 00 inventories and hashes them here, then copies
-the usable ones unchanged into `project/artifacts/imported_vNNN/` and pins them as
-the artifacts later stages use. Anything too large to copy can be named by path in
-the interview and is inventoried by path and hash. Manuscript drafts for Stage 17
+or running one stage on its own from the tool menu, put the work already done in
+`existing/`: the question memo, literature review, codebook or prompt, coded
+data, analysis code and results, replication package, draft, and referee
+letters. Stage 00 inventories and hashes them here, then copies the usable ones
+unchanged into `project/artifacts/imported_vNNN/` and pins them as the artifacts
+later stages use. Anything too large to copy can be named by path in the
+interview and is inventoried by path and hash. Manuscript drafts for Stage 17
 or the manuscript utilities go in `manuscript/`; a marked-up PDF for
-`elr-apply-markup` goes in `manuscript/markup/`.
+`elr-apply-markup` goes in `manuscript/markup/`. If the kit was installed into
+a folder that already held your files, the assistant offers to copy them here;
+it never moves them, and you can also copy them yourself.
 
 ## Before adding a file
 

@@ -10,7 +10,11 @@ description: "Run ELR stage 08-pilot: Pilot the complete coding pipeline. Use wh
 2. Read `workflow/stages/08-pilot.md` completely and follow it as the single source of substantive
    instructions for this stage.
 3. Confirm that the stage is current and its prerequisites and approvals are satisfied.
-   If it is not current, stop unless the researcher explicitly authorized a recovery route.
+   If the project is uninitialized or `usage` in state is `tools`, an out-of-sequence
+   request is expected: follow the tools path in `workflow/stages/00-initialize.md` (see
+   `workflow/shared/tool-menu.md`) to import what this stage needs and record the gates the
+   researcher asserts, then continue. Otherwise, if it is not current, stop unless the
+   researcher explicitly authorized a recovery route.
 4. Honor the stage's mode handoff. A skill cannot switch Plan or Goal mode by itself.
 5. Do not cross the stage's human gate. Update state and append the run ledger only as the
    canonical stage directs.

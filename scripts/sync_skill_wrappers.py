@@ -91,7 +91,11 @@ description: {json.dumps(description)}
 {extra_read}2. Read `{canonical}` completely and follow it as the single source of substantive
    instructions for this stage.
 3. Confirm that the stage is current and its prerequisites and approvals are satisfied.
-   If it is not current, stop unless the researcher explicitly authorized a recovery route.
+   If the project is uninitialized or `usage` in state is `tools`, an out-of-sequence
+   request is expected: follow the tools path in `workflow/stages/00-initialize.md` (see
+   `workflow/shared/tool-menu.md`) to import what this stage needs and record the gates the
+   researcher asserts, then continue. Otherwise, if it is not current, stop unless the
+   researcher explicitly authorized a recovery route.
 4. Honor the stage's mode handoff. A skill cannot switch Plan or Goal mode by itself.
 5. Do not cross the stage's human gate. Update state and append the run ledger only as the
    canonical stage directs.
@@ -114,7 +118,9 @@ description: {json.dumps(spec["description"])}
 2. Read `{spec["canonical"]}` completely and follow it as the single source of
    substantive instructions for this utility.
 3. This is an optional manuscript utility, not a pipeline stage: never change `current_stage`,
-   and append the run ledger and decisions only as the canonical file directs.
+   and append the run ledger and decisions only as the canonical file directs. If the project
+   is uninitialized (`project_slug` is null), first run the two-question quick setup of the
+   tools path in `workflow/stages/00-initialize.md`, then continue.
 4. Honor the utility's phases. Do not edit any manuscript file before the researcher grants
    the permission the canonical file names; a skill cannot switch Plan or Goal mode by itself.
 5. Afterwards follow the route the canonical file names (`{spec["route"]}`) rather than
@@ -137,7 +143,7 @@ def router_text() -> str:
     # model-invocable; only the per-stage wrappers are researcher-invoked.
     return '''---
 name: "elr"
-description: "Start a new project, adopt an existing one, resume, report status, or explain the empirical legal research pipeline. Use when the researcher says start, adopt, resume, continue, next, status, help, or tour, or asks which workflow stage to run."
+description: "Start a new project, adopt an existing one, pick specific tools from a menu, resume, report status, or explain the empirical legal research pipeline. Use when the researcher says start, adopt, tools, menu, resume, continue, next, status, help, or tour, or asks which workflow stage or tool to run."
 ---
 
 # Route the empirical legal research workflow
@@ -145,16 +151,24 @@ description: "Start a new project, adopt an existing one, resume, report status,
 1. Read `AGENTS.md`, `PIPELINE.md`, and `project/PROJECT_STATE.md` completely.
 2. `help` or `tour`: without touching any file, give the orientation in
    `workflow/stages/00-initialize.md` (what ELARA does and does not do, the six steps, gates,
-   the commands, the publication profile), say where this project stands, and stop.
-   `status`: without touching any file, report the current stage and status, approvals and
-   their basis (verified or researcher-asserted), active artifact versions, the last run, and
-   outstanding researcher inputs, then stop.
-3. `start` on an uninitialized template: read and follow `workflow/stages/00-initialize.md`,
-   fresh path, beginning with its orientation. `adopt`, or an uninitialized template with
-   materials under `project/inputs/existing/`: follow the same file's adoption path.
+   the two ways to use it, the commands, the publication profile), say where this project
+   stands, and stop.
+   `status`: without touching any file, report `usage` (whole pipeline or specific tools),
+   the current stage and status, approvals and their basis (verified or
+   researcher-asserted), active artifact versions, the last run, and outstanding researcher
+   inputs, then stop.
+   `tools` or `menu`: present `workflow/shared/tool-menu.md` for this host and act on the
+   researcher's choice: Stage 00's tools path when the project is uninitialized or the
+   chosen stage needs imports and asserted gates; otherwise the chosen tool's canonical file.
+3. `start`, or an uninitialized template with no verb: read and follow
+   `workflow/stages/00-initialize.md` from its orientation; it asks whether the researcher
+   wants the whole pipeline or specific tools and then takes the fresh, adoption, or tools
+   path. `adopt` (or materials under `project/inputs/existing/`) goes straight to the
+   adoption path.
 4. If state is `awaiting_approval` or `waiting_for_user`, report the exact gate or input and
    stop. Never infer approval from silence or from an earlier, different decision.
-5. Otherwise (`resume`, `continue`, `next`) read the canonical file named by `current_stage`,
+5. Otherwise (`resume`, `continue`, `next`): if `usage` is `tools`, reopen the menu and offer
+   to continue `current_stage`; else read the canonical file named by `current_stage`,
    verify its prerequisites (imported artifacts and researcher-asserted approvals recorded
    at adoption satisfy them), and follow it. If the required Plan or Goal mode is not active,
    give the researcher the exact mode command and stage invocation instead of imitating it.
@@ -267,13 +281,17 @@ def sync(root: Path, *, check: bool) -> list[str]:
             yaml_path.parent.mkdir(parents=True, exist_ok=True)
             yaml_path.write_text(desired, encoding="utf-8", newline="\n")
 
-    # Report skill directories the generator no longer produces. Orphans are
-    # never deleted automatically: they may hold researcher work or manual
-    # experiments, so removal stays a deliberate human action.
+    # Report `elr*` skill directories the generator no longer produces. Orphans
+    # are never deleted automatically: they may hold researcher work or manual
+    # experiments, so removal stays a deliberate human action. Skills outside
+    # the `elr` namespace belong to the researcher (the kit may have been
+    # installed into a folder that already had its own) and are ignored.
     for skills_root in (codex_root, root / ".claude" / "skills"):
         if not skills_root.is_dir():
             continue
         for directory in sorted(p for p in skills_root.iterdir() if p.is_dir()):
+            if not directory.name.startswith("elr"):
+                continue
             if directory / "SKILL.md" in expected:
                 continue
             relative = directory.relative_to(root).as_posix()

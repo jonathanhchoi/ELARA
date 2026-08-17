@@ -6,15 +6,20 @@ read those files but write only their declared outputs here.
 
 ## Start
 
+If you installed ELARA with the one-line quick start in the root `README.md`,
+the assistant already walks you through this. Otherwise:
+
 1. Read `inputs/README.md` and place the materials you want inventoried in
    `inputs/`. If you are bringing an existing project (a question, a codebook,
    coded data, results, a draft), put those materials in `inputs/existing/`.
 2. From the repository root, run `$elr start` in Codex or `/elr start` in Claude
-   for a new project, or `$elr adopt` / `/elr adopt` for an existing one.
+   for a new project, `$elr adopt` / `/elr adopt` for an existing one, or
+   `$elr tools` / `/elr tools` to pick specific tools from the menu.
    `$elr help` / `/elr help` explains the workflow at any time.
 3. Review the stage 00 project charter and input inventory (and, on the
-   adoption path, the adoption map and the approvals you asserted). The
-   pipeline will not proceed until you approve the charter.
+   adoption path, the adoption map and the approvals you asserted; on the tools
+   path, the two-line workspace charter). The pipeline will not proceed until
+   you approve the charter.
 
 Do not populate `PROJECT_STATE.md` by hand to skip initialization. The router
 uses its front matter to resume safely in a fresh session.
@@ -23,7 +28,7 @@ uses its front matter to resume safely in a fresh session.
 
 | Path | Purpose | Mutation rule |
 |---|---|---|
-| `PROJECT_STATE.md` | Current stage, status, active versions, approvals, and next user inputs | Mutable router; update only through verified transitions |
+| `PROJECT_STATE.md` | Usage (whole pipeline or specific tools), current stage, status, active versions, approvals, and next user inputs | Mutable router; update only through verified transitions |
 | `DECISIONS.md` | Researcher choices and version-pinned gate dispositions | Append only |
 | `RUN_LEDGER.md` | Started, checkpoint, completed, failed, and interrupted run events with exact counts | Append only |
 | `DEVIATIONS.md` | Departures, amendments, and their dispositions | Append only |

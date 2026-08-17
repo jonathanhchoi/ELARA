@@ -2,10 +2,13 @@
 
 # Claude Code adapter
 
-Use `/elr` to start, resume, or report status. Use `/elr-<stage-slug>` only when
-the router or researcher names a particular stage. The command is a thin wrapper:
-always follow the canonical `workflow/stages/NN-*.md` file and current project
-state rather than treating wrapper text as a second workflow definition.
+Use `/elr` to start, adopt, pick tools from the menu, resume, or report status.
+Use `/elr-<stage-slug>` or `/elr-<utility>` when the router or researcher names
+a particular stage or tool. The command is a thin wrapper: always follow the
+canonical `workflow/stages/NN-*.md` or `workflow/utilities/*.md` file and
+current project state rather than treating wrapper text as a second workflow
+definition. If this file did not exist when the session started (the kit was
+just installed by `scripts/install.py`), `START_HERE.md` says what to do now.
 
 Stage metadata cannot change Claude Code's permission mode automatically. Map
 the canonical `interaction_profile` as follows:

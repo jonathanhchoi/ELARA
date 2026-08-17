@@ -137,22 +137,124 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("not preregistered", lowered)
         self.assertIn("not held out", lowered)
 
-    def test_router_names_start_adopt_resume_status_help(self) -> None:
+    def test_router_names_start_adopt_tools_resume_status_help(self) -> None:
         for platform in (".agents", ".claude"):
             text = (ROOT / platform / "skills" / "elr" / "SKILL.md").read_text(encoding="utf-8")
-            for verb in ("`start`", "`adopt`", "`resume`", "`status`", "`help`"):
+            for verb in ("`start`", "`adopt`", "`tools`", "`menu`", "`resume`", "`status`", "`help`"):
                 self.assertIn(verb, text, (platform, verb))
             self.assertIn("researcher-asserted", text)
+            self.assertIn("workflow/shared/tool-menu.md", text)
+            self.assertIn("`usage`", text)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("researcher-asserted", agents)
+        self.assertIn("`usage`", agents)
+        self.assertIn("workflow/shared/tool-menu.md", agents)
         readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
         self.assertIn("elr adopt", readme)
         self.assertIn("elr help", readme)
+        self.assertIn("elr tools", readme)
         self.assertIn("what to expect in your first session", readme)
         pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8").lower()
         self.assertIn("adopting an existing project", pipeline)
+        self.assertIn("whole pipeline or specific tools", pipeline)
         contract = (ROOT / "workflow" / "shared" / "artifact-contract.md").read_text(encoding="utf-8")
         self.assertIn("researcher-asserted", contract)
+        self.assertIn("`usage`", contract)
+
+    def test_quick_start_is_one_pasted_message_and_start_here_carries_it_on(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        quick_start = readme.split("## Quick start", 1)[1].split("## The long version", 1)[0]
+        self.assertIn("git clone --depth 1 https://github.com/jonathanhchoi/ELARA.git .elara-src", quick_start)
+        self.assertIn("python .elara-src/scripts/install.py", quick_start)
+        self.assertIn("START_HERE.md", quick_start)
+        self.assertIn("whole", quick_start.lower())
+        self.assertIn("specific tools", quick_start.lower())
+        self.assertLess(quick_start.count("\n"), 80, "the quick start must stay short")
+        start_here = (ROOT / "START_HERE.md").read_text(encoding="utf-8")
+        for needle in (
+            "AGENTS.md",
+            "project/PROJECT_STATE.md",
+            "workflow/stages/00-initialize.md",
+            "workflow/shared/tool-menu.md",
+            "Orientation",
+            "never move",
+        ):
+            self.assertIn(needle, start_here, needle)
+
+    def test_tool_menu_covers_every_stage_and_utility(self) -> None:
+        from sync_skill_wrappers import UTILITY_SKILLS
+
+        menu = (ROOT / "workflow" / "shared" / "tool-menu.md").read_text(encoding="utf-8")
+        for stage_id in EXPECTED_STAGE_IDS[1:]:
+            self.assertIn(f"`elr-{stage_id}`", menu, stage_id)
+            self.assertIn(f"workflow/stages/{stage_id}.md", menu, stage_id)
+        for name, spec in UTILITY_SKILLS.items():
+            self.assertIn(f"`{name}`", menu, name)
+            self.assertIn(spec["canonical"], menu, name)
+        lowered = menu.lower()
+        for needle in (
+            "whole pipeline",
+            "specific tools",
+            "usage: pipeline",
+            "usage: tools",
+            "running a tool on its own",
+            "researcher-asserted",
+            "never moved",
+        ):
+            self.assertIn(needle, lowered, needle)
+
+    def test_stage_00_asks_pipeline_or_tools_and_has_a_tools_path(self) -> None:
+        body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "00-initialize")
+        lowered = body.lower()
+        for needle in (
+            "whole pipeline, or use specific tools",
+            "workflow/shared/tool-menu.md",
+            "tools path",
+            "t1.",
+            "t5.",
+            "workspace charter",
+            "usage to tools",
+            "never move",
+            "start_here.md",
+        ):
+            self.assertIn(needle, lowered, needle)
+
+    def test_stage_and_utility_wrappers_handle_out_of_sequence_requests(self) -> None:
+        from sync_skill_wrappers import UTILITY_SKILLS
+
+        for platform in (".agents", ".claude"):
+            for stage_id in EXPECTED_STAGE_IDS:
+                wrapper = ROOT / platform / "skills" / f"elr-{stage_id}" / "SKILL.md"
+                text = wrapper.read_text(encoding="utf-8")
+                self.assertIn("workflow/shared/tool-menu.md", text, wrapper)
+                self.assertIn("`usage`", text, wrapper)
+                self.assertIn("stop unless the researcher explicitly authorized", " ".join(text.split()), wrapper)
+            for name in UTILITY_SKILLS:
+                text = (ROOT / platform / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
+                self.assertIn("`project_slug` is null", text, name)
+                self.assertIn("workflow/stages/00-initialize.md", text, name)
+
+    def test_state_usage_key_is_optional_and_validated(self) -> None:
+        template = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+        self.assertIn('usage: "pipeline"', template)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "project").mkdir()
+            state = root / "project" / "PROJECT_STATE.md"
+            # A schema-1.0 state file without the key still validates.
+            state.write_text(template.replace('usage: "pipeline"\n', ""), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            initialized = template.replace("project_slug: null", 'project_slug: "fixture"').replace(
+                "updated_at: null", 'updated_at: "2026-08-16T00:00:00Z"'
+            )
+            state.write_text(initialized.replace('usage: "pipeline"', 'usage: "tools"'), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            state.write_text(initialized.replace('usage: "pipeline"', 'usage: "menu"'), encoding="utf-8")
+            errors = validate_state(root)
+            self.assertTrue(any("usage must be one of" in error for error in errors), errors)
+            state.write_text(initialized.replace('usage: "pipeline"', 'mode: "tools"'), encoding="utf-8")
+            errors = validate_state(root)
+            self.assertTrue(any("public state contract" in error for error in errors), errors)
 
     def test_scale_up_forbids_multiple_units_not_multiple_documents(self) -> None:
         body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "11-scale-up")

@@ -19,9 +19,15 @@ FORBIDDEN_PLACEHOLDERS = (
 )
 
 # The content scan covers only surfaces the kit ships and maintains. Everything
-# else under project/ is researcher content (inputs, artifacts, runs, corpus)
-# and must never fail kit validation, whatever its encoding or formatting.
-KIT_MARKDOWN_DIRECTORIES = ("workflow", ".agents", ".claude", "tests", "scripts")
+# else — researcher content under project/ (inputs, artifacts, runs, corpus)
+# and any file the researcher already had in the folder the kit was installed
+# into (notes.md, a draft) — must never fail kit validation, whatever its
+# encoding or formatting.
+KIT_ROOT_MARKDOWN = ("AGENTS.md", "CLAUDE.md", "README.md", "PIPELINE.md", "START_HERE.md")
+KIT_MARKDOWN_DIRECTORIES = ("workflow", "tests", "scripts", ".claude/workflows")
+# Only ELARA's own skill directories are kit surfaces; a researcher's other
+# skills in the same .agents/ or .claude/ tree are not validated.
+KIT_SKILL_ROOTS = (".agents/skills", ".claude/skills")
 KIT_PROJECT_FILES = (
     "project/README.md",
     "project/inputs/README.md",
@@ -32,10 +38,18 @@ KIT_PROJECT_FILES = (
 )
 
 
+def _kit_skill_files(root: Path, pattern: str) -> list[Path]:
+    paths: list[Path] = []
+    for skills_root in KIT_SKILL_ROOTS:
+        paths.extend(sorted((root / skills_root).glob(f"elr*/{pattern}")))
+    return paths
+
+
 def _kit_markdown(root: Path) -> list[Path]:
-    paths = sorted(root.glob("*.md"))
+    paths = [root / name for name in KIT_ROOT_MARKDOWN]
     for directory in KIT_MARKDOWN_DIRECTORIES:
         paths.extend(sorted(path for path in (root / directory).rglob("*.md")))
+    paths.extend(_kit_skill_files(root, "**/*.md"))
     paths.extend(root / relative for relative in KIT_PROJECT_FILES)
     return [path for path in paths if path.is_file() and ".git" not in path.parts]
 
@@ -101,9 +115,7 @@ def validate_docs(root: Path) -> list[str]:
             if not resolved.exists():
                 errors.append(f"{path}: broken local link {match.group(1)!r}")
 
-    skill_paths = sorted((root / ".agents" / "skills").glob("*/SKILL.md"))
-    skill_paths += sorted((root / ".claude" / "skills").glob("*/SKILL.md"))
-    for path in skill_paths:
+    for path in _kit_skill_files(root, "SKILL.md"):
         meta, skill_errors = _skill_frontmatter(path)
         errors.extend(skill_errors)
         if meta.get("name") != path.parent.name:

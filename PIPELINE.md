@@ -47,11 +47,29 @@ approved project charter may record a decision to skip it and route from Stage
 
 | Command | What happens |
 |---|---|
-| `start` | Stage 00, fresh path: orientation, environment check, one-question-at-a-time interview, charter, first gate. |
+| `start` (or no verb on a fresh template) | Stage 00: orientation, environment check, then the question "whole pipeline or specific tools?"; on the whole pipeline, the fresh path (one-question-at-a-time interview, charter, first gate) or the adoption path. |
 | `adopt` | Stage 00, adoption path: inventory existing materials under `project/inputs/existing/`, choose a preset, import files as versioned artifacts, record researcher-asserted approvals, write the adoption map, land at the first stage that still needs to run. |
-| `resume`, `continue`, `next` | Read `PROJECT_STATE.md`, verify the current stage's prerequisites, and run it. |
-| `status` | Report stage, status, approvals, active versions, and outstanding inputs. |
+| `tools`, `menu` | Present `workflow/shared/tool-menu.md` and run the chosen tool; on a fresh template, Stage 00's tools path sets up the workspace in two questions first. |
+| `resume`, `continue`, `next` | Read `PROJECT_STATE.md`, verify the current stage's prerequisites, and run it; in a `usage: tools` project, reopen the menu and offer to continue the current stage. |
+| `status` | Report usage, stage, status, approvals and their basis, active versions, and outstanding inputs. |
 | `help`, `tour` | Orientation and current position; no file changes. |
+
+Any stage or utility can also be invoked directly by name (`/elr-18-cite-check`,
+`$elr-proofread`, ...). Its wrapper reads the canonical file; if the project is
+uninitialized or `usage` is `tools`, it first runs Stage 00's tools path to
+import what the stage needs and record the gates the researcher asserts.
+
+## Whole pipeline or specific tools
+
+`project/PROJECT_STATE.md` records the researcher's choice as `usage`.
+`pipeline` (the default) means the router advances stage by stage.
+`tools` means stages and utilities run on request and out of sequence: Stage
+00's tools path does a two-question setup, imports what a chosen stage needs,
+records asserted gates, and lands on that stage; a completed stage still records
+its normal transition, but the handoff returns to the menu. Switching either way
+is a recorded decision. Neither usage relaxes a gate, an authorization
+requirement, or audit separation. The menu, grouped for researchers, is
+`workflow/shared/tool-menu.md`.
 
 ## Adopting an existing project
 
@@ -188,7 +206,8 @@ through every dependent artifact.
 
 ## Persistent state
 
-`project/PROJECT_STATE.md` is the mutable router. Valid statuses are:
+`project/PROJECT_STATE.md` is the mutable router. Its optional `usage` key is
+`pipeline` or `tools` (see above). Valid statuses are:
 
 | Status | Meaning |
 |---|---|
