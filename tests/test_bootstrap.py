@@ -434,6 +434,43 @@ class ExistingFolderTests(unittest.TestCase):
             report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
             self.assertIn("Agent host checked: none", report)
 
+    def test_cloud_sync_detection_uses_path_components_and_the_onedrive_variables(self) -> None:
+        import os
+        from unittest import mock
+
+        import bootstrap
+
+        cleared = {name: "" for name in bootstrap.ONEDRIVE_VARIABLES}
+        with mock.patch.dict(os.environ, cleared):
+            with tempfile.TemporaryDirectory() as tmp:
+                base = Path(tmp)
+                cases = {
+                    base / "OneDrive - University" / "paper": "OneDrive",
+                    base / "My Drive" / "Colab Notebooks" / "paper": "Google Drive",
+                    base / "GoogleDrive-me@example.org" / "paper": "Google Drive",
+                    base / "Dropbox (Personal)" / "paper": "Dropbox",
+                    base / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "paper": "iCloud",
+                    base / "Library" / "CloudStorage" / "Box-Box" / "paper": "a cloud storage service",
+                    base / "projects" / "paper": None,
+                    # A folder whose name merely contains the word is not a synced location.
+                    base / "notes-about-onedrive-migration" / "paper": None,
+                    base / "C--Users-me-OneDrive-Desktop-projects" / "paper": None,
+                }
+                for path, expected in cases.items():
+                    self.assertEqual(bootstrap.cloud_sync_service(path), expected, str(path))
+                    warning = bootstrap.cloud_sync_warning(path)
+                    if expected is None:
+                        self.assertIsNone(warning)
+                    else:
+                        self.assertIn(expected, warning)
+                        self.assertIn("Stage 00 offers", warning)
+                # Windows records where OneDrive lives; anything under it is synced whatever its name.
+                onedrive = base / "cloud"
+                onedrive.mkdir()
+                with mock.patch.dict(os.environ, {"OneDrive": str(onedrive)}):
+                    self.assertEqual(bootstrap.cloud_sync_service(onedrive / "paper"), "OneDrive")
+                    self.assertIsNone(bootstrap.cloud_sync_service(base / "elsewhere" / "paper"))
+
     def test_folder_counts_past_the_cap_are_reported_as_more_than(self) -> None:
         import bootstrap
 

@@ -115,16 +115,22 @@ MARK_END = "<!-- elara:end -->"
 LINE_MARK_BEGIN = "# >>> ELARA (added by scripts/bootstrap.py) >>>"
 LINE_MARK_END = "# <<< ELARA <<<"
 
+# A path component that starts with one of these names marks a folder that a
+# sync service manages ("OneDrive - University", "My Drive", "Dropbox (Personal)",
+# "GoogleDrive-name@example.org", "Mobile Documents", macOS "CloudStorage").
 CLOUD_SYNC_HINTS = (
-    "google drive",
-    "googledrive",
-    "my drive",
-    "onedrive",
-    "dropbox",
-    "icloud",
-    "mobile documents",
-    "box sync",
+    ("onedrive", "OneDrive"),
+    ("google drive", "Google Drive"),
+    ("googledrive", "Google Drive"),
+    ("my drive", "Google Drive"),
+    ("dropbox", "Dropbox"),
+    ("icloud", "iCloud"),
+    ("mobile documents", "iCloud"),
+    ("box sync", "Box"),
+    ("cloudstorage", "a cloud storage service"),
 )
+# Windows records where OneDrive lives; a folder under it is synced whatever it is called.
+ONEDRIVE_VARIABLES = ("OneDrive", "OneDriveCommercial", "OneDriveConsumer")
 
 
 class BootstrapError(Exception):
@@ -976,16 +982,61 @@ def detect_hosts():
     return {"running_inside": environment, "on_path": on_path}
 
 
-def cloud_sync_warning(target):
-    lowered = str(target).lower()
-    for hint in CLOUD_SYNC_HINTS:
-        if hint in lowered:
-            return (
-                "This folder looks like it is inside a cloud-synced location (" + hint + "). "
-                "ELARA works, but sync services can interfere with its append-only logs and "
-                "may copy restricted source material to the cloud; a local, non-synced folder is safer."
-            )
+def cloud_sync_service(target):
+    """Name the sync service this folder appears to live under, or return None.
+
+    Looks at the OneDrive locations Windows records in the environment and at the
+    folder's path components (not mere substrings of the path, so a folder whose
+    name happens to contain "onedrive" is not flagged).
+    """
+    target = Path(target)
+    try:
+        resolved = target.resolve()
+    except OSError:
+        resolved = target
+    for variable in ONEDRIVE_VARIABLES:
+        root = os.environ.get(variable)
+        if not root:
+            continue
+        try:
+            root_path = Path(root).resolve()
+        except OSError:
+            continue
+        if resolved == root_path or root_path in resolved.parents:
+            return "OneDrive"
+    for part in resolved.parts:
+        lowered = part.lower()
+        for hint, label in CLOUD_SYNC_HINTS:
+            if lowered.startswith(hint):
+                return label
     return None
+
+
+def unsynced_folder_suggestion():
+    """A concrete unsynced location to suggest: directly under the home folder."""
+    try:
+        home = Path.home()
+    except (RuntimeError, OSError):
+        return "a folder directly under your home folder"
+    return str(home / "elara" / "<project-name>")
+
+
+def cloud_sync_warning(target):
+    service = cloud_sync_service(target)
+    if not service:
+        return None
+    windows_note = (
+        " On Windows 11, Desktop and Documents are usually inside OneDrive."
+        if os.name == "nt" else ""
+    )
+    return (
+        "This folder is inside a cloud-synced location (" + service + "). ELARA works here, but "
+        "sync services can corrupt append-only logs and Git repositories mid-write, restore "
+        "superseded files, and copy restricted source material to the cloud. A local, unsynced "
+        "folder is safer, for example " + unsynced_folder_suggestion() + "." + windows_note
+        + " Stage 00 offers, before it writes any project state, to set ELARA up in such a folder "
+        "instead and import your materials from here by path; nothing of yours has to move."
+    )
 
 
 # --------------------------------------------------------------------------- report
@@ -1033,6 +1084,16 @@ def next_steps(summary):
                 "not the kit's."
             )
         steps.append(step)
+    if summary.get("cloud_sync_service"):
+        steps.append(
+            "This folder is inside a cloud-synced location (" + str(summary["cloud_sync_service"])
+            + "; see Warnings). Right after the orientation, and before any project state is "
+            "written, say so plainly and offer once to set ELARA up in an unsynced folder instead "
+            "(for example " + unsynced_folder_suggestion() + "): run `python scripts/bootstrap.py "
+            "--into <that folder>` yourself, tell the researcher to reopen the app there, and let "
+            "Stage 00 import their materials from here by path. Record their choice as a decision "
+            "either way. If they stay here, do not recommend `git init` in this folder, and say why."
+        )
     conflicts = summary.get("essential_conflicts") or []
     if conflicts:
         steps.append(
@@ -1288,6 +1349,7 @@ def machine_summary(summary):
             "advice": summary["dependency"].get("advice"),
         },
         "hosts": summary["hosts"],
+        "cloud_sync_service": summary.get("cloud_sync_service"),
         "warnings": summary.get("warnings") or [],
         "doctor": {
             "skipped": bool(doctor.get("skipped")),
@@ -1483,6 +1545,7 @@ def bootstrap(args):
             "hosts": detect_hosts(),
             "warnings": [],
         }
+    summary["cloud_sync_service"] = cloud_sync_service(target)
     warning = cloud_sync_warning(target)
     if warning:
         summary["warnings"].append(warning)

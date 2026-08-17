@@ -16,7 +16,9 @@ the setup and runs the commands. You answer its questions and make the calls.
 ## Start here
 
 1. Open Claude Code or Codex in the folder where you want to work. This can be
-   an empty folder or one that already contains your draft, data, or notes.
+   an empty folder or one that already contains your draft, data, or notes. A
+   folder that OneDrive, Google Drive, or Dropbox does not sync is best (see the
+   cautions below); the assistant will offer to move if it detects one.
 2. Paste this message and press Enter.
 
    ```text
@@ -86,7 +88,11 @@ load when the app starts.
 
 Keep the project in a local folder if you can. Google Drive, OneDrive, Dropbox,
 and similar services can interfere with append-only logs, restore superseded
-files, and copy restricted material to cloud storage.
+files, and copy restricted material to cloud storage. On Windows 11, Desktop and
+Documents are usually inside OneDrive, so choose a folder directly under your
+home folder instead (for example `C:\Users\<you>\elara\<project>`). The
+installer warns when it detects a synced location, and the assistant offers to
+set up elsewhere before anything is written; your files stay where they are.
 
 Do not place licensed, confidential, sealed, privileged, or personal material
 where the assistant can read it until ELARA has completed the data-authorization
