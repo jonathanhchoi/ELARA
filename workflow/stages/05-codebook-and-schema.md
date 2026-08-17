@@ -41,9 +41,7 @@ The agent may expose ambiguity and propose alternatives, but must not settle doc
 
 ## Mode handoff
 
-Begin in Plan Mode. Inspect the active design and metadata, enumerate every definition and schema decision, identify unresolved edge cases, and describe the validation fixtures and unit-space construction. Plan Mode is read-only: do not write any project file, artifact, state, fixture, ledger, or run directory.
-
-Stop after a decision-complete plan and provide the exact execution handoff: leave Plan Mode and execute Stage 05 to write and validate the declared artifacts, then stop at codebook-schema-approval. Normal approved execution is sufficient; /goal is optional. The resulting version may be revised after the pilot, but each pilot run must use one frozen version.
+Plan first, read-only. Inspect the active design and metadata, enumerate every definition and schema decision, identify unresolved edge cases (record a provisional `assistant-default` for each one that has a reasonable resolution), and describe the validation fixtures and unit-space construction; do not write any project file, artifact, state, fixture, ledger, or run directory until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Then execute Stage 05 to write and validate the declared artifacts, and stop at codebook-schema-approval, presenting the provisional choices there. Normal approved execution is sufficient; /goal is optional. The resulting version may be revised after the pilot, but each pilot run must use one frozen version.
 
 ## Work
 

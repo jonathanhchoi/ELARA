@@ -19,6 +19,9 @@ researcher explicitly changes the kit's governing instructions.
   named by the current stage. The researcher's agreement to continue to the
   next stage, or their choice of the whole pipeline at Stage 00, is not approval
   of any gate inside it; each gate is asked separately when it is reached.
+  Between gates, work without interrupting the researcher: §11 lists the only
+  reasons to stop, and everything else proceeds on a recorded provisional
+  default that the researcher confirms or changes at the next gate.
 - During a research run, modify only the current stage's declared outputs under
   `project/`. The kit infrastructure is read-only unless the researcher
   explicitly asks to develop the pipeline itself.
@@ -197,10 +200,72 @@ which measurement-error correction, which agreement statistic, which
 multiplicity procedure, which robustness design, which tool — check whether
 current practice has superseded it: reason from the estimand and design first,
 then verify against literature actually retrieved during this project, not
-kit memory or model memory. Present the options with evidence and record the
-researcher's decision and the sources consulted. Do the same for numeric
-defaults, which are conventions to approve, not settings to inherit silently.
+kit memory or model memory. Recommend one option with evidence, record it as a
+provisional `assistant-default` decision with the sources consulted, and keep
+working; the researcher confirms or changes it at the stage's gate (§11). Do the
+same for numeric defaults, which are conventions to approve at the gate, not
+settings to inherit silently.
 
 Currency checking belongs to design stages only. Once a design is frozen, a
 newer method, model, or tool is not a reason to change it mid-run; route the
 idea through the revision queue and amendment process like any other change.
+
+## 11. Autonomy: when to ask, when to proceed
+
+ELARA is low-touch by default. The researcher decides at gates; between gates
+the assistant works, and it interrupts the researcher only for a real gating
+issue. This section is the complete list of reasons to stop; nothing else is.
+
+- **Stop and ask only when one of these holds:**
+  1. a hard gate named by the current stage is reached (`awaiting_approval`);
+  2. the stage needs a fact, file, credential, or action that only the researcher
+     can supply — a license or institutional text, an IRB or ethics status, human
+     coders' returned files, an external registration identifier
+     (`waiting_for_user`, with the exact request);
+  3. a researcher-owned choice (§1) has no reasonable provisional default,
+     getting it wrong would waste the stage or invalidate approved work, or it
+     must be fixed before results are seen (an analysis choice the
+     preregistration left open, in Stage 14);
+  4. the next step would spend beyond the budget or limits recorded in the
+     charter, or would spend materially (a model-call fan-out, a paid API or
+     database, a run of hours) when no budget was recorded — state the projected
+     cost and ask once;
+  5. the next step is outward-facing or irreversible outside the project folder
+     (an external registration or submission, sending, publishing, deleting);
+  6. the researcher asked to be consulted more often — a checkpoint preference
+     recorded as `checkpoints` in `PROJECT_STATE.md` (`stages`, `plans`, or
+     `all`; absent or `none` means low-touch), in which case also stop before
+     starting the next stage, before executing a plan, or both.
+- **Otherwise proceed.** For every other choice, take the sensible default —
+  the kit's dated default, the researcher's stated preference, or the option
+  best supported by evidence retrieved in this project — record it as a
+  provisional decision (`decision: assistant-default` in `DECISIONS.md`, with
+  `researcher_identity: null`, a one-line rationale, and the alternatives), and
+  continue. Present every provisional decision made since the last gate at the
+  next gate, in one list, so the researcher keeps or changes each with one
+  answer; a change routes like any other change. Purely operational choices
+  (file names, formats, batch sizes, ordering, how a command is run) go in the
+  run manifest, not the decision log, unless they can affect a result.
+- **Never decide provisionally:** project selection, the feasibility go/no-go,
+  data authorization or the model route for restricted material, the content
+  frozen at preregistration, blind adjudication, a manuscript edit, or any
+  change to a frozen or approved artifact. Those are the gates.
+- **When you must ask, ask once.** Put everything you still need in one
+  message: each question concrete, with an example answer and the default you
+  will use if the researcher says "you decide"; accept "go with the defaults"
+  as an answer to all of them, and accept "don't know" as a fact to record as
+  an outstanding input, never a gap to fill silently. Prefer a message the
+  researcher can answer with one word.
+- **Plan-then-execute stages** plan first, read-only, then execute in the same
+  session; the stage's own gate is where the researcher decides. Enter Plan
+  Mode, stop, and hand off only when a stop condition above holds. Stages 17
+  and 19 are the exception by design: their plan is the
+  `manuscript-edit-permission` gate.
+- **Between stages** in `pipeline` mode, when a stage ends with no gate or
+  input pending, summarize in a few lines what was produced and where, then
+  continue into the next stage in the same session — unless a stop condition
+  holds for that stage. In `tools` mode, offer the menu instead. Agreement to
+  continue, or the choice of the whole pipeline, is never approval of a gate.
+- Proceeding on a recorded provisional default is the assistant's own,
+  disclosed decision; it is not inferring approval from silence, which remains
+  forbidden at every gate.

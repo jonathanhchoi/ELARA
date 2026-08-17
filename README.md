@@ -36,8 +36,9 @@ the setup and runs the commands. You answer its questions and make the calls.
       files, check the setup, and remove the temporary subfolder.
    3. Follow the NEXT STEPS printed by the script. Read `AGENTS.md`, then begin
       with the Orientation in `workflow/stages/00-initialize.md`. Explain things
-      in plain language and ask one question at a time. Ask whether I want the
-      whole pipeline or specific tools, and show me the choices.
+      in plain language, work out what you can from my files, and ask me only
+      what you still need, in one message. Ask whether I want the whole
+      pipeline or specific tools, and show me the choices.
 
    Do not delete or overwrite any of my files.
    ```
@@ -63,10 +64,16 @@ tasks such as a preemption review, feasibility audit, methods design, codebook,
 human validation, manuscript integration, citation checking, or proofreading.
 See [PIPELINE.md](PIPELINE.md) for the complete menu.
 
-ELARA then asks one question at a time and drafts a short project charter. It
-stops for your approval before continuing. At the end of each later step, it
-explains what it produced and what comes next. It proceeds when you agree, but
-agreement to continue never substitutes for approval at a formal gate.
+ELARA then works out what it can from your files, asks the few things it still
+needs in one message (each with a suggested answer, so "go with your
+defaults" is a complete reply), and drafts a short project charter. It stops
+for your approval before continuing. From then on it is low-touch: at the end
+of each step it says what it produced and moves on, and it interrupts you only
+for a real decision — the formal gates, a fact only you hold, or a cost beyond
+the budget you set. Choices it makes in between are recorded as provisional
+and shown to you at the next gate to keep or change. If you would rather be
+consulted before each step or before each plan, say so once and it will.
+Agreement to continue never substitutes for approval at a formal gate.
 
 If you already have a question, codebook, dataset, analysis, draft, or referee
 letter, tell the assistant. It will import copies of that work and begin at the
@@ -194,8 +201,9 @@ filling the gap with a silent default.
 
 Use `$elr start` in Codex or `/elr start` in Claude Code. The first session
 checks the environment and asks whether you want the pipeline or specific tools.
-For the pipeline, it interviews you one question at a time and drafts the
-project charter. Approving that charter is the first gate.
+For the pipeline, it infers what it can from your files, asks the rest in one
+message, and drafts the project charter. Approving that charter is the first
+gate; after it, ELARA works between gates without interrupting you.
 
 For a specific tool, ELARA asks for a project name and the task. It then asks
 for the materials and prior decisions that the tool needs. If you run a stage

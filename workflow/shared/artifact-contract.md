@@ -97,16 +97,26 @@ that pinned path, not “latest” globbing or a filename guess.
 types:
 
 - `schema_version`: quoted state-schema version (`1.1` adds the optional
-  `usage` key; `1.0` files remain valid).
+  `usage` key, `1.2` the optional `checkpoints` key; `1.0` and `1.1` files
+  remain valid).
 - `workflow_version`: quoted pipeline release version.
 - `project_slug`: quoted stable slug or `null` before initialization.
 - `usage` (optional): the usage mode Stage 00 records after its orientation —
   `pipeline` when the researcher follows the whole workflow stage by stage (the
-  router offers the next stage when one ends), or `tools` when the researcher
+  router continues into the next stage when one ends, unless a stop condition in
+  `workflow/shared/guardrails.md` section 11 holds), or `tools` when the researcher
   runs specific stages and utilities from the menu in `PIPELINE.md` on request
   (the router offers the menu instead, and `resume` reopens it). Absent means
   `pipeline`. Changing it later is a recorded decision. Usage mode never alters
   a prerequisite, gate, or approval; it decides only what is offered next.
+- `checkpoints` (optional): how often the researcher wants to be consulted
+  beyond the gates — `none` (low-touch, the default: the assistant continues
+  between stages and executes its plans without waiting, per
+  `workflow/shared/guardrails.md` §11), `stages` (pause for agreement before
+  each next stage), `plans` (pause for approval after each plan, before
+  executing it), or `all` (both). Absent means `none`. Stage 00 records the
+  researcher's answer; changing it later is a recorded decision. A checkpoint
+  preference adds pauses; it never removes a gate.
 - `current_stage`: quoted canonical stage ID.
 - `status`: one of `ready`, `running`, `awaiting_approval`,
   `waiting_for_user`, `failed`, `complete`, or `superseded`. Treat any other

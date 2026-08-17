@@ -47,10 +47,10 @@ approved project charter may record a decision to skip it and route from Stage
 
 | Command | What happens |
 |---|---|
-| `start` | Stage 00, fresh path: orientation, environment check, the usage-mode question (whole pipeline or specific tools, with the menu below), a one-question-at-a-time interview, the charter, and the first gate. |
+| `start` | Stage 00, fresh path: orientation, environment check, the usage-mode question (whole pipeline or specific tools, with the menu below), a short interview asked in one message (with a suggested default for each question), the charter, and the first gate. |
 | `adopt` | Stage 00, adoption path: inventory existing materials wherever they are (under `project/inputs/existing/`, elsewhere in the folder, or at a named path), choose a preset or a specific tool, import files as versioned artifacts, record researcher-asserted approvals, write the adoption map, and land at the first stage that still needs to run. |
 | `menu`, `tools` | Show the menu below in plain language and run what the researcher picks, importing and asserting whatever that tool needs first (on a fresh template, Stage 00's two-question specific-tools setup runs first). |
-| `resume`, `continue`, `next` | In pipeline mode, read `PROJECT_STATE.md`, verify the current stage's prerequisites, run it, and at its end summarize what happened and offer the next stage. In specific-tools mode, reopen the menu with "continue the current stage" as one of the choices. |
+| `resume`, `continue`, `next` | In pipeline mode, read `PROJECT_STATE.md`, verify the current stage's prerequisites, run it, and at its end summarize what happened and continue into the next stage in the same session unless a stop condition in `workflow/shared/guardrails.md` §11 holds. In specific-tools mode, reopen the menu with "continue the current stage" as one of the choices. |
 | `status` | Report stage, status, usage mode, approvals and their basis, active versions, and outstanding inputs. |
 | `help`, `tour` | Orientation and current position; no file changes. |
 
@@ -71,13 +71,24 @@ so; the router records the change the same way. Usage mode decides only what is
 offered next; it never alters a prerequisite, gate, or approval.
 
 - **Pipeline mode.** The assistant walks the researcher through each stage. When
-  a stage finishes and no gate or input is pending, it summarizes in plain
-  language what was produced and where it is, says what the next stage will do
-  and roughly how long it takes, and offers to continue. On the researcher's
-  agreement it runs the next stage in the same session — still one bounded stage
-  at a time, never one long-running mode for the whole pipeline. Agreement to
-  continue is not approval of any gate: every gate is still put to the
-  researcher separately, and silence never advances anything.
+  a stage finishes and no gate or input is pending, it summarizes in a few
+  plain-language lines what was produced and where it is, and continues into
+  the next stage in the same session — still one bounded stage at a time, never
+  one long-running mode for the whole pipeline — unless a stop condition in
+  `workflow/shared/guardrails.md` §11 holds for that stage (it needs something
+  only the researcher can supply, it would spend beyond the recorded budget, it
+  acts outside the project folder, or the researcher recorded a `checkpoints`
+  preference). Continuing is not approval of any gate: every gate is still put
+  to the researcher separately, and silence never advances anything.
+- **Low-touch by default.** Between gates the assistant does not interrupt the
+  researcher: `workflow/shared/guardrails.md` §11 lists the only reasons to
+  stop, and every other choice takes a sensible default, is recorded as a
+  provisional `assistant-default` decision, and is presented at the next gate
+  for the researcher to keep or change. A researcher who prefers to be
+  consulted more often says so once; Stage 00 records it as `checkpoints` in
+  `project/PROJECT_STATE.md` (`stages`, `plans`, or `all`), and the router then
+  pauses before each stage, before executing each plan, or both. Neither
+  setting relaxes a gate.
 - **Specific-tools mode.** The researcher picks from the menu below. Stage 00
   runs its adoption path aimed at that tool, with the interview cut to two
   questions (a name for the project and what the researcher wants done): it asks
@@ -174,7 +185,7 @@ version.
 | `normal` | Stay interactive and gather a researcher decision. |
 | `plan` | Inspect in Plan Mode and make no file changes. |
 | `execute` | Run a bounded approved task; use the platform's durable long-running mode for one-unit fan-out where declared. |
-| `plan_then_execute` | Finish a decision-complete read-only plan, stop for approval, then execute only the approved scope. |
+| `plan_then_execute` | Finish a decision-complete read-only plan, then continue into execution in the same session; stop for approval of the plan only when a `workflow/shared/guardrails.md` §11 stop condition holds (Stages 17 and 19 always stop: their plan is the manuscript-edit gate). |
 
 Plan phases do not alter state, ledgers, or artifacts. A mode or permission
 setting never waives a human gate, data restriction, or artifact-version rule.
@@ -290,7 +301,9 @@ through every dependent artifact.
 `project/DEVIATIONS.md` are append-only. State may point to newer versions, but
 history is never rewritten. The optional `usage` key of `PROJECT_STATE.md`
 (`pipeline` or `tools`) is the usage mode that Stage 00 writes and the router
-reads; it is validated, and absent means `pipeline`. `project/BOOTSTRAP.md`, when present, is
+reads; it is validated, and absent means `pipeline`. The optional `checkpoints`
+key (`none`, `stages`, `plans`, or `all`) is the researcher's preference for
+extra pauses; it is validated, and absent means `none`. `project/BOOTSTRAP.md`, when present, is
 the installer's report: how the kit was installed, what the folder already held,
 which Python to use, and the doctor's result. `project/ELARA_MANIFEST.json`,
 rewritten on every installer run, records which files in the folder are the

@@ -40,9 +40,7 @@ External submission, creation of a public record, or acceptance of registry term
 
 ## Mode handoff
 
-Begin in Plan Mode. Audit the proposed frozen package, crosswalk the preregistration sections to active artifacts, identify unresolved choices, choose the PDF and registry workflow, and define amendment rules. Plan Mode is read-only: do not write any project file, hash into a manifest, render a PDF, update state, or contact a registry.
-
-Stop with the exact execution handoff: leave Plan Mode and execute Stage 09 to create and verify the frozen manifest, preregistration source and PDF, and amendment policy, then stop at the preregistration gate before external submission. This stage is bounded, so normal approved execution is sufficient; /goal is optional. A later explicit instruction is required for any external submission.
+Plan first, read-only. Audit the proposed frozen package, crosswalk the preregistration sections to active artifacts, identify unresolved choices, choose the PDF and registry workflow, and define amendment rules; do not write any project file, hash into a manifest, render a PDF, update state, or contact a registry until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Then execute Stage 09 to create and verify the frozen manifest, preregistration source and PDF, and amendment policy, and stop at the preregistration gate before external submission: an unresolved choice in what is to be frozen is never decided provisionally, and a later explicit instruction is required for any external submission. This stage is bounded, so normal approved execution is sufficient; /goal is optional.
 
 ## Work
 

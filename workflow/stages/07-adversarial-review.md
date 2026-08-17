@@ -39,9 +39,7 @@ No critic, synthesizer, or majority vote substitutes for this judgment.
 
 ## Mode handoff
 
-Begin in Plan Mode. Design independent review assignments, attack surfaces, evidence requirements, non-overlapping file ownership, synthesis rules, and upstream invalidation tests. Plan Mode is read-only: do not write any project file, create critiques, update artifacts, spawn editing work, allocate a run, or touch state.
-
-Stop with the exact execution handoff. Because the review and revision cycle may be long-running, Codex and current Claude Code may use /goal when available, with normal researcher-approved execution as the fallback. The objective is: Execute Stage 07 with independent audit-only critics, produce a transparent response matrix and clean versioned artifact package, verify it, and stop at design-freeze.
+Plan first, read-only. Design independent review assignments, attack surfaces, evidence requirements, non-overlapping file ownership, synthesis rules, and upstream invalidation tests; do not write any project file, create critiques, update artifacts, spawn editing work, allocate a run, or touch state until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Because the review and revision cycle may be long-running, Codex and current Claude Code may use /goal when available, with normal researcher-approved execution as the fallback. The objective is: Execute Stage 07 with independent audit-only critics, produce a transparent response matrix and clean versioned artifact package, verify it, and stop at design-freeze.
 
 ## Work
 

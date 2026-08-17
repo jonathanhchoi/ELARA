@@ -32,7 +32,7 @@ The researcher approves the sample and coder architecture, selects and instructs
 
 ## Mode handoff
 
-Begin in Plan Mode. Inspect files read-only and present a decision-complete architecture covering sampling, blinding, coder packets, returned-file contract, scope matching, interface behavior, adjudication, metrics, uncertainty, and failure routes. Do not write any project file during Plan Mode. Stop for approval. After the researcher approves the plan and exits Plan Mode, use normal approved execution with this objective: **Build and run the approved held-out human-validation workflow, preserve blinding through adjudication, compute the approved metrics, and stop at the `validation-disposition` gate.**
+Plan first, read-only. Inspect files and present a decision-complete architecture covering sampling, blinding, coder packets, returned-file contract, scope matching, interface behavior, adjudication, metrics, uncertainty, and failure routes; do not write any project file until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Then use normal approved execution with this objective: **Build and run the approved held-out human-validation workflow, preserve blinding through adjudication, compute the approved metrics, and stop at the `validation-disposition` gate.**
 
 ## Work
 
@@ -65,7 +65,7 @@ The validation plan records the approved architecture and criteria. The held-out
 
 ## State transition
 
-Plan Mode leaves all files and state unchanged. After approval and execution start, set `current_stage` to `13-human-validation` and `status` to `running`. Use `waiting_for_user` while awaiting coder returns or completed blind adjudication, with the exact outstanding action recorded. Once metrics are verified, set `status` to `awaiting_approval` and mark `validation-disposition` pending.
+The plan phase leaves all files and state unchanged. After the plan (and any approval a stop condition required) and execution start, set `current_stage` to `13-human-validation` and `status` to `running`. Use `waiting_for_user` while awaiting coder returns or completed blind adjudication, with the exact outstanding action recorded. Once metrics are verified, set `status` to `awaiting_approval` and mark `validation-disposition` pending.
 
 Advance only after the researcher records a pass for the exact validation artifacts. Activate those versions, append the decision, set `current_stage` to `14-analysis-and-correction`, and set `status` to `ready`. A revise disposition preserves all evidence and routes the defect to Stage 05 or Stage 08, with new downstream versions through Stages 09–13. Data or matching defects route to Stages 11–12. An abandon disposition records the reason and sets `status` to `failed`; it is not relabeled as a pass.
 

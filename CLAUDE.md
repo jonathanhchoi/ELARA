@@ -26,13 +26,20 @@ the canonical `interaction_profile` as follows:
   `workflow/shared/observation-fanout.md`. For other long work, use `/goal
   <verifiable completion condition>` where supported; otherwise checkpoint
   through `project/PROJECT_STATE.md` and `project/RUN_LEDGER.md`.
-- `plan_then_execute`: complete the Plan Mode phase without writes, stop, and ask
-  the researcher to approve the plan and switch to an execution-capable mode,
-  using `/goal` for a long-running phase where available. Resume only after that
-  explicit handoff.
+- `plan_then_execute`: plan first in the normal mode without writing any project
+  file (inspect, settle the choices, present a decision-complete plan), then
+  continue into execution in the same session. Enter Plan Mode, stop, and ask
+  the researcher to approve the plan and switch to an execution-capable mode
+  only when a stop condition in `workflow/shared/guardrails.md` §11 holds (an
+  open researcher-owned choice with no reasonable default, a spend beyond the
+  recorded budget, a `checkpoints` preference), and always for Stages 17 and
+  19, whose plan is the manuscript-edit gate. Use `/goal` for a long-running
+  phase where available.
 
 Claude permission modes control tool access; they never waive a workflow gate or
-data-authorization requirement.
+data-authorization requirement. Nor do they add stops: outside the gates and
+the §11 stop conditions, keep working and record provisional defaults instead
+of asking.
 
 Dynamic workflows require Claude Code v2.1.154 or later. The workflow script coordinates only:
 agents read and write files. Every worker receives one immutable assignment and one unique output

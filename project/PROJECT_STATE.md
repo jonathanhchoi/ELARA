@@ -1,8 +1,9 @@
 ---
-schema_version: "1.1"
+schema_version: "1.2"
 workflow_version: "1.0.0"
 project_slug: null
 usage: "pipeline"
+checkpoints: "none"
 current_stage: "00-initialize"
 status: "ready"
 active_artifacts: {}
@@ -19,9 +20,14 @@ matter—not chat history—controls resume behavior. Stage 00 replaces the init
 `null` values with the approved project identity and timestamp and records the
 first active artifact versions. `usage` records the usage mode the researcher
 chose at Stage 00: `pipeline` (the whole workflow, stage by stage; the router
-offers the next stage when one ends) or `tools` (specific tools from the menu in
+continues into the next stage when one ends unless a stop condition holds) or
+`tools` (specific tools from the menu in
 `PIPELINE.md`, run on request; the router offers the menu instead). It is
 optional in state files written under schema 1.0 and defaults to `pipeline`.
+`checkpoints` records how often the researcher wants to be consulted beyond
+the gates: `none` (the default: the assistant continues between stages and
+executes its plans without waiting), `stages`, `plans`, or `all`. It is
+optional and defaults to `none`; see `workflow/shared/guardrails.md` section 11.
 
 Do not hand-edit state merely to bypass a prerequisite or gate. State changes
 must correspond to a verified stage transition, append-only run entry, and, when

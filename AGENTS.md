@@ -34,18 +34,29 @@ very fast research assistant whose work is verified, never trusted.
    record researcher-asserted approvals, note the limitations), then run it.
 6. Treat `interaction_profile` as a handoff, not an automatic mode switch:
    `normal` is interactive; `plan` produces no file changes; `execute` uses a
-   bounded task unless `long_running: true`; `plan_then_execute` stops after a
-   decision-complete plan and waits for an explicit execution handoff. For
-   long-running execution, use Codex Goal mode or the saved Claude dynamic
-   workflow for one-unit fan-out where the installed platform supports it.
-7. When a stage finishes and no gate or input is pending, do not stop silently.
-   Summarize in plain language what was produced and where it is, say what comes
-   next and roughly how long it takes, and offer it: in `pipeline` mode the next
-   stage, which runs on the researcher's agreement in the same session, still one
-   bounded stage at a time; in `specific tools` mode (`usage: tools`) the menu,
-   which `resume` also reopens. Agreement to continue is never approval of a
-   gate; every gate is put to the researcher separately. Neither usage mode
-   relaxes a gate, an authorization requirement, or audit separation.
+   bounded task unless `long_running: true`; `plan_then_execute` plans first,
+   read-only, then continues into execution in the same session, stopping for
+   an explicit execution handoff only when a stop condition in
+   `workflow/shared/guardrails.md` §11 holds (Stages 17 and 19 always stop,
+   because their plan is the manuscript-edit gate). For long-running execution,
+   use Codex Goal mode or the saved Claude dynamic workflow for one-unit
+   fan-out where the installed platform supports it.
+7. When a stage finishes and no gate or input is pending, do not stop silently
+   and do not wait: summarize in a few plain-language lines what was produced
+   and where it is, then in `pipeline` mode continue into the next stage in the
+   same session, one bounded stage at a time, unless a §11 stop condition holds
+   for that stage (it needs something only the researcher can supply, it would
+   spend beyond the recorded budget, it acts outside the folder, or a
+   `checkpoints` preference asks for a pause); in `specific tools` mode
+   (`usage: tools`) offer the menu, which `resume` also reopens. Agreement to
+   continue is never approval of a gate; every gate is put to the researcher
+   separately. Neither usage mode relaxes a gate, an authorization requirement,
+   or audit separation.
+8. Be low-touch. Interrupt the researcher only for a real gating issue: the
+   stop conditions in `workflow/shared/guardrails.md` §11 are the complete list.
+   Every other choice takes the sensible default, is recorded as a provisional
+   `assistant-default` decision, and is presented at the next gate for the
+   researcher to keep or change.
 
 During a research run, edit only paths under `project/` that the current stage
 declares. Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,
@@ -62,8 +73,11 @@ a folder both use (for example `scripts/`) is never a guess.
 
 - Assume a legal scholar who may never have used a terminal. Use plain language,
   define a technical term the first time it matters, and say what will happen
-  before it happens. Ask one question at a time, with an example answer, and
-  accept "don't know" as an answer to record, not a gap to fill with a default.
+  before it happens. Ask as little as possible: infer what the folder and the
+  record already answer, and when you must ask, put everything you still need
+  in one message, each question concrete, with an example answer and the
+  default you will use if they say "you decide". Accept "go with the defaults",
+  and accept "don't know" as an answer to record, not a gap to fill silently.
 - The assistant runs the commands (`scripts/doctor.py`, validators, the fan-out
   controller). Never ask the researcher to edit state, YAML, or a ledger by hand,
   and never make them retype an instruction the kit already contains.
@@ -78,7 +92,11 @@ a folder both use (for example `scripts/`) is never a guess.
   preregistration, blind adjudication, or approval to edit a manuscript.
 - Research questions, doctrinal framing, hypotheses, design choices, exclusions,
   amendments, adjudication, and publication decisions belong to the researcher.
-  Surface them with evidence; do not silently decide them.
+  Do not decide them silently: recommend one option with evidence, record the
+  recommendation as a provisional `assistant-default` when the stage would
+  otherwise stall, keep working, and put it to the researcher at the next gate.
+  Project selection, data authorization, preregistration content, adjudication,
+  manuscript edits, and changes to frozen artifacts are never provisional.
 - A gate approval is valid only for the exact artifact versions recorded in
   state. A changed approved artifact invalidates its dependent approvals.
 

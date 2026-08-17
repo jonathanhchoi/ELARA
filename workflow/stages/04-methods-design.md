@@ -41,9 +41,7 @@ Present meaningful alternatives and consequences. Never make the choice merely b
 
 ## Mode handoff
 
-Begin in Plan Mode. Inspect inputs, discuss architecture and alternatives, resolve blocking researcher choices, and produce a decision-complete proposed design in chat. Plan Mode is read-only: do not write any project file, allocate a run, update state, or append ledgers.
-
-Stop after the plan and give the exact execution instruction: leave Plan Mode and execute Stage 04 to write and verify the four declared design artifacts, then stop at methods-plan-approval. This stage is bounded, so normal approved execution is sufficient; /goal is optional, not required. Approval to execute the plan is not approval to advance past the completed methods artifacts.
+Plan first, read-only. Inspect inputs, weigh architecture and alternatives, settle the design choices (recommend one option with evidence and record it as a provisional `assistant-default` where the researcher has not decided), and produce a decision-complete proposed design in chat; do not write any project file, allocate a run, update state, or append ledgers until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Then execute Stage 04 to write and verify the four declared design artifacts, and stop at methods-plan-approval, presenting the provisional choices there for the researcher to keep or change. This stage is bounded, so normal approved execution is sufficient; /goal is optional, not required.
 
 ## Work
 

@@ -1058,8 +1058,10 @@ def next_steps(summary):
         'Follow workflow/stages/00-initialize.md from its "Orientation (first session)" section: '
         "explain ELARA in plain language, ask whether the researcher wants to go through the whole "
         "pipeline or use specific tools now (show the menu from PIPELINE.md), then continue with "
-        "Stage 00 one question at a time. Speak to a legal scholar who may never have used a "
-        "terminal; run every command yourself."
+        "Stage 00: work out what the folder already answers and ask the rest in one message, each "
+        "question with a suggested default. Speak to a legal scholar who may never have used a "
+        "terminal; run every command yourself; and be low-touch from then on — "
+        "workflow/shared/guardrails.md section 11 lists the only reasons to stop and ask."
     )
     if not summary.get("already_installed"):
         steps.append(

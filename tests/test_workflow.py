@@ -120,7 +120,11 @@ class WorkflowContractTests(unittest.TestCase):
         )
         lowered = body.lower()
         self.assertIn("## orientation", lowered)
-        self.assertIn("one question at a time", lowered)
+        # Low-touch by design: infer first, then ask what remains in one message.
+        self.assertIn("in one message", lowered)
+        self.assertIn("go with the defaults", lowered)
+        self.assertNotIn("one question at a time", lowered)
+        self.assertIn("checkpoints", lowered)
         self.assertIn("don't know", lowered)
         self.assertIn("adoption path", lowered)
         self.assertIn("adoption map", lowered)
@@ -223,6 +227,53 @@ class WorkflowContractTests(unittest.TestCase):
             state.write_text(initialized.replace('usage: "pipeline"', 'mode: "tools"'), encoding="utf-8")
             errors = validate_state(root)
             self.assertTrue(any("public state contract" in error for error in errors), errors)
+
+    def test_state_checkpoints_key_is_optional_and_validated(self) -> None:
+        template = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+        self.assertIn('checkpoints: "none"', template)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "project").mkdir()
+            state = root / "project" / "PROJECT_STATE.md"
+            # A schema-1.1 state file without the key still validates: absent means none.
+            state.write_text(template.replace('checkpoints: "none"\n', ""), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            initialized = template.replace("project_slug: null", 'project_slug: "fixture"').replace(
+                "updated_at: null", 'updated_at: "2026-08-16T00:00:00Z"'
+            )
+            for value in ("stages", "plans", "all"):
+                state.write_text(initialized.replace('checkpoints: "none"', f'checkpoints: "{value}"'), encoding="utf-8")
+                self.assertEqual(validate_state(root), [], value)
+            state.write_text(initialized.replace('checkpoints: "none"', 'checkpoints: "always"'), encoding="utf-8")
+            errors = validate_state(root)
+            self.assertTrue(any("checkpoints must be one of" in error for error in errors), errors)
+
+    def test_kit_is_low_touch_between_gates(self) -> None:
+        guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(encoding="utf-8")
+        self.assertIn("## 11. Autonomy", guardrails)
+        self.assertIn("assistant-default", guardrails)
+        self.assertIn("Never decide provisionally", guardrails)
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("Be low-touch", agents)
+        self.assertNotIn("one question at a time", agents)
+        pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
+        self.assertIn("Low-touch by default", pipeline)
+        self.assertIn("`checkpoints`", pipeline)
+        decisions = (ROOT / "project" / "DECISIONS.md").read_text(encoding="utf-8")
+        self.assertIn("assistant-default", decisions)
+        for platform in (".agents", ".claude"):
+            router = (ROOT / platform / "skills" / "elr" / "SKILL.md").read_text(encoding="utf-8")
+            self.assertIn("section 11", router)
+        # The eight plan-then-execute stages that end at their own gate continue into
+        # execution; the two manuscript stages keep their stop, which is the gate.
+        for stage_id in ("01-conceive", "04-methods-design", "05-codebook-and-schema", "07-adversarial-review",
+                         "08-pilot", "09-freeze-and-preregister", "13-human-validation", "14-analysis-and-correction"):
+            body = (ROOT / "workflow" / "stages" / f"{stage_id}.md").read_text(encoding="utf-8")
+            self.assertIn("continue into execution in the same session", body, stage_id)
+        for stage_id in ("17-integrate-manuscript", "19-revise-and-respond"):
+            body = (ROOT / "workflow" / "stages" / f"{stage_id}.md").read_text(encoding="utf-8")
+            self.assertIn("manuscript-edit-permission", body, stage_id)
+            self.assertNotIn("continue into execution in the same session", body, stage_id)
 
     def test_stage_00_records_usage_in_front_matter_and_has_a_two_question_tools_setup(self) -> None:
         body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "00-initialize")

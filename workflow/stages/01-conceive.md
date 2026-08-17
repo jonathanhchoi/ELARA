@@ -38,9 +38,7 @@ Pause after presenting the profile if any material inference is disputed. At the
 
 ## Mode handoff
 
-Begin in Plan Mode. Read the active inputs, identify missing information, outline the profiling, landmark, brainstorming, screening, and verification passes, and make the plan decision-complete. Plan Mode is read-only: do not write any project file, create a run, update state, or browse-download files.
-
-Stop and provide the exact execution handoff. Because this stage is long-running, Codex and current Claude Code may use /goal when available, with normal researcher-approved execution as the fallback. The Goal objective is: Execute Stage 01 exactly as specified, produce the declared versioned artifacts, and stop at the project-selection gate. Do not treat a mode change as approval of the final project.
+Plan first, read-only. Read the active inputs, identify missing information, outline the profiling, landmark, brainstorming, screening, and verification passes, and make the plan decision-complete; do not write any project file, create a run, update state, or browse-download files until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Because this stage is long-running, Codex and current Claude Code may use /goal when available, with normal researcher-approved execution as the fallback. The Goal objective is: Execute Stage 01 exactly as specified, produce the declared versioned artifacts, and stop at the project-selection gate. Neither the plan nor a mode change is approval of the final project; the researcher decides at project-selection.
 
 ## Work
 
