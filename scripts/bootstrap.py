@@ -361,8 +361,7 @@ def download_kit(ref, workdir):
     raise BootstrapError(
         "Could not fetch ELARA from GitHub.\n  Tried:\n    "
         + "\n    ".join(errors)
-        + "\n  If the repository is private, you need access to it and Git (or the gh CLI) signed in.\n"
-        + "  Otherwise check the internet connection, or download the kit by hand from\n  "
+        + "\n  Check the internet connection, or download the kit by hand from\n  "
         + "https://github.com/" + REPOSITORY
         + " (Code > Download ZIP), unzip it, and run\n  "
         + "python <unzipped-folder>/scripts/bootstrap.py --into <your project folder>"

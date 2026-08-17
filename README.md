@@ -23,33 +23,25 @@ the setup and runs the commands. You answer its questions and make the calls.
 
    ```text
    Please set up ELARA (https://github.com/jonathanhchoi/ELARA), a workflow kit
-   for empirical legal research, in this folder and walk me through it. Follow
-   these steps.
+   for empirical legal research, in this folder and walk me through it.
 
-   1. Fetch the kit into a temporary subfolder by running
-      `git clone --depth 1 https://github.com/jonathanhchoi/ELARA.git .elara-kit`.
-      If Git is unavailable, download the repository ZIP and unzip it as
-      `.elara-kit`.
-   2. Run `python .elara-kit/scripts/bootstrap.py --into .`. Try `python3` or
-      `py` if `python` fails. If Python 3.10 or newer is missing, help me install
-      it first. The script should install ELARA here without overwriting my
-      files, check the setup, and remove the temporary subfolder.
-   3. Follow the NEXT STEPS printed by the script. Read `AGENTS.md`, then begin
-      with the Orientation in `workflow/stages/00-initialize.md`. Explain things
-      in plain language, work out what you can from my files, and ask me only
-      what you still need, in one message. Ask whether I want the whole
-      pipeline or specific tools, and show me the choices.
+   1. Download
+      https://raw.githubusercontent.com/jonathanhchoi/ELARA/main/scripts/bootstrap.py
+      into this folder and run it with Python 3 (`python bootstrap.py`; try
+      `python3` or `py` if that fails, and if Python 3.10 or newer is missing,
+      help me install it first). The script installs ELARA here without
+      overwriting my files, checks the setup, and removes itself.
+   2. Follow the NEXT STEPS it prints: read `AGENTS.md`, then begin with the
+      Orientation in `workflow/stages/00-initialize.md`. Explain things in plain
+      language, work out what you can from my files, and ask me only what you
+      still need, in one message. Ask whether I want the whole pipeline or
+      specific tools, and show me the choices.
 
    Do not delete or overwrite any of my files.
    ```
 
 3. Approve the commands if the app asks, then answer the questions. Use a
    different folder for each project.
-
-If the repository is public, a shorter instruction also works. Ask the
-assistant to download
-`https://raw.githubusercontent.com/jonathanhchoi/ELARA/main/scripts/bootstrap.py`,
-run it with Python 3, and follow the `NEXT STEPS` it prints.
 
 ## What happens after setup?
 

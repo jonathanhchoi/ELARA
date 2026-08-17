@@ -165,8 +165,10 @@ class WorkflowContractTests(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
         self.assertIn("## start here", readme)
         self.assertIn("paste this message", readme)
-        self.assertIn("scripts/bootstrap.py --into .", readme)
-        self.assertIn("git clone --depth 1 https://github.com/jonathanhchoi/elara.git .elara-kit", readme)
+        # The paste-in start downloads the installer alone; the public archive supplies the kit.
+        self.assertIn("https://raw.githubusercontent.com/jonathanhchoi/elara/main/scripts/bootstrap.py", readme)
+        self.assertIn("python bootstrap.py", readme)
+        self.assertNotIn("if the repository is public", readme)
         self.assertIn("whole pipeline", readme)
         self.assertIn("specific tools", readme)
         self.assertIn("elr adopt", readme)
