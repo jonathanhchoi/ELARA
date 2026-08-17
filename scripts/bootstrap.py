@@ -1061,12 +1061,13 @@ def next_steps(summary):
         "Stage 00 one question at a time. Speak to a legal scholar who may never have used a "
         "terminal; run every command yourself."
     )
-    steps.append(
-        "Do not invoke /elr or $elr in this session: repository skills load when the app starts, "
-        "and a skill announced from a temporary kit copy no longer exists once that copy is "
-        "removed. Follow the stage file directly; the commands work after the researcher "
-        "restarts the app in this folder."
-    )
+    if not summary.get("already_installed"):
+        steps.append(
+            "Do not invoke /elr or $elr in this session: repository skills load when the app starts, "
+            "and a skill announced from a temporary kit copy no longer exists once that copy is "
+            "removed. Follow the stage file directly; the commands work after the researcher "
+            "restarts the app in this folder."
+        )
     existing = summary.get("existing_materials") or []
     if existing:
         step = (
