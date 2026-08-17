@@ -354,8 +354,11 @@ def validate_repository(root: Path) -> list[str]:
     if not claude.exists() or not claude.read_text(encoding="utf-8").startswith("@AGENTS.md"):
         errors.append("CLAUDE.md must import AGENTS.md on its first line")
 
+    # The kit README is README.md in a clone and ELARA_README.md in a project folder
+    # that scripts/bootstrap.py installed into; either satisfies the check.
+    if not any((root / name).exists() for name in ("ELARA_README.md", "README.md")):
+        errors.append("missing ELARA_README.md or README.md")
     for required in (
-        "README.md",
         "PIPELINE.md",
         "workflow/shared/guardrails.md",
         "workflow/shared/artifact-contract.md",

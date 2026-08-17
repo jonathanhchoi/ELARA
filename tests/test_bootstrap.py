@@ -66,8 +66,8 @@ class FreshInstallTests(unittest.TestCase):
                 "AGENTS.md",
                 "CLAUDE.md",
                 "PIPELINE.md",
-                "README.md",
-                "LICENSE",
+                "ELARA_README.md",
+                "LICENSE.ELARA",
                 "requirements.txt",
                 ".gitignore",
                 "scripts/bootstrap.py",
@@ -81,7 +81,11 @@ class FreshInstallTests(unittest.TestCase):
                 "tests/fixtures/one_unit_fanout/spec.json",
             ):
                 self.assertTrue((target / relative).is_file(), relative)
+            # README.md and LICENSE in a project folder are the researcher's to use.
+            self.assertFalse((target / "README.md").exists())
+            self.assertFalse((target / "LICENSE").exists())
             manifest = json.loads((target / "project" / "ELARA_MANIFEST.json").read_text(encoding="utf-8"))
+            self.assertIn("ELARA_README.md", manifest["kit_paths"])
             self.assertIn("scripts/doctor.py", manifest["kit_paths"])
             self.assertIn("project/PROJECT_STATE.md", manifest["project_paths"])
             self.assertEqual(manifest["researcher_paths"], [])
@@ -182,10 +186,11 @@ class ExistingFolderTests(unittest.TestCase):
             data_record = next(record for record in summary["existing_materials"] if record["name"] == "data")
             self.assertEqual(data_record["kind"], "folder")
             self.assertEqual(data_record["files"], 1)
-            # The kit README and LICENSE live under alternate names; the researcher's stay put.
+            # The kit README and LICENSE live under their kit names; the researcher's README stays put.
             self.assertTrue((target / "ELARA_README.md").is_file())
             self.assertTrue(any(item.startswith("README.md -> ELARA_README.md") for item in summary["kept"]))
-            self.assertTrue((target / "LICENSE").is_file())  # installed: no collision
+            self.assertTrue((target / "LICENSE.ELARA").is_file())
+            self.assertFalse((target / "LICENSE").exists())
             # .gitignore and requirements.txt gained the kit's lines in one marked block.
             gitignore = (target / ".gitignore").read_text(encoding="utf-8")
             self.assertTrue(gitignore.startswith("*.aux\n*.log\n"))
@@ -353,6 +358,25 @@ class ExistingFolderTests(unittest.TestCase):
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             self.assertEqual(manifest["researcher_paths"], ["scripts/doctor.py"])
             self.assertEqual(summary["essential_conflicts"], ["scripts/doctor.py"])
+
+    def test_kit_readme_installed_by_an_earlier_version_is_refreshed_in_place(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            target.mkdir()
+            # An earlier kit version put its README at the plain name; simulate an older text.
+            legacy = (ROOT / "README.md").read_text(encoding="utf-8").replace("## Start here", "## Getting started")
+            (target / "README.md").write_text(legacy, encoding="utf-8")
+            summary = install(target)
+            self.assertTrue(summary["ok"], summary)
+            self.assertFalse((target / "ELARA_README.md").exists(), "no second copy of the kit README")
+            self.assertTrue(any(item.startswith("README.md (an earlier kit version") for item in summary["kept"]))
+            self.assertEqual((target / "README.md").read_text(encoding="utf-8"), legacy)
+            summary = install(target, "--update")
+            self.assertEqual((target / "README.md").read_bytes(), (ROOT / "README.md").read_bytes())
+            self.assertFalse((target / "ELARA_README.md").exists())
+            manifest = json.loads((target / "project" / "ELARA_MANIFEST.json").read_text(encoding="utf-8"))
+            self.assertIn("README.md", manifest["kit_paths"])
+            self.assertEqual(validate_repository(target), [])
 
     def test_dry_run_writes_nothing_and_shows_the_plan(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

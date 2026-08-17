@@ -39,10 +39,13 @@ from importlib import metadata  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 
+# A tuple entry lists alternatives, any one of which satisfies the check: the kit
+# README is README.md in a clone of the kit and ELARA_README.md in a project
+# folder scripts/bootstrap.py installed into.
 DISCOVERY_SURFACES = (
     "AGENTS.md",
     "CLAUDE.md",
-    "README.md",
+    ("ELARA_README.md", "README.md"),
     "PIPELINE.md",
     "requirements.txt",
     "scripts/bootstrap.py",
@@ -229,8 +232,9 @@ def build_report(root, platform="auto", smoke=True):
     root = root.resolve()
     failures = []
     for relative in DISCOVERY_SURFACES:
-        if not (root / relative).is_file():
-            failures.append("missing " + relative)
+        alternatives = relative if isinstance(relative, tuple) else (relative,)
+        if not any((root / candidate).is_file() for candidate in alternatives):
+            failures.append("missing " + " or ".join(alternatives))
     stage_count = len(sorted((root / "workflow" / "stages").glob("[0-9][0-9]-*.md")))
     if stage_count != EXPECTED_STAGE_COUNT:
         failures.append(

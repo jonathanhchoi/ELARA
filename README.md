@@ -372,12 +372,13 @@ repository.
 
 ### What happens when I install into an existing folder?
 
-`scripts/bootstrap.py` copies the kit without overwriting an existing file. If
-the folder already has a `README.md` or `LICENSE`, ELARA installs its versions as
-`ELARA_README.md` and `LICENSE.ELARA`. It appends missing lines from its own
-`.gitignore` or `requirements.txt` in a marked block. It places the ELARA text
-first in an existing `AGENTS.md` or `CLAUDE.md`, also in a marked block, and
-leaves your text after it.
+`scripts/bootstrap.py` copies the kit without overwriting an existing file. It
+installs its own README and license as `ELARA_README.md` and `LICENSE.ELARA`,
+so `README.md` and `LICENSE` in your folder stay yours, or free for your own
+use. It appends missing lines from its own `.gitignore` or `requirements.txt`
+in a marked block. It places the ELARA text first in an existing `AGENTS.md` or
+`CLAUDE.md`, also in a marked block, and leaves your text after it. Run it with
+`--dry-run` to see all of this as a plan before anything is written.
 
 The installer lists what the folder already held in `project/BOOTSTRAP.md`, by
 name for any file of yours inside a folder the kit also uses (such as
@@ -446,4 +447,4 @@ additional tool before relying on it.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE) (installed as `LICENSE.ELARA` in a project folder).

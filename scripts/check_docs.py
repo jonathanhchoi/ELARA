@@ -29,6 +29,9 @@ KIT_MARKDOWN_DIRECTORIES = ("workflow", "tests", "scripts", ".claude/workflows")
 KIT_SKILL_ROOTS = (".agents/skills", ".claude/skills")
 KIT_TOP_LEVEL_FILES = ("AGENTS.md", "CLAUDE.md", "PIPELINE.md")
 KIT_README_TITLE = "# ELARA: Empirical Legal Analysis with Research Agents"
+# scripts/bootstrap.py installs these kit files under kit-specific names in a
+# project folder; a link to the plain name resolves to either.
+INSTALLED_NAMES = {"README.md": "ELARA_README.md", "LICENSE": "LICENSE.ELARA"}
 KIT_PROJECT_FILES = (
     "project/README.md",
     "project/inputs/README.md",
@@ -131,8 +134,12 @@ def validate_docs(root: Path) -> list[str]:
             if target is None:
                 continue
             resolved = (path.parent / target).resolve()
-            if not resolved.exists():
-                errors.append(f"{path}: broken local link {match.group(1)!r}")
+            if resolved.exists():
+                continue
+            installed = INSTALLED_NAMES.get(resolved.name)
+            if installed and (resolved.parent / installed).exists():
+                continue
+            errors.append(f"{path}: broken local link {match.group(1)!r}")
 
     # Only the kit's own elr* skills are checked; a researcher's other skills in
     # the same folder are theirs.

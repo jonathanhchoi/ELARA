@@ -103,8 +103,10 @@ PROJECT_OWNED = {
     "project/RUN_LEDGER.md",
     "project/DEVIATIONS.md",
 }
-# Kit files that may collide with a file the researcher already has. The kit
-# copy is installed under an alternate name so nothing of theirs is touched.
+# The kit's README and license are installed under these names in a project
+# folder, so that README.md and LICENSE there stay the researcher's (or free for
+# their own use: a replication package wants a README of its own). A kit README
+# that an earlier version installed as plain README.md is refreshed in place.
 ALIASES = {"README.md": "ELARA_README.md", "LICENSE": "LICENSE.ELARA"}
 MERGED = {".gitignore", "requirements.txt"}
 
@@ -727,21 +729,48 @@ def install(source, target, update, already_installed=False, researcher_paths=()
         if relative in theirs and destination.exists():
             keep_researcher_file(relative)
             continue
-        if not destination.exists():
-            if relative in ALIASES and (target / ALIASES[relative]).exists():
-                # The researcher's own file was replaced or removed since the
-                # first install, but the alias exists: keep the alias current.
-                destination = target / ALIASES[relative]
-                relative = ALIASES[relative]
-                if destination.read_bytes() == kit_bytes:
-                    outcome["unchanged"].append(relative)
+        if relative in ALIASES:
+            # The kit README and license live under their kit names in a project
+            # folder; README.md and LICENSE there are the researcher's to use.
+            alias_relative = ALIASES[relative]
+            alias = target / alias_relative
+            if alias.exists():
+                if alias.read_bytes() == kit_bytes:
+                    outcome["unchanged"].append(alias_relative)
                 elif update:
-                    put(destination, kit_bytes)
-                    outcome["updated"].append(relative)
+                    put(alias, kit_bytes)
+                    outcome["updated"].append(alias_relative)
                 else:
-                    outcome["kept"].append(relative + " (differs from this kit version; --update refreshes it)")
-                owned(relative)
+                    outcome["kept"].append(alias_relative + " (differs from this kit version; --update refreshes it)")
+                owned(alias_relative)
                 continue
+            if destination.exists():
+                existing_bytes = destination.read_bytes()
+                legacy_kit_file = existing_bytes == kit_bytes or (
+                    relative == "README.md"
+                    and is_kit_readme(existing_bytes.decode("utf-8", errors="replace"))
+                )
+                if legacy_kit_file:
+                    # An earlier kit version installed this file under its plain
+                    # name; keep that location rather than leaving two copies.
+                    if existing_bytes == kit_bytes:
+                        outcome["unchanged"].append(relative + " (this kit file, where an earlier kit version put it)")
+                    elif update:
+                        put(destination, kit_bytes)
+                        outcome["updated"].append(relative)
+                    else:
+                        outcome["kept"].append(relative + " (an earlier kit version; --update refreshes it)")
+                    owned(relative)
+                    continue
+                put(alias, kit_bytes)
+                outcome["aliased"].append(relative + " -> " + alias_relative + " (your " + relative + " was left alone)")
+                owned(alias_relative)
+                continue
+            put(alias, kit_bytes)
+            outcome["installed"].append(alias_relative)
+            owned(alias_relative)
+            continue
+        if not destination.exists():
             put(destination, kit_bytes)
             outcome["installed"].append(relative)
             owned(relative, "project" if relative in PROJECT_OWNED else "kit")
@@ -804,28 +833,6 @@ def install(source, target, update, already_installed=False, researcher_paths=()
                 put_text(destination, merged_text)
                 outcome["prepended"].append(relative + " (" + how + "; your text follows the ELARA block)")
             owned(relative, "shared")
-            continue
-        if relative in ALIASES:
-            if relative == "README.md" and is_kit_readme(existing_text):
-                if update:
-                    put(destination, kit_bytes)
-                    outcome["updated"].append(relative)
-                else:
-                    outcome["kept"].append(relative + " (an earlier kit version; --update refreshes it)")
-                owned(relative)
-                continue
-            alias = target / ALIASES[relative]
-            if alias.exists() and alias.read_bytes() == kit_bytes:
-                outcome["unchanged"].append(ALIASES[relative])
-                owned(ALIASES[relative])
-                continue
-            if alias.exists() and not update:
-                outcome["kept"].append(ALIASES[relative] + " (differs from this kit version; --update refreshes it)")
-                owned(ALIASES[relative])
-                continue
-            put(alias, kit_bytes)
-            outcome["aliased"].append(relative + " -> " + ALIASES[relative] + " (your " + relative + " was left alone)")
-            owned(ALIASES[relative])
             continue
         # Every other kit-owned file (workflow/, scripts/, tests/, .agents/, .claude/,
         # PIPELINE.md, project READMEs, ...): refreshed only with --update.
@@ -1428,12 +1435,6 @@ def bootstrap(args):
         kit_top = kit_top_level(source)
         existing_materials = snapshot_existing(target, ignore_names)
         shared_before = shared_folder_snapshot(target, kit_top, ignore_names)
-        if already_installed:
-            # Report only what is not part of the kit itself.
-            existing_materials = [
-                record for record in existing_materials
-                if record["name"] not in kit_top and record["name"] not in ALIASES.values()
-            ]
         if target == source:
             # "python scripts/bootstrap.py" inside a downloaded kit: nothing to copy.
             files = empty_outcome()
@@ -1451,6 +1452,16 @@ def bootstrap(args):
                 researcher_paths=(previous_manifest or {}).get("researcher_paths") or [],
                 dry_run=dry_run,
             )
+        if already_installed:
+            # Report only what is not part of the kit itself: whatever the kit
+            # actually owns here at top level (a researcher's README.md is theirs).
+            kit_names = set(
+                path.split("/", 1)[0]
+                for path in files["kit_paths"] + files["shared_paths"] + files["project_paths"]
+            )
+            existing_materials = [
+                record for record in existing_materials if record["name"] not in kit_names
+            ]
         summary = {
             "timestamp": utc_now(),
             "target": str(target),
