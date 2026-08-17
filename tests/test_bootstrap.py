@@ -354,6 +354,62 @@ class ExistingFolderTests(unittest.TestCase):
             self.assertEqual(manifest["researcher_paths"], ["scripts/doctor.py"])
             self.assertEqual(summary["essential_conflicts"], ["scripts/doctor.py"])
 
+    def test_dry_run_writes_nothing_and_shows_the_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            self._populate(target)
+            before = sorted(str(path.relative_to(target)) for path in target.rglob("*"))
+            summary = install(target, "--dry-run")
+            self.assertTrue(summary["dry_run"])
+            self.assertTrue(summary["ok"], summary)
+            self.assertEqual(summary["_returncode"], 0, summary["_stderr"])
+            self.assertGreater(summary["files"]["installed"], 100)
+            self.assertTrue(summary["doctor"]["skipped"])
+            self.assertIsNone(summary["report_path"])
+            self.assertIsNone(summary["manifest_path"])
+            # The plan names what a real run would keep, merge, and prepend ...
+            self.assertTrue(any(item.startswith("README.md -> ELARA_README.md") for item in summary["kept"]))
+            self.assertTrue(any(item.startswith(".gitignore") for item in summary["merged"]))
+            self.assertTrue(any(item.startswith("AGENTS.md") for item in summary["merged"]))
+            names = {record["name"] for record in summary["existing_materials"]}
+            self.assertIn("draft.docx", names)
+            # ... but nothing at all changed on disk.
+            after = sorted(str(path.relative_to(target)) for path in target.rglob("*"))
+            self.assertEqual(before, after)
+            self.assertFalse((target / "project").exists())
+            self.assertFalse((target / "ELARA_README.md").exists())
+            self.assertEqual((target / ".gitignore").read_text(encoding="utf-8"), "*.aux\n*.log\n")
+            # The human report says so and shows a folder-level plan.
+            completed = run_bootstrap(
+                "--into", str(target), "--source", str(ROOT), "--no-install", "--dry-run", cwd=target
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertIn("DRY RUN", completed.stdout)
+            self.assertIn("would install:", completed.stdout)
+            self.assertIn("workflow/", completed.stdout)
+            self.assertIn("run the same command again without --dry-run", completed.stdout)
+            self.assertEqual(sorted(str(path.relative_to(target)) for path in target.rglob("*")), before)
+
+    def test_doctor_runs_for_the_detected_host_or_none(self) -> None:
+        import bootstrap
+
+        claude = {"running_inside": ["Claude Code"], "on_path": {"Claude Code": "/usr/bin/claude", "Codex": None}}
+        self.assertEqual(bootstrap.doctor_platform(claude), "claude")
+        codex = {"running_inside": ["Codex"], "on_path": {"Claude Code": None, "Codex": "/usr/bin/codex"}}
+        self.assertEqual(bootstrap.doctor_platform(codex), "codex")
+        # Inside a host whose command is not on PATH, or outside any host: a maintenance check.
+        self.assertEqual(bootstrap.doctor_platform({"running_inside": ["Claude Code"], "on_path": {}}), "none")
+        self.assertEqual(bootstrap.doctor_platform({"running_inside": [], "on_path": {"Codex": "/usr/bin/codex"}}), "none")
+        self.assertEqual(bootstrap.doctor_platform(claude, requested="none"), "none")
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            target.mkdir()
+            summary = install(target, "--platform", "none")
+            self.assertTrue(summary["ok"], summary)
+            self.assertEqual(summary["doctor"]["platform"], "none")
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertIn("Agent host checked: none", report)
+
     def test_folder_counts_past_the_cap_are_reported_as_more_than(self) -> None:
         import bootstrap
 

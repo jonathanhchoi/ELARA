@@ -682,7 +682,7 @@ def empty_outcome(researcher_paths=()):
     }
 
 
-def install(source, target, update, already_installed=False, researcher_paths=()):
+def install(source, target, update, already_installed=False, researcher_paths=(), dry_run=False):
     """Copy the kit into target. Returns the per-file outcome lists.
 
     Besides the outcome lists, the result records ownership: ``kit_paths`` are
@@ -692,12 +692,23 @@ def install(source, target, update, already_installed=False, researcher_paths=()
     that sit where a kit file would go. Those last are never replaced, not even
     by --update: on a first install into a folder that is not yet a kit copy,
     whatever already sits at a kit path is the researcher's, and the previous
-    manifest carries that knowledge into later runs.
+    manifest carries that knowledge into later runs. With ``dry_run`` nothing
+    is written; the lists describe what a real run would do.
     """
     source = Path(source)
     target = Path(target)
     outcome = empty_outcome(researcher_paths)
     theirs = set(researcher_paths)
+
+    def put(destination, data):
+        if dry_run:
+            return
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(data)
+
+    def put_text(destination, text):
+        if not dry_run:
+            write_text(destination, text)
 
     def owned(relative, kind="kit"):
         outcome[kind + "_paths"].append(relative)
@@ -725,14 +736,13 @@ def install(source, target, update, already_installed=False, researcher_paths=()
                 if destination.read_bytes() == kit_bytes:
                     outcome["unchanged"].append(relative)
                 elif update:
-                    destination.write_bytes(kit_bytes)
+                    put(destination, kit_bytes)
                     outcome["updated"].append(relative)
                 else:
                     outcome["kept"].append(relative + " (differs from this kit version; --update refreshes it)")
                 owned(relative)
                 continue
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            destination.write_bytes(kit_bytes)
+            put(destination, kit_bytes)
             outcome["installed"].append(relative)
             owned(relative, "project" if relative in PROJECT_OWNED else "kit")
             continue
@@ -753,7 +763,7 @@ def install(source, target, update, already_installed=False, researcher_paths=()
             else:
                 merged_text, added = merge_line_file(existing_text, kit_text)
             if added:
-                write_text(destination, merged_text)
+                put_text(destination, merged_text)
                 outcome["merged"].append(relative + " (+" + str(len(added)) + " line(s))")
             else:
                 outcome["unchanged"].append(relative + " (already contains the kit's lines)")
@@ -764,7 +774,7 @@ def install(source, target, update, already_installed=False, researcher_paths=()
         if relative == "AGENTS.md":
             if is_kit_agents(existing_text):
                 if update:
-                    destination.write_bytes(kit_bytes)
+                    put(destination, kit_bytes)
                     outcome["updated"].append(relative)
                 else:
                     outcome["kept"].append(relative + " (an earlier kit version; --update refreshes it)")
@@ -774,14 +784,14 @@ def install(source, target, update, already_installed=False, researcher_paths=()
             if how == "already merged":
                 outcome["unchanged"].append(relative + " (kit constitution already merged)")
             else:
-                write_text(destination, merged_text)
+                put_text(destination, merged_text)
                 outcome["prepended"].append(relative + " (" + how + "; your text follows the ELARA block)")
             owned(relative, "shared")
             continue
         if relative == "CLAUDE.md":
             if is_kit_claude(existing_text):
                 if update:
-                    destination.write_bytes(kit_bytes)
+                    put(destination, kit_bytes)
                     outcome["updated"].append(relative)
                 else:
                     outcome["kept"].append(relative + " (an earlier kit version; --update refreshes it)")
@@ -791,14 +801,14 @@ def install(source, target, update, already_installed=False, researcher_paths=()
             if how == "already merged":
                 outcome["unchanged"].append(relative + " (kit adapter already merged)")
             else:
-                write_text(destination, merged_text)
+                put_text(destination, merged_text)
                 outcome["prepended"].append(relative + " (" + how + "; your text follows the ELARA block)")
             owned(relative, "shared")
             continue
         if relative in ALIASES:
             if relative == "README.md" and is_kit_readme(existing_text):
                 if update:
-                    destination.write_bytes(kit_bytes)
+                    put(destination, kit_bytes)
                     outcome["updated"].append(relative)
                 else:
                     outcome["kept"].append(relative + " (an earlier kit version; --update refreshes it)")
@@ -813,7 +823,7 @@ def install(source, target, update, already_installed=False, researcher_paths=()
                 outcome["kept"].append(ALIASES[relative] + " (differs from this kit version; --update refreshes it)")
                 owned(ALIASES[relative])
                 continue
-            alias.write_bytes(kit_bytes)
+            put(alias, kit_bytes)
             outcome["aliased"].append(relative + " -> " + ALIASES[relative] + " (your " + relative + " was left alone)")
             owned(ALIASES[relative])
             continue
@@ -825,7 +835,7 @@ def install(source, target, update, already_installed=False, researcher_paths=()
             keep_researcher_file(relative)
             continue
         if update:
-            destination.write_bytes(kit_bytes)
+            put(destination, kit_bytes)
             outcome["updated"].append(relative)
         else:
             outcome["kept"].append(relative + " (differs from this kit version; --update refreshes it)")
@@ -875,6 +885,11 @@ def ensure_dependency(target, python, no_install):
         }
     requirements = str(Path(target) / "requirements.txt")
     attempts = []
+    # Say what is about to happen before it happens (stderr keeps --json output clean).
+    sys.stderr.write(
+        "Installing the kit's one Python dependency (jsonschema) with " + python
+        + "; if that is not allowed here, a virtual environment .venv is tried next.\n"
+    )
     base = [python, "-m", "pip", "install", "--disable-pip-version-check", "-q", "-r", requirements]
     for extra in ([], ["--user"]):
         result = run_command(base + extra, timeout=900)
@@ -904,10 +919,31 @@ def ensure_dependency(target, python, no_install):
     }
 
 
-def run_doctor(target, python):
-    command = [python, str(Path(target) / "scripts" / "doctor.py"), "--json", "--platform", "none", "--root", str(target)]
+def doctor_platform(hosts, requested="auto"):
+    """The agent host the doctor should check: the one this script runs inside, if its
+    command is on PATH; otherwise none (a maintenance check that requires no host)."""
+    if requested != "auto":
+        return requested
+    running = hosts.get("running_inside") or []
+    on_path = hosts.get("on_path") or {}
+    if "Claude Code" in running and on_path.get("Claude Code"):
+        return "claude"
+    if "Codex" in running and on_path.get("Codex"):
+        return "codex"
+    return "none"
+
+
+def run_doctor(target, python, platform="none"):
+    command = [python, str(Path(target) / "scripts" / "doctor.py"), "--json", "--platform", platform, "--root", str(target)]
     result = run_command(command, timeout=600)
-    record = {"command": " ".join(command), "returncode": result["returncode"], "ok": False, "failures": [], "report": None}
+    record = {
+        "command": " ".join(command),
+        "platform": platform,
+        "returncode": result["returncode"],
+        "ok": False,
+        "failures": [],
+        "report": None,
+    }
     try:
         report = json.loads(result["stdout"])
     except (ValueError, TypeError):
@@ -967,6 +1003,12 @@ def next_steps(summary):
         "Stage 00 one question at a time. Speak to a legal scholar who may never have used a "
         "terminal; run every command yourself."
     )
+    steps.append(
+        "Do not invoke /elr or $elr in this session: repository skills load when the app starts, "
+        "and a skill announced from a temporary kit copy no longer exists once that copy is "
+        "removed. Follow the stage file directly; the commands work after the researcher "
+        "restarts the app in this folder."
+    )
     existing = summary.get("existing_materials") or []
     if existing:
         step = (
@@ -1021,6 +1063,33 @@ def next_steps(summary):
             "the interview can start meanwhile, but no research work should proceed on a broken setup."
         )
     return steps
+
+
+def dry_run_steps(summary):
+    """What to do after a dry run: it only showed the plan."""
+    steps = [
+        "This was a dry run: nothing was written, installed, or removed. The lists above are what "
+        "a real run would do. Check them against the researcher's files, then run the same command "
+        "again without --dry-run to install."
+    ]
+    conflicts = summary.get("essential_conflicts") or []
+    if conflicts:
+        steps.append(
+            "A real run would leave these files of the researcher's alone but ELARA would be "
+            "incomplete here (" + ", ".join(conflicts) + "); prefer installing into a different "
+            "folder and importing the materials by path at Stage 00."
+        )
+    return steps
+
+
+def rollup(paths):
+    """Summarize many paths as top-level names with counts, e.g. 'workflow/ (58)'."""
+    counts = {}
+    for path in paths:
+        head, sep, _rest = str(path).partition("/")
+        key = head + ("/" if sep else "")
+        counts[key] = counts.get(key, 0) + 1
+    return [key + (" (" + str(count) + ")" if key.endswith("/") else "") for key, count in sorted(counts.items())]
 
 
 def researcher_notes():
@@ -1152,6 +1221,13 @@ def render_report(summary):
     else:
         if doctor.get("command"):
             lines.append("- Command: `" + doctor["command"] + "`")
+        if doctor.get("platform"):
+            lines.append(
+                "- Agent host checked: " + doctor["platform"]
+                + (" (none: no host command was on PATH, so only Python, the dependency, the kit "
+                   "contract, and the offline fan-out were checked; Stage 00 runs the doctor "
+                   "again for the active platform)" if doctor["platform"] == "none" else "")
+            )
         lines.append("- Result: " + ("PASS" if doctor["ok"] else "FAIL"))
         if doctor["failures"]:
             lines.append(format_list(doctor["failures"]))
@@ -1183,6 +1259,7 @@ def machine_summary(summary):
         "source": summary["source"],
         "kit_version": summary.get("kit_version"),
         "update": summary["update"],
+        "dry_run": bool(summary.get("dry_run")),
         "already_installed": summary.get("already_installed", False),
         "files": {
             key: len(value)
@@ -1193,7 +1270,7 @@ def machine_summary(summary):
         "merged": summary["files"]["merged"] + summary["files"]["prepended"],
         "researcher_paths": sorted(set(summary["files"]["researcher_paths"])),
         "essential_conflicts": summary.get("essential_conflicts") or [],
-        "manifest_path": MANIFEST_RELATIVE,
+        "manifest_path": None if summary.get("dry_run") else MANIFEST_RELATIVE,
         "existing_materials": summary.get("existing_materials") or [],
         "shared_folders": summary.get("shared_folders") or [],
         "python": summary["python"],
@@ -1208,9 +1285,10 @@ def machine_summary(summary):
         "doctor": {
             "skipped": bool(doctor.get("skipped")),
             "ok": bool(doctor.get("ok")),
+            "platform": doctor.get("platform"),
             "failures": doctor.get("failures") or [],
         },
-        "report_path": REPORT_RELATIVE,
+        "report_path": None if summary.get("dry_run") else REPORT_RELATIVE,
         "temporary_source": summary.get("temporary_source"),
         "temporary_source_removed": summary.get("temporary_source_removed"),
         "ok": summary["ok"],
@@ -1234,22 +1312,34 @@ def append_report(target, text):
 
 def print_human(summary):
     files = summary["files"]
-    print("ELARA bootstrap")
+    dry_run = bool(summary.get("dry_run"))
+    print("ELARA bootstrap" + (" (DRY RUN: nothing was written, installed, or removed)" if dry_run else ""))
     print("  Folder:      " + summary["target"])
     source = summary["source"]
     print("  Kit source:  " + str(source.get("kind")) + " " + str(source.get("location")))
+    verb = "would be " if dry_run else ""
     print(
         "  Files:       "
-        + str(len(files["installed"])) + " installed, "
+        + str(len(files["installed"])) + " " + verb + "installed, "
         + str(len(files["unchanged"])) + " unchanged, "
-        + str(len(files["updated"])) + " updated, "
+        + str(len(files["updated"])) + " " + verb + "updated, "
         + str(len(files["kept"]) + len(files["aliased"])) + " kept as yours, "
-        + str(len(files["merged"]) + len(files["prepended"])) + " merged"
+        + str(len(files["merged"]) + len(files["prepended"])) + " " + verb + "merged"
     )
+    if dry_run and files["installed"]:
+        print("               would install: " + ", ".join(rollup(files["installed"])))
     for item in files["aliased"] + files["kept"] + files["merged"] + files["prepended"]:
         print("               - " + item)
     existing = summary.get("existing_materials") or []
-    print("  Already here: " + (str(len(existing)) + " item(s) (see " + REPORT_RELATIVE + ")" if existing else "nothing; empty folder"))
+    where = "below" if dry_run else "see " + REPORT_RELATIVE
+    print("  Already here: " + (str(len(existing)) + " item(s) (" + where + ")" if existing else "nothing; empty folder"))
+    if dry_run:
+        for record in existing[:200]:
+            if record["kind"] == "folder":
+                count = ("more than " if record.get("files_truncated") else "") + str(record.get("files"))
+                print("               - " + record["name"] + "/ (folder, " + count + " file(s))")
+            else:
+                print("               - " + record["name"] + " (" + str(record.get("bytes")) + " bytes)")
     shared = [record for record in summary.get("shared_folders") or [] if record["yours"]]
     if shared:
         print(
@@ -1257,12 +1347,19 @@ def print_human(summary):
             + ", ".join(
                 record["folder"] + "/ (" + str(len(record["yours"])) + " of yours)" for record in shared
             )
-            + " (each file named in " + REPORT_RELATIVE + ")"
+            + (" (each file named in " + REPORT_RELATIVE + ")" if not dry_run else "")
         )
-    print("  Manifest:    " + MANIFEST_RELATIVE + " (which files are the kit's, shared, or yours)")
+        if dry_run:
+            for record in shared:
+                print("               - " + record["folder"] + "/: " + ", ".join(record["yours"][:50]))
+    if not dry_run:
+        print("  Manifest:    " + MANIFEST_RELATIVE + " (which files are the kit's, shared, or yours)")
     print("  Python:      " + summary["python"]["version"] + " (" + summary["python"]["executable"] + ")")
     dependency = summary["dependency"]
-    print("  jsonschema:  " + str(dependency.get("status")) + (" via " + dependency["how"] if dependency.get("how") else ""))
+    status = str(dependency.get("status"))
+    if dry_run and status != "present":
+        status += " (a real run installs it)"
+    print("  jsonschema:  " + status + (" via " + dependency["how"] if dependency.get("how") else ""))
     print("  Use for ELARA scripts: " + str(summary["python_for_kit"]))
     hosts = summary["hosts"]
     print("  Assistant:   " + (", ".join(hosts["running_inside"]) or "not detected from the environment"))
@@ -1270,11 +1367,21 @@ def print_human(summary):
         print("  WARNING:     " + warning)
     doctor = summary["doctor"]
     if doctor.get("skipped"):
-        print("  Doctor:      skipped")
+        print("  Doctor:      skipped" + (" (" + doctor["reason"] + ")" if doctor.get("reason") else ""))
     else:
-        print("  Doctor:      " + ("PASS" if doctor["ok"] else "FAIL"))
+        checked = " (checked for " + doctor["platform"] + ")" if doctor.get("platform") and doctor["platform"] != "none" else ""
+        print("  Doctor:      " + ("PASS" if doctor["ok"] else "FAIL") + checked)
         for failure in doctor["failures"]:
             print("               - " + str(failure))
+    if dry_run:
+        temporary = summary.get("temporary_source")
+        if temporary and is_temporary_kit_name(temporary):
+            print("  Would remove: the temporary kit copy ./" + str(temporary) + " after installing")
+        print("")
+        print("NEXT STEPS FOR THE ASSISTANT")
+        for index, step in enumerate(dry_run_steps(summary), 1):
+            print("  " + str(index) + ". " + step)
+        return
     print("  Report:      " + REPORT_RELATIVE)
     print("")
     print("NEXT STEPS FOR THE ASSISTANT")
@@ -1297,6 +1404,7 @@ def print_human(summary):
 
 def bootstrap(args):
     target = Path(args.into).expanduser().resolve()
+    dry_run = bool(getattr(args, "dry_run", False))
     loose = loose_script_path()
     ignore_names = set()
     if loose is not None and loose.parent == target:
@@ -1333,13 +1441,15 @@ def bootstrap(args):
                 files["unchanged"].append(relative)
                 files["project_paths" if relative in PROJECT_OWNED else "kit_paths"].append(relative)
         else:
-            target.mkdir(parents=True, exist_ok=True)
+            if not dry_run:
+                target.mkdir(parents=True, exist_ok=True)
             files = install(
                 source,
                 target,
                 args.update,
                 already_installed=already_installed,
                 researcher_paths=(previous_manifest or {}).get("researcher_paths") or [],
+                dry_run=dry_run,
             )
         summary = {
             "timestamp": utc_now(),
@@ -1349,6 +1459,7 @@ def bootstrap(args):
             "source": source_info,
             "kit_version": kit_version(target) or kit_version(source),
             "update": bool(args.update),
+            "dry_run": dry_run,
             "already_installed": already_installed,
             "files": files,
             "existing_materials": existing_materials,
@@ -1368,10 +1479,20 @@ def bootstrap(args):
     summary["essential_conflicts"] = conflicts
     if conflicts:
         summary["warnings"].append(essential_conflict_warning(conflicts))
-    dependency = ensure_dependency(target, sys.executable, args.no_install)
+    # A dry run only checks whether the dependency is present; it installs nothing.
+    dependency = ensure_dependency(target, sys.executable, args.no_install or dry_run)
     summary["dependency"] = dependency
     summary["python_for_kit"] = dependency.get("python") or sys.executable
-    if args.skip_doctor:
+    summary["doctor_platform"] = doctor_platform(summary["hosts"], getattr(args, "platform", "auto"))
+    if dry_run:
+        summary["doctor"] = {
+            "skipped": True,
+            "ok": False,
+            "failures": [],
+            "command": None,
+            "reason": "dry run: nothing was installed, so there is nothing to check yet",
+        }
+    elif args.skip_doctor:
         summary["doctor"] = {"skipped": True, "ok": False, "failures": [], "command": None}
     elif "scripts/doctor.py" in conflicts:
         # Never run a file of the researcher's as if it were the kit's doctor.
@@ -1386,8 +1507,15 @@ def bootstrap(args):
             "report": None,
         }
     else:
-        summary["doctor"] = run_doctor(target, summary["python_for_kit"])
+        summary["doctor"] = run_doctor(target, summary["python_for_kit"], summary["doctor_platform"])
         summary["doctor"]["skipped"] = False
+    if dry_run:
+        # The plan itself is the result; nothing was written, so nothing can be broken yet.
+        summary["ok"] = True
+        summary["temporary_source_removed"] = None
+        summary["report_path"] = None
+        summary["manifest_path"] = None
+        return summary
     summary["ok"] = bool(
         (summary["doctor"].get("skipped") or summary["doctor"].get("ok"))
         and dependency.get("status") in ("present", "installed")
@@ -1437,6 +1565,11 @@ def main():
         help="refresh kit-owned files that differ from this kit version (never project state, ledgers, or a file that was yours before the kit)",
     )
     parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="show what would be installed, kept, merged, or aliased, and what the folder already holds; write, install, and remove nothing",
+    )
+    parser.add_argument(
         "--no-install",
         action="store_true",
         help="do not try to install the Python dependency",
@@ -1445,6 +1578,12 @@ def main():
         "--skip-doctor",
         action="store_true",
         help="do not run scripts/doctor.py afterwards",
+    )
+    parser.add_argument(
+        "--platform",
+        choices=("auto", "codex", "claude", "all", "none"),
+        default="auto",
+        help="agent host the doctor should check; auto means the host this script runs inside (if its command is on PATH), else none",
     )
     parser.add_argument(
         "--keep",
