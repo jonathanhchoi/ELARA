@@ -20,6 +20,15 @@ forward-test target.
 8. **Replication is self-contained.** Extract the final fixture package into a clean directory and
    run its documented rebuild command. All reported fixture values are reproduced from archived
    inputs and outputs.
+9. **Fan-outs are host-managed.** Prepare the one-unit fixture (`scripts/unit_fanout.py prepare`
+   on `fixtures/one_unit_fanout/spec.json`) and a one-brief research fan-out
+   (`scripts/research_fanout.py prepare`). In Claude Code, the stage launches the saved
+   `elr-observation-fanout` / `elr-research-fanout` workflows itself (visible in `/workflows`) and
+   every agent runs as `elr-worker` / `elr-research-worker`; in Codex, the parent spawns
+   `elr_worker` / `elr_research_worker` by name in bounded waves. In neither host does the assistant
+   launch a general-purpose agent, hand-launch workers one at a time, or process units in its own
+   context; a stopped run relaunched with the same command resumes from the return files, and the
+   controllers' `status` reconciles the counts.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–19.

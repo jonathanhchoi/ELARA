@@ -186,7 +186,8 @@ class DoctorTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("PASS", result.stdout)
         self.assertIn("offline one-unit fan-out smoke passed", result.stdout)
-        self.assertIn("restricted worker subagent definitions present", result.stdout)
+        self.assertIn("offline research fan-out smoke passed", result.stdout)
+        self.assertIn("restricted worker definitions and saved workflows present", result.stdout)
 
     def test_doctor_fails_when_a_worker_definition_loses_its_tool_restriction(self) -> None:
         # A worker that inherits the host's interactive tools can crash the host (2026-08-17
@@ -214,6 +215,44 @@ class DoctorTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("missing .claude/agents/elr-worker.md", result.stdout + result.stderr)
+
+    def test_doctor_checks_the_codex_worker_agents_and_the_saved_workflows(self) -> None:
+        # The same roles on Codex are custom sub-agents in .codex/agents/; the doctor must fail
+        # closed when one is renamed, loses its instructions or sandbox, gains an MCP server, or
+        # when a saved workflow stops launching the restricted agent type.
+        from doctor import _worker_agent_failures  # noqa: PLC0415
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw) / "kit"
+            copy_kit(ROOT, root)
+            self.assertEqual(_worker_agent_failures(root), [])
+            codex_worker = root / ".codex" / "agents" / "elr-worker.toml"
+            original = codex_worker.read_text(encoding="utf-8")
+            codex_worker.write_text(original.replace('name = "elr_worker"', 'name = "worker"'), encoding="utf-8")
+            failures = _worker_agent_failures(root)
+            self.assertTrue(any('name = "elr_worker"' in failure for failure in failures), failures)
+            codex_worker.write_text(original + '\n[mcp_servers.docs]\nurl = "https://example.invalid/mcp"\n', encoding="utf-8")
+            failures = _worker_agent_failures(root)
+            self.assertTrue(any("declares an MCP server" in failure for failure in failures), failures)
+            codex_worker.write_text(original.replace('sandbox_mode = "workspace-write"', ""), encoding="utf-8")
+            failures = _worker_agent_failures(root)
+            self.assertTrue(any("no sandbox_mode" in failure for failure in failures), failures)
+            codex_worker.write_text(original, encoding="utf-8")
+            self.assertEqual(_worker_agent_failures(root), [])
+            workflow = root / ".claude" / "workflows" / "elr-research-fanout.js"
+            text = workflow.read_text(encoding="utf-8")
+            workflow.write_text(text.replace("agentType: 'elr-research-worker'", "agentType: 'general-purpose'"), encoding="utf-8")
+            failures = _worker_agent_failures(root)
+            self.assertTrue(any("general-purpose" in failure for failure in failures), failures)
+            self.assertTrue(any("agentType elr-research-worker" in failure for failure in failures), failures)
+            codex_research = root / ".codex" / "agents" / "elr-research-worker.toml"
+            codex_research.unlink()
+            result = subprocess.run(
+                [sys.executable, str(root / "scripts" / "doctor.py"), "--platform", "none", "--skip-smoke", "--root", str(root)],
+                text=True, capture_output=True, timeout=120, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("missing .codex/agents/elr-research-worker.toml", result.stdout + result.stderr)
 
 
 class PreregistrationTemplateTests(unittest.TestCase):

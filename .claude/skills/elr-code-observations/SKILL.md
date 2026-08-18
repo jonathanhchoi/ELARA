@@ -14,7 +14,12 @@ description: "Fan out frozen empirical legal research coding or audit work with 
    return path; workers never edit shared files.
 4. Require workers to send their return envelope through `python scripts/unit_fanout.py submit`;
    they do not write the worker-return path directly or expose substantive labels in receipts.
-5. Use the Claude workflow adapter specified by the shared contract. If its required mode is not
-   active, issue the exact handoff for `/elr-code-observations` instead of imitating that mode.
+5. Run the fan-out through the host's orchestrator as the shared contract directs — never one
+   hand-launched worker at a time and never an all-tools agent. On this host that means
+   the saved `elr-observation-fanout` workflow (`.claude/workflows/`), which you launch
+   yourself with the Workflow tool (`name` plus `{ "run_dir": ... }`) and relaunch until
+   nothing is pending; every agent in it is the restricted `elr-worker` type. If dynamic
+   workflows are unavailable, launch `elr-worker` directly, one assignment per call, and
+   record that route.
 6. Validate returns and update ledgers serially after each bounded wave. Resume from files,
    preserve every attempt, expose only operational progress, and reconcile before merging.

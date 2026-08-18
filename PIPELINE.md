@@ -184,7 +184,7 @@ version.
 |---|---|
 | `normal` | Stay interactive and gather a researcher decision. |
 | `plan` | Inspect in Plan Mode and make no file changes. |
-| `execute` | Run a bounded approved task; use the platform's durable long-running mode for one-unit fan-out where declared. |
+| `execute` | Run a bounded approved task. A fan-out inside it is run by the host's own orchestrator — Claude Code: the kit's saved workflows, launched by the assistant; Codex: the kit's custom sub-agents in bounded waves — under `workflow/shared/observation-fanout.md`. |
 | `plan_then_execute` | Finish a decision-complete read-only plan, then continue into execution in the same session; stop for approval of the plan only when a `workflow/shared/guardrails.md` §11 stop condition holds (Stages 17 and 19 always stop: their plan is the manuscript-edit gate). |
 
 Plan phases do not alter state, ledgers, or artifacts. A mode or permission
@@ -218,6 +218,28 @@ setting never waives a human gate, data restriction, or artifact-version rule.
 A coding unit may contain one document or several related documents, as fixed by
 the codebook and unit-space manifest. Stage 11 assigns one such unit—not
 necessarily one document—to each fresh worker context.
+
+## How parallel work runs
+
+Whenever a stage needs many independent judgments or retrievals — coding units
+in Stages 08, 11, 12, and 15; searches, author and citation chains, and
+retrieval in Stage 02; independent critics in Stage 07; claim-citation pairs in
+Stage 18; fresh reviews — the work is fanned out one unit per isolated worker
+under `workflow/shared/observation-fanout.md`, and the fan-out itself is run by
+the host's own orchestrator, not by the assistant launching workers by hand:
+
+| Host | Orchestrator | Worker definitions |
+|---|---|---|
+| Claude Code | The kit's saved dynamic workflows, `elr-observation-fanout` (coding and audit units) and `elr-research-fanout` (research units), which the assistant launches as part of the stage; the researcher can watch them in `/workflows` | `.claude/agents/elr-worker.md`, `.claude/agents/elr-research-worker.md` |
+| Codex | The kit's custom sub-agents, spawned by name in bounded waves (Goal mode keeps a long run going) | `.codex/agents/elr-worker.toml` (`elr_worker`), `.codex/agents/elr-research-worker.toml` (`elr_research_worker`) |
+
+On either host the kit's controllers (`scripts/unit_fanout.py`,
+`scripts/research_fanout.py`) fix the manifest on disk, say what is still
+pending, validate returns, bound attempts, and merge — so an interrupted fan-out
+resumes in a later session from the files, and no unit is silently dropped.
+Workers have a fixed, minimal tool surface (coding workers no web; research
+workers web search and fetch; none an interactive surface), a time box, and one
+unique return path each; shared ledgers are edited serially by the parent.
 
 ## Manuscript utilities and the publication profile
 

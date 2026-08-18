@@ -75,7 +75,7 @@ SHARED_FOLDER_LIST_CAP = 500
 SHARED_FOLDER_SKIP = {"project"}
 # Kit files ELARA needs in order to run at all. A file of the researcher's at one
 # of these paths is left alone, and the report says ELARA is incomplete here.
-ESSENTIAL_PREFIXES = ("scripts/", "workflow/", ".agents/", ".claude/")
+ESSENTIAL_PREFIXES = ("scripts/", "workflow/", ".agents/", ".claude/", ".codex/")
 ESSENTIAL_FILES = {"PIPELINE.md"}
 
 # Never copied into a project folder.
@@ -1167,7 +1167,10 @@ def researcher_notes():
         "Later, open this same folder in Claude Code or Codex and type /elr resume (Claude Code) or "
         "$elr resume (Codex), or simply say \"continue\". /elr menu shows the tools; /elr help explains "
         "everything again; /elr status says where things stand.",
-        "If /elr (or $elr) is not recognized, restart the app in this folder once; skills load at start.",
+        "If /elr (or $elr) is not recognized, restart the app in this folder once; skills load at start. "
+        "The same restart loads ELARA's worker definitions (.claude/agents/ and .claude/workflows/ in "
+        "Claude Code, .codex/agents/ in Codex), which the kit uses to run searches and coding in "
+        "parallel; do it before the first long stage.",
     ]
 
 

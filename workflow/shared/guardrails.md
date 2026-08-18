@@ -139,28 +139,41 @@ researcher explicitly changes the kit's governing instructions.
   serial writer to validate and merge them.
 - Reject duplicate, missing, misidentified, or out-of-schema unit returns before
   aggregation. Record retries as new attempts rather than erasing failures.
+- The host's own orchestrator runs every fan-out; the assistant never launches
+  workers one at a time by hand while that orchestrator is available, and never
+  imitates a fan-out serially inside its own context. On Claude Code the
+  orchestrator is the kit's saved dynamic workflows (`.claude/workflows/
+  elr-observation-fanout.js` for coding and audit units,
+  `elr-research-fanout.js` for research units), which the assistant launches
+  itself as part of the stage; on Codex it is the kit's custom sub-agents
+  (`.codex/agents/`), spawned by name in bounded waves. The kit's controllers
+  (`scripts/unit_fanout.py`, `scripts/research_fanout.py`) fix the manifest,
+  say what is pending, validate, and merge on either host.
 - Give every worker a fixed, minimal tool surface, enforced by the platform
   where it can be (the kit ships `.claude/agents/elr-worker.md` and
-  `elr-research-worker.md` for Claude Code): coding and audit workers get no
+  `elr-research-worker.md` for Claude Code, and `.codex/agents/elr-worker.toml`
+  and `elr-research-worker.toml` for Codex): coding and audit workers get no
   web; research workers get web fetch and search; no worker ever gets an
   interactive surface — the host's in-app browser, computer use, desktop or
   other MCP tools, sub-agent spawning, or user prompts. Those surfaces belong to
   the researcher's own session, and a worker that reaches one can take the host
   down (a browser preview opened by a worker on a bot-challenge page crashed
   the Claude desktop app twice on 2026-08-17). Never launch a worker as an
-  all-tools default agent.
+  all-tools default or general-purpose agent.
 - A worker that meets a 401/403/429, CAPTCHA, bot challenge, or login wall
   records a typed access gap (URL, status, time) and moves on; it never retries
   more than once, spoofs, or escalates to another surface. The parent turns the
   gaps into the stage's access-limitations record and manual search packet.
-- Every parallel wave is bounded and resumable from disk: a fan-out manifest
-  under the run directory (assignment, attempt, launch time, unique output path,
-  status), worker outputs written incrementally under the run directory (never
-  the assistant's session-specific scratchpad), a per-worker time box, a parent
-  watchdog that marks an overdue worker timed out and relaunches it as a new
-  attempt (bounded attempts), a concurrency ceiling (default six), and a ledger
-  checkpoint with exact counts after each wave. This applies to every
-  parallelized stage — searches and retrieval as much as coding.
+- Every parallel wave is bounded and resumable from disk: a sealed fan-out
+  manifest under the run directory (assignment, brief or assignment file,
+  unique return path), worker returns written under the run directory (never
+  the assistant's session-specific scratchpad; incrementally for research
+  workers), a per-worker time box, bounded attempts enforced by the controller
+  (a launch record; an assignment that used its attempts is reported as
+  exhausted, never silently dropped), a concurrency ceiling (the host runtime's,
+  and six per wave for research workers by default), and a ledger checkpoint
+  with exact counts after each run or wave. This applies to every parallelized
+  stage — searches and retrieval as much as coding.
 
 ## 8. Audit separation and correction
 

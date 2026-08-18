@@ -294,6 +294,72 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("`usage` key", pipeline)
         self.assertNotIn("## Usage mode", pipeline)
 
+    def test_fan_outs_are_run_by_the_host_orchestrator_on_both_hosts(self) -> None:
+        # Claude Code: every fan-out is one of the kit's saved workflows, launched by the
+        # assistant; Codex: the kit's custom sub-agents. Never a hand-launched worker loop, never
+        # an all-tools agent (2026-08-17 incident), on either host.
+        from doctor import DISCOVERY_SURFACES  # noqa: PLC0415
+
+        observation = (ROOT / ".claude" / "workflows" / "elr-observation-fanout.js").read_text(encoding="utf-8")
+        research = (ROOT / ".claude" / "workflows" / "elr-research-fanout.js").read_text(encoding="utf-8")
+        self.assertIn("agentType: 'elr-worker'", observation)
+        self.assertIn("agentType: 'elr-research-worker'", research)
+        self.assertIn("agentType: 'elr-worker'", research)  # controller status steps
+        self.assertIn("scripts/research_fanout.py status", research)
+        for text in (observation, research):
+            self.assertNotIn("general-purpose", text)
+            self.assertIn("export const meta", text)
+        for relative, name in (
+            (".codex/agents/elr-worker.toml", "elr_worker"),
+            (".codex/agents/elr-research-worker.toml", "elr_research_worker"),
+        ):
+            toml = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn(f'name = "{name}"', toml)
+            self.assertIn("developer_instructions", toml)
+            self.assertIn("sandbox_mode", toml)
+            self.assertNotIn("[mcp_servers.", toml)
+        for relative in (
+            ".claude/workflows/elr-research-fanout.js",
+            ".codex/agents/elr-worker.toml",
+            ".codex/agents/elr-research-worker.toml",
+            "scripts/research_fanout.py",
+        ):
+            self.assertIn(relative, DISCOVERY_SURFACES)
+        contract = (ROOT / "workflow" / "shared" / "observation-fanout.md").read_text(encoding="utf-8")
+        for heading in (
+            "## The host orchestrates; the kit validates",
+            "## Research fan-outs",
+            "## Codex adapter",
+            "## Claude Code adapter",
+        ):
+            self.assertIn(heading, contract)
+        flat_contract = " ".join(contract.split())
+        for needle in ("elr-observation-fanout", "elr-research-fanout", "elr_worker", "elr_research_worker",
+                       "scripts/research_fanout.py", "never by the assistant launching workers one at a time"):
+            self.assertIn(needle, flat_contract, needle)
+        guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(encoding="utf-8")
+        self.assertIn(".codex/agents/", guardrails)
+        self.assertIn("host's own orchestrator runs every fan-out", guardrails)
+        claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+        self.assertIn("elr-research-fanout", claude)
+        self.assertIn("elr-observation-fanout", claude)
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn(".codex/agents/", agents)
+        self.assertIn("## How parallel work runs", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
+        stages = {meta["stage_id"]: body for _, meta, body in load_stages(ROOT)}
+        for stage_id in ("02-preemption-review", "07-adversarial-review", "18-cite-check"):
+            self.assertIn("elr-research-fanout", stages[stage_id], stage_id)
+            self.assertIn("elr_research_worker", stages[stage_id], stage_id)
+        for stage_id in ("08-pilot", "11-scale-up", "12-interpretive-verification", "15-robustness"):
+            self.assertIn("elr-observation-fanout", stages[stage_id], stage_id)
+            self.assertIn("elr_worker", stages[stage_id], stage_id)
+        claude_skill = (ROOT / ".claude" / "skills" / "elr-code-observations" / "SKILL.md").read_text(encoding="utf-8")
+        codex_skill = (ROOT / ".agents" / "skills" / "elr-code-observations" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Workflow tool", claude_skill)
+        self.assertIn("elr_worker", codex_skill)
+        for text in (claude_skill, codex_skill):
+            self.assertIn("never one hand-launched worker at a time", " ".join(text.split()))
+
     def test_scale_up_forbids_multiple_units_not_multiple_documents(self) -> None:
         body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "11-scale-up")
         self.assertIn("Never pack multiple coding units into one prompt", body)

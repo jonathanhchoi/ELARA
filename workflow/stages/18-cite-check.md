@@ -7,7 +7,7 @@ interaction_profile: "execute"
 long_running: true
 prerequisites: ["17-integrate-manuscript"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/manuscript_vNNN/", "project/artifacts/manuscript_change_log_vNNN.md", "project/artifacts/manuscript_consistency_report_vNNN.md", "project/artifacts/replication_package_vNNN/", "researcher-supplied bibliography, source files, and authorized database access where applicable"]
-declared_outputs: ["project/artifacts/citation_audit_vNNN.jsonl", "project/artifacts/citation_audit_report_vNNN.md", "project/sources/cite_check/<run_id>/source_manifest.csv", "project/sources/cite_check/<run_id>/search_log.csv", "project/sources/cite_check/<run_id>/retrieved/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
+declared_outputs: ["project/artifacts/citation_audit_vNNN.jsonl", "project/artifacts/citation_audit_report_vNNN.md", "project/sources/cite_check/<run_id>/source_manifest.csv", "project/sources/cite_check/<run_id>/search_log.csv", "project/sources/cite_check/<run_id>/retrieved/", "project/sources/cite_check/<run_id>/fanout/ (briefs, sealed manifest, launch record, worker returns; when pairs are audited in parallel)", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
 human_gate: null
 next_stage: "19-revise-and-respond"
 failure_routes: ["17-integrate-manuscript", "18-cite-check"]
@@ -32,7 +32,7 @@ The researcher decides which unavailable sources to supply, the governing citati
 
 ## Mode handoff
 
-This is a long-running audit stage. In Codex or current Claude Code, `/goal` may be used with this objective: **Retrieve and read the actual source for every manuscript claim-citation pair, verify identity, proposition, quotation, pinpoint, version, and relevant authority status, archive the evidence, and report every problem without editing the manuscript.** If Goal mode is unavailable, use normal approved execution with durable checkpoints. Do not use Plan Mode for the audit.
+This is a long-running audit stage. In Codex or current Claude Code, `/goal` may be used with this objective: **Retrieve and read the actual source for every manuscript claim-citation pair, verify identity, proposition, quotation, pinpoint, version, and relevant authority status, archive the evidence, and report every problem without editing the manuscript.** If Goal mode is unavailable, use normal approved execution with durable checkpoints. When the claim-citation pairs are audited in parallel, run them as a research fan-out under `workflow/shared/observation-fanout.md` — one pair per brief, sealed with `scripts/research_fanout.py prepare` under `project/sources/cite_check/<run_id>/fanout/`, run by the host's orchestrator (Claude Code: the saved `elr-research-fanout` workflow, launched by the assistant; Codex: `elr_research_worker` sub-agents in bounded waves) — never hand-launched workers or an all-tools agent. Do not use Plan Mode for the audit.
 
 ## Work
 

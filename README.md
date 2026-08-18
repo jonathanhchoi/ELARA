@@ -163,7 +163,9 @@ For Claude Code, follow the
 [official installation guide](https://code.claude.com/docs/en/installation).
 Open a terminal in the repository root and run `claude`. Type `/skills` and
 confirm that `/elr` appears, then run `/elr start`. Claude Code v2.1.154 or later
-is required for the saved dynamic workflow used in Stage 11.
+is required for the saved dynamic workflows that run ELARA's parallel work
+(coding in Stage 11 and its pilots and audits; searches, retrieval, cite-checks,
+and reviews elsewhere).
 
 If a skill does not appear, make sure the folder you opened directly contains
 both `AGENTS.md` and the hidden folder for your platform. A double-nested ZIP
@@ -300,17 +302,29 @@ The canonical utility instructions are in `workflow/utilities/`. The shared
 rules for manuscript edits are in
 `workflow/shared/manuscript-editing-contract.md`.
 
-## How does parallel coding work?
+## How does parallel work run?
 
 ELARA gives one observation or coding unit to each fresh worker context. The
 approved codebook and unit-space manifest define the coding unit, which may
 contain one document or several related documents. File boundaries do not
-silently determine the unit of observation.
+silently determine the unit of observation. Searches, retrieval, cite-checks,
+critiques, and reviews are fanned out the same way, one bounded unit per worker.
 
-Each worker submits its response through the deterministic controller. The
-controller checks the sealed assignment, schema, identifiers, and unique output
-path before creating the canonical return. It refuses overwrites and merges
-validated returns serially.
+The fan-out itself is run by the tool you are using, not by hand: in Claude Code
+the assistant launches ELARA's saved workflows (`elr-observation-fanout` for
+coding, `elr-research-fanout` for research units), which you can watch in
+`/workflows`; in Codex it spawns ELARA's custom sub-agents (`elr_worker`,
+`elr_research_worker`) in bounded waves. Workers have a fixed, minimal set of
+tools — coding workers have no web access, research workers have web search and
+fetch, and none can reach a browser, desktop, or MCP tool — and each writes one
+unique return.
+
+Each coding worker submits its response through the deterministic controller.
+The controller checks the sealed assignment, schema, identifiers, and unique
+output path before creating the canonical return. It refuses overwrites and
+merges validated returns serially. A second controller does the same
+bookkeeping for research fan-outs (sealed manifest, pending list, bounded
+attempts), so an interrupted run resumes from the files in a later session.
 
 ## What are the interaction modes and approval rules?
 
@@ -366,10 +380,12 @@ workflow/shared/                Guardrails and artifact, fan-out, and manuscript
 workflow/templates/             Preregistration and publication-profile templates
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
-.claude/workflows/              Claude one-unit fan-out workflow
+.claude/agents/                 Claude restricted worker subagents
+.claude/workflows/              Claude saved fan-out workflows (coding, research)
+.codex/agents/                  Codex restricted worker sub-agents
 project/                        Blank project state, inputs, logs, and outputs
 scripts/bootstrap.py            Safe installer and setup check
-scripts/                        Validators and fan-out controller
+scripts/                        Validators and the two fan-out controllers
 tests/                          Maintenance tests and public fixtures
 ```
 
@@ -430,11 +446,14 @@ Add an integration only after Stage 06 authorizes the exact source, action,
 account, model route, and data exposure. Record its name, version, permissions,
 and limitations in the active access snapshot and run manifest.
 
-For a large coding run, use host permission rules or trusted deterministic
-hooks where supported. These controls should prevent web access, unrelated MCP
-use, sibling-return reads, and writes outside the assigned path. The strict
-`submit` command validates and creates canonical returns, but it isn't a host
-sandbox. An optional plugin may distribute later ELARA updates. A clean
+For a large run, ELARA's workers already have a fixed, minimal tool surface:
+the restricted subagent definitions in `.claude/agents/` (Claude Code) and
+`.codex/agents/` (Codex) give coding workers no web access, research workers web
+search and fetch only, and no worker a browser, desktop, MCP, or user-prompt
+tool. Add host permission rules or trusted deterministic hooks where supported
+to also prevent sibling-return reads and writes outside the assigned path. The
+strict `submit` command validates and creates canonical returns, but it isn't a
+host sandbox. An optional plugin may distribute later ELARA updates. A clean
 repository copy remains the authoritative workspace for one project.
 
 ## What does ELARA cost, and what does it require?

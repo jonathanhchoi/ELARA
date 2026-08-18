@@ -23,7 +23,7 @@ Attack every important assumption and artifact with independent reviewers, respo
 2. Confirm that all reviewers can be given the necessary artifacts without violating data authorization. This review should ordinarily use design materials and public or synthetic examples, not corpus text.
 3. Identify all prior critique, unresolved issue, feasibility condition, authorization constraint, and preemption condition. A reviewer must be able to trace each one.
 4. Confirm that no pilot or study-scale coding has begun. If it has, record the deviation and ask the researcher whether this review is retrospective.
-5. Check that sub-agents or fresh independent sessions are available. If not, use serial fresh-context reviews and preserve their separation.
+5. Check that sub-agents or fresh independent sessions are available. Independent critics run as a research fan-out under `workflow/shared/observation-fanout.md` — one critic per brief, each a fresh `elr-research-worker` / `elr_research_worker` launched by the host's orchestrator (Claude Code: the saved `elr-research-fanout` workflow; Codex: the kit's sub-agents), each receiving the design and codebook and none receiving another critic's findings. If no orchestrator is available, use serial fresh-context reviews and preserve their separation.
 
 ## Researcher decisions
 

@@ -59,17 +59,34 @@ DISCOVERY_SURFACES = (
     ".claude/skills/elr/SKILL.md",
     ".claude/skills/elr-code-observations/SKILL.md",
     ".claude/workflows/elr-observation-fanout.js",
+    ".claude/workflows/elr-research-fanout.js",
     ".claude/agents/elr-worker.md",
     ".claude/agents/elr-research-worker.md",
+    ".codex/agents/elr-worker.toml",
+    ".codex/agents/elr-research-worker.toml",
+    "scripts/unit_fanout.py",
+    "scripts/research_fanout.py",
 )
 
 # The restricted worker subagent types every fan-out must use (see
-# workflow/shared/observation-fanout.md, "Worker tool surface"). Each file's front matter must
-# carry a `tools:` allowlist and a `disallowedTools:` line that removes every MCP tool; a worker
-# that inherits the host's interactive tools can crash the host (observed 2026-08-17).
+# workflow/shared/observation-fanout.md, "Worker tool surface"). Each Claude file's front matter
+# must carry a `tools:` allowlist and a `disallowedTools:` line that removes every MCP tool; a
+# worker that inherits the host's interactive tools can crash the host (observed 2026-08-17).
 WORKER_AGENT_FILES = (
     ".claude/agents/elr-worker.md",
     ".claude/agents/elr-research-worker.md",
+)
+# The Codex custom sub-agents that play the same roles (workflow/shared/observation-fanout.md,
+# "Codex adapter"). Each TOML file must name the agent, carry developer_instructions and a
+# sandbox_mode, and declare no MCP server; the coding worker's instructions must forbid the web.
+CODEX_WORKER_AGENT_FILES = (
+    (".codex/agents/elr-worker.toml", "elr_worker"),
+    (".codex/agents/elr-research-worker.toml", "elr_research_worker"),
+)
+# The kit's saved Claude workflows, and the restricted agent type each must launch its workers as.
+CLAUDE_WORKFLOW_FILES = (
+    (".claude/workflows/elr-observation-fanout.js", "elr-worker"),
+    (".claude/workflows/elr-research-fanout.js", "elr-research-worker"),
 )
 
 EXPECTED_STAGE_COUNT = 20
@@ -264,7 +281,85 @@ def _worker_agent_failures(root):
             failures.append(relative + " does not carry `disallowedTools: mcp__*`")
         if relative.endswith("elr-worker.md") and re.search(r"\bWeb(Fetch|Search)\b", tools_line):
             failures.append(relative + " grants web tools to the coding worker")
+
+    for relative, expected_name in CODEX_WORKER_AGENT_FILES:
+        path = root / relative
+        if not path.is_file():
+            continue  # already reported as a missing discovery surface
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeDecodeError) as exc:
+            failures.append(relative + " is unreadable: " + str(exc))
+            continue
+        try:
+            import tomllib  # Python 3.11+; older interpreters skip the parse and keep the line checks
+        except ImportError:  # pragma: no cover - depends on the interpreter
+            tomllib = None
+        if tomllib is not None:
+            try:
+                tomllib.loads(text)
+            except tomllib.TOMLDecodeError as exc:
+                failures.append(relative + " is not valid TOML: " + str(exc))
+        name_match = re.search(r'^name\s*=\s*"([^"]+)"', text, re.MULTILINE)
+        if not name_match or name_match.group(1) != expected_name:
+            failures.append(relative + ' must set name = "' + expected_name + '"')
+        if not re.search(r"^developer_instructions\s*=", text, re.MULTILINE):
+            failures.append(relative + " has no developer_instructions")
+        if not re.search(r'^sandbox_mode\s*=\s*"[^"]+"', text, re.MULTILINE):
+            failures.append(relative + " has no sandbox_mode")
+        if re.search(r"^\[mcp_servers\.", text, re.MULTILINE):
+            failures.append(relative + " declares an MCP server for a worker")
+        if relative.endswith("elr-worker.toml") and not re.search(r"no web", text, re.IGNORECASE):
+            failures.append(relative + " does not forbid the web for the coding worker")
+
+    for relative, agent_type in CLAUDE_WORKFLOW_FILES:
+        path = root / relative
+        if not path.is_file():
+            continue  # already reported as a missing discovery surface
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeDecodeError) as exc:
+            failures.append(relative + " is unreadable: " + str(exc))
+            continue
+        if "agentType: '" + agent_type + "'" not in text:
+            failures.append(relative + " does not launch its workers as agentType " + agent_type)
+        if re.search(r"agentType:\s*['\"]general-purpose['\"]", text):
+            failures.append(relative + " launches a general-purpose agent")
     return failures
+
+
+def _offline_research_fanout_smoke(root):
+    """Exercise research_fanout prepare and status without a model or network."""
+    from research_fanout import prepare, status
+
+    with tempfile.TemporaryDirectory(prefix="elara-doctor-research-") as temporary:
+        fanout_dir = Path(temporary) / "fanout"
+        (fanout_dir / "briefs").mkdir(parents=True)
+        (fanout_dir / "briefs" / "unit-1.md").write_text(
+            "# Doctor fixture brief\nNo network; return {\"complete\": true}.\n", encoding="utf-8"
+        )
+        spec = {
+            "contract_version": "1.0",
+            "fanout_id": "doctor-offline-fixture",
+            "kind": "doctor_fixture",
+            "time_box_minutes": 1,
+            "max_attempts": 1,
+            "assignments": [{"assignment_id": "unit-1", "brief": "briefs/unit-1.md"}],
+        }
+        (fanout_dir / "spec.json").write_text(json.dumps(spec), encoding="utf-8")
+        prepare(fanout_dir)
+        before = status(fanout_dir, include_pending=True, record_launch=True)
+        if before["pending"] != 1 or before.get("launches_recorded") != 1:
+            raise ValueError("research fan-out status did not report one pending launch")
+        return_path = Path(before["pending_assignments"][0]["return_path"])
+        return_path.write_text(
+            json.dumps({"assignment_id": "unit-1", "complete": True, "result": {}}),
+            encoding="utf-8",
+        )
+        after = status(fanout_dir, include_pending=True)
+        if after["complete"] != 1 or after["pending"] != 0 or after["exhausted"] != 0:
+            raise ValueError("research fan-out status did not reconcile one complete return")
+    return {"ready": True, "model_calls": 0, "network_calls": 0, "assignments": 1}
 
 
 def build_report(root, platform="auto", smoke=True):
@@ -324,6 +419,15 @@ def build_report(root, platform="auto", smoke=True):
                 "reason": "jsonschema dependency is unavailable or unsupported",
             }
 
+    research_smoke_report = {"ready": False, "skipped": not smoke}
+    if smoke:
+        try:
+            research_smoke_report = _offline_research_fanout_smoke(root)
+            research_smoke_report["skipped"] = False
+        except Exception as exc:  # fail closed and preserve a useful diagnostic
+            research_smoke_report = {"ready": False, "skipped": False, "error": str(exc)}
+            failures.append("offline research fan-out smoke test failed: " + str(exc))
+
     return {
         "schema_version": "1.0",
         "ok": not failures,
@@ -344,6 +448,7 @@ def build_report(root, platform="auto", smoke=True):
             "repository_contract": "passed" if not repository_failures else "failed",
             "worker_agent_definitions": "passed" if not worker_agent_failures else "failed",
             "offline_fanout_smoke": smoke_report,
+            "offline_research_fanout_smoke": research_smoke_report,
         },
         "failures": failures,
     }
@@ -375,10 +480,20 @@ def _print_human_report(report):
         print("CHECK: offline one-unit fan-out smoke passed")
     else:
         print("CHECK: offline one-unit fan-out smoke failed")
-    if report["checks"].get("worker_agent_definitions") == "passed":
-        print("CHECK: restricted worker subagent definitions present (elr-worker, elr-research-worker)")
+    research_smoke = report["checks"].get("offline_research_fanout_smoke", {})
+    if research_smoke.get("skipped"):
+        print("CHECK: offline research fan-out smoke skipped")
+    elif research_smoke.get("ready"):
+        print("CHECK: offline research fan-out smoke passed")
     else:
-        print("CHECK: restricted worker subagent definitions missing or unrestricted")
+        print("CHECK: offline research fan-out smoke failed")
+    if report["checks"].get("worker_agent_definitions") == "passed":
+        print(
+            "CHECK: restricted worker definitions and saved workflows present "
+            "(Claude: elr-worker, elr-research-worker; Codex: elr_worker, elr_research_worker)"
+        )
+    else:
+        print("CHECK: restricted worker definitions or saved workflows missing or unrestricted")
 
     if report["failures"]:
         print("FAIL: this installation has " + str(len(report["failures"])) + " problem(s):")

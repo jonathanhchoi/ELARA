@@ -33,7 +33,7 @@ The researcher approves the paraphrase rule, second-model choice, comparison met
 
 ## Mode handoff
 
-This is a long-running execution stage. In Codex, `/goal` may be used with this objective: **Run every approved prompt-paraphrase and second-model robustness condition on the protected validation sample, one unit per fresh context, preserve raw outputs, apply identical checks and downstream analysis, and report the complete stability spread.** In Claude Code, invoke `/elr-code-observations` and the saved dynamic workflow on the frozen condition manifest. If the adapter is unavailable, use normal approved execution with durable checkpoints. Do not execute a robustness search in Plan Mode.
+This is a long-running execution stage. In Codex, `/goal` may be used with this objective: **Run every approved prompt-paraphrase and second-model robustness condition on the protected validation sample, one unit per fresh context, preserve raw outputs, apply identical checks and downstream analysis, and report the complete stability spread.** — with the unit-condition assignments run as the kit's `elr_worker` sub-agents in bounded waves. In Claude Code, prepare the condition manifest with the controller and launch the saved `elr-observation-fanout` workflow yourself, relaunching it until nothing is pending. If the host's orchestrator is unavailable, launch the restricted worker type directly one assignment per call and record that route. Do not execute a robustness search in Plan Mode.
 
 ## Work
 

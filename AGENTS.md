@@ -39,8 +39,11 @@ very fast research assistant whose work is verified, never trusted.
    an explicit execution handoff only when a stop condition in
    `workflow/shared/guardrails.md` §11 holds (Stages 17 and 19 always stop,
    because their plan is the manuscript-edit gate). For long-running execution,
-   use Codex Goal mode or the saved Claude dynamic workflow for one-unit
-   fan-out where the installed platform supports it.
+   Codex uses Goal mode for persistence, and every fan-out on either host runs
+   through the host's own orchestrator: Claude Code runs the kit's saved
+   dynamic workflows in `.claude/workflows/`, which the assistant launches
+   itself; Codex spawns the kit's custom sub-agents in `.codex/agents/` in
+   bounded waves. See `workflow/shared/observation-fanout.md`.
 7. When a stage finishes and no gate or input is pending, do not stop silently
    and do not wait: summarize in a few plain-language lines what was produced
    and where it is, then in `pipeline` mode continue into the next stage in the
@@ -62,12 +65,13 @@ During a research run, edit only paths under `project/` that the current stage
 declares. Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,
 `PIPELINE.md`, the kit README (`ELARA_README.md` in a project folder;
 `README.md` in a plain clone of the kit), `workflow/`, `.agents/`, `.claude/`,
-`scripts/`, and `tests/` — unless the researcher explicitly asks to develop the
-kit itself. Files that were in this folder before ELARA was installed are the
-researcher's: never move, rename, edit, or delete them; import copies.
-`project/BOOTSTRAP.md` lists them, and `project/ELARA_MANIFEST.json` records
-which files are the kit's, which are shared, and which are the researcher's, so
-a folder both use (for example `scripts/`) is never a guess.
+`.codex/`, `scripts/`, and `tests/` — unless the researcher explicitly asks to
+develop the kit itself. Files that were in this folder before ELARA was
+installed are the researcher's: never move, rename, edit, or delete them;
+import copies. `project/BOOTSTRAP.md` lists them, and
+`project/ELARA_MANIFEST.json` records which files are the kit's, which are
+shared, and which are the researcher's, so a folder both use (for example
+`scripts/`) is never a guess.
 
 ## Working with the researcher
 
@@ -146,11 +150,15 @@ a folder both use (for example `scripts/`) is never a guess.
 - Keep an exact run ledger: attempted, succeeded, failed, unusable, and
   outstanding counts must reconcile. Archive prompts and raw outputs as soon as
   they are produced; never report progress with vague estimates.
-- When parallelizing, assign one observation, coding unit, comment, or other
-  bounded unit per subagent. A coding unit may contain one document or several
-  related documents; do not assume that document boundaries define units.
-  Follow `workflow/shared/observation-fanout.md`: workers get fresh contexts and
-  unique return paths, while shared ledgers and aggregates are edited serially.
+- When parallelizing, assign one observation, coding unit, search, retrieval,
+  comment, or other bounded unit per subagent. A coding unit may contain one
+  document or several related documents; do not assume that document boundaries
+  define units. Follow `workflow/shared/observation-fanout.md`: the host's
+  orchestrator runs the wave (Claude Code: the kit's saved workflows; Codex: the
+  kit's custom sub-agents `elr_worker` and `elr_research_worker`) — never
+  hand-launched workers one at a time, never an all-tools agent, never a serial
+  imitation in the parent's context — while workers get fresh contexts and
+  unique return paths and shared ledgers and aggregates are edited serially.
 - Make only requested, stage-declared changes. Preserve unrelated and uncommitted
   work.
 - Audit stages report findings; they do not silently repair the work audited.

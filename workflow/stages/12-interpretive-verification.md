@@ -32,7 +32,7 @@ The researcher decides whether a recurring unsupported or ambiguous pattern reve
 
 ## Mode handoff
 
-This is a long-running audit stage. In Codex, `/goal` may be used with this objective: **Independently audit the interpretive support for every active coded observation, one audit unit per fresh context, preserve raw findings, create a complete targeted recoding queue, and make no coding corrections.** In Claude Code, invoke `/elr-code-observations` and the saved dynamic workflow on the frozen audit manifest. If the adapter is unavailable, use normal approved execution with durable checkpoints. Do not run this audit in Plan Mode.
+This is a long-running audit stage. In Codex, `/goal` may be used with this objective: **Independently audit the interpretive support for every active coded observation, one audit unit per fresh context, preserve raw findings, create a complete targeted recoding queue, and make no coding corrections.** — with the audit units run as the kit's `elr_worker` sub-agents in bounded waves. In Claude Code, prepare the audit manifest with the controller and launch the saved `elr-observation-fanout` workflow yourself, relaunching it until nothing is pending. If the host's orchestrator is unavailable, launch the restricted worker type directly one assignment per call and record that route. Do not run this audit in Plan Mode.
 
 ## Work
 
