@@ -15,8 +15,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from kit_context import resolve_test_root
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = resolve_test_root(Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from research_fanout import FanoutError, prepare, status  # noqa: E402

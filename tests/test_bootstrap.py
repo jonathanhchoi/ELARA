@@ -11,8 +11,9 @@ import unittest
 import zipfile
 from pathlib import Path
 
+from kit_context import materialize_clean_kit, resolve_test_root
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = resolve_test_root(Path(__file__).resolve().parents[1])
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
@@ -508,6 +509,62 @@ class ExistingFolderTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 2, completed.stdout)
             self.assertIn("initialized project", json.loads(completed.stdout)["error"])
             self.assertFalse((target / "AGENTS.md").exists())
+
+    def test_clean_test_context_excludes_initialized_project_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            initialized = tmp_path / "initialized"
+            summary = install(initialized)
+            self.assertTrue(summary["ok"], summary)
+
+            state = initialized / "project" / "PROJECT_STATE.md"
+            state.write_text(
+                state.read_text(encoding="utf-8").replace(
+                    "project_slug: null", 'project_slug: "research-project"'
+                ),
+                encoding="utf-8",
+            )
+            decisions = initialized / "project" / "DECISIONS.md"
+            decisions.write_text(
+                decisions.read_text(encoding="utf-8") + "\n## DEC-LIVE-PROJECT\n",
+                encoding="utf-8",
+            )
+            (initialized / "researcher_notes.md").write_text("private project note\n", encoding="utf-8")
+
+            clean = tmp_path / "clean"
+            materialize_clean_kit(initialized, clean)
+
+            fixture_root = ROOT / "tests" / "fixtures" / "clean_project_records"
+            for filename in ("PROJECT_STATE.md", "DECISIONS.md", "RUN_LEDGER.md", "DEVIATIONS.md"):
+                self.assertEqual(
+                    (clean / "project" / filename).read_bytes(),
+                    (fixture_root / filename).read_bytes(),
+                    filename,
+                )
+            self.assertNotIn("DEC-LIVE-PROJECT", (clean / "project" / "DECISIONS.md").read_text(encoding="utf-8"))
+            self.assertFalse((clean / "researcher_notes.md").exists())
+            self.assertFalse((clean / "project" / "BOOTSTRAP.md").exists())
+            self.assertFalse((clean / "project" / "ELARA_MANIFEST.json").exists())
+            self.assertTrue((clean / "README.md").is_file())
+            self.assertFalse((clean / "ELARA_README.md").exists())
+
+            fresh = tmp_path / "fresh"
+            completed = run_bootstrap(
+                "--into", str(fresh), "--source", str(clean), "--no-install", "--dry-run", "--json",
+                cwd=tmp_path,
+            )
+            clean_summary = json.loads(completed.stdout)
+            self.assertEqual(completed.returncode, 0, clean_summary)
+            self.assertTrue(clean_summary["ok"], clean_summary)
+
+    def test_clean_project_record_fixtures_match_the_distribution_templates(self) -> None:
+        fixtures = ROOT / "tests" / "fixtures" / "clean_project_records"
+        for filename in ("PROJECT_STATE.md", "DECISIONS.md", "RUN_LEDGER.md", "DEVIATIONS.md"):
+            self.assertEqual(
+                (fixtures / filename).read_text(encoding="utf-8"),
+                (ROOT / "project" / filename).read_text(encoding="utf-8"),
+                filename,
+            )
 
 
 if __name__ == "__main__":
