@@ -135,14 +135,14 @@ class UnitFanoutTests(unittest.TestCase):
             manifest = prepare(self.make_spec(root, 1), run)
             assignment_path = Path(manifest["assignments"][0]["assignment_path"])
             returned, return_path = self.base_return(assignment_path)
-            secret = "TOP_SECRET_INVALID_LABEL_ZQX"
-            returned["result"] = {"label": secret}
+            sentinel = "DISALLOWED_LABEL_SENTINEL_ZQX"
+            returned["result"] = {"label": sentinel}
 
             with self.assertRaises(FanoutError) as raised:
                 submit(run, returned["assignment_id"], returned)
 
             self.assertFalse(return_path.exists())
-            self.assertNotIn(secret, str(raised.exception))
+            self.assertNotIn(sentinel, str(raised.exception))
             self.assertIn("enum constraint failed", str(raised.exception))
 
     def test_submit_cli_accepts_json_on_stdin_and_prints_only_operational_receipt(self) -> None:
@@ -380,14 +380,14 @@ class UnitFanoutTests(unittest.TestCase):
             root = Path(tmp)
             run = root / "run"
             manifest = prepare(self.make_spec(root, 1), run)
-            secret = "TOP_SECRET_LABEL_ZQX"
+            sentinel = "DISALLOWED_LABEL_SENTINEL_ZQX"
             self.write_disallowed_label(
-                Path(manifest["assignments"][0]["assignment_path"]), secret
+                Path(manifest["assignments"][0]["assignment_path"]), sentinel
             )
             observed = status(run)
             self.assertEqual(observed["invalid"], 1)
             dumped = json.dumps(observed)
-            self.assertNotIn(secret, dumped)
+            self.assertNotIn(sentinel, dumped)
             self.assertIn(
                 "result invalid at result/label: enum constraint failed",
                 observed["invalid_returns"][0]["errors"],

@@ -13,7 +13,7 @@ from kit_context import resolve_test_root
 ROOT = resolve_test_root(Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from sync_skill_wrappers import expected_files  # noqa: E402
+from sync_skill_wrappers import add_codex_policy, expected_files  # noqa: E402
 from validate_workflow import (  # noqa: E402
     EXPECTED_STAGE_IDS,
     HARD_GATES,
@@ -24,6 +24,27 @@ from workflow_lib import load_stages, parse_frontmatter  # noqa: E402
 
 
 class WorkflowContractTests(unittest.TestCase):
+    def test_ci_uses_an_explicit_read_only_token(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("\npermissions:\n  contents: read\n", workflow)
+
+    def test_codex_policy_replacement_uses_one_trailing_policy_block(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp) / "openai.yaml"
+            config.write_text(
+                'interface:\n  display_name: "ELARA"\npolicy:\n'
+                "  allow_implicit_invocation: true\n  note: retained nowhere\n",
+                encoding="utf-8",
+            )
+
+            updated = add_codex_policy(config, allow_implicit=False)
+
+            self.assertEqual(updated.count("\npolicy:\n"), 1)
+            self.assertNotIn("note: retained nowhere", updated)
+            self.assertTrue(updated.endswith("  allow_implicit_invocation: false\n"))
+
     def test_repository_contract(self) -> None:
         self.assertEqual(validate_repository(ROOT), [])
 

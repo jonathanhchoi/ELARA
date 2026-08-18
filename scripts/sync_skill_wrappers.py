@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -246,7 +245,14 @@ policy:
 
 def add_codex_policy(openai_yaml: Path, allow_implicit: bool) -> str:
     text = openai_yaml.read_text(encoding="utf-8") if openai_yaml.exists() else ""
-    text = re.sub(r"\npolicy:\n(?:  .*\n?)*\Z", "\n", text.rstrip() + "\n")
+    lines = text.rstrip().splitlines()
+    for index in range(len(lines) - 1, -1, -1):
+        if lines[index] != "policy:":
+            continue
+        if all(not line or line.startswith("  ") for line in lines[index + 1 :]):
+            lines = lines[:index]
+        break
+    text = "\n".join(lines)
     value = "true" if allow_implicit else "false"
     return text.rstrip() + f"\npolicy:\n  allow_implicit_invocation: {value}\n"
 
