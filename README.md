@@ -302,6 +302,32 @@ The canonical utility instructions are in `workflow/utilities/`. The shared
 rules for manuscript edits are in
 `workflow/shared/manuscript-editing-contract.md`.
 
+## How do plans and goals run?
+
+ELARA uses the planning surface in the tool you opened for every substantive
+stage. In Codex that is the native plan updated with `update_plan`. In Claude
+Code it is the task list maintained with `TaskCreate`, `TaskUpdate`, and
+`TaskList`. The plan follows the canonical stage: prerequisites, any read-only
+design phase, execution, verification, and the gate or handoff. ELARA updates it
+as each phase actually finishes. The plan display is useful for orientation, but
+the project state, run manifest, ledger, and validated files remain the record.
+
+A stage marked `long_running: true` also declares an exact `goal_condition`.
+Before execution starts, ELARA checks the active goal. If the right one is not
+running, it gives you one complete `/goal ...` line to paste. That goal covers
+one stage, including all waves and final reconciliation. It never covers the
+whole pipeline, and workers do not create goals of their own. If goals are not
+available in the host, ELARA records the fallback and uses the same plan and
+completion condition with durable file checkpoints.
+
+Plan Mode is narrower. ELARA uses it when the result should be a read-only plan
+or when your approval is the boundary between planning and writing. Otherwise a
+`plan_then_execute` stage completes the no-write plan item in the native tracker
+and continues in the same session. This keeps routine work moving between the
+research gates you control.
+
+The complete contract is in `workflow/shared/execution-control.md`.
+
 ## How does parallel work run?
 
 ELARA gives one observation or coding unit to each fresh worker context. The
@@ -330,12 +356,13 @@ attempts), so an interrupted run resumes from the files in a later session.
 
 Each stage declares an `interaction_profile`.
 
-- `normal` gathers an interactive researcher decision.
-- `plan` inspects the project and proposes a plan without changing files.
-- `execute` performs one bounded approved task. It uses a durable mode when the
-  stage is marked `long_running: true`.
-- `plan_then_execute` completes a read-only plan and stops. Work begins only
-  after an explicit handoff.
+- `normal` tracks and gathers a short interactive researcher decision.
+- `plan` uses Plan Mode and returns a plan without changing project files.
+- `execute` performs the tracked work. A long-running execution uses the
+  stage's exact goal condition.
+- `plan_then_execute` completes the read-only plan item first, then continues in
+  the same session unless a real approval or other stop condition requires Plan
+  Mode and a handoff. Its execution uses a goal when the stage is long-running.
 
 ELARA never silently crosses project selection, feasibility, data
 authorization, methods or codebook approval, pilot acceptance, preregistration,

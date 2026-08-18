@@ -5,6 +5,7 @@ paper_steps: ["5"]
 core: true
 interaction_profile: "plan_then_execute"
 long_running: true
+goal_condition: "Run Stage 14 exactly as specified until every approved hypothesis module and the clean complete build reproduce from archived inputs, confirmatory outputs are hash-pinned before exploration, correction uncertainty is propagated, every declared artifact passes verification, and PROJECT_STATE.md is ready for Stage 15, or until an unresolved preregistration choice, recorded failure route, or other ELARA section 11 stop condition is surfaced; do not choose a result-affecting open method after seeing results."
 prerequisites: ["13-human-validation"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/frozen_artifact_manifest_vNNN.csv", "project/artifacts/methods_plan_vNNN.md", "project/artifacts/hypotheses_vNNN.md", "project/artifacts/estimands_vNNN.csv", "project/artifacts/sampling_validation_plan_vNNN.md", "project/artifacts/preregistration_vNNN.md", "project/artifacts/preregistration_record_vNNN.md", "project/code/frozen_analysis_vNNN/", "project/artifacts/coding_dataset_vNNN.jsonl", "project/artifacts/interpretive_audit_vNNN.jsonl", "project/artifacts/adjudicated_validation_data_vNNN.csv", "project/artifacts/validation_metrics_vNNN.json", "project/artifacts/human_validation_report_vNNN.md", "project/artifacts/human_validation_disposition_vNNN.md", "project/DEVIATIONS.md"]
 declared_outputs: ["project/artifacts/analysis_execution_plan_vNNN.md", "project/code/analysis_vNNN/", "project/artifacts/analysis_dataset_vNNN.csv", "project/artifacts/analysis_results_vNNN/", "project/artifacts/measurement_error_correction_vNNN.json", "project/artifacts/script_output_manifest_vNNN.csv", "project/artifacts/analysis_report_vNNN.md", "project/runs/<run_id>/commands.log", "project/runs/<run_id>/test_results/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -32,7 +33,21 @@ The researcher decides the estimands and specifications, how hypotheses map to v
 
 ## Mode handoff
 
-Plan first, read-only. Do not write any project file until the plan is complete. Present a decision-complete, hypothesis-by-hypothesis execution plan grounded in the inspected files and the preregistered analysis, including exact inputs, transformations, estimands, correction and uncertainty procedure, command interface, tests, and expected outputs; an analysis choice the preregistration left open that could materially affect a result (a correction method, model specification, transformation, threshold, or missing-data rule) is a stop condition: surface it and stop before executing, because it must be fixed before any result is seen; only operational choices take a provisional `assistant-default`. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. For the long execution phase, Codex or current Claude Code may use `/goal` with this objective: **Implement and run the approved deterministic Stage 14 analysis, keep each hypothesis separately runnable, propagate validation uncertainty through the approved correction, and reproduce every output from archived inputs.** Use normal approved execution with checkpoints if Goal mode is unavailable.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. Plan first, read-only. Do not write any project file until the plan
+is complete. Present a decision-complete, hypothesis-by-hypothesis execution
+plan grounded in the inspected files and preregistered analysis, including exact
+inputs, transformations, estimands, correction and uncertainty procedure,
+command interface, tests, and expected outputs. A result-affecting analysis
+choice left open by the preregistration is a stop condition: surface it and stop
+before executing, because it must be fixed before any result is seen; only
+operational choices take a provisional `assistant-default`. Then continue into execution in the same session, without waiting,
+unless a stop condition in `workflow/shared/guardrails.md` §11 holds;
+only then enter Plan Mode, stop, and give the exact execution handoff. Because
+the execution is long-running, the front-matter `goal_condition` must be the
+active goal before the first execution write. If it is not active, provide
+`/goal <goal_condition>` and stop. Keep each hypothesis separately runnable and
+the native plan current through the clean rebuild.
 
 ## Work
 

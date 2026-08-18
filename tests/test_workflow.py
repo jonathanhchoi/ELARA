@@ -40,6 +40,78 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIn("do not write", body.lower(), path)
                 self.assertIn("approval", body.lower(), path)
 
+    def test_native_plan_and_goal_control_is_stage_scoped(self) -> None:
+        control_path = ROOT / "workflow" / "shared" / "execution-control.md"
+        self.assertTrue(control_path.is_file())
+        control = control_path.read_text(encoding="utf-8")
+        for heading in (
+            "## One stage, one native plan",
+            "## Plan profiles and Plan Mode",
+            "## Long-running stages use one goal",
+            "## Codex adapter",
+            "## Claude Code adapter",
+        ):
+            self.assertIn(heading, control)
+        for needle in (
+            "`update_plan`",
+            "`get_goal`",
+            "`update_goal`",
+            "`TaskCreate`",
+            "`TaskUpdate`",
+            "`TaskList`",
+            "one goal per stage",
+            "never one goal for the whole pipeline",
+        ):
+            self.assertIn(needle, control, needle)
+
+        conditions: list[str] = []
+        for path, meta, body in load_stages(ROOT):
+            self.assertIn("workflow/shared/execution-control.md", body, path)
+            condition = meta["goal_condition"]
+            if meta["long_running"]:
+                self.assertIsInstance(condition, str, path)
+                self.assertTrue(condition.startswith("Run Stage "), path)
+                self.assertIn(meta["stage_id"][:2], condition, path)
+                self.assertIn("section 11", condition, path)
+                self.assertIn("<goal_condition>", body, path)
+                self.assertIn("/goal", body, path)
+                conditions.append(condition)
+            else:
+                self.assertIsNone(condition, path)
+        self.assertEqual(len(conditions), len(set(conditions)))
+        self.assertEqual(len(conditions), 12)
+
+        codex_wrapper = (ROOT / ".agents" / "skills" / "elr-11-scale-up" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        claude_wrapper = (ROOT / ".claude" / "skills" / "elr-11-scale-up" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("`update_plan`", codex_wrapper)
+        for tool in ("`TaskCreate`", "`TaskUpdate`", "`TaskList`"):
+            self.assertIn(tool, claude_wrapper)
+        for wrapper in (codex_wrapper, claude_wrapper):
+            self.assertIn("`/goal <goal_condition>`", wrapper)
+            self.assertIn("never replace another active goal", wrapper)
+
+        from doctor import DISCOVERY_SURFACES
+
+        self.assertIn("workflow/shared/execution-control.md", DISCOVERY_SURFACES)
+        observation = (ROOT / "workflow" / "shared" / "observation-fanout.md").read_text(
+            encoding="utf-8"
+        )
+        flat_observation = " ".join(observation.split())
+        self.assertIn("do not create a narrower fan-out goal", flat_observation)
+        self.assertIn("Workers never create goals or plans", flat_observation)
+
+        guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("`/goal <goal_condition>`", guardrails)
+        self.assertIn("do not replace or clear it", guardrails)
+        self.assertIn("native plan", (ROOT / "README.md").read_text(encoding="utf-8"))
+        self.assertIn("`TaskCreate`", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
+
     def test_wrappers_are_thin_and_canonical(self) -> None:
         expected = expected_files(ROOT)
         for path, content in expected.items():

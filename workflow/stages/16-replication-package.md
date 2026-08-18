@@ -5,6 +5,7 @@ paper_steps: ["5"]
 core: true
 interaction_profile: "execute"
 long_running: true
+goal_condition: "Run Stage 16 exactly as specified until the lawful versioned replication package, manifest, and checksums pass, one clean downstream command rebuilds every reported number, a fresh agent verifies the rebuild, restrictions and non-rerunnable steps are disclosed, and PROJECT_STATE.md records the core pipeline complete, or until a redistribution question, rebuild discrepancy, recorded failure route, or other ELARA section 11 stop condition is surfaced."
 prerequisites: ["15-robustness"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/frozen_artifact_manifest_vNNN.csv", "project/artifacts/preregistration_vNNN.md", "project/artifacts/preregistration_record_vNNN.md", "project/artifacts/data_authorization_record_vNNN.md", "project/artifacts/corpus_manifest_vNNN.csv", "project/artifacts/provenance_manifest_vNNN.csv", "project/artifacts/corpus_gap_register_vNNN.csv", "project/artifacts/coding_dataset_vNNN.jsonl", "project/artifacts/coding_ledger_vNNN.csv", "project/artifacts/schema_validation_vNNN.csv", "project/artifacts/quote_verification_vNNN.csv", "project/artifacts/interpretive_audit_vNNN.jsonl", "project/artifacts/adjudicated_validation_data_vNNN.csv", "project/artifacts/validation_metrics_vNNN.json", "project/code/analysis_vNNN/", "project/artifacts/analysis_results_vNNN/", "project/artifacts/measurement_error_correction_vNNN.json", "project/artifacts/robustness_results_vNNN/", "project/artifacts/robustness_report_vNNN.md", "project/runs/", "project/DEVIATIONS.md"]
 declared_outputs: ["project/artifacts/replication_package_vNNN/", "project/artifacts/replication_manifest_vNNN.json", "project/artifacts/replication_checksums_vNNN.txt", "project/artifacts/replication_rebuild_report_vNNN.md", "project/artifacts/fresh_agent_rerun_report_vNNN.md", "project/runs/<run_id>/rebuild_logs/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -32,7 +33,14 @@ The researcher decides the public, controlled-access, and nonshareable component
 
 ## Mode handoff
 
-This is a long-running execution stage. In Codex or current Claude Code, `/goal` may be used with this objective: **Assemble the exact active project into a versioned replication package, exclude unauthorized material without hiding the limitation, create a one-command downstream rebuild, and have a fresh agent reproduce every reported number in a clean location.** If Goal mode is unavailable, use normal approved execution with durable checkpoints. Do not perform packaging in Plan Mode.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. This is a long-running execution stage: its front-matter
+`goal_condition` must be the active goal before execution begins. If it is not
+active, provide `/goal <goal_condition>` and stop. Do not perform packaging in
+Plan Mode. Keep the native plan and durable run checkpoints aligned through the
+clean rebuild and fresh-agent verification. If goals are unavailable, record
+the fallback and use normal approved execution with the same completion
+condition.
 
 ## Work
 

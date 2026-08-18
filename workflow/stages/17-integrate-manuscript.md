@@ -5,6 +5,7 @@ paper_steps: ["6"]
 core: false
 interaction_profile: "plan_then_execute"
 long_running: false
+goal_condition: null
 prerequisites: ["16-replication-package"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/replication_package_vNNN/", "project/artifacts/replication_rebuild_report_vNNN.md", "project/artifacts/analysis_results_vNNN/", "project/artifacts/analysis_report_vNNN.md", "project/artifacts/robustness_results_vNNN/", "project/artifacts/robustness_report_vNNN.md", "project/artifacts/human_validation_report_vNNN.md", "researcher-supplied substantive manuscript under project/inputs/manuscript/", "project/PUBLICATION_PROFILE_vNNN.md (optional; the active publication profile created from workflow/templates/publication_profile_template.md)"]
 declared_outputs: ["project/PUBLICATION_PROFILE_vNNN.md", "project/artifacts/manuscript_edit_plan_vNNN.md", "project/artifacts/manuscript_vNNN/", "project/artifacts/manuscript_change_log_vNNN.md", "project/artifacts/manuscript_consistency_report_vNNN.md", "project/runs/<run_id>/build_and_render_logs/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -33,7 +34,19 @@ The researcher controls the thesis, framing, normative claims, audience, venue, 
 
 ## Mode handoff
 
-Begin in Plan Mode. Do not write any project file during Plan Mode. Present a section-by-section integration plan that identifies each proposed change, its exact result source, figures or tables, validation and robustness caveats, disclosure needs, files to copy, dependent passages, and build checks. State expressly that no new thesis, section architecture, or analysis discussion outside the supplied draft and approved scope will be created. Stop for explicit researcher approval at `manuscript-edit-permission`. After the researcher approves the plan and exits Plan Mode, use normal approved execution with this objective: **Create a versioned copy of the researcher-supplied manuscript and make only the approved, source-traceable integrations, preserve the researcher's voice, compile or render it, perform two review passes, and disclose every change.**
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. Begin in Plan Mode with the plan phase as the only in-progress
+item. Do not write any project file during Plan Mode. Present a
+section-by-section integration plan that identifies each proposed change, its
+exact result source, figures or tables, validation and robustness caveats,
+disclosure needs, files to copy, dependent passages, and build checks. State
+expressly that no new thesis, section architecture, or analysis discussion
+outside the supplied draft and approved scope will be created. Stop for
+explicit researcher approval at `manuscript-edit-permission`. After approval
+and exit from Plan Mode, update the native plan and use normal bounded execution
+to create a versioned copy, make only the approved source-traceable
+integrations, preserve the researcher's voice, compile or render it, perform
+two review passes, and disclose every change. Do not start a goal.
 
 ## Work
 

@@ -79,6 +79,11 @@ def wrapper_text(
     name: str, description: str, canonical: str, *, claude: bool, extra_read: str = ""
 ) -> str:
     extra = "disable-model-invocation: true\n" if claude else ""
+    tracker = (
+        "On Claude Code use `TaskCreate`, `TaskUpdate`, and `TaskList`."
+        if claude
+        else "On Codex use `update_plan` and keep exactly one item `in_progress`."
+    )
     return f'''---
 name: {json.dumps(name)}
 description: {json.dumps(description)}
@@ -86,8 +91,8 @@ description: {json.dumps(description)}
 
 # Run {name}
 
-1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`, and
-   `workflow/shared/artifact-contract.md` completely.
+1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
+   execution-control files under `workflow/shared/` completely.
 {extra_read}2. Read `{canonical}` completely and follow it as the single source of substantive
    instructions for this stage.
 3. Confirm that the stage is current and its prerequisites and approvals are satisfied
@@ -96,10 +101,12 @@ description: {json.dumps(description)}
    stage as the aim. If it is not current and the researcher chose it explicitly (this skill,
    the menu, or by name), first satisfy its prerequisites through Stage 00's adoption path,
    then run it; otherwise stop.
-4. Honor the stage's mode handoff. A skill cannot switch Plan or Goal mode by itself. Work
-   low-touch: stop only for a gate or another stop condition in
-   `workflow/shared/guardrails.md` section 11; take recorded provisional defaults otherwise.
-5. Do not cross the stage's human gate. Update state and append the run ledger only as the
+4. Create or reconcile the host-native stage plan before work and update it at every phase
+   boundary as required; {tracker}
+5. Honor the mode handoff. For `long_running: true`, resume the matching active goal or give
+   the exact `/goal <goal_condition>` handoff and stop; never replace another active goal.
+   Otherwise work low-touch under `workflow/shared/guardrails.md` section 11.
+6. Do not cross the stage's human gate. Update state and append the run ledger only as the
    canonical stage directs. At the end, summarize plainly and, per the usage mode (`usage` in
    `project/PROJECT_STATE.md`), continue into the next stage in `pipeline` mode unless a stop
    condition holds, or offer the menu in `specific tools` mode.
@@ -108,6 +115,11 @@ description: {json.dumps(description)}
 
 def utility_wrapper_text(name: str, spec: dict[str, str], *, claude: bool) -> str:
     extra = "disable-model-invocation: true\n" if claude else ""
+    tracker = (
+        "   On Claude Code use `TaskCreate`, `TaskUpdate`, and `TaskList`."
+        if claude
+        else "   On Codex use `update_plan` and keep exactly one item `in_progress`."
+    )
     return f'''---
 name: {json.dumps(name)}
 description: {json.dumps(spec["description"])}
@@ -116,7 +128,8 @@ description: {json.dumps(spec["description"])}
 # Run {name}
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
-   `workflow/shared/artifact-contract.md`, and `{MANUSCRIPT_CONTRACT}` completely,
+   `workflow/shared/artifact-contract.md`, `workflow/shared/execution-control.md`, and
+   `{MANUSCRIPT_CONTRACT}` completely,
    then the active publication profile pinned in `project/PROJECT_STATE.md`
    (`project/PUBLICATION_PROFILE_vNNN.md`), if any.
 2. Read `{spec["canonical"]}` completely and follow it as the single source of
@@ -125,9 +138,11 @@ description: {json.dumps(spec["description"])}
    and append the run ledger and decisions only as the canonical file directs. If the project
    is uninitialized (`project_slug` is null), first run Stage 00's two-question specific-tools
    setup (`workflow/stages/00-initialize.md`, "Usage mode"), then continue.
-4. Honor the utility's phases. Do not edit any manuscript file before the researcher grants
+4. Create or reconcile the native utility plan and update it at each phase boundary.
+{tracker}
+5. Honor the utility's phases. Do not edit any manuscript file before the researcher grants
    the permission the canonical file names; a skill cannot switch Plan or Goal mode by itself.
-5. Afterwards follow the route the canonical file names (`{spec["route"]}`) rather than
+6. Afterwards follow the route the canonical file names (`{spec["route"]}`) rather than
    treating the utility's output as final.
 '''
 
@@ -142,17 +157,23 @@ policy:
 '''
 
 
-def router_text() -> str:
+def router_text(*, claude: bool) -> str:
     # The router deliberately omits disable-model-invocation so /elr stays
     # model-invocable; only the per-stage wrappers are researcher-invoked.
-    return '''---
+    tracker = (
+        "   On Claude Code use `TaskCreate`, `TaskUpdate`, and `TaskList`; on resume reconcile the task list from disk."
+        if claude
+        else "   On Codex use `update_plan`, with exactly one item `in_progress`; on resume reconcile it from disk."
+    )
+    return f'''---
 name: "elr"
 description: "Start a new project, adopt an existing one, show the menu of tools, resume, report status, or explain the empirical legal research pipeline. Use when the researcher says start, adopt, menu, tools, resume, continue, next, status, help, or tour, asks what ELARA can do, or asks which workflow stage to run."
 ---
 
 # Route the empirical legal research workflow
 
-1. Read `AGENTS.md`, `PIPELINE.md`, and `project/PROJECT_STATE.md` completely (its `usage` key
+1. Read `AGENTS.md`, `PIPELINE.md`, `workflow/shared/execution-control.md`, and
+   `project/PROJECT_STATE.md` completely (its `usage` key
    records the usage mode: `pipeline`, or `tools` for specific tools; absent means `pipeline`;
    its `checkpoints` key records how often the researcher wants extra pauses; absent means
    `none`), and `project/BOOTSTRAP.md` if it exists. Speak in plain language to a legal
@@ -182,15 +203,18 @@ description: "Start a new project, adopt an existing one, show the menu of tools
    the menu and offer to continue `current_stage` as one of the choices; in `pipeline` mode
    read the canonical file named by `current_stage`, verify its prerequisites (imported
    artifacts and researcher-asserted approvals recorded at adoption satisfy them), and follow
-   it. If a Goal mode the stage requires is not active, give the researcher the exact mode
-   command and stage invocation instead of imitating it.
-7. When a stage ends with no gate or input pending, summarize plainly what was produced and
+   it. Create or reconcile the native stage plan before work.
+{tracker}
+   For `long_running: true`, resume only the matching active goal; otherwise give the exact
+   `/goal <goal_condition>` handoff and stop. Never replace another active goal.
+7. When a stage ends with no gate or input pending, reconcile the native plan, summarize
+   plainly what was produced and
    what comes next, then in `pipeline` mode continue into the next stage in this session
    unless a stop condition in `workflow/shared/guardrails.md` section 11 holds for it (it
    needs something only the researcher can supply, it would spend beyond the recorded
    budget, it acts outside the folder, or `checkpoints` asks for a pause); in `specific
    tools` mode offer the menu. Agreement to continue is not gate approval. Run only one
-   bounded stage at a time; never one Goal for the whole pipeline.
+   bounded stage at a time; never one goal for the whole pipeline.
 '''
 
 
@@ -217,7 +241,8 @@ description: "Fan out frozen empirical legal research coding or audit work with 
 
 # Code observations with isolated subagents
 
-1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and
+1. Read `AGENTS.md`, `project/PROJECT_STATE.md`,
+   `workflow/shared/execution-control.md`, and
    `workflow/shared/observation-fanout.md` completely.
 2. Read the active canonical file under `workflow/stages/`; this skill implements its
    per-unit execution contract and never changes stage gates or frozen instruments.
@@ -229,8 +254,9 @@ description: "Fan out frozen empirical legal research coding or audit work with 
 5. Run the fan-out through the host's orchestrator as the shared contract directs — never one
    hand-launched worker at a time and never an all-tools agent. On this host that means
 {route}
-6. Validate returns and update ledgers serially after each bounded wave. Resume from files,
-   preserve every attempt, expose only operational progress, and reconcile before merging.
+6. The parent keeps the one stage goal and native plan; workers never create either. Validate
+   returns, update the plan, and edit ledgers serially after each bounded wave. Resume from
+   files, preserve every attempt, expose only operational progress, and reconcile before merging.
 '''
 
 
@@ -256,8 +282,8 @@ def expected_files(root: Path) -> dict[Path, str]:
     codex_root = root / ".agents" / "skills"
     claude_root = root / ".claude" / "skills"
 
-    files[codex_root / "elr" / "SKILL.md"] = router_text()
-    files[claude_root / "elr" / "SKILL.md"] = router_text()
+    files[codex_root / "elr" / "SKILL.md"] = router_text(claude=False)
+    files[claude_root / "elr" / "SKILL.md"] = router_text(claude=True)
     files[codex_root / OBSERVATION_SKILL / "SKILL.md"] = observation_skill_text(
         claude=False
     )

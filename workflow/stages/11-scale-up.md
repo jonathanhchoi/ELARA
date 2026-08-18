@@ -5,6 +5,7 @@ paper_steps: ["3"]
 core: true
 interaction_profile: "execute"
 long_running: true
+goal_condition: "Run Stage 11 exactly as specified until every unit in the active corpus has one terminal reconciled disposition under the frozen instrument, every attempt and raw output is preserved, schema and evidence checks pass, no material queue item is unresolved, and PROJECT_STATE.md is ready for Stage 12, or until an ELARA section 11 stop condition or recorded failure route is surfaced; never change the frozen rules or code units in the parent context."
 prerequisites: ["10-corpus-acquisition"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/frozen_artifact_manifest_vNNN.csv", "project/artifacts/methods_plan_vNNN.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/artifacts/coding_prompt_vNNN.md", "project/artifacts/pilot_acceptance_vNNN.md", "project/corpus/corpus_vNNN/", "project/artifacts/corpus_manifest_vNNN.csv", "project/artifacts/provenance_manifest_vNNN.csv", "project/artifacts/corpus_gap_register_vNNN.csv"]
 declared_outputs: ["project/artifacts/coding_dataset_vNNN.jsonl", "project/artifacts/coding_ledger_vNNN.csv", "project/artifacts/schema_validation_vNNN.csv", "project/artifacts/quote_verification_vNNN.csv", "project/artifacts/coding_revision_queue_vNNN.csv", "project/artifacts/scale_up_report_vNNN.md", "project/runs/<run_id>/prompts/", "project/runs/<run_id>/raw_model_outputs/", "project/runs/<run_id>/unit_attempts.jsonl", "project/runs/<run_id>/batch_checks/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -32,7 +33,16 @@ The researcher decides any change to the instrument, model route, exclusion rule
 
 ## Mode handoff
 
-This is a long-running execution stage. In Codex, use `/goal` with this objective: **Code the complete active corpus under the frozen Stage 09 instrument, one unit per fresh model context, checkpoint every attempt, preserve raw outputs, enforce schema and evidence checks, and finish only when the exact ledger reconciles.** — and run the coding waves as the kit's `elr_worker` sub-agents, spawned by name in bounded waves (`workflow/shared/observation-fanout.md`, "Codex adapter"). In Claude Code, prepare the run with the controller and launch the saved `elr-observation-fanout` workflow yourself (`{ "run_dir": ... }`), relaunching it until nothing is pending; no mode change is needed and the researcher types nothing. If the host's orchestrator is unavailable, launch the restricted worker types directly one assignment per call and record that route; never code units serially in the parent's own context. Do not run the scale-up in Plan Mode.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. This is a long-running execution stage: its front-matter
+`goal_condition` must be the active goal before execution begins. If it is not
+active, provide `/goal <goal_condition>` and stop. Do not run the scale-up in
+Plan Mode. The parent keeps the goal and plan current while the host orchestrator
+runs coding waves under `workflow/shared/observation-fanout.md`: Codex spawns the
+kit's `elr_worker` sub-agents in bounded waves; Claude Code launches the saved
+`elr-observation-fanout` workflow until nothing is pending. If the orchestrator
+is unavailable, launch the same restricted worker type one assignment per call
+and record the fallback; never code units serially in the parent's context.
 
 ## Work
 

@@ -5,8 +5,8 @@ description: "Run ELR stage 03-feasibility-audit: Audit feasibility. Use when th
 
 # Run elr-03-feasibility-audit
 
-1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`, and
-   `workflow/shared/artifact-contract.md` completely.
+1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
+   execution-control files under `workflow/shared/` completely.
 2. Read `workflow/stages/03-feasibility-audit.md` completely and follow it as the single source of substantive
    instructions for this stage.
 3. Confirm that the stage is current and its prerequisites and approvals are satisfied
@@ -15,10 +15,12 @@ description: "Run ELR stage 03-feasibility-audit: Audit feasibility. Use when th
    stage as the aim. If it is not current and the researcher chose it explicitly (this skill,
    the menu, or by name), first satisfy its prerequisites through Stage 00's adoption path,
    then run it; otherwise stop.
-4. Honor the stage's mode handoff. A skill cannot switch Plan or Goal mode by itself. Work
-   low-touch: stop only for a gate or another stop condition in
-   `workflow/shared/guardrails.md` section 11; take recorded provisional defaults otherwise.
-5. Do not cross the stage's human gate. Update state and append the run ledger only as the
+4. Create or reconcile the host-native stage plan before work and update it at every phase
+   boundary as required; On Codex use `update_plan` and keep exactly one item `in_progress`.
+5. Honor the mode handoff. For `long_running: true`, resume the matching active goal or give
+   the exact `/goal <goal_condition>` handoff and stop; never replace another active goal.
+   Otherwise work low-touch under `workflow/shared/guardrails.md` section 11.
+6. Do not cross the stage's human gate. Update state and append the run ledger only as the
    canonical stage directs. At the end, summarize plainly and, per the usage mode (`usage` in
    `project/PROJECT_STATE.md`), continue into the next stage in `pipeline` mode unless a stop
    condition holds, or offer the menu in `specific tools` mode.

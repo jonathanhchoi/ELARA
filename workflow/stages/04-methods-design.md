@@ -5,6 +5,7 @@ paper_steps: ["2"]
 core: true
 interaction_profile: "plan_then_execute"
 long_running: false
+goal_condition: null
 prerequisites: ["03-feasibility-audit"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/preemption_review_vNNN.md", "project/artifacts/feasibility_audit_vNNN.md", "approved feasibility decision"]
 declared_outputs: ["project/artifacts/methods_plan_vNNN.md", "project/artifacts/hypotheses_vNNN.md", "project/artifacts/estimands_vNNN.csv", "project/artifacts/sampling_validation_plan_vNNN.md", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -41,7 +42,18 @@ Present meaningful alternatives and consequences. Never make the choice merely b
 
 ## Mode handoff
 
-Plan first, read-only. Inspect inputs, weigh architecture and alternatives, settle the design choices (recommend one option with evidence and record it as a provisional `assistant-default` where the researcher has not decided), and produce a decision-complete proposed design in chat; do not write any project file, allocate a run, update state, or append ledgers until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Then execute Stage 04 to write and verify the four declared design artifacts, and stop at methods-plan-approval, presenting the provisional choices there for the researcher to keep or change. This stage is bounded, so normal approved execution is sufficient; /goal is optional, not required.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. Plan first, read-only. Inspect inputs, weigh architecture and
+alternatives, settle the design choices (recommend one option with evidence and
+record it as a provisional `assistant-default` where the researcher has not
+decided), and produce a decision-complete proposed design in chat; do not write
+any project file, allocate a run, update state, or append ledgers until the plan
+is complete. Then continue into execution in the same session, without waiting,
+unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then
+enter Plan Mode, stop, and give the exact execution handoff. Execute Stage 04,
+verify the four declared design artifacts, and stop at `methods-plan-approval`,
+presenting the provisional choices for the researcher to keep or change. This
+stage is bounded: maintain the native plan but do not start a goal.
 
 ## Work
 

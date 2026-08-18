@@ -29,8 +29,9 @@ workers one at a time by hand and never by an all-tools default agent:
 - **Codex** runs every fan-out as the kit's custom sub-agents — `elr_worker` and
   `elr_research_worker`, defined in `.codex/agents/` — spawned by name by the parent session, one per
   assignment, in bounded waves, with the host's own sub-agent tools (spawn, wait, close; a CSV batch
-  fan-out tool when the host offers one that can run the kit's restricted agents). Goal mode supplies
-  persistence for a long run; the sub-agents supply the parallelism.
+  fan-out tool when the host offers one that can run the kit's restricted agents). The one parent
+  stage goal supplies persistence and the native stage plan records progress; sub-agents supply
+  parallelism. See `workflow/shared/execution-control.md`.
 - **Either host**: the kit's controllers (`scripts/unit_fanout.py`, `scripts/research_fanout.py`)
   fix the manifest on disk, say what is pending, validate returns, bound attempts, and merge — the
   same files whichever host ran the wave. Resume evidence is the files under the run directory, so
@@ -186,20 +187,18 @@ Codex runs the fan-out as the kit's custom sub-agents (`.codex/agents/`), spawne
 parent session with the host's own sub-agent tools; the parent never processes assignments in its
 own context and never launches a general-purpose or `default` sub-agent for kit work.
 
-1. Use Goal mode for a long run so the objective persists across turns. If Goal mode is not
-   active, stop and give the researcher this handoff, filled with the fixed paths and completion
-   count (the researcher types only this line):
-
-   `/goal Use $elr-code-observations to process <manifest>, one fresh elr_worker sub-agent per assignment, in bounded waves. Preserve each unique return, validate and checkpoint serially, expose no interim outcomes, and finish only when the ledger reconciles to <N> terminal assignments.`
-
-   For a research fan-out the objective names `scripts/research_fanout.py`, the fan-out directory,
-   `elr_research_worker`, and "finish when status reports every assignment complete or exhausted".
+1. The parent must already be running the canonical stage's exact front-matter goal and native
+   plan under `workflow/shared/execution-control.md`. If that goal is not active, return to the
+   stage handoff and give `/goal <goal_condition>`; do not create a narrower fan-out goal. The
+   stage goal covers every wave, serial validation, merge, and final verification. Workers never
+   create goals or plans.
 2. Each wave: run the controller's `status --include-pending` (with `--record-launch` for a
    research fan-out) to obtain the pending list; spawn one `elr_worker` (coding/audit) or
    `elr_research_worker` (research) per pending assignment, up to six at once and never more than
    the session's thread cap, each with a message naming exactly its one assignment or brief and its
    return path (plus the frozen model and effort where the host lets a spawn set them); wait for
-   the whole wave; close the workers; run `status` again; append the ledger checkpoint; repeat
+   the whole wave; close the workers; run `status` again; append the ledger checkpoint; update
+   the parent native plan with the exact counts; repeat
    until nothing is pending. Never reuse a worker context for another unit. Each coding worker
    uses the controller's `submit` rather than writing the return path directly.
 3. A CSV batch fan-out tool (the host reads a CSV, spawns one worker per row, and collects results

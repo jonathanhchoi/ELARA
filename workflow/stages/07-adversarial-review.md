@@ -5,6 +5,7 @@ paper_steps: ["2"]
 core: true
 interaction_profile: "plan_then_execute"
 long_running: true
+goal_condition: "Run Stage 07 exactly as specified until every independent critique is preserved, every issue has a transparent disposition, all revised design artifacts and invalidation checks pass, and PROJECT_STATE.md records the design-freeze gate, or until an ELARA section 11 stop condition is recorded and surfaced; do not freeze the design for the researcher."
 prerequisites: ["06-data-authorization"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/methods_plan_vNNN.md", "project/artifacts/hypotheses_vNNN.md", "project/artifacts/estimands_vNNN.csv", "project/artifacts/sampling_validation_plan_vNNN.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/artifacts/unit_space_vNNN.csv", "project/artifacts/coding_prompt_vNNN.md", "project/artifacts/data_authorization_record_vNNN.md"]
 declared_outputs: ["project/runs/<run_id>/critiques/", "project/artifacts/adversarial_review_synthesis_vNNN.md", "project/artifacts/adversarial_change_matrix_vNNN.csv", "project/artifacts/methods_plan_vNNN.md", "project/artifacts/hypotheses_vNNN.md", "project/artifacts/estimands_vNNN.csv", "project/artifacts/sampling_validation_plan_vNNN.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/artifacts/unit_space_vNNN.csv", "project/artifacts/coding_prompt_vNNN.md", "project/artifacts/schema_examples_vNNN.jsonl", "project/artifacts/design_freeze_vNNN.md", "project/runs/<run_id>/schema_validation_report.json", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -39,7 +40,18 @@ No critic, synthesizer, or majority vote substitutes for this judgment.
 
 ## Mode handoff
 
-Plan first, read-only. Design independent review assignments, attack surfaces, evidence requirements, non-overlapping file ownership, synthesis rules, and upstream invalidation tests; do not write any project file, create critiques, update artifacts, spawn editing work, allocate a run, or touch state until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Because the review and revision cycle may be long-running, Codex and current Claude Code may use /goal when available, with normal researcher-approved execution as the fallback. The objective is: Execute Stage 07 with independent audit-only critics, produce a transparent response matrix and clean versioned artifact package, verify it, and stop at design-freeze.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. Plan first, read-only. Design independent review assignments,
+attack surfaces, evidence requirements, non-overlapping file ownership,
+synthesis rules, and upstream invalidation tests; do not write any project file,
+create critiques, update artifacts, spawn editing work, allocate a run, or touch
+state until the plan is complete. Then continue into execution in the same session, without waiting,
+unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then enter Plan
+Mode, stop, and give the exact execution handoff. Because this stage is
+long-running, its front-matter `goal_condition` must be the active goal before
+execution begins. If it is not active, provide `/goal <goal_condition>` and stop.
+The goal stays with the parent while independent critics run under the fan-out
+contract. Stop at `design-freeze`; the goal does not approve that gate.
 
 ## Work
 

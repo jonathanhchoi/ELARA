@@ -5,6 +5,7 @@ paper_steps: ["4"]
 core: true
 interaction_profile: "execute"
 long_running: true
+goal_condition: "Run Stage 12 exactly as specified until every active coded observation has one independent audit disposition and the audit counts reconcile; if the recoding queue is nonempty, preserve it and record the failure route without correcting codes, otherwise pass verification and make PROJECT_STATE.md ready for Stage 13; also stop when any ELARA section 11 condition is recorded and surfaced."
 prerequisites: ["11-scale-up"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/corpus/corpus_vNNN/", "project/artifacts/corpus_manifest_vNNN.csv", "project/artifacts/coding_dataset_vNNN.jsonl", "project/artifacts/coding_ledger_vNNN.csv", "project/artifacts/schema_validation_vNNN.csv", "project/artifacts/quote_verification_vNNN.csv", "project/runs/<run_id>/raw_model_outputs/"]
 declared_outputs: ["project/artifacts/interpretive_audit_vNNN.jsonl", "project/artifacts/interpretive_audit_coverage_vNNN.csv", "project/artifacts/interpretive_recoding_queue_vNNN.csv", "project/artifacts/interpretive_verification_report_vNNN.md", "project/runs/<run_id>/prompts/", "project/runs/<run_id>/raw_model_outputs/", "project/runs/<run_id>/unit_attempts.jsonl", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -32,7 +33,17 @@ The researcher decides whether a recurring unsupported or ambiguous pattern reve
 
 ## Mode handoff
 
-This is a long-running audit stage. In Codex, `/goal` may be used with this objective: **Independently audit the interpretive support for every active coded observation, one audit unit per fresh context, preserve raw findings, create a complete targeted recoding queue, and make no coding corrections.** — with the audit units run as the kit's `elr_worker` sub-agents in bounded waves. In Claude Code, prepare the audit manifest with the controller and launch the saved `elr-observation-fanout` workflow yourself, relaunching it until nothing is pending. If the host's orchestrator is unavailable, launch the restricted worker type directly one assignment per call and record that route. Do not run this audit in Plan Mode.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. This is a long-running audit stage: its front-matter
+`goal_condition` must be the active goal before execution begins. If it is not
+active, provide `/goal <goal_condition>` and stop. Do not run the audit in Plan
+Mode. The parent keeps the goal and plan current while the host orchestrator
+runs audit units under `workflow/shared/observation-fanout.md`: Codex spawns
+`elr_worker` sub-agents in bounded waves; Claude Code launches the saved
+`elr-observation-fanout` workflow until nothing is pending. If the orchestrator
+is unavailable, launch the same restricted worker type one assignment per call
+and record the fallback. Preserve audit separation and make no coding
+corrections.
 
 ## Work
 

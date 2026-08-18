@@ -8,7 +8,8 @@ very fast research assistant whose work is verified, never trusted.
 
 1. Read `project/PROJECT_STATE.md` before doing research work.
 2. Read `workflow/shared/guardrails.md` and
-   `workflow/shared/artifact-contract.md`.
+   `workflow/shared/artifact-contract.md`, then
+   `workflow/shared/execution-control.md`.
 3. Read the canonical file in `workflow/stages/` named by `current_stage`.
    Canonical stage files control prerequisites, inputs, outputs, gates, failure
    routes, and the next stage; native skills are only wrappers.
@@ -32,19 +33,28 @@ very fast research assistant whose work is verified, never trusted.
    its own skill — is authorized even when it is not current: satisfy its
    prerequisites through Stage 00's adoption path first (import what exists,
    record researcher-asserted approvals, note the limitations), then run it.
-6. Treat `interaction_profile` as a handoff, not an automatic mode switch:
-   `normal` is interactive; `plan` produces no file changes; `execute` uses a
-   bounded task unless `long_running: true`; `plan_then_execute` plans first,
-   read-only, then continues into execution in the same session, stopping for
-   an explicit execution handoff only when a stop condition in
-   `workflow/shared/guardrails.md` §11 holds (Stages 17 and 19 always stop,
-   because their plan is the manuscript-edit gate). For long-running execution,
-   Codex uses Goal mode for persistence, and every fan-out on either host runs
-   through the host's own orchestrator: Claude Code runs the kit's saved
-   dynamic workflows in `.claude/workflows/`, which the assistant launches
-   itself; Codex spawns the kit's custom sub-agents in `.codex/agents/` in
-   bounded waves. See `workflow/shared/observation-fanout.md`.
-7. When a stage finishes and no gate or input is pending, do not stop silently
+6. Give every nontrivial stage or utility one native host plan derived from its
+   canonical file, keep exactly one item in progress, and update it only when
+   the declared evidence exists. Treat `interaction_profile` as a handoff, not
+   an automatic permission switch: `normal` is interactive; `plan` produces no
+   file changes; `execute` runs the tracked execution; `plan_then_execute`
+   completes its tracked read-only plan phase before any write and continues in
+   the same session unless a §11 stop applies (Stages 17 and 19 always stop,
+   because their plan is the manuscript-edit gate). A stage marked
+   `long_running: true` executes only under its exact front-matter
+   `goal_condition`: inspect the current goal, resume it if it matches, or give
+   the complete `/goal <goal_condition>` handoff and stop; never replace a
+   different active goal and never use one goal for the whole pipeline. Claude
+   Code tracks work with its Task tools and Codex with `update_plan`; both hosts
+   use `/goal` for the durable stage loop. See
+   `workflow/shared/execution-control.md`.
+7. Every fan-out on either host runs through the host's own orchestrator:
+   Claude Code runs the kit's saved dynamic workflows in `.claude/workflows/`,
+   which the assistant launches itself; Codex spawns the kit's custom
+   sub-agents in `.codex/agents/` in bounded waves. The stage goal stays with
+   the parent through wave validation and reconciliation. See
+   `workflow/shared/observation-fanout.md`.
+8. When a stage finishes and no gate or input is pending, do not stop silently
    and do not wait: summarize in a few plain-language lines what was produced
    and where it is, then in `pipeline` mode continue into the next stage in the
    same session, one bounded stage at a time, unless a §11 stop condition holds
@@ -55,7 +65,7 @@ very fast research assistant whose work is verified, never trusted.
    continue is never approval of a gate; every gate is put to the researcher
    separately. Neither usage mode relaxes a gate, an authorization requirement,
    or audit separation.
-8. Be low-touch. Interrupt the researcher only for a real gating issue: the
+9. Be low-touch. Interrupt the researcher only for a real gating issue: the
    stop conditions in `workflow/shared/guardrails.md` §11 are the complete list.
    Every other choice takes the sensible default, is recorded as a provisional
    `assistant-default` decision, and is presented at the next gate for the
@@ -150,6 +160,11 @@ shared, and which are the researcher's, so a folder both use (for example
 - Keep an exact run ledger: attempted, succeeded, failed, unusable, and
   outstanding counts must reconcile. Archive prompts and raw outputs as soon as
   they are produced; never report progress with vague estimates.
+- Keep the host-native plan synchronized with the run: update it at phase and
+  wave checkpoints and before the completion report. For a long stage, report
+  the exact verification evidence and counts in the conversation so the goal
+  evaluator can judge the front-matter condition. Neither surface replaces the
+  ledger or state.
 - When parallelizing, assign one observation, coding unit, search, retrieval,
   comment, or other bounded unit per subagent. A coding unit may contain one
   document or several related documents; do not assume that document boundaries
@@ -175,5 +190,7 @@ shared, and which are the researcher's, so a folder both use (for example
   which those stages read on demand. The profile governs prose and deliverable
   format only; it cannot relax any rule here or in `workflow/shared/`.
 
-The complete operational rules live in `workflow/shared/`; `PIPELINE.md` is the
+The complete operational rules live in `workflow/shared/`; in particular,
+`execution-control.md` governs native plans and goals and
+`observation-fanout.md` governs orchestrated workers. `PIPELINE.md` is the
 human-readable map of stages, modes, gates, and failure loops.

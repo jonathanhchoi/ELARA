@@ -51,6 +51,7 @@ DISCOVERY_SURFACES = (
     "scripts/bootstrap.py",
     "workflow/shared/guardrails.md",
     "workflow/shared/artifact-contract.md",
+    "workflow/shared/execution-control.md",
     "workflow/shared/observation-fanout.md",
     "workflow/templates/preregistration_template.md",
     "project/PROJECT_STATE.md",

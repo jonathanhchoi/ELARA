@@ -5,6 +5,7 @@ paper_steps: ["4"]
 core: true
 interaction_profile: "plan_then_execute"
 long_running: false
+goal_condition: null
 prerequisites: ["12-interpretive-verification"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/methods_plan_vNNN.md", "project/artifacts/hypotheses_vNNN.md", "project/artifacts/estimands_vNNN.csv", "project/artifacts/sampling_validation_plan_vNNN.md", "project/artifacts/preregistration_record_vNNN.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/artifacts/coding_dataset_vNNN.jsonl", "project/artifacts/interpretive_audit_vNNN.jsonl", "project/artifacts/interpretive_audit_coverage_vNNN.csv", "project/artifacts/interpretive_verification_report_vNNN.md", "researcher-supplied blind human codes under project/inputs/human_validation/ when coding is complete"]
 declared_outputs: ["project/artifacts/validation_plan_vNNN.md", "project/artifacts/held_out_sample_vNNN.csv", "project/artifacts/coder_pack_vNNN/", "project/artifacts/blind_review_interface_vNNN/", "project/artifacts/validation_crosswalk_vNNN.csv", "project/artifacts/blind_adjudication_queue_vNNN.csv", "project/artifacts/adjudicated_validation_data_vNNN.csv", "project/artifacts/validation_metrics_vNNN.json", "project/artifacts/human_validation_report_vNNN.md", "project/artifacts/human_validation_disposition_vNNN.md", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -32,7 +33,18 @@ The researcher approves the sample and coder architecture, selects and instructs
 
 ## Mode handoff
 
-Plan first, read-only. Inspect files and present a decision-complete architecture covering sampling, blinding, coder packets, returned-file contract, scope matching, interface behavior, adjudication, metrics, uncertainty, and failure routes; do not write any project file until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Then use normal approved execution with this objective: **Build and run the approved held-out human-validation workflow, preserve blinding through adjudication, compute the approved metrics, and stop at the `validation-disposition` gate.**
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. Plan first, read-only. Inspect files and present a decision-complete
+architecture covering sampling, blinding, coder packets, returned-file
+contract, scope matching, interface behavior, adjudication, metrics,
+uncertainty, and failure routes; do not write any project file until the plan is
+complete. Then continue into execution in the same session, without waiting,
+unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then
+enter Plan Mode, stop, and give the exact execution handoff. Build and run the
+approved held-out human-validation workflow, preserve blinding through
+adjudication, compute the approved metrics, and stop at
+`validation-disposition`. This stage is bounded: maintain the native plan but
+do not start a goal.
 
 ## Work
 

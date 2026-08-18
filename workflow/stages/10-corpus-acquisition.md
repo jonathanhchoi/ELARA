@@ -5,6 +5,7 @@ paper_steps: ["3"]
 core: true
 interaction_profile: "execute"
 long_running: true
+goal_condition: "Run Stage 10 exactly as specified until every unit in the frozen unit space has an acquired or typed-gap disposition, immutable sources and provenance reconcile, all corpus integrity and coverage checks pass, and PROJECT_STATE.md is ready for Stage 11, or until an authorization issue, material-corpus-deviation gate, or other ELARA section 11 stop condition is recorded and surfaced; do not alter the frozen denominator."
 prerequisites: ["09-freeze-and-preregister"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/frozen_artifact_manifest_vNNN.csv", "project/artifacts/preregistration_record_vNNN.md", "project/artifacts/amendment_policy_vNNN.md", "project/artifacts/data_authorization_record_vNNN.md", "project/artifacts/methods_plan_vNNN.md", "project/artifacts/hypotheses_vNNN.md", "project/artifacts/estimands_vNNN.csv", "project/artifacts/sampling_validation_plan_vNNN.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/artifacts/unit_space_vNNN.csv", "project/artifacts/coding_prompt_vNNN.md", "project/artifacts/pilot_acceptance_vNNN.md"]
 declared_outputs: ["project/corpus/corpus_vNNN/", "project/artifacts/corpus_manifest_vNNN.csv", "project/artifacts/provenance_manifest_vNNN.csv", "project/artifacts/corpus_gap_register_vNNN.csv", "project/artifacts/corpus_acquisition_report_vNNN.md", "project/runs/<run_id>/search_log.jsonl", "project/runs/<run_id>/fetch_log.jsonl", "project/runs/<run_id>/integrity_checks.json", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -33,7 +34,13 @@ The researcher alone decides whether to change the unit space, accept a substitu
 
 ## Mode handoff
 
-This is a long-running execution stage. In Codex or current Claude Code, `/goal` may be used with this objective: **Acquire every authorized unit in the frozen Stage 09 unit space, preserve immutable sources and complete provenance, verify corpus integrity and coverage, and stop at any authorization issue or material-corpus-deviation gate.** If Goal mode is unavailable, use the tool's normal approved execution mode with frequent state and ledger checkpoints. Do not execute acquisition in Plan Mode.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. This is a long-running execution stage: its front-matter
+`goal_condition` must be the active goal before execution begins. If it is not
+active, provide `/goal <goal_condition>` and stop. Do not execute acquisition in
+Plan Mode. Keep the native plan and durable ledger checkpoints aligned while
+acquiring the frozen unit space. If goals are unavailable, record the fallback
+and use normal approved execution with the same condition and checkpoints.
 
 ## Work
 

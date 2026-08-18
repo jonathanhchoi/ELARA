@@ -14,6 +14,7 @@ REQUIRED_STAGE_KEYS = (
     "core",
     "interaction_profile",
     "long_running",
+    "goal_condition",
     "prerequisites",
     "required_inputs",
     "declared_outputs",
