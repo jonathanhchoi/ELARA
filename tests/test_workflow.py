@@ -8,8 +8,9 @@ import unittest
 import zipfile
 from pathlib import Path
 
+from kit_context import resolve_test_root
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = resolve_test_root(Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from sync_skill_wrappers import expected_files  # noqa: E402

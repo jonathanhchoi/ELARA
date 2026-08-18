@@ -12,8 +12,9 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+from kit_context import resolve_test_root
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = resolve_test_root(Path(__file__).resolve().parents[1])
 FIXTURES = ROOT / "tests" / "fixtures"
 E2E = FIXTURES / "public_domain_e2e"
 sys.path.insert(0, str(ROOT / "scripts"))

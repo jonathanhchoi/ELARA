@@ -412,6 +412,13 @@ installer again with `--update` to refresh ELARA's own files from GitHub. It
 does not change project state, ledgers, or your files. The doctor and
 validators ignore files that are not part of the kit.
 
+An agent may also run the maintenance test suite from an initialized project.
+The tests use `project/ELARA_MANIFEST.json` to build a temporary clean view of
+that installed kit and substitute blank fixtures for the four live project
+records. They never treat the project's state or append-only ledgers as clean
+installation templates, and they fail closed if the manifest is unavailable or
+malformed.
+
 ## What else can the preflight check?
 
 You can require a particular host, check both hosts, or run package-maintenance
