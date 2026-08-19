@@ -54,6 +54,7 @@ DISCOVERY_SURFACES = (
     "workflow/shared/execution-control.md",
     "workflow/shared/observation-fanout.md",
     "workflow/templates/preregistration_template.md",
+    "workflow/templates/preemption_review_template.md",
     "project/PROJECT_STATE.md",
     ".agents/skills/elr/SKILL.md",
     ".agents/skills/elr-code-observations/SKILL.md",
@@ -67,6 +68,7 @@ DISCOVERY_SURFACES = (
     ".codex/agents/elr-research-worker.toml",
     "scripts/unit_fanout.py",
     "scripts/research_fanout.py",
+    "scripts/build_preemption_review.py",
 )
 
 # The restricted worker subagent types every fan-out must use (see
@@ -92,6 +94,7 @@ CLAUDE_WORKFLOW_FILES = (
 
 EXPECTED_STAGE_COUNT = 20
 JSONSCHEMA_RANGE = ">=4.18,<5"
+PYTHON_DOCX_RANGE = ">=1.1,<2"
 MIN_CLAUDE_WORKFLOW_VERSION = (2, 1, 154)
 VERSION_PATTERN = re.compile(r"(?<!\d)(\d+)\.(\d+)\.(\d+)(?!\d)")
 
@@ -130,6 +133,37 @@ def _dependency_report():
     if not report["ready"]:
         return report, [
             "jsonschema " + version + " is outside the supported range " + JSONSCHEMA_RANGE
+        ]
+    return report, []
+
+
+def _document_dependency_report():
+    report = {
+        "name": "python-docx",
+        "required": PYTHON_DOCX_RANGE,
+        "installed": False,
+        "version": None,
+        "ready": False,
+    }
+    try:
+        from docx import Document  # noqa: F401
+    except ImportError:
+        return report, [
+            "missing Python dependency python-docx; run: "
+            + sys.executable
+            + " -m pip install -r requirements.txt"
+        ]
+    try:
+        version = metadata.version("python-docx")
+    except metadata.PackageNotFoundError:
+        return report, ["python-docx imports but its installed version cannot be identified"]
+    parsed = _version_tuple(version)
+    report["installed"] = True
+    report["version"] = version
+    report["ready"] = bool(parsed and parsed >= (1, 1, 0) and parsed < (2, 0, 0))
+    if not report["ready"]:
+        return report, [
+            "python-docx " + version + " is outside the supported range " + PYTHON_DOCX_RANGE
         ]
     return report, []
 
@@ -397,6 +431,8 @@ def build_report(root, platform="auto", smoke=True):
 
     dependency, dependency_failures = _dependency_report()
     failures.extend(dependency_failures)
+    document_dependency, document_dependency_failures = _document_dependency_report()
+    failures.extend(document_dependency_failures)
     hosts, host_failures = _host_reports(platform)
     failures.extend(host_failures)
 
@@ -439,6 +475,7 @@ def build_report(root, platform="auto", smoke=True):
             "ready": True,
         },
         "dependency": dependency,
+        "document_dependency": document_dependency,
         "platform_selection": platform,
         "hosts": hosts,
         "checks": {
@@ -467,6 +504,11 @@ def _print_human_report(report):
         print("CHECK: jsonschema " + str(dependency["version"]))
     else:
         print("CHECK: jsonschema not installed")
+    document_dependency = report["document_dependency"]
+    if document_dependency["installed"]:
+        print("CHECK: python-docx " + str(document_dependency["version"]))
+    else:
+        print("CHECK: python-docx not installed")
     for name in ("codex", "claude"):
         host = report["hosts"][name]
         if host["installed"]:

@@ -186,6 +186,7 @@ class DoctorTests(unittest.TestCase):
         result = run_script("doctor.py", "--platform", "none")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("PASS", result.stdout)
+        self.assertIn("python-docx", result.stdout)
         self.assertIn("offline one-unit fan-out smoke passed", result.stdout)
         self.assertIn("offline research fan-out smoke passed", result.stdout)
         self.assertIn("restricted worker definitions and saved workflows present", result.stdout)

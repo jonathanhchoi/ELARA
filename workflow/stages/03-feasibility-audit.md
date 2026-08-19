@@ -7,7 +7,7 @@ interaction_profile: "execute"
 long_running: true
 goal_condition: "Run Stage 03 exactly as specified until every authorized live probe is archived, the acquisition, cost, timing, risk, and variable-verifiability artifacts pass validation, and PROJECT_STATE.md records the feasibility-go-no-go gate, or until an ELARA section 11 stop condition is recorded and surfaced; do not decide feasibility for the researcher."
 prerequisites: ["02-preemption-review"]
-required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/preemption_review_vNNN.md", "accepted project and preemption disposition", "candidate corpus locations"]
+required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/preemption_review_vNNN.docx", "accepted project and preemption disposition", "candidate corpus locations"]
 declared_outputs: ["project/artifacts/feasibility_audit_vNNN.md", "project/runs/<run_id>/probe_log.csv", "project/runs/<run_id>/probe_exposure_manifest.csv", "project/runs/<run_id>/funnel_model.csv", "project/runs/<run_id>/cost_model.csv", "project/runs/<run_id>/variable_verifiability.csv", "project/runs/<run_id>/probes/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
 human_gate: "feasibility-go-no-go"
 next_stage: "04-methods-design"
