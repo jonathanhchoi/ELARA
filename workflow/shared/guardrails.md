@@ -186,8 +186,11 @@ researcher explicitly changes the kit's governing instructions.
   all-tools default or general-purpose agent.
 - A worker that meets a 401/403/429, CAPTCHA, bot challenge, or login wall
   records a typed access gap (URL, status, time) and moves on; it never retries
-  more than once, spoofs, or escalates to another surface. The parent turns the
-  gaps into the stage's access-limitations record and manual search packet.
+  more than once, spoofs, or escalates to another surface. In Stage 02 the
+  parent applies the parent-only browser fallback in
+  `workflow/shared/observation-fanout.md` to materially relevant download gaps;
+  the browser is never added to a worker. The parent turns every unresolved gap
+  into the stage's access-limitations record and manual search packet.
 - Every parallel wave is bounded and resumable from disk: a sealed fan-out
   manifest under the run directory (assignment, brief or assignment file,
   unique return path), worker returns written under the run directory (never

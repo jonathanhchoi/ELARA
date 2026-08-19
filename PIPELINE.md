@@ -253,6 +253,11 @@ resumes in a later session from the files, and no unit is silently dropped.
 Workers have a fixed, minimal tool surface (coding workers no web; research
 workers web search and fetch; none an interactive surface), a time box, and one
 unique return path each; shared ledgers are edited serially by the parent.
+During Stage 02 only, the parent session follows a separate browser-control
+fallback for materially relevant papers that a worker could not download: it
+tries open routes first, makes one ordinary browser attempt in the researcher's
+authorized session, archives and hashes a successful download, and records any
+remaining restriction. The browser is never given to a worker.
 
 ## Manuscript utilities and the publication profile
 

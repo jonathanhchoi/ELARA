@@ -348,6 +348,15 @@ tools — coding workers have no web access, research workers have web search an
 fetch, and none can reach a browser, desktop, or MCP tool — and each writes one
 unique return.
 
+Stage 02 adds a parent-only browser-control fallback without broadening those
+worker permissions. After each literature-search wave, the parent session
+reviews download gaps for potentially material papers, tries lawful open routes,
+and then makes one ordinary browser-control attempt in your authorized session
+when a bot restriction still blocks full text. It never bypasses a CAPTCHA,
+paywall, login, license, or terms. Successful downloads are checked, archived,
+and hashed; failed attempts remain explicit access gaps in the manual search
+packet.
+
 Each coding worker submits its response through the deterministic controller.
 The controller checks the sealed assignment, schema, identifiers, and unique
 output path before creating the canonical return. It refuses overwrites and
