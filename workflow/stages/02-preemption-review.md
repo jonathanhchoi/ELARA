@@ -8,7 +8,7 @@ long_running: true
 goal_condition: "Run Stage 02 exactly as specified until the exhaustive search ledger reconciles, every relied-on source is retrieved and verified, all declared artifacts pass validation, and PROJECT_STATE.md records the preemption-disposition gate, or until an ELARA section 11 stop condition is recorded and surfaced; do not decide the gate for the researcher."
 prerequisites: ["00-initialize"]
 required_inputs: ["project/PROJECT_STATE.md", "project/PROJECT_CHARTER_vNNN.md", "selected project decision", "project/artifacts/conception_report_vNNN.md or researcher-supplied project memorandum"]
-declared_outputs: ["project/artifacts/preemption_review_vNNN.md", "project/sources/preemption/<run_id>/source_manifest.csv", "project/sources/preemption/<run_id>/search_log.csv", "project/sources/preemption/<run_id>/claim_evidence.csv", "project/sources/preemption/<run_id>/retrieved/", "project/sources/preemption/<run_id>/fanout/<wave>/ (query matrix, spec.json, briefs, sealed manifest, launch record, worker returns, merged candidates)", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
+declared_outputs: ["project/artifacts/preemption_review_vNNN.docx", "project/sources/preemption/<run_id>/source_manifest.csv", "project/sources/preemption/<run_id>/search_log.csv", "project/sources/preemption/<run_id>/claim_evidence.csv", "project/sources/preemption/<run_id>/retrieved/", "project/sources/preemption/<run_id>/fanout/<wave>/ (query matrix, spec.json, briefs, sealed manifest, launch record, worker returns, merged candidates)", "project/runs/<run_id>/preemption_review_source.md", "project/runs/<run_id>/rendered_preemption_review/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
 human_gate: "preemption-disposition"
 next_stage: "03-feasibility-audit"
 failure_routes: ["01-conceive", "02-preemption-review"]
@@ -24,6 +24,7 @@ Conduct an exhaustive, adversarial, retrieved-source literature review of the se
 2. Restate the selected question, intended data, method, comparison, and claimed new contribution. If any element is indeterminate enough to change search results, obtain clarification before starting.
 3. Load earlier conception sources only as leads. Reopen and independently verify them; an earlier citation or screen is not evidence for this stage.
 4. Confirm current live web access. If key subscription databases are unavailable, the review may proceed only with a conspicuous access gap and an exact researcher search packet; it may not claim completeness.
+5. Confirm that `python scripts/build_preemption_review.py --help` succeeds and that the host can render DOCX files to page images for visual inspection. A missing renderer is an environment gap, not permission to activate an uninspected document.
 
 ## Researcher decisions
 
@@ -62,10 +63,11 @@ with the parent through wave validation and final reconciliation.
 10. Render one verdict: preempted, partially preempted, or open. Before preempted, test distinguish, extend, new era or courts, new scale, new measurement, and limitations acknowledged by the prior authors. Before open, run and log a final skeptic search designed to disprove novelty. State discoveries that would flip the verdict and report no confidence score.
 11. Report an honest contribution sentence, lineage, scoop risk, active researchers, inaccessible routes, exact manual search packet, check date, and recommended recheck date. Record the recheck date and the scoop-risk level in the preemption-disposition approval record's conditions so Stage 04 can check staleness mechanically.
 12. Give the draft and evidence table to a fresh reviewer with no stake in the conclusion (per `workflow/shared/fresh-review.md`). The reviewer must reopen every cited URL, validate bibliographic identity and attributed claims, sample archived files and hashes, and challenge the verdict. Correct factual errors; move failures to unverified; preserve the review trail.
+13. Instantiate `workflow/templates/preemption_review_template.md` as the run-scoped `project/runs/<run_id>/preemption_review_source.md`. Preserve the required section order and complete every metadata field. Build the new versioned Word artifact with `python scripts/build_preemption_review.py project/runs/<run_id>/preemption_review_source.md project/artifacts/preemption_review_vNNN.docx`. The Markdown file is an auditable build source, not the active researcher-facing report. Render the DOCX to page images under `project/runs/<run_id>/rendered_preemption_review/`, inspect every page at 100 percent zoom, and iterate on the source until headings, paragraphs, lists, tables, hyperlinks, page breaks, headers, and footers are clean. Never patch the generated DOCX by hand. If no DOCX renderer is available, record the gap, leave the artifact inactive, and set `waiting_for_user` with the exact rendering capability needed.
 
 ## Artifacts
 
-preemption_review_vNNN.md must contain, in order, the annotated map, verdict and flip conditions, positioning and lineage, scoop risk, search methods and saturation evidence, access limitations and manual search packet, and review date. The source manifest, query-level search log, claim-evidence table, retrieved copies, and run manifest are mandatory support artifacts. Do not cite a source absent from the manifest.
+preemption_review_vNNN.docx is the active, researcher-facing literature review. It must contain, in order, the annotated map, verdict and flip conditions, positioning and lineage, scoop risk, search methods and saturation evidence, access limitations and manual search packet, and review date. The run-scoped preemption_review_source.md is the exact build source and remains immutable when the run closes. The source manifest, query-level search log, claim-evidence table, retrieved copies, rendered page images, and run manifest are mandatory support artifacts. Do not cite a source absent from the manifest.
 
 ## Verification
 
@@ -74,6 +76,7 @@ preemption_review_vNNN.md must contain, in order, the annotated map, verdict and
 - Confirm that inaccessible sources remain unverified and that absence claims point to logged searches rather than intuition.
 - Confirm that the verdict applies thesis-level preemption, includes escape routes and flip conditions, and distinguishes topic overlap from the same question and evidence.
 - Confirm the fresh review is archived or summarized in the run manifest and all discrepancies are resolved or disclosed.
+- Confirm the DOCX opens successfully, carries the required metadata and section hierarchy, contains no unresolved template marker, and was rendered after its last build. Inspect every rendered page for clipped or overlapping text, broken lists or tables, bad page breaks, missing glyphs, and inconsistent headers or footers. Record the render command, renderer version, page count, and inspection result in the run manifest.
 - Confirm no previous artifact, ledger row, source, or input was overwritten.
 
 ## State transition

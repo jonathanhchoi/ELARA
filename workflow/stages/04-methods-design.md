@@ -7,7 +7,7 @@ interaction_profile: "plan_then_execute"
 long_running: false
 goal_condition: null
 prerequisites: ["03-feasibility-audit"]
-required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/preemption_review_vNNN.md", "project/artifacts/feasibility_audit_vNNN.md", "approved feasibility decision"]
+required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/preemption_review_vNNN.docx", "project/artifacts/feasibility_audit_vNNN.md", "approved feasibility decision"]
 declared_outputs: ["project/artifacts/methods_plan_vNNN.md", "project/artifacts/hypotheses_vNNN.md", "project/artifacts/estimands_vNNN.csv", "project/artifacts/sampling_validation_plan_vNNN.md", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
 human_gate: "methods-plan-approval"
 next_stage: "05-codebook-and-schema"

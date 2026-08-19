@@ -144,11 +144,11 @@ python scripts/doctor.py
 ```
 
 On Windows, `py` may replace `python`. The doctor detects installed agent hosts,
-checks their versions, validates the kit and its dependency, and performs a
+checks their versions, validates the kit and its dependencies, and performs a
 temporary one-unit `prepare`/`submit`/`status`/`merge` exercise. This exercise
 uses no model and no network. Resolve every reported failure before continuing.
 
-You can instead run `python scripts/bootstrap.py`. It installs the dependency,
+You can instead run `python scripts/bootstrap.py`. It installs the dependencies,
 uses a `.venv` if the system Python is locked down, runs the doctor, and writes
 `project/BOOTSTRAP.md`.
 
@@ -205,6 +205,9 @@ out of sequence, its reports distinguish decisions you vouch for from work that
 ELARA independently verified. The menu returns when the task is done.
 
 Stages 02, 03, and 11 can take a long time. You can start them and return later.
+Stage 02 delivers its literature review as a formatted Word document; its
+search log, source manifest, and claim-evidence table remain separate audit
+files.
 
 ## Can I bring an existing project?
 
@@ -400,11 +403,12 @@ requirements are in `workflow/shared/`.
 AGENTS.md                       Shared rules and state router
 CLAUDE.md                       Claude-specific adapter
 PIPELINE.md                     Workflow map, router commands, and tools menu
-requirements.txt                Bounded Python dependency
+requirements.txt                Bounded Python dependencies
 workflow/stages/NN-*.md         Canonical sequential stage instructions
 workflow/utilities/             Optional manuscript utilities
 workflow/shared/                Guardrails and artifact, fan-out, and manuscript contracts
-workflow/templates/             Preregistration and publication-profile templates
+workflow/templates/             Preemption-review, preregistration, and publication-profile templates
+scripts/build_preemption_review.py  Build the formatted Stage 02 Word report
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
 .claude/agents/                 Claude restricted worker subagents
@@ -466,8 +470,9 @@ that contains no secrets.
 python scripts/doctor.py --json
 ```
 
-Python and `jsonschema` are required for the deterministic fan-out controller
-and validators. They aren't required for the earliest design discussion.
+Python, `jsonschema`, and `python-docx` are required for the deterministic
+fan-out controller, validators, and formatted Stage 02 Word report. They aren't
+required for the earliest design discussion.
 
 ## What about plugins, MCP servers, and hooks?
 
