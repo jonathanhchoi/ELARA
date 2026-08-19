@@ -113,12 +113,13 @@ mid-write; relaunched identically, it did the same thing again.
    TOML file and record the residual limitation.
 2. **Bot walls, paywalls, and rate limits are typed access gaps.** A worker that meets a 401/403/429,
    CAPTCHA, "verifying you are human" page, or login wall records `{url, status_or_message,
-   timestamp_utc}` and moves on — one retry at most for a 429, no spoofing, no other surface. The
-   parent aggregates gaps into the stage's access-limitations record and manual search packet.
-   Sites known to sit behind bot walls (SSRN's `papers.ssrn.com`, HeinOnline, Westlaw, Lexis, JSTOR,
+   timestamp_utc}` and moves on — one retry at most for a 429, no spoofing, no other surface. Sites
+   known to sit behind bot walls (SSRN's `papers.ssrn.com`, HeinOnline, Westlaw, Lexis, JSTOR,
    Google Scholar) are reached only through open APIs and indexes (OpenAlex, CrossRef, Semantic
    Scholar, repository OAI/JSON endpoints, web-search snippets) or through the researcher's own
-   authenticated session, never by a worker.
+   authorized session, never by a worker. The parent aggregates the gaps after the wave. In Stage
+   02 it first applies the parent-only browser fallback below to materially relevant download gaps;
+   every unresolved gap then goes into the access-limitations record and manual search packet.
 3. **Time boxes and timeouts.** Every worker gets a time box (default 12 minutes for a search or
    retrieval unit, 10 for a coding unit), stated in its brief or assignment; every network call
    inside it carries a hard timeout (about 60 s; 90 s for a full-text download); workers never
@@ -187,6 +188,40 @@ lists what to launch and records the launch; `status` alone reports `expected`, 
 `incomplete`, `missing`, `invalid`, `exhausted`, and `pending`. The parent, never a worker, reads
 the returns, validates them against the brief's schema, merges deterministically in manifest order,
 and appends the ledger checkpoint.
+
+## Parent-only browser fallback for Stage 02
+
+Browser control is a serial access-remediation step in the parent literature-review session, never
+a worker tool and never a retry of a fan-out assignment in the parent's context. After validating
+and merging each Stage 02 wave, the parent applies this protocol to every typed access gap for a
+work that could materially affect the closest-work map, a citation chain, or the verdict:
+
+1. Recheck the exact title and locator through lawful open routes first: the publisher or repository
+   landing page, an author or institutional copy, and any available purpose-built scholarly
+   connector, API, or index. Do not use a browser merely to repeat a route that already succeeded.
+2. If full text is still blocked by an automated-download or bot restriction and the host exposes
+   browser control, the parent uses that surface in the researcher's main session, opens the exact
+   landing URL, and makes one bounded ordinary-UI attempt to open or download the work. An existing
+   signed-in session may be used only when the project's recorded authorization permits that source.
+   Never inspect credentials or session stores, spoof a client, disable protections, solve or bypass
+   a CAPTCHA, evade a paywall or terms, or manufacture a direct-download URL.
+3. If the page requires a login, CAPTCHA, license acceptance, purchase, or other action only the
+   researcher can take, leave the control with the researcher and batch the exact requests under
+   `guardrails.md` section 11. Browser unavailability or a failed ordinary-UI attempt is evidence of
+   an access gap, not permission to switch to an unsupported automation route.
+4. Record one `search_log.csv` row with route `parent_browser_fallback` for each attempted source:
+   source ID, landing URL, original status or message and time, browser-attempt time, browser surface,
+   final URL when visible, and result (`retrieved`, `still_blocked`, `researcher_action_required`, or
+   `browser_unavailable`). If a potentially material gap is not attempted because use is not
+   authorized or the locator is not a lawful retrieval route, record that typed reason instead.
+5. A successful browser download is not self-validating. Save or copy the lawful full text into the
+   Stage 02 `retrieved/` directory, verify that it is the identified work rather than an HTML
+   challenge or error page, hash it, and update the source manifest with retrieval surface, access
+   date, local path, hash, and full-text-read status. Only then may the work become verified.
+
+This fallback does not change worker isolation, fan-out counts, or saturation rules. The parent
+keeps browser attempts serial so interactive state and downloaded files cannot race, and the manual
+search packet contains every source that remains unresolved after the protocol.
 
 ## Codex adapter
 

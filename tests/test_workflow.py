@@ -474,6 +474,38 @@ class WorkflowContractTests(unittest.TestCase):
         for text in (claude_skill, codex_skill):
             self.assertIn("never one hand-launched worker at a time", " ".join(text.split()))
 
+    def test_stage_02_uses_parent_browser_fallback_without_broadening_workers(self) -> None:
+        stage = (ROOT / "workflow" / "stages" / "02-preemption-review.md").read_text(
+            encoding="utf-8"
+        )
+        guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(
+            encoding="utf-8"
+        )
+        contract = (ROOT / "workflow" / "shared" / "observation-fanout.md").read_text(
+            encoding="utf-8"
+        )
+        flat_stage = " ".join(stage.split())
+        flat_contract = " ".join(contract.split())
+        self.assertIn("parent-only browser fallback", flat_stage)
+        self.assertIn("parent_browser_fallback", stage)
+        self.assertIn("browser control in the researcher's main authorized session", flat_stage)
+        self.assertIn("Parent-only browser fallback for Stage 02", contract)
+        self.assertIn("never a worker tool", flat_contract)
+        self.assertIn("one bounded ordinary-UI attempt", flat_contract)
+        self.assertIn("Never inspect credentials or session stores", contract)
+        self.assertIn("parent-only browser fallback", guardrails)
+        for relative in (
+            ".claude/agents/elr-research-worker.md",
+            ".codex/agents/elr-research-worker.toml",
+        ):
+            worker = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn("no browser", worker.lower(), relative)
+            self.assertIn("never escalate", worker.lower(), relative)
+        for relative in ("README.md", "PIPELINE.md"):
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn("parent", text.lower(), relative)
+            self.assertIn("browser-control", text.lower(), relative)
+
     def test_scale_up_forbids_multiple_units_not_multiple_documents(self) -> None:
         body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "11-scale-up")
         self.assertIn("Never pack multiple coding units into one prompt", body)
