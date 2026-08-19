@@ -49,12 +49,21 @@ SCOOP_RISKS = {"low", "moderate", "high"}
 EXECUTIVE_SUMMARY_SECTION = "Executive summary"
 ANNOTATED_MAP_SECTION = "Annotated map of closest work"
 EXECUTIVE_SUMMARY_MAX_WORDS = 1200
+EXECUTIVE_SUMMARY_MATCH_HEADING_PREFIX = "Closest match:"
 EXECUTIVE_SUMMARY_REQUIRED_LABELS = (
     "Bottom line",
+    "Intended contribution",
     "Closest threats",
     "Remaining contribution",
     "Recommended disposition",
     "Scoop risk and access gaps",
+)
+EXECUTIVE_SUMMARY_MATCH_REQUIRED_LABELS = (
+    "What the work says",
+    "Relevant scope and basis",
+    "Preemption of the intended contribution",
+    "What remains",
+    "Evidence",
 )
 REQUIRED_SECTIONS = (
     EXECUTIVE_SUMMARY_SECTION,
@@ -312,17 +321,58 @@ def validate_sections(blocks: list[Block]) -> None:
             "executive summary exceeds "
             f"{EXECUTIVE_SUMMARY_MAX_WORDS} words ({summary_words} found)"
         )
-    normalized_summary = " ".join(summary_text.lower().split())
     missing_labels = [
         label
         for label in EXECUTIVE_SUMMARY_REQUIRED_LABELS
-        if label.lower() not in normalized_summary
+        if not re.search(rf"\*\*{re.escape(label)}:\*\*", summary_text, re.IGNORECASE)
     ]
     if missing_labels:
         raise ValueError(
             "executive summary is missing required labeled content: "
             + ", ".join(missing_labels)
         )
+
+    match_indices = [
+        index
+        for index, block in enumerate(summary_blocks)
+        if block.kind == "heading"
+        and block.level == 3
+        and block.text.lower().startswith(EXECUTIVE_SUMMARY_MATCH_HEADING_PREFIX.lower())
+    ]
+    if not match_indices:
+        raise ValueError(
+            "executive summary must contain at least one "
+            f"'{EXECUTIVE_SUMMARY_MATCH_HEADING_PREFIX} [full citation]' subsection"
+        )
+    for match_number, match_index in enumerate(match_indices, start=1):
+        heading = summary_blocks[match_index].text
+        citation = heading[len(EXECUTIVE_SUMMARY_MATCH_HEADING_PREFIX) :].strip()
+        if not citation:
+            raise ValueError(
+                f"executive summary closest match {match_number} must include a full citation"
+            )
+        match_end = (
+            match_indices[match_number]
+            if match_number < len(match_indices)
+            else len(summary_blocks)
+        )
+        match_text = " ".join(
+            block.text
+            if block.kind != "table"
+            else " ".join(" ".join(row) for row in block.rows)
+            for block in summary_blocks[match_index + 1 : match_end]
+        )
+        missing_match_labels = [
+            label
+            for label in EXECUTIVE_SUMMARY_MATCH_REQUIRED_LABELS
+            if not re.search(rf"\*\*{re.escape(label)}:\*\*", match_text, re.IGNORECASE)
+        ]
+        if missing_match_labels:
+            raise ValueError(
+                f"executive summary closest match '{citation}' is missing required "
+                "labeled content: "
+                + ", ".join(missing_match_labels)
+            )
 
     map_index = next(
         index
