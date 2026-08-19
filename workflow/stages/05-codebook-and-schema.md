@@ -5,6 +5,7 @@ paper_steps: ["2"]
 core: true
 interaction_profile: "plan_then_execute"
 long_running: false
+goal_condition: null
 prerequisites: ["04-methods-design"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/methods_plan_vNNN.md", "project/artifacts/hypotheses_vNNN.md", "project/artifacts/estimands_vNNN.csv", "project/artifacts/sampling_validation_plan_vNNN.md", "authorized metadata or public corpus index"]
 declared_outputs: ["project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/artifacts/unit_space_vNNN.csv", "project/artifacts/coding_prompt_vNNN.md", "project/artifacts/schema_examples_vNNN.jsonl", "project/runs/<run_id>/schema_validation_report.json", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -41,7 +42,20 @@ The agent may expose ambiguity and propose alternatives, but must not settle doc
 
 ## Mode handoff
 
-Plan first, read-only. Inspect the active design and metadata, enumerate every definition and schema decision, identify unresolved edge cases (record a provisional `assistant-default` for each one that has a reasonable resolution), and describe the validation fixtures and unit-space construction; do not write any project file, artifact, state, fixture, ledger, or run directory until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Then execute Stage 05 to write and validate the declared artifacts, and stop at codebook-schema-approval, presenting the provisional choices there. Normal approved execution is sufficient; /goal is optional. The resulting version may be revised after the pilot, but each pilot run must use one frozen version.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. Plan first, read-only. Inspect the active design and metadata,
+enumerate every definition and schema decision, identify unresolved edge cases
+(record a provisional `assistant-default` for each one that has a reasonable
+resolution), and describe the validation fixtures and unit-space construction;
+do not write any project file, artifact, state, fixture, ledger, or run directory
+until the plan is complete. Then continue into execution in the same session,
+without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11
+holds; only then enter Plan Mode, stop, and give the exact execution handoff.
+Write and validate the declared artifacts and stop at
+`codebook-schema-approval`, presenting the provisional choices there. This stage
+is bounded: maintain the native plan but do not start a goal. The resulting
+version may be revised after the pilot, but each pilot run must use one frozen
+version.
 
 ## Work
 

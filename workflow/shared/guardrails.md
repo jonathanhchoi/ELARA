@@ -127,6 +127,10 @@ researcher explicitly changes the kit's governing instructions.
   failed.
 - For long work, checkpoint exact state and counts after recoverable units so a
   fresh session can resume without chat history or duplication.
+- Follow `workflow/shared/execution-control.md`: keep the host's native stage
+  plan aligned with these durable checkpoints, and run every stage marked
+  `long_running: true` under its exact front-matter `goal_condition` after the
+  researcher activates it. A native plan or goal is never a provenance record.
 
 ## 7. Parallel work and shared files
 
@@ -271,6 +275,10 @@ issue. This section is the complete list of reasons to stop; nothing else is.
      recorded as `checkpoints` in `PROJECT_STATE.md` (`stages`, `plans`, or
      `all`; absent or `none` means low-touch), in which case also stop before
      starting the next stage, before executing a plan, or both.
+  7. a stage marked `long_running: true` is ready to execute but its exact
+     front-matter `goal_condition` is not the active host goal — give the
+     researcher the complete `/goal <goal_condition>` command once and wait.
+     If a different goal is active, do not replace or clear it.
 - **Otherwise proceed.** For every other choice, take the sensible default —
   the kit's dated default, the researcher's stated preference, or the option
   best supported by evidence retrieved in this project — record it as a
@@ -292,10 +300,11 @@ issue. This section is the complete list of reasons to stop; nothing else is.
   an outstanding input, never a gap to fill silently. Prefer a message the
   researcher can answer with one word.
 - **Plan-then-execute stages** plan first, read-only, then execute in the same
-  session; the stage's own gate is where the researcher decides. Enter Plan
-  Mode, stop, and hand off only when a stop condition above holds. Stages 17
-  and 19 are the exception by design: their plan is the
-  `manuscript-edit-permission` gate.
+  session; the stage's own gate is where the researcher decides. Maintain the
+  native plan tracker throughout. Enter Plan Mode, stop, and hand off only when
+  a stop condition above holds. Stages 17 and 19 are the exception by design:
+  their plan is the `manuscript-edit-permission` gate. A long-running execution
+  phase also performs the one-time goal handoff in item 7.
 - **Between stages** in `pipeline` mode, when a stage ends with no gate or
   input pending, summarize in a few lines what was produced and where, then
   continue into the next stage in the same session — unless a stop condition

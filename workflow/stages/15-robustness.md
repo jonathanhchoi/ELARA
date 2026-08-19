@@ -5,6 +5,7 @@ paper_steps: ["5"]
 core: true
 interaction_profile: "execute"
 long_running: true
+goal_condition: "Run Stage 15 exactly as specified until every approved prompt-paraphrase and second-model condition has a terminal reconciled disposition, identical validation and downstream checks have run, the complete stability spread and every fragility are reported, all declared artifacts pass verification, and PROJECT_STATE.md is ready for Stage 16, or until an ELARA section 11 stop condition or recorded failure route is surfaced; do not tune on robustness outcomes."
 prerequisites: ["14-analysis-and-correction"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/methods_plan_vNNN.md", "project/artifacts/preregistration_record_vNNN.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/artifacts/coding_prompt_vNNN.md", "project/artifacts/data_authorization_record_vNNN.md", "project/artifacts/held_out_sample_vNNN.csv", "project/artifacts/adjudicated_validation_data_vNNN.csv", "project/artifacts/validation_metrics_vNNN.json", "project/code/analysis_vNNN/", "project/artifacts/analysis_dataset_vNNN.csv", "project/artifacts/analysis_results_vNNN/", "project/artifacts/measurement_error_correction_vNNN.json"]
 declared_outputs: ["project/artifacts/robustness_specification_vNNN.md", "project/artifacts/prompt_paraphrases_vNNN.md", "project/artifacts/robustness_dataset_vNNN.jsonl", "project/artifacts/robustness_metrics_vNNN.json", "project/artifacts/robustness_results_vNNN/", "project/artifacts/robustness_report_vNNN.md", "project/runs/<run_id>/prompts/", "project/runs/<run_id>/raw_model_outputs/", "project/runs/<run_id>/unit_attempts.jsonl", "project/runs/<run_id>/schema_and_quote_checks/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -33,7 +34,17 @@ The researcher approves the paraphrase rule, second-model choice, comparison met
 
 ## Mode handoff
 
-This is a long-running execution stage. In Codex, `/goal` may be used with this objective: **Run every approved prompt-paraphrase and second-model robustness condition on the protected validation sample, one unit per fresh context, preserve raw outputs, apply identical checks and downstream analysis, and report the complete stability spread.** — with the unit-condition assignments run as the kit's `elr_worker` sub-agents in bounded waves. In Claude Code, prepare the condition manifest with the controller and launch the saved `elr-observation-fanout` workflow yourself, relaunching it until nothing is pending. If the host's orchestrator is unavailable, launch the restricted worker type directly one assignment per call and record that route. Do not execute a robustness search in Plan Mode.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. This is a long-running execution stage: its front-matter
+`goal_condition` must be the active goal before execution begins. If it is not
+active, provide `/goal <goal_condition>` and stop. Do not execute the robustness
+search in Plan Mode. The parent keeps the goal and plan current while the host
+orchestrator runs condition units under
+`workflow/shared/observation-fanout.md`: Codex spawns `elr_worker` sub-agents in
+bounded waves; Claude Code launches the saved `elr-observation-fanout` workflow
+until nothing is pending. If the orchestrator is unavailable, launch the same
+restricted worker type one assignment per call and record the fallback. Apply
+identical checks and downstream analysis; never tune on the comparison.
 
 ## Work
 

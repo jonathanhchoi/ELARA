@@ -11,13 +11,21 @@ definition. If this file did not exist when the session started (the kit was
 just installed by `scripts/bootstrap.py`), `project/BOOTSTRAP.md` says what to
 do now.
 
+For every nontrivial stage or utility, follow
+`workflow/shared/execution-control.md`: use `TaskCreate` for a four-to-seven-item
+native stage plan, `TaskUpdate` at every phase or fan-out checkpoint, and
+`TaskList` on resume and before the final report. Keep exactly one task in
+progress and reconcile the task list from project state and ledgers, never the
+other way around.
+
 Stage metadata cannot change Claude Code's permission mode automatically. Map
 the canonical `interaction_profile` as follows:
 
-- `normal`: remain in Claude's normal approved/default mode and conduct the
-  researcher interaction. Do not create a long-running autonomous task.
-- `plan`: use `/plan` where available, inspect read-only context, and make no file
-  changes. Return the completed plan and the exact command needed for the next
+- `normal`: remain in Claude's normal approved/default mode, track the short
+  interaction in the task list, and conduct the researcher gate. Do not start a
+  goal.
+- `plan`: enter Plan Mode, inspect read-only context, update the task list, and
+  make no file changes. Return the decision-complete plan and exact execution
   handoff.
 - `execute`: use Claude's approved/default execution mode for a bounded stage.
   Every fan-out inside it — coding or audit units in Stages 08, 11, 12, and 15;
@@ -28,18 +36,23 @@ the canonical `interaction_profile` as follows:
   `elr-research-fanout` (`{ "fanout_dir": ... }`) for research units, both under
   `workflow/shared/observation-fanout.md`. Do not launch workers one at a time
   with the Agent tool while workflows are available, and do not process the
-  units serially in your own context. For other long work, use `/goal
-  <verifiable completion condition>` where supported; otherwise checkpoint
-  through `project/PROJECT_STATE.md` and `project/RUN_LEDGER.md`.
-- `plan_then_execute`: plan first in the normal mode without writing any project
-  file (inspect, settle the choices, present a decision-complete plan), then
-  continue into execution in the same session. Enter Plan Mode, stop, and ask
-  the researcher to approve the plan and switch to an execution-capable mode
-  only when a stop condition in `workflow/shared/guardrails.md` §11 holds (an
-  open researcher-owned choice with no reasonable default, a spend beyond the
-  recorded budget, a `checkpoints` preference), and always for Stages 17 and
-  19, whose plan is the manuscript-edit gate. Use `/goal` for a long-running
-  phase where available.
+  units serially in your own context.
+- `plan_then_execute`: put the read-only plan phase first in the task list. Plan
+  in normal mode without writing any project file, then continue into execution
+  in the same session. Enter Plan Mode and stop only when a stop condition in
+  `workflow/shared/guardrails.md` §11 holds, and always for Stages 17 and 19,
+  whose plan is the manuscript-edit gate.
+
+For every stage marked `long_running: true`, inspect `/goal` status before its
+first execution write. Resume only if the exact front-matter `goal_condition`
+is active. If none is active, print the complete `/goal <goal_condition>` command
+and stop; if another goal is active, do not replace or clear it. The parent
+keeps that one stage goal and the task list current while saved workflows run
+fan-outs. Surface verification results and exact counts in checkpoint and final
+turns because Claude's goal evaluator sees the conversation, not project files.
+If goals are unavailable or disabled, record the fallback and use the same task
+plan and durable disk checkpoints. Never use one goal for the whole pipeline or
+one goal per worker.
 
 Claude permission modes control tool access; they never waive a workflow gate or
 data-authorization requirement. Nor do they add stops: outside the gates and

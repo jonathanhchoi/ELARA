@@ -5,6 +5,7 @@ paper_steps: ["setup"]
 core: true
 interaction_profile: "normal"
 long_running: false
+goal_condition: null
 prerequisites: []
 required_inputs: ["repository root", "researcher instructions", "project/inputs/", "project/inputs/existing/ (adoption path only: the researcher's existing project materials)", "project/BOOTSTRAP.md (if present: the installer's report, listing pre-existing materials and the Python interpreter to use)"]
 declared_outputs: ["project/PROJECT_STATE.md", "project/PROJECT_CHARTER_vNNN.md", "project/ACCESS_MODEL_SNAPSHOT_vNNN.md", "project/INPUT_INVENTORY_vNNN.csv", "project/PUBLICATION_PROFILE_vNNN.md", "project/artifacts/adoption_map_vNNN.md", "project/artifacts/imported_vNNN/", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md", "project/runs/<run_id>/run_manifest.json"]
@@ -47,7 +48,25 @@ Do not invent these choices. Record unresolved choices as outstanding user input
 
 ## Mode handoff
 
-Run this stage in normal interactive mode. Do not start a Goal. Infer first, ask second: before asking anything, read what the folder already answers (project/BOOTSTRAP.md, the pre-existing files, project/inputs/, anything the researcher has said) and draft answers to the researcher decisions above from it. Then ask, in one message, only what is still genuinely missing — each question concrete, in plain language, with an example answer and the default you will use if they say "you decide" — and accept "go with the defaults" as an answer to all of them. Accept "don't know" and record it as an outstanding input rather than choosing a default. Keep the interview to one message of at most six questions in pipeline mode (two in specific-tools mode) unless the researcher wants more; a second message only for what the first answers open up. Explain that approval of the charter is a hard gate and that approval will be recorded verbatim. Assume a legal scholar who may never have used a terminal: the assistant runs every command and never asks the researcher to edit a state file, YAML, or ledger by hand. These interview questions are what the charter needs; from the charter on, `workflow/shared/guardrails.md` §11 governs, and the assistant works between gates without interrupting the researcher.
+Follow `workflow/shared/execution-control.md`: create the native stage plan before
+work and keep its prerequisite, interview, artifact, verification, and gate items
+current. Run this stage in normal interactive mode and do not start a goal. Infer
+first, ask second: before asking anything, read what the folder already answers
+(project/BOOTSTRAP.md, the pre-existing files, project/inputs/, anything the
+researcher has said) and draft answers to the researcher decisions above from it.
+Then ask, in one message, only what is still genuinely missing — each question
+concrete, in plain language, with an example answer and the default you will use
+if they say "you decide" — and accept "go with the defaults" as an answer to all
+of them. Accept "don't know" and record it as an outstanding input rather than
+choosing a default. Keep the interview to one message of at most six questions in
+pipeline mode (two in specific-tools mode) unless the researcher wants more; a
+second message only for what the first answers open up. Explain that approval of
+the charter is a hard gate and that approval will be recorded verbatim. Assume a
+legal scholar who may never have used a terminal: the assistant runs every
+command and never asks the researcher to edit a state file, YAML, or ledger by
+hand. These interview questions are what the charter needs; from the charter on,
+`workflow/shared/guardrails.md` §11 governs, and the assistant works between
+gates without interrupting the researcher.
 
 ## Orientation (first session)
 

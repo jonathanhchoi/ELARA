@@ -5,6 +5,7 @@ paper_steps: ["6"]
 core: false
 interaction_profile: "plan_then_execute"
 long_running: false
+goal_condition: null
 prerequisites: ["18-cite-check"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/manuscript_vNNN/", "project/artifacts/manuscript_change_log_vNNN.md", "project/artifacts/citation_audit_vNNN.jsonl", "project/artifacts/citation_audit_report_vNNN.md", "project/artifacts/replication_package_vNNN/", "project/artifacts/analysis_results_vNNN/", "researcher-supplied reviewer letter, editor letter, or revision notes under project/inputs/peer_review/", "project/PUBLICATION_PROFILE_vNNN.md (optional; the active publication profile)"]
 declared_outputs: ["project/artifacts/revision_plan_vNNN.md", "project/artifacts/revised_manuscript_vNNN/", "project/code/revision_analysis_vNNN/", "project/artifacts/revision_analysis_results_vNNN/", "project/artifacts/citation_finding_disposition_vNNN.csv", "project/artifacts/peer_review_response_vNNN.md", "project/artifacts/revision_internal_report_vNNN.md", "project/runs/<run_id>/build_test_and_render_logs/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -33,7 +34,18 @@ The researcher decides whether each suggestion has merit; whether to accept, par
 
 ## Mode handoff
 
-Begin in Plan Mode. Do not write any project file during Plan Mode. Present a table with one row per comment or audit finding: exact request, evidence, merit assessment, recommended accept, partial, or decline disposition, upstream route if any, proposed code and manuscript edits, dependent sections and outputs, verification, and draft response. Stop at `manuscript-edit-permission`. After the researcher approves the dispositions and exits Plan Mode, use normal approved execution with this objective: **Execute only the approved comment-level revisions serially on versioned copies, rerun and validate any authorized analysis, update every dependent statement, and produce a complete response letter and internal change report.**
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. Begin in Plan Mode with the plan phase as the only in-progress
+item. Do not write any project file during Plan Mode. Present a table with one
+row per comment or audit finding: exact request, evidence, merit assessment,
+recommended accept, partial, or decline disposition, upstream route if any,
+proposed code and manuscript edits, dependent sections and outputs,
+verification, and draft response. Stop at `manuscript-edit-permission`. After
+the researcher approves the dispositions and exits Plan Mode, update the native
+plan and use normal bounded execution to make only the approved comment-level
+revisions serially on versioned copies, rerun and validate authorized analysis,
+update every dependent statement, and produce the response letter and internal
+change report. Do not start a goal.
 
 ## Work
 

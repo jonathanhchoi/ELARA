@@ -27,7 +27,15 @@ The researcher decides which claims need citations, the citation style, and whic
 
 ## Mode handoff
 
-Begin in Plan Mode. Do not write any project file. For each marked claim, present the candidate source(s) actually retrieved and read, the supporting quotation and pinpoint, the proposed citation in the required style, and, where nothing was found, the searches attempted. Stop for approval at `manuscript-edit-permission` covering exactly those citations. After the researcher approves and exits Plan Mode, use normal approved execution.
+Follow `workflow/shared/execution-control.md` and create the native utility plan
+before work. Begin in Plan Mode with research and proposal as the only
+in-progress item. Do not write any project file. For each marked claim, present
+the candidate source(s) actually retrieved and read, the supporting quotation
+and pinpoint, the proposed citation in the required style, and, where nothing
+was found, the searches attempted. Stop for approval at
+`manuscript-edit-permission` covering exactly those citations. After the
+researcher approves and exits Plan Mode, update the native plan and use normal
+bounded execution. Do not start a goal.
 
 ## Work
 

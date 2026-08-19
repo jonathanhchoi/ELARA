@@ -27,7 +27,14 @@ The researcher decides what each mark means where the legend is silent or the ma
 
 ## Mode handoff
 
-Phase 1 (transcription) needs no edit permission but must not touch the manuscript. Phase 2 (application) begins only after the researcher has reviewed the transcription and granted `manuscript-edit-permission` for the approved items. Between the phases, stop and hand the transcription to the researcher.
+Follow `workflow/shared/execution-control.md` and create the native utility plan
+before work, with separate transcription, mapping review, approval, application,
+and verification items. Phase 1 (transcription) needs no edit permission but
+must not touch the manuscript. Phase 2 (application) begins only after the
+researcher has reviewed the transcription and granted
+`manuscript-edit-permission` for the approved items. Between the phases, update
+the native plan, stop, and hand the transcription to the researcher. This is
+bounded work; do not start a goal.
 
 ## Work
 

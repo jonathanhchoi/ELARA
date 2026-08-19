@@ -5,7 +5,8 @@ description: "Fan out frozen empirical legal research coding or audit work with 
 
 # Code observations with isolated subagents
 
-1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and
+1. Read `AGENTS.md`, `project/PROJECT_STATE.md`,
+   `workflow/shared/execution-control.md`, and
    `workflow/shared/observation-fanout.md` completely.
 2. Read the active canonical file under `workflow/stages/`; this skill implements its
    per-unit execution contract and never changes stage gates or frozen instruments.
@@ -21,5 +22,6 @@ description: "Fan out frozen empirical legal research coding or audit work with 
    nothing is pending; every agent in it is the restricted `elr-worker` type. If dynamic
    workflows are unavailable, launch `elr-worker` directly, one assignment per call, and
    record that route.
-6. Validate returns and update ledgers serially after each bounded wave. Resume from files,
-   preserve every attempt, expose only operational progress, and reconcile before merging.
+6. The parent keeps the one stage goal and native plan; workers never create either. Validate
+   returns, update the plan, and edit ledgers serially after each bounded wave. Resume from
+   files, preserve every attempt, expose only operational progress, and reconcile before merging.

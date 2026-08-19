@@ -116,6 +116,8 @@ def validate_stage(
     _require_type(errors, path, "core", meta["core"], bool)
     _require_type(errors, path, "interaction_profile", meta["interaction_profile"], str)
     _require_type(errors, path, "long_running", meta["long_running"], bool)
+    if meta["goal_condition"] is not None:
+        _require_type(errors, path, "goal_condition", meta["goal_condition"], str)
     for key in ("prerequisites", "required_inputs", "declared_outputs", "failure_routes"):
         _require_type(errors, path, key, meta[key], list)
     if meta["human_gate"] is not None and not isinstance(meta["human_gate"], str):
@@ -205,6 +207,14 @@ def validate_stage(
             errors.append(f"{path}: failure route may not skip forward to {target}")
     if meta["interaction_profile"] == "normal" and meta["long_running"] is not False:
         errors.append(f"{path}: normal interaction stages cannot be long_running")
+    if meta["long_running"] is True:
+        condition = meta["goal_condition"]
+        if not isinstance(condition, str) or not condition.strip():
+            errors.append(f"{path}: long_running stages require a nonempty goal_condition")
+        elif not condition.startswith("Run Stage "):
+            errors.append(f"{path}: goal_condition must begin with 'Run Stage '")
+    elif meta["goal_condition"] is not None:
+        errors.append(f"{path}: bounded stages must set goal_condition to null")
 
     headings = set(re.findall(r"^## (.+)$", body, flags=re.MULTILINE))
     for section in REQUIRED_STAGE_SECTIONS:
@@ -214,6 +224,10 @@ def validate_stage(
         errors.append(f"{path}: unresolved TODO")
     if "AGENTS.md" not in body or "PROJECT_STATE.md" not in body:
         errors.append(f"{path}: stage must route through AGENTS.md and PROJECT_STATE.md")
+    if "workflow/shared/execution-control.md" not in body:
+        errors.append(f"{path}: stage must route through the native plan/goal contract")
+    if meta["long_running"] is True and "<goal_condition>" not in body:
+        errors.append(f"{path}: long_running stage must use its exact goal_condition handoff")
     return errors
 
 

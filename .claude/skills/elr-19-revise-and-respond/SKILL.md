@@ -6,8 +6,8 @@ disable-model-invocation: true
 
 # Run elr-19-revise-and-respond
 
-1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`, and
-   `workflow/shared/artifact-contract.md` completely.
+1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
+   execution-control files under `workflow/shared/` completely.
    Then read `workflow/shared/manuscript-editing-contract.md` and the active publication profile pinned in
    `project/PROJECT_STATE.md` (`project/PUBLICATION_PROFILE_vNNN.md`), if any.
 2. Read `workflow/stages/19-revise-and-respond.md` completely and follow it as the single source of substantive
@@ -18,10 +18,12 @@ disable-model-invocation: true
    stage as the aim. If it is not current and the researcher chose it explicitly (this skill,
    the menu, or by name), first satisfy its prerequisites through Stage 00's adoption path,
    then run it; otherwise stop.
-4. Honor the stage's mode handoff. A skill cannot switch Plan or Goal mode by itself. Work
-   low-touch: stop only for a gate or another stop condition in
-   `workflow/shared/guardrails.md` section 11; take recorded provisional defaults otherwise.
-5. Do not cross the stage's human gate. Update state and append the run ledger only as the
+4. Create or reconcile the host-native stage plan before work and update it at every phase
+   boundary as required; On Claude Code use `TaskCreate`, `TaskUpdate`, and `TaskList`.
+5. Honor the mode handoff. For `long_running: true`, resume the matching active goal or give
+   the exact `/goal <goal_condition>` handoff and stop; never replace another active goal.
+   Otherwise work low-touch under `workflow/shared/guardrails.md` section 11.
+6. Do not cross the stage's human gate. Update state and append the run ledger only as the
    canonical stage directs. At the end, summarize plainly and, per the usage mode (`usage` in
    `project/PROJECT_STATE.md`), continue into the next stage in `pipeline` mode unless a stop
    condition holds, or offer the menu in `specific tools` mode.

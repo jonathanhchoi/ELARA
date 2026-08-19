@@ -1,8 +1,9 @@
 """Prepare, validate, retry, resume, and merge one-unit subagent assignments.
 
 This module is deliberately provider-neutral. It never spawns an agent or calls a model.
-Claude workflows and Codex Goal mode consume the same immutable assignment files and write
-one return file per attempt; this script is the serial controller around those workers.
+Claude workflows and Codex sub-agents consume the same immutable assignment files and write
+one return file per attempt; the parent keeps the host-native stage plan and goal, and this
+script is the serial controller around the workers.
 
 Contract invariants:
 

@@ -26,7 +26,15 @@ The researcher decides which categories are in scope, whether the agent may appl
 
 ## Mode handoff
 
-Begin in Plan Mode. Do not write any project file. Confirm the categories to check and whether uncontroversial fixes are permitted; state the exact definition of "uncontroversial" that will be used (a clear typographical or grammatical error with one obvious correction). Stop at `manuscript-edit-permission` if any fix will be applied; a report-only run needs no edit permission. After the researcher decides and exits Plan Mode, use normal approved execution.
+Follow `workflow/shared/execution-control.md` and create the native utility plan
+before work. Begin in Plan Mode with the review design as the only in-progress
+item. Do not write any project file. Confirm the categories to check and whether
+uncontroversial fixes are permitted; state the exact definition of
+"uncontroversial" that will be used (a clear typographical or grammatical error
+with one obvious correction). Stop at `manuscript-edit-permission` if any fix
+will be applied; a report-only run needs no edit permission. After the
+researcher decides and exits Plan Mode, update the native plan and use normal
+bounded execution. Do not start a goal.
 
 ## Work
 

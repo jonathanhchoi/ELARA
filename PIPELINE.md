@@ -4,7 +4,8 @@ This is the human-readable map for ELARA (Empirical Legal Analysis with Research
 Agents), the companion package for *ELARA: A Framework for Empirical Legal
 Research with AI Agents*. The canonical instructions are the numbered files in
 `workflow/stages/`; their YAML front matter is the machine-readable source for
-prerequisites, inputs, outputs, gates, next-stage routing, and failure routes.
+prerequisites, inputs, outputs, interaction profile, long-running goal
+condition, gates, next-stage routing, and failure routes.
 
 The repository holds one active project. The mandatory core ends when Stage 16
 rebuilds a verified replication package. Optional Stages 17–19 implement the
@@ -32,10 +33,12 @@ steps. A stage's `paper_steps` field records the crosswalk above.
 2. It reads the current canonical stage and the shared workflow contracts.
 3. It checks prerequisites, exact active artifact versions, approvals,
    outstanding researcher inputs, and the authorized data route.
-4. It explains the stage's mode handoff; metadata cannot change an application's
-   mode automatically.
-5. Execution receives a unique run ID, writes only declared versioned paths under
-   `project/`, appends to the ledgers, and verifies every declared result.
+4. It creates or reconciles the host-native stage plan, then follows the mode
+   handoff; metadata cannot change an application's mode automatically.
+5. A long stage resumes its matching goal or gives the researcher the exact
+   front-matter `/goal` handoff. Execution then receives a unique run ID, writes
+   only declared versioned paths under `project/`, appends to the ledgers, and
+   verifies every declared result.
 6. A human gate sets `status: awaiting_approval`; silence is not approval. A
    failed verification follows a declared failure route rather than advancing.
 
@@ -182,13 +185,23 @@ version.
 
 | Profile | Handoff |
 |---|---|
-| `normal` | Stay interactive and gather a researcher decision. |
-| `plan` | Inspect in Plan Mode and make no file changes. |
-| `execute` | Run a bounded approved task. A fan-out inside it is run by the host's own orchestrator — Claude Code: the kit's saved workflows, launched by the assistant; Codex: the kit's custom sub-agents in bounded waves — under `workflow/shared/observation-fanout.md`. |
-| `plan_then_execute` | Finish a decision-complete read-only plan, then continue into execution in the same session; stop for approval of the plan only when a `workflow/shared/guardrails.md` §11 stop condition holds (Stages 17 and 19 always stop: their plan is the manuscript-edit gate). |
+| `normal` | Track the short stage in the native plan and gather a researcher decision; no Plan Mode or goal. |
+| `plan` | Track the work, inspect in Plan Mode, make no file changes, and return the exact execution handoff. |
+| `execute` | Track and run approved execution. If `long_running: true`, execute under the exact stage `goal_condition`. A fan-out inside it is run by the host's own orchestrator under `workflow/shared/observation-fanout.md`. |
+| `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 17 and 19 always stop because their plan is the manuscript-edit gate). A long execution phase uses the exact stage goal. |
 
 Plan phases do not alter state, ledgers, or artifacts. A mode or permission
 setting never waives a human gate, data restriction, or artifact-version rule.
+
+Every substantive stage and utility uses the host's native tracker: Codex uses
+`update_plan`; Claude Code uses `TaskCreate`, `TaskUpdate`, and `TaskList`. The
+tracker is reconciled from the files on resume and is not a research artifact.
+Every stage marked `long_running: true` has a validator-enforced
+`goal_condition`. If that goal is not active, the assistant gives the exact
+`/goal <goal_condition>` command and stops for the one-time activation. It
+never replaces another active goal. One goal covers one stage, not the full
+pipeline or an individual fan-out worker. Stages 01–03, 07–08, 10–12, 14–16,
+and 18 are long-running. See `workflow/shared/execution-control.md`.
 
 ## Canonical stages
 
@@ -231,7 +244,7 @@ the host's own orchestrator, not by the assistant launching workers by hand:
 | Host | Orchestrator | Worker definitions |
 |---|---|---|
 | Claude Code | The kit's saved dynamic workflows, `elr-observation-fanout` (coding and audit units) and `elr-research-fanout` (research units), which the assistant launches as part of the stage; the researcher can watch them in `/workflows` | `.claude/agents/elr-worker.md`, `.claude/agents/elr-research-worker.md` |
-| Codex | The kit's custom sub-agents, spawned by name in bounded waves (Goal mode keeps a long run going) | `.codex/agents/elr-worker.toml` (`elr_worker`), `.codex/agents/elr-research-worker.toml` (`elr_research_worker`) |
+| Codex | The kit's custom sub-agents, spawned by name in bounded waves; the parent retains the stage plan and goal | `.codex/agents/elr-worker.toml` (`elr_worker`), `.codex/agents/elr-research-worker.toml` (`elr_research_worker`) |
 
 On either host the kit's controllers (`scripts/unit_fanout.py`,
 `scripts/research_fanout.py`) fix the manifest on disk, say what is still

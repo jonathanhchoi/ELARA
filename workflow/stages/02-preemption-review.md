@@ -5,6 +5,7 @@ paper_steps: ["1"]
 core: true
 interaction_profile: "execute"
 long_running: true
+goal_condition: "Run Stage 02 exactly as specified until the exhaustive search ledger reconciles, every relied-on source is retrieved and verified, all declared artifacts pass validation, and PROJECT_STATE.md records the preemption-disposition gate, or until an ELARA section 11 stop condition is recorded and surfaced; do not decide the gate for the researcher."
 prerequisites: ["00-initialize"]
 required_inputs: ["project/PROJECT_STATE.md", "project/PROJECT_CHARTER_vNNN.md", "selected project decision", "project/artifacts/conception_report_vNNN.md or researcher-supplied project memorandum"]
 declared_outputs: ["project/artifacts/preemption_review_vNNN.md", "project/sources/preemption/<run_id>/source_manifest.csv", "project/sources/preemption/<run_id>/search_log.csv", "project/sources/preemption/<run_id>/claim_evidence.csv", "project/sources/preemption/<run_id>/retrieved/", "project/sources/preemption/<run_id>/fanout/<wave>/ (query matrix, spec.json, briefs, sealed manifest, launch record, worker returns, merged candidates)", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -37,7 +38,15 @@ The agent may recommend a disposition but must not approve novelty or silently r
 
 ## Mode handoff
 
-This is a long-running execution stage. In Codex, use `/goal` when available, with normal researcher-approved execution as the fallback, and run every search, author, citation-chain, and retrieval wave as the kit's `elr_research_worker` sub-agents (`workflow/shared/observation-fanout.md`, "Codex adapter"). In Claude Code, run those waves as the saved `elr-research-fanout` workflow, which the assistant launches itself and which needs no mode change; `/goal` may wrap the rest of the stage where available. Use the objective: Execute the exhaustive Stage 02 preemption review for the selected project, verify every cited source, produce all declared artifacts, and stop at the preemption-disposition gate. If Codex Goal mode is required and not active, provide that handoff and stop. Do not do this review in Plan Mode.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. This is a long-running execution stage: its front-matter
+`goal_condition` must be the active goal before execution begins. If it is not
+active, provide `/goal <goal_condition>` and stop. Do not run the review in Plan
+Mode. In Codex, run every search, author, citation-chain, and retrieval wave as
+the kit's `elr_research_worker` sub-agents. In Claude Code, run those waves as
+the saved `elr-research-fanout` workflow, which the assistant launches itself.
+Both routes follow `workflow/shared/observation-fanout.md`; the stage goal stays
+with the parent through wave validation and final reconciliation.
 
 ## Work
 

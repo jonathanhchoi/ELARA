@@ -5,6 +5,7 @@ paper_steps: ["2"]
 core: true
 interaction_profile: "plan_then_execute"
 long_running: true
+goal_condition: "Run Stage 08 exactly as specified until the fixed pilot sample has terminal reconciled returns, every raw output and attempt is preserved, schema, quote, code-review, and researcher-review artifacts pass validation, and PROJECT_STATE.md records the pilot-acceptance gate, or until an ELARA section 11 stop condition is recorded and surfaced; do not accept the pilot for the researcher."
 prerequisites: ["07-adversarial-review"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/design_freeze_vNNN.md", "project/artifacts/methods_plan_vNNN.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/artifacts/unit_space_vNNN.csv", "project/artifacts/coding_prompt_vNNN.md", "project/artifacts/data_authorization_record_vNNN.md"]
 declared_outputs: ["project/artifacts/pilot_plan_vNNN.md", "project/artifacts/pilot_sample_vNNN.csv", "project/artifacts/pilot_report_vNNN.md", "project/artifacts/pilot_researcher_review_vNNN.csv", "project/artifacts/pilot_disagreements_vNNN.csv", "project/artifacts/pilot_revision_queue_vNNN.csv", "project/artifacts/pilot_acceptance_vNNN.md", "project/runs/<run_id>/code/", "project/runs/<run_id>/raw_model_outputs/", "project/runs/<run_id>/normalized_outputs/", "project/runs/<run_id>/pilot_ledger.csv", "project/runs/<run_id>/schema_quote_compliance.csv", "project/runs/<run_id>/code_review.md", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -40,7 +41,26 @@ The agent may diagnose and propose; it cannot self-certify accuracy or waive fai
 
 ## Mode handoff
 
-Plan first, read-only. Talk through architecture before code: inputs, one-unit execution, prompt assembly, raw-output capture, validation, quote matching, retries, ledgering, human review, code review, and stopping rules. Finalize the sample and thresholds (where the approved design or the kit's defaults name them and the researcher has not, they are provisional `assistant-default` choices); do not write any project file, allocate a run, build code, call a coding model, update state, or append ledgers until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. A pilot spends model calls: state the projected cost in the plan, and stop only if it exceeds the recorded budget. For execution, once the pilot assignments are fixed with the controller, the fan-out runs through the host's orchestrator under `workflow/shared/observation-fanout.md`: in Claude Code the assistant launches the saved `elr-observation-fanout` workflow itself; in Codex, `/goal` may hold the run and the units run as the kit's `elr_worker` sub-agents in bounded waves. Direct launches of the same restricted worker types are the fallback only when the orchestrator is unavailable, and are recorded as such. Use the objective: Save and execute the Stage 08 pilot plan on the fixed sample, archive all raw outputs, verify every unit, prepare researcher review, and stop at pilot-acceptance. Neither the plan nor a mode switch accepts the pilot.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. Plan first, read-only. Talk through architecture before code:
+inputs, one-unit execution, prompt assembly, raw-output capture, validation,
+quote matching, retries, ledgering, human review, code review, and stopping
+rules. Finalize the sample and thresholds (where the approved design or the
+kit's defaults name them and the researcher has not, they are provisional
+`assistant-default` choices); do not write any project file, allocate a run,
+build code, call a coding model, update state, or append ledgers until the plan
+is complete. Then continue into execution in the same session, without waiting,
+unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then enter Plan Mode, stop, and
+give the exact execution handoff. State the projected model-call cost in the
+plan and stop if it exceeds the recorded budget. Because this stage is
+long-running, its front-matter `goal_condition` must be the active goal before
+execution begins. If it is not active, provide `/goal <goal_condition>` and stop.
+Once assignments are fixed, the host orchestrator runs the fan-out under
+`workflow/shared/observation-fanout.md`: Claude Code launches the saved
+`elr-observation-fanout` workflow and Codex spawns the kit's `elr_worker`
+sub-agents in bounded waves. The goal stays with the parent through serial
+validation and reconciliation. Neither the plan, goal, nor mode switch accepts
+the pilot.
 
 ## Work
 

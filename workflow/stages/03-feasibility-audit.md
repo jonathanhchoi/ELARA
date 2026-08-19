@@ -5,6 +5,7 @@ paper_steps: ["1"]
 core: true
 interaction_profile: "execute"
 long_running: true
+goal_condition: "Run Stage 03 exactly as specified until every authorized live probe is archived, the acquisition, cost, timing, risk, and variable-verifiability artifacts pass validation, and PROJECT_STATE.md records the feasibility-go-no-go gate, or until an ELARA section 11 stop condition is recorded and surfaced; do not decide feasibility for the researcher."
 prerequisites: ["02-preemption-review"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/preemption_review_vNNN.md", "accepted project and preemption disposition", "candidate corpus locations"]
 declared_outputs: ["project/artifacts/feasibility_audit_vNNN.md", "project/runs/<run_id>/probe_log.csv", "project/runs/<run_id>/probe_exposure_manifest.csv", "project/runs/<run_id>/funnel_model.csv", "project/runs/<run_id>/cost_model.csv", "project/runs/<run_id>/variable_verifiability.csv", "project/runs/<run_id>/probes/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -40,7 +41,13 @@ Anything implicating terms, institutional rules, nontrivial spending, or risk is
 
 ## Mode handoff
 
-This is a long-running execution stage. Codex and current Claude Code may use /goal when available, with normal researcher-approved execution as the fallback. Use the objective: Execute Stage 03 adversarially, run and archive only authorized live probes, produce the declared feasibility artifacts, and stop at the feasibility-go-no-go gate. Do not proceed on a paper plan or perform this work in Plan Mode.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. This is a long-running execution stage: its front-matter
+`goal_condition` must be the active goal before execution begins. If it is not
+active, provide `/goal <goal_condition>` and stop. Do not proceed on a paper plan
+or perform the audit in Plan Mode. Run and archive only authorized live probes,
+keep the plan current through verification, and stop at the
+`feasibility-go-no-go` gate.
 
 ## Work
 

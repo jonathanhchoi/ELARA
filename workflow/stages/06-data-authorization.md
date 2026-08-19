@@ -5,6 +5,7 @@ paper_steps: ["2"]
 core: true
 interaction_profile: "normal"
 long_running: false
+goal_condition: null
 prerequisites: ["05-codebook-and-schema"]
 required_inputs: ["project/PROJECT_STATE.md", "project/PROJECT_CHARTER_vNNN.md", "project/ACCESS_MODEL_SNAPSHOT_vNNN.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/artifacts/unit_space_vNNN.csv", "corpus source and governing terms"]
 declared_outputs: ["project/artifacts/data_authorization_record_vNNN.md", "project/artifacts/data_handling_plan_vNNN.md", "project/artifacts/authorization_evidence_manifest_vNNN.csv", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -40,7 +41,13 @@ The agent assembles evidence and identifies issues; it does not give a binding l
 
 ## Mode handoff
 
-Run in normal interactive mode, not Plan or Goal. This stage depends on short, explicit confirmations and documents that only the researcher may possess. Inspect and summarize public governing materials, then stop for any missing authority. Never interpret silence, prior data access, technical capability, or a public-facing webpage as authorization.
+Follow `workflow/shared/execution-control.md`: create the native stage plan and
+keep its authority, route, evidence, and gate items current. Run in normal
+interactive mode, not Plan or Goal. This stage depends on short, explicit
+confirmations and documents that only the researcher may possess. Inspect and
+summarize public governing materials, then stop for any missing authority. Never
+interpret silence, prior data access, technical capability, or a public-facing
+webpage as authorization.
 
 ## Work
 

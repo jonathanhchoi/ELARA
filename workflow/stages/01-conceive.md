@@ -5,6 +5,7 @@ paper_steps: ["1"]
 core: true
 interaction_profile: "plan_then_execute"
 long_running: true
+goal_condition: "Run Stage 01 exactly as specified until every declared conception artifact and its sources have passed the stage verification and PROJECT_STATE.md records the project-selection gate, or until an ELARA section 11 stop condition is recorded and surfaced; do not select a project or cross the gate for the researcher."
 prerequisites: ["00-initialize"]
 required_inputs: ["project/PROJECT_STATE.md", "project/PROJECT_CHARTER_vNNN.md", "project/INPUT_INVENTORY_vNNN.csv", "project/inputs/"]
 declared_outputs: ["project/artifacts/researcher_profile_vNNN.md", "project/artifacts/landmark_survey_vNNN.md", "project/artifacts/conception_report_vNNN.md", "project/sources/conception/<run_id>/source_manifest.csv", "project/sources/conception/<run_id>/search_log.csv", "project/sources/conception/<run_id>/retrieved/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
@@ -38,7 +39,18 @@ Pause after presenting the profile if any material inference is disputed. At the
 
 ## Mode handoff
 
-Plan first, read-only. Read the active inputs, identify missing information, outline the profiling, landmark, brainstorming, screening, and verification passes, and make the plan decision-complete; do not write any project file, create a run, update state, or browse-download files until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11 holds (a researcher-owned choice with no reasonable provisional default, a spend beyond the recorded budget, or a `checkpoints` preference of `plans` or `all`); only then enter Plan Mode, stop, and give the exact execution handoff. Because this stage is long-running, Codex and current Claude Code may use /goal when available, with normal researcher-approved execution as the fallback. The Goal objective is: Execute Stage 01 exactly as specified, produce the declared versioned artifacts, and stop at the project-selection gate. Neither the plan nor a mode change is approval of the final project; the researcher decides at project-selection.
+Follow `workflow/shared/execution-control.md` and create the native stage plan
+before work. Plan first, read-only. Read the active inputs, identify missing
+information, outline the profiling, landmark, brainstorming, screening, and
+verification passes, and make the plan decision-complete; do not write any
+project file, create a run, update state, or browse-download files until the plan
+is complete. Then continue into execution in the same session, without waiting,
+unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then
+enter Plan Mode, stop, and give the exact execution handoff. Because this stage is long-running, its
+front-matter `goal_condition` must be the active goal before execution begins.
+If it is not active, provide `/goal <goal_condition>` and stop. Neither the plan,
+the goal, nor a mode change approves the final project; the researcher decides at
+`project-selection`.
 
 ## Work
 
