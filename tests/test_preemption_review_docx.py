@@ -16,10 +16,13 @@ SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from build_preemption_review import (  # noqa: E402
+    ANNOTATED_MAP_SECTION,
+    EXECUTIVE_SUMMARY_MAX_WORDS,
     REQUIRED_SECTIONS,
     build,
     parse_blocks,
     parse_source,
+    validate_sections,
 )
 from workflow_lib import load_stages  # noqa: E402
 
@@ -33,6 +36,23 @@ scoop_risk: "moderate"
 review_date: "2026-08-19"
 recheck_date: "2026-11-19"
 ---
+
+## Executive summary
+
+> **Bottom line:** The project is partially preempted because the doctrinal
+thesis is occupied, but the proposed empirical comparison remains open.
+
+**Closest threats:** Rivera is the closest work because it addresses the same
+authentication problem without measuring court-level treatment.
+
+**Remaining contribution:** The project can still measure how authentication
+reasoning varies across courts after synthetic evidence became practical.
+
+**Recommended disposition:** Reposition around authentication reasoning and
+the post-2024 period, unless a working paper using the same corpus appears.
+
+**Scoop risk and access gaps:** Risk is moderate; monitor two active researchers,
+complete the HeinOnline search packet, and recheck by 2026-11-19.
 
 ## Annotated map of closest work
 
@@ -132,6 +152,16 @@ class PreemptionReviewBuilderTests(unittest.TestCase):
                 if paragraph.style and paragraph.style.name == "Heading 1"
             }
             self.assertTrue(set(REQUIRED_SECTIONS) <= heading_text)
+            ordered_headings = [
+                paragraph.text
+                for paragraph in document.paragraphs
+                if paragraph.style and paragraph.style.name == "Heading 1"
+            ]
+            self.assertEqual(ordered_headings[:2], ["Executive summary", ANNOTATED_MAP_SECTION])
+            annotated_map = next(
+                paragraph for paragraph in document.paragraphs if paragraph.text == ANNOTATED_MAP_SECTION
+            )
+            self.assertTrue(annotated_map.paragraph_format.page_break_before)
 
             with zipfile.ZipFile(output) as archive:
                 document_xml = archive.read("word/document.xml").decode("utf-8")
@@ -154,6 +184,25 @@ class PreemptionReviewBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unresolved placeholder"):
             parse_source(template)
 
+    def test_executive_summary_is_required_and_capped(self) -> None:
+        _metadata, body = parse_source(SAMPLE_SOURCE)
+        blocks = parse_blocks(body)
+        validate_sections(blocks)
+
+        missing = SAMPLE_SOURCE.replace("## Executive summary", "## Overview", 1)
+        _metadata, body = parse_source(missing)
+        with self.assertRaisesRegex(ValueError, "Executive summary"):
+            validate_sections(parse_blocks(body))
+
+        oversized = SAMPLE_SOURCE.replace(
+            "Risk is moderate; monitor two active researchers,",
+            " ".join(["risk"] * (EXECUTIVE_SUMMARY_MAX_WORDS + 1)),
+            1,
+        )
+        _metadata, body = parse_source(oversized)
+        with self.assertRaisesRegex(ValueError, "exceeds 1200 words"):
+            validate_sections(parse_blocks(body))
+
 
 class PreemptionReviewStageContractTests(unittest.TestCase):
     def test_word_report_is_the_active_stage_02_artifact(self) -> None:
@@ -170,6 +219,8 @@ class PreemptionReviewStageContractTests(unittest.TestCase):
         self.assertIn("project/runs/<run_id>/preemption_review_source.md", stage_two["declared_outputs"])
         self.assertIn("project/runs/<run_id>/rendered_preemption_review/", stage_two["declared_outputs"])
         self.assertIn("scripts/build_preemption_review.py", body)
+        self.assertIn("decision-focused executive summary", body)
+        self.assertIn("1,200-word limit", body)
         self.assertIn("inspect every page at 100 percent zoom", body)
         for stage_id in ("03-feasibility-audit", "04-methods-design"):
             self.assertIn(
