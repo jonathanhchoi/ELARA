@@ -98,6 +98,15 @@ shared, and which are the researcher's, so a folder both use (for example
 - Speak in terms of the researcher's project ("your codebook", "the 400 opinions
   you sent"), not the kit's internals, and translate stage numbers into what
   they do. Name the exact file when they want to look at something.
+- Before work likely to take more than about two minutes, give a rough duration
+  or range and say what it is based on. While it runs, send brief progress and
+  revised time-remaining updates after each major phase or fan-out wave and at
+  least about every five minutes when the host permits. Include exact completed
+  and total counts where a denominator exists, elapsed time, retries or delays,
+  and an ETA range based on observed throughput. If there is not yet enough
+  evidence for a responsible completion ETA, say that and estimate the next
+  checkpoint instead. These are informational updates, not gates or requests to
+  stop; follow `workflow/shared/guardrails.md` §6.
 
 ## Gates and researcher authority
 
@@ -159,7 +168,8 @@ shared, and which are the researcher's, so a folder both use (for example
 
 - Keep an exact run ledger: attempted, succeeded, failed, unusable, and
   outstanding counts must reconcile. Archive prompts and raw outputs as soon as
-  they are produced; never report progress with vague estimates.
+  they are produced; report progress and remaining time under
+  `workflow/shared/guardrails.md` §6, never with vague or stale estimates.
 - Keep the host-native plan synchronized with the run: update it at phase and
   wave checkpoints and before the completion report. For a long stage, report
   the exact verification evidence and counts in the conversation so the goal

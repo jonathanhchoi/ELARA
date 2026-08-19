@@ -25,6 +25,12 @@ the work, and before the final report. A stage gate, missing researcher input,
 or failed check stays pending and is described accurately; it is never marked
 complete to tidy the display.
 
+When work is likely to take more than about two minutes, pair plan creation and
+each plan checkpoint with the progress and time-remaining report required by
+`workflow/shared/guardrails.md` section 6. A tracker update by itself is not a
+researcher-facing progress report, and a progress message does not change a
+plan item's status.
+
 Plans are session control, not project artifacts. Do not copy a host plan into
 `project/`, `DECISIONS.md`, or `RUN_LEDGER.md` unless the canonical stage itself
 declares a plan artifact. Conversely, a completed native plan never substitutes
@@ -75,8 +81,8 @@ Before the first execution write or external call in a long-running stage:
    a goal. Do not imitate Goal mode with repeated ordinary turns.
 3. Under the active goal, keep the native stage plan current and surface compact
    checkpoint reports: current item, verified evidence, exact remaining count,
-   and any blocker. Persist the corresponding run checkpoint before reporting
-   it.
+   elapsed time, a revised ETA range with its basis, and any blocker. Persist
+   the corresponding run checkpoint before reporting it.
 4. A goal is complete only when its stated evidence has been surfaced and the
    canonical state transition or section 11 stop has been recorded. Do not mark
    it complete because a turn, wave, or command ended.

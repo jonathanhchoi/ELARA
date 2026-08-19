@@ -122,6 +122,26 @@ researcher explicitly changes the kit's governing instructions.
   `attempted = succeeded + failed + unusable`, and report `outstanding`
   separately. If categories overlap, define them and supply a reconciliation
   table that prevents double counting.
+- Before starting a stage, utility, command, or fan-out likely to take more than
+  about two minutes, tell the researcher its rough expected duration or range
+  and the basis for that estimate (unit count, planned passes, a time box,
+  measured throughput, or a comparable completed run). If there is not yet
+  enough evidence for a responsible completion ETA, say so and give the time to
+  the first checkpoint that will make one possible.
+- While long work is active, give a short operational update after every major
+  phase or bounded fan-out wave and at least about every five minutes when the
+  host permits. Structure commands, waits, and worker waves to yield control at
+  that cadence where practical; when a host operation cannot yield, update
+  immediately before it starts and after it returns. Each update states the
+  exact completed and total counts where a denominator exists, elapsed time,
+  remaining work, failures or retries affecting the schedule, and a revised ETA
+  range with its basis. Use measured wall-clock throughput once available,
+  recompute rather than repeat a stale estimate, and explain material slowdowns
+  or stalls. For open-ended work, estimate the next bounded milestone and say
+  why a final ETA is not yet defensible.
+- Progress messages are informational. They do not stop execution, ask for
+  approval, expose blinded or interim substantive outcomes, or add a reason to
+  interrupt under §11.
 - Record every unusable or excluded unit as an audit row with a typed reason.
   Never silently drop a document because OCR, parsing, retrieval, or coding
   failed.
