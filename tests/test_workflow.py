@@ -208,6 +208,26 @@ class WorkflowContractTests(unittest.TestCase):
         for stage_id in ("02-preemption-review", "12-interpretive-verification", "18-cite-check"):
             self.assertIn(stage_id, referencing)
 
+    def test_long_work_requires_progress_and_eta_updates(self) -> None:
+        def compact(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        agents = compact(ROOT / "AGENTS.md")
+        guardrails = compact(ROOT / "workflow" / "shared" / "guardrails.md")
+        fanout = compact(ROOT / "workflow" / "shared" / "observation-fanout.md")
+        execution_control = compact(ROOT / "workflow" / "shared" / "execution-control.md")
+
+        for text in (agents, guardrails):
+            self.assertIn("about two minutes", text)
+            self.assertIn("about every five minutes", text)
+            self.assertIn("eta range", text)
+            self.assertIn("elapsed time", text)
+        self.assertIn("observed wall-clock wave throughput", fanout)
+        self.assertIn("actual remaining waves", fanout)
+        self.assertIn("never expose interim labels", fanout)
+        self.assertIn("pair plan creation", execution_control)
+        self.assertIn("revised eta range", execution_control)
+
     def test_stage_00_has_orientation_and_adoption_path(self) -> None:
         path, meta, body = next(
             entry for entry in load_stages(ROOT) if entry[1]["stage_id"] == "00-initialize"

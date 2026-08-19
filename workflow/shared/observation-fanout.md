@@ -148,7 +148,14 @@ mid-write; relaunched identically, it did the same thing again.
    rate limit), waits for the whole wave, and only then spawns the next. After each run or wave
    the parent validates returns from files, merges serially, and appends a ledger checkpoint with
    exact counts. Writes to manifests, merged aggregates, ledgers, and state are atomic (temporary
-   file, then replace); the controllers already write that way.
+   file, then replace); the controllers already write that way. At launch and after each status
+   check or wave, the parent tells the researcher the exact terminal and outstanding counts,
+   elapsed wall-clock time, retries or exhausted assignments, and a revised time-remaining range.
+   Before measured throughput exists, base the provisional range on the number of waves and worker
+   time boxes; afterward use observed wall-clock wave throughput and the actual remaining waves.
+   If a wave runs longer than about five minutes, give the same operational update from the host's
+   run view at about five-minute intervals where the host permits. Never expose interim labels or
+   other substantive outcomes in these updates.
 
 ## Research fan-outs
 
