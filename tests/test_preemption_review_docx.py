@@ -43,7 +43,27 @@ recheck_date: "2026-11-19"
 thesis is occupied, but the proposed empirical comparison remains open.
 
 **Closest threats:** Rivera is the closest work because it addresses the same
-authentication problem without measuring court-level treatment.
+authentication problem and materially affects the verdict.
+
+**Intended contribution:** The project would provide the first cross-court
+measurement of authentication reasoning in post-2024 synthetic-evidence cases.
+
+### Closest match: Rivera, *Authenticating Synthetic Media* (2025)
+
+**What the work says:** Rivera asks how existing authentication doctrine applies
+to synthetic media and argues for a reliability-focused doctrinal approach.
+
+**Relevant scope and basis:** The article uses doctrinal analysis of reported
+federal cases through 2024; it does not construct a cross-court opinion corpus.
+
+**Preemption of the intended contribution:** Rivera occupies the project's
+general doctrinal account of authentication problems, but not its proposed
+measurement of variation across courts in post-2024 cases.
+
+**What remains:** A cross-court empirical comparison using the proposed opinion
+corpus remains unoccupied, provided the project drops its broad doctrinal claim.
+
+**Evidence:** Source SRC-001 and claim-evidence entries CE-001 through CE-004.
 
 **Remaining contribution:** The project can still measure how authentication
 reasoning varies across courts after synthetic evidence became practical.
@@ -203,6 +223,54 @@ class PreemptionReviewBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exceeds 1200 words"):
             validate_sections(parse_blocks(body))
 
+    def test_executive_summary_requires_a_complete_per_match_comparison(self) -> None:
+        no_match = SAMPLE_SOURCE.replace(
+            "### Closest match: Rivera, *Authenticating Synthetic Media* (2025)",
+            "### Adjacent work: Rivera, *Authenticating Synthetic Media* (2025)",
+            1,
+        )
+        _metadata, body = parse_source(no_match)
+        with self.assertRaisesRegex(ValueError, "at least one 'Closest match:"):
+            validate_sections(parse_blocks(body))
+
+        no_preemption_analysis = SAMPLE_SOURCE.replace(
+            "**Preemption of the intended contribution:**",
+            "**General relationship:**",
+            1,
+        )
+        _metadata, body = parse_source(no_preemption_analysis)
+        with self.assertRaisesRegex(ValueError, "Preemption of the intended contribution"):
+            validate_sections(parse_blocks(body))
+
+        no_evidence = SAMPLE_SOURCE.replace(
+            "**Evidence:** Source SRC-001 and claim-evidence entries CE-001 through CE-004.",
+            "Source SRC-001 and claim-evidence entries CE-001 through CE-004.",
+            1,
+        )
+        _metadata, body = parse_source(no_evidence)
+        with self.assertRaisesRegex(ValueError, "Evidence"):
+            validate_sections(parse_blocks(body))
+
+        incomplete_second_match = SAMPLE_SOURCE.replace(
+            "**Remaining contribution:**",
+            "### Closest match: Chen, *Synthetic Proof in Federal Courts* (2026)\n\n"
+            "**What the work says:** Chen reports that courts apply inconsistent "
+            "authentication standards.\n\n"
+            "**Relevant scope and basis:** The study codes published federal opinions "
+            "from 2020 through 2025.\n\n"
+            "**Preemption of the intended contribution:** It occupies the proposed "
+            "cross-court measurement and most of the intended period.\n\n"
+            "**What remains:** Only a later-period extension remains.\n\n"
+            "**Remaining contribution:**",
+            1,
+        )
+        _metadata, body = parse_source(incomplete_second_match)
+        with self.assertRaisesRegex(
+            ValueError,
+            "Chen, .+ is missing required labeled content: Evidence",
+        ):
+            validate_sections(parse_blocks(body))
+
 
 class PreemptionReviewStageContractTests(unittest.TestCase):
     def test_word_report_is_the_active_stage_02_artifact(self) -> None:
@@ -220,6 +288,9 @@ class PreemptionReviewStageContractTests(unittest.TestCase):
         self.assertIn("project/runs/<run_id>/rendered_preemption_review/", stage_two["declared_outputs"])
         self.assertIn("scripts/build_preemption_review.py", body)
         self.assertIn("decision-focused executive summary", body)
+        self.assertIn("what the work actually says", body)
+        self.assertIn("precise component of the intended contribution it occupies", body)
+        self.assertIn("claim-evidence IDs or pinpoint pages", body)
         self.assertIn("1,200-word limit", body)
         self.assertIn("inspect every page at 100 percent zoom", body)
         for stage_id in ("03-feasibility-audit", "04-methods-design"):
