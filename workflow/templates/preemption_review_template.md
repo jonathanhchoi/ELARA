@@ -8,6 +8,28 @@ review_date: "TODO-PREEMPTION: YYYY-MM-DD"
 recheck_date: "TODO-PREEMPTION: YYYY-MM-DD"
 ---
 
+## Executive summary
+
+> **Bottom line:** TODO-PREEMPTION: State the verdict, the short reason, and the
+> practical consequence for the proposed project.
+
+**Closest threats:** TODO-PREEMPTION: Identify the few works that most directly
+threaten the contribution and state why.
+
+**Remaining contribution:** TODO-PREEMPTION: Give the honest contribution
+sentence and explain what remains open after the closest literature.
+
+**Recommended disposition:** TODO-PREEMPTION: Recommend proceed, reposition,
+return to conception, or stop, with the central reason and any flip condition.
+
+**Scoop risk and access gaps:** TODO-PREEMPTION: State the risk level, active
+researchers or developments to watch, material inaccessible sources, and the
+recommended recheck date.
+
+TODO-PREEMPTION: Keep this decision-focused summary within roughly two or three
+rendered pages and no more than 1,200 words. Synthesize only findings supported
+in the detailed review and its source record; introduce no new claim or source.
+
 ## Annotated map of closest work
 
 ### TODO-PREEMPTION: Full citation for the closest work

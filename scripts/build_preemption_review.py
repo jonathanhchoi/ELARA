@@ -46,8 +46,19 @@ REQUIRED_METADATA = (
 )
 VERDICTS = {"preempted", "partially preempted", "open"}
 SCOOP_RISKS = {"low", "moderate", "high"}
+EXECUTIVE_SUMMARY_SECTION = "Executive summary"
+ANNOTATED_MAP_SECTION = "Annotated map of closest work"
+EXECUTIVE_SUMMARY_MAX_WORDS = 1200
+EXECUTIVE_SUMMARY_REQUIRED_LABELS = (
+    "Bottom line",
+    "Closest threats",
+    "Remaining contribution",
+    "Recommended disposition",
+    "Scoop risk and access gaps",
+)
 REQUIRED_SECTIONS = (
-    "Annotated map of closest work",
+    EXECUTIVE_SUMMARY_SECTION,
+    ANNOTATED_MAP_SECTION,
     "Verdict and flip conditions",
     "Positioning and lineage",
     "Scoop risk",
@@ -276,10 +287,47 @@ def validate_sections(blocks: list[Block]) -> None:
         except ValueError as exc:
             raise ValueError(f"missing or misordered required section: {required}") from exc
 
+    summary_index = next(
+        index
+        for index, block in enumerate(blocks)
+        if block.kind == "heading"
+        and block.level == 2
+        and block.text == EXECUTIVE_SUMMARY_SECTION
+    )
+    summary_end = next(
+        index
+        for index, block in enumerate(blocks[summary_index + 1 :], start=summary_index + 1)
+        if block.kind == "heading" and block.level == 2
+    )
+    summary_blocks = blocks[summary_index + 1 : summary_end]
+    summary_text = " ".join(
+        block.text if block.kind != "table" else " ".join(" ".join(row) for row in block.rows)
+        for block in summary_blocks
+    )
+    summary_words = len(re.findall(r"\b[\w][\w'-]*\b", summary_text))
+    if not summary_words:
+        raise ValueError("executive summary must contain substantive text")
+    if summary_words > EXECUTIVE_SUMMARY_MAX_WORDS:
+        raise ValueError(
+            "executive summary exceeds "
+            f"{EXECUTIVE_SUMMARY_MAX_WORDS} words ({summary_words} found)"
+        )
+    normalized_summary = " ".join(summary_text.lower().split())
+    missing_labels = [
+        label
+        for label in EXECUTIVE_SUMMARY_REQUIRED_LABELS
+        if label.lower() not in normalized_summary
+    ]
+    if missing_labels:
+        raise ValueError(
+            "executive summary is missing required labeled content: "
+            + ", ".join(missing_labels)
+        )
+
     map_index = next(
         index
         for index, block in enumerate(blocks)
-        if block.kind == "heading" and block.level == 2 and block.text == REQUIRED_SECTIONS[0]
+        if block.kind == "heading" and block.level == 2 and block.text == ANNOTATED_MAP_SECTION
     )
     verdict_index = next(
         index
@@ -718,6 +766,8 @@ def build_document(metadata: dict[str, str], blocks: list[Block]) -> Document:
                 continue
             style_level = min(max(block.level - 1, 1), 3)
             paragraph = doc.add_paragraph(style=f"Heading {style_level}")
+            if block.level == 2 and block.text == ANNOTATED_MAP_SECTION:
+                paragraph.paragraph_format.page_break_before = True
             add_inline(paragraph, block.text)
         elif block.kind == "paragraph":
             paragraph = doc.add_paragraph()

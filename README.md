@@ -268,6 +268,10 @@ ELARA's nineteen operational stages implement the paper's six-step framework.
 | 5. Analysis, robustness, and replication | `14` through `16` | Analyze the data, correct for measurement error, test robustness, and build a verified replication package |
 | 6. Publication | `17` through `19` | Integrate results into the researcher's draft, audit citations, and revise with permission |
 
+Stage 02's formatted Word literature review begins with a decision-focused
+executive summary, normally no more than two or three pages, before the detailed
+map of the closest work and the supporting search record.
+
 The publication steps are optional. Stage 17 only integrates results into an
 existing substantive draft. ELARA won't write the first draft or turn an
 outline into a paper. The researcher retains control over the thesis, framing,
