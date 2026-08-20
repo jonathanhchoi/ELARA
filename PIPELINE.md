@@ -23,7 +23,7 @@ the first manuscript.
 | 3. Data acquisition | `10`–`11` | Assemble the corpus and generate structured data. |
 | 4. Validation | `12`–`13` | Audit interpretive support and validate against blinded human coding. |
 | 5. Analysis, robustness, and replication | `14`–`16` | Analyze, correct measurement error, test robustness, and verify the replication package. |
-| 6. Publication (optional) | `17`–`19` | Integrate results into the researcher's first draft, audit citations, and revise with approval. |
+| 6. Publication (optional) | `17`–`20` | Organize the article, integrate results into the researcher's first draft, audit citations, and revise with approval. |
 
 The operational stage numbers are intentionally more granular than the six paper
 steps. A stage's `paper_steps` field records the crosswalk above.
@@ -137,7 +137,7 @@ what the researcher needs to bring (or point to) so that the tool can start.
 | Analyze, correcting for measurement error | Stage 14, `elr-14-analysis-and-correction` | coded data (and validation results) |
 | Test robustness to prompts and models | Stage 15, `elr-15-robustness` | the analysis |
 | Build a replication package | Stage 16, `elr-16-replication-package` | code, data, and results |
-| Plan the article's sections without drafting prose | Stage 17, `elr-17-skeleton-draft` | the verified replication package and any organization preferences |
+| Build a complete article skeleton with minimal methods and results prose | Stage 17, `elr-17-skeleton-draft` | the verified replication package and any organization preferences |
 | Put results into your draft | Stage 18, `elr-18-integrate-manuscript` | your draft and the results |
 | Cite-check a draft | Stage 19, `elr-19-cite-check` | your draft |
 | Revise in response to referee or editor comments | Stage 20, `elr-20-revise-and-respond` | your draft and the comments |
@@ -226,7 +226,7 @@ and 19 are long-running. See `workflow/shared/execution-control.md`.
 | `14-analysis-and-correction` | 5 | yes | `plan_then_execute` | Deterministic analysis, diagnostics, and measurement-error correction | Stop if verified inputs do not support the analysis |
 | `15-robustness` | 5 | yes | `execute` | Prompt and model comparisons, stability results, and deviations | Researcher disposition of material instability |
 | `16-replication-package` | 5 | yes | `execute` | Environment lock, archive, one rebuild command, and fresh-agent report | Core completes only after a clean rebuild |
-| `17-skeleton-draft` | 6 | no | `normal` | Versioned article map with section IDs and a result crosswalk, but no article prose | `skeleton-draft-approval`, with a recorded skip available |
+| `17-skeleton-draft` | 6 | no | `normal` | Organizationally complete draft with full results in displays and minimal prose | `skeleton-draft-approval`, with a recorded skip available |
 | `18-integrate-manuscript` | 6 | no | `plan_then_execute` | Approved integration into the researcher's substantive first draft | `manuscript-edit-permission` |
 | `19-cite-check` | 6 | no | `execute` | Audit-only citation/source-support report | Findings are reported, never silently repaired |
 | `20-revise-and-respond` | 6 | no | `plan_then_execute` | Versioned revisions, response matrix, and change disclosure | `manuscript-edit-permission` |
@@ -264,8 +264,11 @@ remaining restriction. The browser is never given to a worker.
 
 ## Article planning, manuscript utilities, and the publication profile
 
-Stage 17 produces a structured article skeleton from verified project artifacts
-without article prose. Stages 18–20 and three optional utilities work on the
+Stage 17 produces an organizationally complete skeleton from verified project
+artifacts. It presents the full results through verified tables, figures, and
+equations with sufficient captions and notes. It uses only the prose needed to
+orient the reader and leaves the article's substantive writing to the researcher.
+Stages 18–20 and three optional utilities work on the
 researcher's manuscript under `workflow/shared/manuscript-editing-contract.md` (fixed invariants: no
 first-draft authorship, permission before edits, versioned copies, numbers only
 from results, no citations from memory, build and two review passes, complete
@@ -334,6 +337,9 @@ Stages 17–19 as 18–20. ELARA does not automatically migrate a project whose
 state points to one of the former Stage 17–19 IDs. Repair that state against the
 append-only ledgers and active artifact hashes, or rerun Stage 00's adoption path
 to record the proper 2.0 landing. Do not change `current_stage` by number alone.
+
+Version 2.0.1 refines the Stage 17 artifact. A project with an earlier Stage 17
+artifact should create a new Stage 17 version or record a skip before Stage 18.
 
 ## Persistent state
 

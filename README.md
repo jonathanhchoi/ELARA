@@ -256,7 +256,7 @@ real project.
 
 ## How does the kit correspond to the paper?
 
-ELARA's twenty operational stages implement the paper's six-step framework.
+ELARA's twenty-one operational stages implement the paper's six-step framework.
 
 | Paper step | ELARA stages | Purpose |
 |---|---|---|
@@ -275,11 +275,12 @@ exactly what it preempts and what remains. The detailed map of the closest work
 and the supporting search record follow.
 
 The publication steps are optional. Stage 17 offers a default, skippable article
-skeleton after the replication package is verified. It maps section purposes,
-claims, evidence, results, tables, figures, limitations, and open questions in
-Word by default, with LaTeX and Markdown alternatives. It writes no article
-paragraphs. Stage 18 only integrates results into an existing substantive draft.
-ELARA won't write the first draft or turn an outline into a paper. The
+skeleton after the replication package is verified. It supplies a complete
+article structure and presents the full results through verified tables,
+figures, and equations with sufficient captions and notes. Word is the default,
+with LaTeX and Markdown alternatives. It leaves the remaining prose
+to the author. Stage 18 only integrates results into an existing substantive
+draft. ELARA won't write the first draft or turn notes into a paper. The
 researcher retains control over the thesis, framing, organization, and voice.
 
 Workflow version 2.0.0 inserted Stage 17 and renumbered the former publication
@@ -288,11 +289,16 @@ IDs are not migrated automatically. Repair the state against its ledgers and
 active artifact hashes, or use Stage 00's adoption path to record the correct
 2.0 landing.
 
+Workflow version 2.0.1 refines Stage 17 into an organizationally complete draft
+that presents the full verified results through displays and leaves the
+remaining prose to the researcher. A project with an earlier Stage 17 artifact
+should create a new Stage 17 version or record a skip before entering Stage 18.
+
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
 ## How does ELARA handle manuscript work?
 
-The Stage 17 skeleton is a planning artifact, not a first draft. It stays active
+The Stage 17 skeleton is an organizational aid, not a substantive first draft. It stays active
 through as many versioned iterations as the researcher wants, then advances only
 after explicit approval or a recorded skip. Stage 18 may consult an approved
 skeleton, but the researcher's substantive draft and explicit instructions
