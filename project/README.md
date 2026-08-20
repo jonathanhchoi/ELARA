@@ -33,7 +33,7 @@ uses its front matter to resume safely in a fresh session.
 | `RUN_LEDGER.md` | Started, checkpoint, completed, failed, and interrupted run events with exact counts | Append only |
 | `DEVIATIONS.md` | Departures, amendments, and their dispositions | Append only |
 | `inputs/` | User-supplied source material | Immutable after stage 00 inventory |
-| `PUBLICATION_PROFILE_vNNN.md` | Your venue, audience, tone, voice, prohibited constructions, citation style, and manuscript QA preferences, from `workflow/templates/publication_profile_template.md`; pinned in state as `publication_profile` and read by Stages 17 and 19 and the manuscript utilities | New `_vNNN` version for every change; governs prose only |
+| `PUBLICATION_PROFILE_vNNN.md` | Your venue, audience, tone, voice, prohibited constructions, citation style, and manuscript QA preferences, from `workflow/templates/publication_profile_template.md`; pinned in state as `publication_profile` and read by Stages 18 and 20 and the manuscript utilities | New `_vNNN` version for every change; governs prose only |
 | `artifacts/imported_vNNN/`, `artifacts/adoption_map_vNNN.md` | Adoption path only: unchanged copies of your existing files, pinned as the artifacts later stages use, and the stage-by-stage map of what they satisfy | Immutable once written; new version for a later import |
 | `runs/<run_id>/` | Prompts, raw responses, parsed responses, logs, and run-local evidence | Unique and immutable after close |
 | stage-declared paths | Versioned plans, manifests, data, analyses, audits, and packages | New `_vNNN` version for every rerun or correction |

@@ -16,7 +16,7 @@ OBSERVATION_SKILL = "elr-code-observations"
 # publication profile. The profile is loaded only here, on demand, never from
 # AGENTS.md or CLAUDE.md, so style rules stay out of coding and analysis runs.
 MANUSCRIPT_CONTRACT = "workflow/shared/manuscript-editing-contract.md"
-MANUSCRIPT_STAGE_IDS = ("17-integrate-manuscript", "19-revise-and-respond")
+MANUSCRIPT_STAGE_IDS = ("18-integrate-manuscript", "20-revise-and-respond")
 MANUSCRIPT_EXTRA_READ = (
     f"   Then read `{MANUSCRIPT_CONTRACT}` and the active publication profile pinned in\n"
     "   `project/PROJECT_STATE.md` (`project/PUBLICATION_PROFILE_vNNN.md`), if any.\n"
@@ -28,11 +28,11 @@ MANUSCRIPT_EXTRA_READ = (
 UTILITY_SKILLS = {
     "elr-add-citations": {
         "canonical": "workflow/utilities/add-citations.md",
-        "route": "workflow/stages/18-cite-check.md",
+        "route": "workflow/stages/19-cite-check.md",
         "description": (
             "Research, retrieve, and add only the citations the researcher marked as needed, "
             "in the publication profile's citation style, then route the new manuscript "
-            "version through the audit-only Stage 18. Use when the researcher asks to add or "
+            "version through the audit-only Stage 19. Use when the researcher asks to add or "
             "supply citations for specific passages."
         ),
         "display_name": "ELARA Add Citations",
@@ -41,7 +41,7 @@ UTILITY_SKILLS = {
     },
     "elr-proofread": {
         "canonical": "workflow/utilities/proofread.md",
-        "route": "workflow/stages/19-revise-and-respond.md",
+        "route": "workflow/stages/20-revise-and-respond.md",
         "description": (
             "Proofread the manuscript against the publication profile and report typos, grammar, "
             "clarity, tone, style tells, internal consistency, and venue compliance without "
@@ -54,7 +54,7 @@ UTILITY_SKILLS = {
     },
     "elr-apply-markup": {
         "canonical": "workflow/utilities/apply-markup.md",
-        "route": "workflow/stages/19-revise-and-respond.md",
+        "route": "workflow/stages/20-revise-and-respond.md",
         "description": (
             "Transcribe the researcher's hand markup on a PDF into a reviewable edit list, stop "
             "for approval, then apply exactly the approved edits to a versioned manuscript copy. "
@@ -72,6 +72,17 @@ def stage_description(title: str, stage_id: str) -> str:
         f"Run ELR stage {stage_id}: {title}. Use when this is the current stage in "
         "project/PROJECT_STATE.md or when the researcher explicitly requests this recovery stage."
     )
+
+
+def stage_openai_yaml(stage_id: str, title: str) -> str:
+    number = stage_id[:2]
+    return f'''interface:
+  display_name: {json.dumps(f"ELARA {number} {title}")}
+  short_description: {json.dumps(f"Run Stage {number}: {title}")}
+  default_prompt: {json.dumps(f"Use $elr-{stage_id} for the current empirical legal research project.")}
+policy:
+  allow_implicit_invocation: false
+'''
 
 
 def wrapper_text(
@@ -311,6 +322,13 @@ def expected_files(root: Path) -> dict[Path, str]:
         )
         files[claude_root / name / "SKILL.md"] = wrapper_text(
             name, description, canonical, claude=True, extra_read=extra_read
+        )
+        yaml_path = codex_root / name / "agents" / "openai.yaml"
+        existing_yaml = yaml_path.read_text(encoding="utf-8") if yaml_path.exists() else ""
+        files[yaml_path] = (
+            add_codex_policy(yaml_path, allow_implicit=False)
+            if "interface:" in existing_yaml
+            else stage_openai_yaml(stage_id, meta["title"])
         )
 
     for name, spec in UTILITY_SKILLS.items():

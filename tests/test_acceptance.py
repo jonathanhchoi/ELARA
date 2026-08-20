@@ -102,11 +102,11 @@ class RecordedStageContractTests(unittest.TestCase):
             for path, meta, body in load_stages(ROOT)
         }
 
-    def test_record_has_one_matching_case_for_every_stage_00_through_19(self) -> None:
+    def test_record_has_one_matching_case_for_every_stage_00_through_20(self) -> None:
         cases = self.record["cases"]
-        expected_ids = [f"{number:02d}-" for number in range(20)]
-        self.assertEqual(len(cases), 20)
-        self.assertEqual(len({case["stage_id"] for case in cases}), 20)
+        expected_ids = [f"{number:02d}-" for number in range(21)]
+        self.assertEqual(len(cases), 21)
+        self.assertEqual(len({case["stage_id"] for case in cases}), 21)
         for prefix, case in zip(expected_ids, cases, strict=True):
             self.assertTrue(case["stage_id"].startswith(prefix))
             self.assertIn(case["stage_id"], self.stages)

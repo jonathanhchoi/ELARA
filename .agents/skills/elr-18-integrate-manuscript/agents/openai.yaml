@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELARA 18 Integrate validated results into the researcher's manuscript"
+  short_description: "Run Stage 18: Integrate validated results into the researcher's manuscript"
+  default_prompt: "Use $elr-18-integrate-manuscript for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

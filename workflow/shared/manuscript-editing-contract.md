@@ -1,7 +1,7 @@
 # Manuscript-editing contract
 
-These rules apply whenever ELARA touches a researcher's manuscript: Stage 17
-(integration), Stage 19 (revision and response), and the optional manuscript
+These rules apply whenever ELARA touches a researcher's manuscript: Stage 18
+(integration), Stage 20 (revision and response), and the optional manuscript
 utilities in `workflow/utilities/` (`add-citations`, `proofread`,
 `apply-markup`). They are invariants in the sense of `guardrails.md` §10: a
 stage or utility may add stricter requirements but may not relax them, and a
@@ -12,8 +12,12 @@ file.
 ## 1. Authorship boundary
 
 - ELARA does not write the first draft, turn an outline or notes into a paper,
-  or supply an original thesis, argument, section architecture, or normative
-  claim. It works only on a substantive draft the researcher supplies.
+  or supply an original thesis, argument, or normative claim. Stage 17 may
+  propose an evidence-linked section architecture without article prose.
+  Manuscript stages work only on a substantive draft the researcher supplies.
+- An approved Stage 17 skeleton is planning context, not manuscript prose. A
+  later manuscript stage may use its map to identify possible locations and
+  omissions, but the researcher's draft and explicit instructions control.
 - Bounded insertions the researcher requests inside their own draft (a
   paragraph, a caption, a transition, a citation) are permitted under the
   researcher's instruction and the active publication profile; they are not a
@@ -67,7 +71,7 @@ file.
 - Reuse only citations already supported by retrieved sources. Never fabricate
   or complete a case, article, quotation, pinpoint, or bibliography entry from
   memory. Retrieve and read an authority before adding or recharacterizing it;
-  otherwise mark it as a citation-needed finding for Stage 18.
+  otherwise mark it as a citation-needed finding for Stage 19.
 - Manuscript, response, ledger, and shared analysis files are edited by one
   serial writer. Separate contexts may analyze separate comments or units, but
   edits to shared files are applied and verified one at a time.
@@ -89,5 +93,5 @@ file.
   immutable source, and a redline (for example `latexdiff`) when the profile
   asks for one. Make no undisclosed changes.
 - Any manuscript edit invalidates the prior citation audit. Route the edited
-  version through an audit-only Stage 18 pass before the manuscript is called
+  version through an audit-only Stage 19 pass before the manuscript is called
   final.

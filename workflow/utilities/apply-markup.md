@@ -10,7 +10,7 @@ human_gate: "manuscript-edit-permission"
 
 ## Objective
 
-Turn a researcher's hand-marked PDF into an explicit, reviewable list of proposed edits, stop for the researcher's corrections and approval, and then apply exactly the approved edits to a versioned copy of the manuscript. Transcription and application are separate phases with a hard stop between them. This is not a pipeline stage and does not change `current_stage`; where a revision is under way, Stage 19 consumes the approved transcription as researcher notes.
+Turn a researcher's hand-marked PDF into an explicit, reviewable list of proposed edits, stop for the researcher's corrections and approval, and then apply exactly the approved edits to a versioned copy of the manuscript. Transcription and application are separate phases with a hard stop between them. This is not a pipeline stage and does not change `current_stage`; where a revision is under way, Stage 20 consumes the approved transcription as researcher notes.
 
 ## Prerequisite checks
 
@@ -49,7 +49,7 @@ Phase 2, application (after approval):
 
 5. Copy the manuscript into a new `manuscript_vNNN/`. Apply exactly the approved edits, in manuscript order, under the manuscript-editing contract and the publication profile. Where an approved edit is proposed prose, write it in the draft's voice and change nothing beyond what the mark requires.
 6. Compile or render, inspect every affected page (every page when the profile requires it), and produce the change log, a diff, and a redline when the profile asks. Cross-check the change log against the approved transcription: every approved item applied or listed as not applied with a reason; nothing applied that was not approved.
-7. If any approved edit added, removed, or recharacterized a citation, route the new version through an audit-only Stage 18 pass before it is treated as the active manuscript.
+7. If any approved edit added, removed, or recharacterized a citation, route the new version through an audit-only Stage 19 pass before it is treated as the active manuscript.
 
 ## Verification
 
@@ -61,4 +61,4 @@ Phase 2, application (after approval):
 
 ## State transition
 
-Do not change `current_stage`. Append the run to `RUN_LEDGER.md` and the transcription approval and permission to `DECISIONS.md`. Pin the new manuscript version only after the researcher accepts the applied result and any required Stage 18 audit is clean or expressly accepted.
+Do not change `current_stage`. Append the run to `RUN_LEDGER.md` and the transcription approval and permission to `DECISIONS.md`. Pin the new manuscript version only after the researcher accepts the applied result and any required Stage 19 audit is clean or expressly accepted.

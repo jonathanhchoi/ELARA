@@ -8,9 +8,10 @@ prerequisites, inputs, outputs, interaction profile, long-running goal
 condition, gates, next-stage routing, and failure routes.
 
 The repository holds one active project. The mandatory core ends when Stage 16
-rebuilds a verified replication package. Optional Stages 17–19 implement the
-paper's publication step for a substantive manuscript first drafted by the
-researcher. ELARA does not draft the first manuscript.
+rebuilds a verified replication package. Optional Stage 17 maps the article
+from verified artifacts without writing article prose. Stages 18–20 support a
+substantive manuscript first drafted by the researcher. ELARA does not draft
+the first manuscript.
 
 ## Six-step crosswalk
 
@@ -136,9 +137,10 @@ what the researcher needs to bring (or point to) so that the tool can start.
 | Analyze, correcting for measurement error | Stage 14, `elr-14-analysis-and-correction` | coded data (and validation results) |
 | Test robustness to prompts and models | Stage 15, `elr-15-robustness` | the analysis |
 | Build a replication package | Stage 16, `elr-16-replication-package` | code, data, and results |
-| Put results into your draft | Stage 17, `elr-17-integrate-manuscript` | your draft and the results |
-| Cite-check a draft | Stage 18, `elr-18-cite-check` | your draft |
-| Revise in response to referee or editor comments | Stage 19, `elr-19-revise-and-respond` | your draft and the comments |
+| Plan the article's sections without drafting prose | Stage 17, `elr-17-skeleton-draft` | the verified replication package and any organization preferences |
+| Put results into your draft | Stage 18, `elr-18-integrate-manuscript` | your draft and the results |
+| Cite-check a draft | Stage 19, `elr-19-cite-check` | your draft |
+| Revise in response to referee or editor comments | Stage 20, `elr-20-revise-and-respond` | your draft and the comments |
 | Add citations you marked as needed | `elr-add-citations` | your draft with the passages marked |
 | Proofread | `elr-proofread` | your draft |
 | Apply your hand-marked edits from a PDF | `elr-apply-markup` | the marked-up PDF |
@@ -171,14 +173,14 @@ artifacts, and record the rest as limitations.
 | Question only | `02-preemption-review` |
 | Design in hand | `06-data-authorization` (or `07`/`08` if authorization and review are asserted) |
 | Data in hand | `12-interpretive-verification` (or `13`/`14` if verification and validation are asserted) |
-| Results in hand | `16-replication-package` (or `17-integrate-manuscript` if a package is asserted) |
-| Publication only | `17-integrate-manuscript` or `18-cite-check`; Stages 01–16 recorded as not run by ELARA; manuscript utilities available at once |
+| Results in hand | `16-replication-package` (or `17-skeleton-draft` if a verified package is asserted) |
+| Publication only | `18-integrate-manuscript` or `19-cite-check`; Stages 01–17 recorded as not run or, for the skeleton, skipped; manuscript utilities available at once |
 
 Facts adoption cannot supply are recorded rather than assumed: preregistration
 timing (analyses that predate any preregistration are labeled not preregistered
 unless a dated record is imported), held-out purity (an unlisted tuning set
 makes the Stage 13 sample "not held out"), audit separation (prior audits are
-recorded as prior audits; Stages 12 and 18 re-audit), and an unknown coder model
+recorded as prior audits; Stages 12 and 19 re-audit), and an unknown coder model
 version.
 
 ## Interaction profiles
@@ -188,7 +190,7 @@ version.
 | `normal` | Track the short stage in the native plan and gather a researcher decision; no Plan Mode or goal. |
 | `plan` | Track the work, inspect in Plan Mode, make no file changes, and return the exact execution handoff. |
 | `execute` | Track and run approved execution. If `long_running: true`, execute under the exact stage `goal_condition`. A fan-out inside it is run by the host's own orchestrator under `workflow/shared/observation-fanout.md`. |
-| `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 17 and 19 always stop because their plan is the manuscript-edit gate). A long execution phase uses the exact stage goal. |
+| `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 18 and 20 always stop because their plan is the manuscript-edit gate). A long execution phase uses the exact stage goal. |
 
 Plan phases do not alter state, ledgers, or artifacts. A mode or permission
 setting never waives a human gate, data restriction, or artifact-version rule.
@@ -201,7 +203,7 @@ Every stage marked `long_running: true` has a validator-enforced
 `/goal <goal_condition>` command and stops for the one-time activation. It
 never replaces another active goal. One goal covers one stage, not the full
 pipeline or an individual fan-out worker. Stages 01–03, 07–08, 10–12, 14–16,
-and 18 are long-running. See `workflow/shared/execution-control.md`.
+and 19 are long-running. See `workflow/shared/execution-control.md`.
 
 ## Canonical stages
 
@@ -224,9 +226,10 @@ and 18 are long-running. See `workflow/shared/execution-control.md`.
 | `14-analysis-and-correction` | 5 | yes | `plan_then_execute` | Deterministic analysis, diagnostics, and measurement-error correction | Stop if verified inputs do not support the analysis |
 | `15-robustness` | 5 | yes | `execute` | Prompt and model comparisons, stability results, and deviations | Researcher disposition of material instability |
 | `16-replication-package` | 5 | yes | `execute` | Environment lock, archive, one rebuild command, and fresh-agent report | Core completes only after a clean rebuild |
-| `17-integrate-manuscript` | 6 | no | `plan_then_execute` | Approved integration into the researcher's substantive first draft | `manuscript-edit-permission` |
-| `18-cite-check` | 6 | no | `execute` | Audit-only citation/source-support report | Findings are reported, never silently repaired |
-| `19-revise-and-respond` | 6 | no | `plan_then_execute` | Versioned revisions, response matrix, and change disclosure | `manuscript-edit-permission` |
+| `17-skeleton-draft` | 6 | no | `normal` | Versioned article map with section IDs and a result crosswalk, but no article prose | `skeleton-draft-approval`, with a recorded skip available |
+| `18-integrate-manuscript` | 6 | no | `plan_then_execute` | Approved integration into the researcher's substantive first draft | `manuscript-edit-permission` |
+| `19-cite-check` | 6 | no | `execute` | Audit-only citation/source-support report | Findings are reported, never silently repaired |
+| `20-revise-and-respond` | 6 | no | `plan_then_execute` | Versioned revisions, response matrix, and change disclosure | `manuscript-edit-permission` |
 
 A coding unit may contain one document or several related documents, as fixed by
 the codebook and unit-space manifest. Stage 11 assigns one such unit—not
@@ -237,7 +240,7 @@ necessarily one document—to each fresh worker context.
 Whenever a stage needs many independent judgments or retrievals — coding units
 in Stages 08, 11, 12, and 15; searches, author and citation chains, and
 retrieval in Stage 02; independent critics in Stage 07; claim-citation pairs in
-Stage 18; fresh reviews — the work is fanned out one unit per isolated worker
+Stage 19; fresh reviews — the work is fanned out one unit per isolated worker
 under `workflow/shared/observation-fanout.md`, and the fan-out itself is run by
 the host's own orchestrator, not by the assistant launching workers by hand:
 
@@ -259,10 +262,11 @@ tries open routes first, makes one ordinary browser attempt in the researcher's
 authorized session, archives and hashes a successful download, and records any
 remaining restriction. The browser is never given to a worker.
 
-## Manuscript utilities and the publication profile
+## Article planning, manuscript utilities, and the publication profile
 
-Stages 17–19 and three optional utilities work on the researcher's manuscript
-under `workflow/shared/manuscript-editing-contract.md` (fixed invariants: no
+Stage 17 produces a structured article skeleton from verified project artifacts
+without article prose. Stages 18–20 and three optional utilities work on the
+researcher's manuscript under `workflow/shared/manuscript-editing-contract.md` (fixed invariants: no
 first-draft authorship, permission before edits, versioned copies, numbers only
 from results, no citations from memory, build and two review passes, complete
 change disclosure, post-edit citation audit) and the researcher's **publication
@@ -276,9 +280,9 @@ stages and utilities, never imported into `AGENTS.md` or `CLAUDE.md`.
 
 | Utility | Canonical file | What it does | Then |
 |---|---|---|---|
-| `elr-add-citations` | `workflow/utilities/add-citations.md` | Retrieves, reads, and adds only the citations the researcher marked, in the profile's citation style | audit-only Stage 18 |
-| `elr-proofread` | `workflow/utilities/proofread.md` | Reports typos, grammar, clarity, tone, style tells, internal consistency, and venue compliance; fixes only clear errors when permitted | accepted items to Stage 19 |
-| `elr-apply-markup` | `workflow/utilities/apply-markup.md` | Transcribes a hand-marked PDF into a reviewable edit list, stops, then applies exactly the approved edits | Stage 18 if citations changed |
+| `elr-add-citations` | `workflow/utilities/add-citations.md` | Retrieves, reads, and adds only the citations the researcher marked, in the profile's citation style | audit-only Stage 19 |
+| `elr-proofread` | `workflow/utilities/proofread.md` | Reports typos, grammar, clarity, tone, style tells, internal consistency, and venue compliance; fixes only clear errors when permitted | accepted items to Stage 20 |
+| `elr-apply-markup` | `workflow/utilities/apply-markup.md` | Transcribes a hand-marked PDF into a reviewable edit list, stops, then applies exactly the approved edits | Stage 19 if citations changed |
 
 Utilities never change `current_stage`; they append the run ledger and decisions
 and produce versioned outputs like any stage.
@@ -316,12 +320,20 @@ approvals and is never a clerical correction.
 | Human validation or blind adjudication fails | `05-codebook-and-schema` or `08-pilot`, followed by new scale-up and validation versions |
 | Analysis fails or robustness is materially unstable | Relevant method, validation, analysis, or robustness stage |
 | Replication package does not rebuild | Originating Stage 10–15; never patch a final number by hand |
-| Citation audit reports unsupported prose | `17-integrate-manuscript` or `19-revise-and-respond`; Stage 18 remains audit-only |
+| Citation audit reports unsupported prose | `18-integrate-manuscript` or `20-revise-and-respond`; Stage 19 remains audit-only |
 
 Every return creates new run and artifact versions. It does not erase the failed
 run, original decision, deviation, or prior approval. A necessary departure from
 the preregistration follows the recorded amendment/deviation process and carries
 through every dependent artifact.
+
+## Workflow 2.0 state compatibility
+
+Version 2.0.0 inserts `17-skeleton-draft` and renumbers the former publication
+Stages 17–19 as 18–20. ELARA does not automatically migrate a project whose
+state points to one of the former Stage 17–19 IDs. Repair that state against the
+append-only ledgers and active artifact hashes, or rerun Stage 00's adoption path
+to record the proper 2.0 landing. Do not change `current_stage` by number alone.
 
 ## Persistent state
 

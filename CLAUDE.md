@@ -30,7 +30,7 @@ the canonical `interaction_profile` as follows:
 - `execute`: use Claude's approved/default execution mode for a bounded stage.
   Every fan-out inside it — coding or audit units in Stages 08, 11, 12, and 15;
   research units such as Stage 02 searches and retrieval, Stage 07 critics,
-  Stage 18 claim-citation pairs, and fresh reviews — runs as one of the kit's
+  Stage 19 claim-citation pairs, and fresh reviews — runs as one of the kit's
   saved dynamic workflows, which you launch yourself as part of the stage:
   `elr-observation-fanout` (`{ "run_dir": ... }`) for coding and audit units,
   `elr-research-fanout` (`{ "fanout_dir": ... }`) for research units, both under
@@ -40,7 +40,7 @@ the canonical `interaction_profile` as follows:
 - `plan_then_execute`: put the read-only plan phase first in the task list. Plan
   in normal mode without writing any project file, then continue into execution
   in the same session. Enter Plan Mode and stop only when a stop condition in
-  `workflow/shared/guardrails.md` §11 holds, and always for Stages 17 and 19,
+  `workflow/shared/guardrails.md` §11 holds, and always for Stages 18 and 20,
   whose plan is the manuscript-edit gate.
 
 For every stage marked `long_running: true`, inspect `/goal` status before its

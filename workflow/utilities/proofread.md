@@ -10,13 +10,13 @@ human_gate: "manuscript-edit-permission"
 
 ## Objective
 
-Read the manuscript as a careful proofreader and report what should change, without rewriting it. Fix only clear typographical and grammatical errors, and only when the researcher has permitted uncontroversial fixes; flag everything else for the researcher's decision. This is an audit in the sense of `guardrails.md` §8: it reports; the researcher decides; substantive changes go to Stage 19. It is not a pipeline stage and does not change `current_stage`.
+Read the manuscript as a careful proofreader and report what should change, without rewriting it. Fix only clear typographical and grammatical errors, and only when the researcher has permitted uncontroversial fixes; flag everything else for the researcher's decision. This is an audit in the sense of `guardrails.md` §8: it reports; the researcher decides; substantive changes go to Stage 20. It is not a pipeline stage and does not change `current_stage`.
 
 ## Prerequisite checks
 
 Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`, `workflow/shared/artifact-contract.md`, and `workflow/shared/manuscript-editing-contract.md` before doing any work.
 
-1. Resolve the manuscript to proofread (active version, or the researcher-supplied draft before Stage 17) and record its path and hash.
+1. Resolve the manuscript to proofread (active version, or the researcher-supplied draft before Stage 18) and record its path and hash.
 2. Resolve the active publication profile: venue and audience, prohibited constructions and punctuation preferences, word and grammar preferences, author-reference conventions, structure rules, venue format and length constraints, and whether uncontroversial fixes may be applied. If no profile is active, ask the researcher for the checks to apply and whether any fix may be made; do not assume.
 3. Confirm the manuscript builds, so page-level review is possible.
 
@@ -50,7 +50,7 @@ bounded execution. Do not start a goal.
 3. Apply a fix only if the researcher permitted uncontroversial fixes and the finding meets the stated definition; work on a new `manuscript_vNNN/` copy, never on the source. Everything else stays flagged.
 4. Compile or render if anything was changed, inspect the affected pages, and produce the change log, a diff, and a redline when the profile asks.
 5. Write `proofreading_report_vNNN.md`: counts by category, every finding in manuscript order with its proposed fix, the fixes applied, and the items that need a researcher decision. Then conduct two validation passes over the report against the manuscript: first that the list is complete for the categories in scope, second that every applied fix is correct and within the permitted definition. Record both passes.
-6. Route flagged items the researcher accepts to Stage 19 as researcher notes; route any citation problem to Stage 18.
+6. Route flagged items the researcher accepts to Stage 20 as researcher notes; route any citation problem to Stage 19.
 
 ## Verification
 
@@ -62,4 +62,4 @@ bounded execution. Do not start a goal.
 
 ## State transition
 
-Do not change `current_stage`. Append the run to `RUN_LEDGER.md` and any permission decision to `DECISIONS.md`. If fixes were applied, pin the new manuscript version only after the researcher accepts the report; a manuscript with changed text also needs a fresh Stage 18 audit before it is called final.
+Do not change `current_stage`. Append the run to `RUN_LEDGER.md` and any permission decision to `DECISIONS.md`. If fixes were applied, pin the new manuscript version only after the researcher accepts the report; a manuscript with changed text also needs a fresh Stage 19 audit before it is called final.

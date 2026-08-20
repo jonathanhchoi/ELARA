@@ -1,17 +1,17 @@
 ---
-stage_id: "18-cite-check"
+stage_id: "19-cite-check"
 title: "Audit every manuscript citation against retrieved sources"
 paper_steps: ["6"]
 core: false
 interaction_profile: "execute"
 long_running: true
-goal_condition: "Run Stage 18 exactly as specified until every manuscript claim-citation pair has a verified or expressly unverified disposition based on the actual retrieved source, exact counts and evidence archives reconcile, all declared audit artifacts pass review, and PROJECT_STATE.md is ready for Stage 19, or until a source only the researcher can supply or another ELARA section 11 stop condition is recorded and surfaced; report findings without editing the manuscript."
-prerequisites: ["17-integrate-manuscript"]
+goal_condition: "Run Stage 19 exactly as specified until every manuscript claim-citation pair has a verified or expressly unverified disposition based on the actual retrieved source, exact counts and evidence archives reconcile, all declared audit artifacts pass review, and PROJECT_STATE.md is ready for Stage 20, or until a source only the researcher can supply or another ELARA section 11 stop condition is recorded and surfaced; report findings without editing the manuscript."
+prerequisites: ["18-integrate-manuscript"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/manuscript_vNNN/", "project/artifacts/manuscript_change_log_vNNN.md", "project/artifacts/manuscript_consistency_report_vNNN.md", "project/artifacts/replication_package_vNNN/", "researcher-supplied bibliography, source files, and authorized database access where applicable"]
 declared_outputs: ["project/artifacts/citation_audit_vNNN.jsonl", "project/artifacts/citation_audit_report_vNNN.md", "project/sources/cite_check/<run_id>/source_manifest.csv", "project/sources/cite_check/<run_id>/search_log.csv", "project/sources/cite_check/<run_id>/retrieved/", "project/sources/cite_check/<run_id>/fanout/ (briefs, sealed manifest, launch record, worker returns; when pairs are audited in parallel)", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
 human_gate: null
-next_stage: "19-revise-and-respond"
-failure_routes: ["17-integrate-manuscript", "18-cite-check"]
+next_stage: "20-revise-and-respond"
+failure_routes: ["18-integrate-manuscript", "19-cite-check"]
 ---
 
 ## Objective
@@ -73,10 +73,10 @@ with the same completion condition and durable checkpoints.
 
 ## State transition
 
-Set `current_stage` to `18-cite-check` and `status` to `running` only after checks pass. If a source needed for a defensible finding is available only to the researcher, preserve completed audit work, set `status` to `waiting_for_user`, and record the exact requested file or access action. An unavailable source may receive an explicit unverified disposition if the researcher chooses to proceed with that limitation.
+Set `current_stage` to `19-cite-check` and `status` to `running` only after checks pass. If a source needed for a defensible finding is available only to the researcher, preserve completed audit work, set `status` to `waiting_for_user`, and record the exact requested file or access action. An unavailable source may receive an explicit unverified disposition if the researcher chooses to proceed with that limitation.
 
-After every inventory unit has a verified or expressly unverified disposition and review passes, activate the audit, report, source manifest, logs, and run; set `current_stage` to `19-revise-and-respond`; and set `status` to `ready`. Findings remain findings until the researcher approves a revision plan; do not claim the citations were corrected.
+After every inventory unit has a verified or expressly unverified disposition and review passes, activate the audit, report, source manifest, logs, and run; set `current_stage` to `20-revise-and-respond`; and set `status` to `ready`. Findings remain findings until the researcher approves a revision plan; do not claim the citations were corrected.
 
 ## Next-stage handoff
 
-Tell the researcher the total claim-citation pairs and sources, disposition counts, every severe error, qualifications, unavailable-source requests, authority concerns, and exact audit and manuscript versions. State that no manuscript file changed. Then provide the exact next task: plan `19-revise-and-respond`, map each audit finding and reviewer comment to a proposed disposition, and stop for manuscript-edit permission before changing prose, citations, or analysis code.
+Tell the researcher the total claim-citation pairs and sources, disposition counts, every severe error, qualifications, unavailable-source requests, authority concerns, and exact audit and manuscript versions. State that no manuscript file changed. Then provide the exact next task: plan `20-revise-and-respond`, map each audit finding and reviewer comment to a proposed disposition, and stop for manuscript-edit permission before changing prose, citations, or analysis code.

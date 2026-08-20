@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELARA 19 Audit every manuscript citation against retrieved sources"
+  short_description: "Run Stage 19: Audit every manuscript citation against retrieved sources"
+  default_prompt: "Use $elr-19-cite-check for the current empirical legal research project."
+policy:
+  allow_implicit_invocation: false

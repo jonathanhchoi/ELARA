@@ -40,9 +40,10 @@ EXPECTED_STAGE_IDS = [
     "14-analysis-and-correction",
     "15-robustness",
     "16-replication-package",
-    "17-integrate-manuscript",
-    "18-cite-check",
-    "19-revise-and-respond",
+    "17-skeleton-draft",
+    "18-integrate-manuscript",
+    "19-cite-check",
+    "20-revise-and-respond",
 ]
 
 HARD_GATES = {
@@ -58,8 +59,9 @@ HARD_GATES = {
     "09-freeze-and-preregister": "preregistration-confirmation",
     "10-corpus-acquisition": "material-corpus-deviation",
     "13-human-validation": "validation-disposition",
-    "17-integrate-manuscript": "manuscript-edit-permission",
-    "19-revise-and-respond": "manuscript-edit-permission",
+    "17-skeleton-draft": "skeleton-draft-approval",
+    "18-integrate-manuscript": "manuscript-edit-permission",
+    "20-revise-and-respond": "manuscript-edit-permission",
 }
 
 UNVERSIONED_OUTPUTS = {
@@ -174,7 +176,7 @@ def validate_stage(
 
     stage_number = int(stage_id[:2])
     if stage_number >= len(EXPECTED_STAGE_IDS):
-        errors.append(f"{path}: stage number {stage_number} is outside the 00-19 pipeline")
+        errors.append(f"{path}: stage number {stage_number} is outside the 00-20 pipeline")
         return errors
     if stage_number == 0:
         expected_prerequisites = []
@@ -385,6 +387,7 @@ def validate_repository(root: Path) -> list[str]:
         "workflow/shared/manuscript-editing-contract.md",
         "workflow/shared/fresh-review.md",
         "workflow/templates/publication_profile_template.md",
+        "workflow/templates/skeleton_draft_template.md",
         "workflow/utilities/add-citations.md",
         "workflow/utilities/proofread.md",
         "workflow/utilities/apply-markup.md",
@@ -394,6 +397,7 @@ def validate_repository(root: Path) -> list[str]:
         "project/inputs/README.md",
         "scripts/bootstrap.py",
         "scripts/doctor.py",
+        "scripts/build_skeleton_draft.py",
     ):
         if not (root / required).exists():
             errors.append(f"missing {required}")

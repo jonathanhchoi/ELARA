@@ -1,17 +1,17 @@
 ---
-stage_id: "19-revise-and-respond"
+stage_id: "20-revise-and-respond"
 title: "Revise the manuscript and prepare the response"
 paper_steps: ["6"]
 core: false
 interaction_profile: "plan_then_execute"
 long_running: false
 goal_condition: null
-prerequisites: ["18-cite-check"]
+prerequisites: ["19-cite-check"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/manuscript_vNNN/", "project/artifacts/manuscript_change_log_vNNN.md", "project/artifacts/citation_audit_vNNN.jsonl", "project/artifacts/citation_audit_report_vNNN.md", "project/artifacts/replication_package_vNNN/", "project/artifacts/analysis_results_vNNN/", "researcher-supplied reviewer letter, editor letter, or revision notes under project/inputs/peer_review/", "project/PUBLICATION_PROFILE_vNNN.md (optional; the active publication profile)"]
 declared_outputs: ["project/artifacts/revision_plan_vNNN.md", "project/artifacts/revised_manuscript_vNNN/", "project/code/revision_analysis_vNNN/", "project/artifacts/revision_analysis_results_vNNN/", "project/artifacts/citation_finding_disposition_vNNN.csv", "project/artifacts/peer_review_response_vNNN.md", "project/artifacts/revision_internal_report_vNNN.md", "project/runs/<run_id>/build_test_and_render_logs/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
 human_gate: "manuscript-edit-permission"
 next_stage: null
-failure_routes: ["09-freeze-and-preregister", "13-human-validation", "14-analysis-and-correction", "15-robustness", "16-replication-package", "17-integrate-manuscript", "18-cite-check", "19-revise-and-respond"]
+failure_routes: ["09-freeze-and-preregister", "13-human-validation", "14-analysis-and-correction", "15-robustness", "16-replication-package", "18-integrate-manuscript", "19-cite-check", "20-revise-and-respond"]
 ---
 
 ## Objective
@@ -25,8 +25,8 @@ Read `AGENTS.md` and route this stage from `project/PROJECT_STATE.md` before doi
 1. Resolve the exact active manuscript, citation audit, replication package, results, and reviewer materials. Hash researcher-supplied letters and notes and preserve them under `project/inputs/` unchanged.
 2. Parse each discrete reviewer, editor, researcher, and citation-audit issue into a stable comment ID. Researcher notes may arrive as a letter, a comments file, margin instructions written into the draft in `[[double square brackets]]`, or a marked-up PDF (transcribe it with `elr-apply-markup` first); use the conventions named in the publication profile. Keep compound comments together only when they require one inseparable decision.
 3. Inspect the actual manuscript and relevant analysis code read-only. For each comment, determine whether it calls for explanation, prose, citation, rerunning an existing registered command, a new exploratory analysis, a measurement or data change, or no change.
-4. Identify comments that would change hypotheses, methods, codebook, schema, unit space, data authorization, validation, correction, or robustness. Those require the appropriate upstream stage and, where material, a preregistration amendment and new replication package; Stage 19 cannot waive the loop.
-5. Confirm the active citation audit applies to the manuscript that will be the base revision. If not, rerun Stage 18 before planning. If prerequisites fail, make no writes and leave state unchanged.
+4. Identify comments that would change hypotheses, methods, codebook, schema, unit space, data authorization, validation, correction, or robustness. Those require the appropriate upstream stage and, where material, a preregistration amendment and new replication package; Stage 20 cannot waive the loop.
+5. Confirm the active citation audit applies to the manuscript that will be the base revision. If not, rerun Stage 19 before planning. If prerequisites fail, make no writes and leave state unchanged.
 
 ## Researcher decisions
 
@@ -60,7 +60,7 @@ change report. Do not start a goal.
 9. Compile or render the complete manuscript and inspect it visually and structurally, page by page when the profile requires it. Conduct a full consistency pass across claims, numbers, citations, tables, figures, cross-references, disclosures, and appendices, followed by a diff review for out-of-scope edits and a redline (for example `latexdiff`) when the profile asks for one.
 10. Draft a respectful, cooperative response letter organized by comment ID that quotes or fairly paraphrases each request, states the disposition, describes the precise change and location, reports new results accurately, and explains any principled decline without defensiveness. Winning the reviewers' approval is a legitimate aim for the letter's tone; it is not a test of whether a comment has merit or of which specification to run.
 11. Create a separate candid internal report listing every file and line or section changed, analysis command run, result added or changed, issue declined, upstream reroute, unresolved risk, citation disposition, and difference between the response letter's diplomacy and the complete project record.
-12. Because manuscript edits invalidate the prior citation audit, route the revised manuscript through a new audit-only Stage 18 version. If that audit finds a required repair, return with a new approved edit scope. Finalize Stage 19 only after the active revised manuscript has a clean or expressly accepted citation audit and no later manuscript edit has invalidated it.
+12. Because manuscript edits invalidate the prior citation audit, route the revised manuscript through a new audit-only Stage 19 version. If that audit finds a required repair, return with a new approved edit scope. Finalize Stage 20 only after the active revised manuscript has a clean or expressly accepted citation audit and no later manuscript edit has invalidated it.
 
 ## Artifacts
 
@@ -73,16 +73,16 @@ The revision plan preserves the researcher-approved disposition and route for ev
 - Re-run tests and each changed analysis alone and in the full build; trace every revised number, table, and figure to machine-readable output and the active replicated data.
 - Confirm design-changing requests followed the correct upstream approval, validation, robustness, preregistration, and replication routes before manuscript integration.
 - Retrieve and reopen every authority added or materially recharacterized; confirm citation findings are not marked resolved by unsupported prose edits.
-- Compile or render and inspect the complete manuscript, verify the response letter against actual changes, and confirm a post-edit Stage 18 audit covers the exact final manuscript version.
+- Compile or render and inspect the complete manuscript, verify the response letter against actual changes, and confirm a post-edit Stage 19 audit covers the exact final manuscript version.
 - Confirm parallel work never edited shared artifacts, no unrelated change occurred, and no input, prior manuscript, code version, result, or ledger row was overwritten.
 - Confirm the run manifest records the publication profile version and hash (or the recorded decision to proceed without one), and that the profile's prohibited constructions, punctuation preferences, QA steps, and deliverables were honored.
 
 ## State transition
 
-Plan Mode leaves all files and state unchanged. Without explicit permission, keep the prior stage active and do not create outputs. After permission and execution start, set `current_stage` to `19-revise-and-respond` and `status` to `running`. An upstream design or data change records the comment ID and routes to the owning stage with this revision pending. A missing source sets `waiting_for_user`. Preserve every partial version and never call it final.
+Plan Mode leaves all files and state unchanged. Without explicit permission, keep the prior stage active and do not create outputs. After permission and execution start, set `current_stage` to `20-revise-and-respond` and `status` to `running`. An upstream design or data change records the comment ID and routes to the owning stage with this revision pending. A missing source sets `waiting_for_user`. Preserve every partial version and never call it final.
 
-After manuscript edits, set `current_stage` to `18-cite-check` and `status` to `ready` for the required audit. When a later Stage 18 audit covers the exact revised version and no further manuscript edit is required, resume Stage 19, activate the final manuscript, analysis, citation disposition, response letter, internal report, and run; append all approvals; keep `current_stage` at `19-revise-and-respond`; and set `status` to `complete`.
+After manuscript edits, set `current_stage` to `19-cite-check` and `status` to `ready` for the required audit. When a later Stage 19 audit covers the exact revised version and no further manuscript edit is required, resume Stage 20, activate the final manuscript, analysis, citation disposition, response letter, internal report, and run; append all approvals; keep `current_stage` at `20-revise-and-respond`; and set `status` to `complete`.
 
 ## Next-stage handoff
 
-Tell the researcher every comment and audit disposition, upstream stage rerun, file changed, analysis command and result, citation resolution, declined suggestion, build and test result, post-edit audit version, unresolved risk, and exact final artifact versions. State whether the optional publication workflow is complete. If any manuscript edit occurs later, explain that Stage 18 must audit that new version before another Stage 19 completion.
+Tell the researcher every comment and audit disposition, upstream stage rerun, file changed, analysis command and result, citation resolution, declined suggestion, build and test result, post-edit audit version, unresolved risk, and exact final artifact versions. State whether the optional publication workflow is complete. If any manuscript edit occurs later, explain that Stage 19 must audit that new version before another Stage 20 completion.

@@ -10,7 +10,7 @@ prerequisites: ["15-robustness"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/frozen_artifact_manifest_vNNN.csv", "project/artifacts/preregistration_vNNN.md", "project/artifacts/preregistration_record_vNNN.md", "project/artifacts/data_authorization_record_vNNN.md", "project/artifacts/corpus_manifest_vNNN.csv", "project/artifacts/provenance_manifest_vNNN.csv", "project/artifacts/corpus_gap_register_vNNN.csv", "project/artifacts/coding_dataset_vNNN.jsonl", "project/artifacts/coding_ledger_vNNN.csv", "project/artifacts/schema_validation_vNNN.csv", "project/artifacts/quote_verification_vNNN.csv", "project/artifacts/interpretive_audit_vNNN.jsonl", "project/artifacts/adjudicated_validation_data_vNNN.csv", "project/artifacts/validation_metrics_vNNN.json", "project/code/analysis_vNNN/", "project/artifacts/analysis_results_vNNN/", "project/artifacts/measurement_error_correction_vNNN.json", "project/artifacts/robustness_results_vNNN/", "project/artifacts/robustness_report_vNNN.md", "project/runs/", "project/DEVIATIONS.md"]
 declared_outputs: ["project/artifacts/replication_package_vNNN/", "project/artifacts/replication_manifest_vNNN.json", "project/artifacts/replication_checksums_vNNN.txt", "project/artifacts/replication_rebuild_report_vNNN.md", "project/artifacts/fresh_agent_rerun_report_vNNN.md", "project/runs/<run_id>/rebuild_logs/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
 human_gate: null
-next_stage: "17-integrate-manuscript"
+next_stage: "17-skeleton-draft"
 failure_routes: ["10-corpus-acquisition", "11-scale-up", "12-interpretive-verification", "13-human-validation", "14-analysis-and-correction", "15-robustness", "16-replication-package"]
 ---
 
@@ -78,4 +78,4 @@ After the lawful package passes every verification, activate the package, manife
 
 ## Next-stage handoff
 
-Tell the researcher the package version and checksum, archive contents and restrictions, exact rebuild command, clean-environment result, fresh-agent result, runtime, any non-rerunnable model step, and any controlled-access requirement. State that the core pipeline is complete. If the researcher has supplied a substantive first draft and explicitly requests publication work, offer optional `17-integrate-manuscript`, which begins with a no-write plan and a separate manuscript-edit-permission gate. ELARA does not draft the first manuscript.
+Tell the researcher the package version and checksum, archive contents and restrictions, exact rebuild command, clean-environment result, fresh-agent result, runtime, any non-rerunnable model step, and any controlled-access requirement. State that the core pipeline is complete. Offer optional `17-skeleton-draft` as the default next step, with a recorded skip as the alternative. Explain that it maps the article from verified artifacts but writes no article prose. ELARA does not draft the first manuscript.

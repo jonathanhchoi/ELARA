@@ -1,15 +1,13 @@
 ---
-name: "elr-19-revise-and-respond"
-description: "Run ELR stage 19-revise-and-respond: Revise the manuscript and prepare the response. Use when this is the current stage in project/PROJECT_STATE.md or when the researcher explicitly requests this recovery stage."
+name: "elr-19-cite-check"
+description: "Run ELR stage 19-cite-check: Audit every manuscript citation against retrieved sources. Use when this is the current stage in project/PROJECT_STATE.md or when the researcher explicitly requests this recovery stage."
 ---
 
-# Run elr-19-revise-and-respond
+# Run elr-19-cite-check
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.
-   Then read `workflow/shared/manuscript-editing-contract.md` and the active publication profile pinned in
-   `project/PROJECT_STATE.md` (`project/PUBLICATION_PROFILE_vNNN.md`), if any.
-2. Read `workflow/stages/19-revise-and-respond.md` completely and follow it as the single source of substantive
+2. Read `workflow/stages/19-cite-check.md` completely and follow it as the single source of substantive
    instructions for this stage.
 3. Confirm that the stage is current and its prerequisites and approvals are satisfied
    (imported artifacts and researcher-asserted approvals count). If the project is

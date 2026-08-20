@@ -20,5 +20,5 @@ description: "Transcribe the researcher's hand markup on a PDF into a reviewable
    On Codex use `update_plan` and keep exactly one item `in_progress`.
 5. Honor the utility's phases. Do not edit any manuscript file before the researcher grants
    the permission the canonical file names; a skill cannot switch Plan or Goal mode by itself.
-6. Afterwards follow the route the canonical file names (`workflow/stages/19-revise-and-respond.md`) rather than
+6. Afterwards follow the route the canonical file names (`workflow/stages/20-revise-and-respond.md`) rather than
    treating the utility's output as final.

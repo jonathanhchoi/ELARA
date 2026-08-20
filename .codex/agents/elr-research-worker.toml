@@ -1,7 +1,7 @@
 # ELARA read-only research worker for Codex (custom sub-agent).
 # Mirrors .claude/agents/elr-research-worker.md. The parent spawns this agent by name, one per
 # bounded research assignment (a Stage 02 query, author, or citation chain; a source retrieval; a
-# Stage 07 critique; a Stage 18 claim-citation pair; a fresh review), and never a general-purpose
+# Stage 07 critique; a Stage 19 claim-citation pair; a fresh review), and never a general-purpose
 # agent. See workflow/shared/observation-fanout.md, "Research fan-outs" and "Codex adapter". Field
 # names follow the Codex custom-agent file schema as of 2026-08 (name, description,
 # developer_instructions, sandbox_mode, mcp_servers): a dated default; Stage 00 records the host

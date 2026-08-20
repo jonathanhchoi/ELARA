@@ -8,7 +8,7 @@ retrievals. Two kinds of fan-out share it:
   worker, controlled by `scripts/unit_fanout.py`. Stage 14 consumes the merged data and does not
   use this contract for ordinary deterministic statistical analysis.
 - **Research fan-outs** (Stage 02 query, author, citation-chain, and retrieval waves; Stage 07
-  independent critics; Stage 18 claim-citation pairs; add-citations retrieval; fresh reviews under
+  independent critics; Stage 19 claim-citation pairs; add-citations retrieval; fresh reviews under
   `fresh-review.md`): one bounded search, retrieval, critique, or review unit per worker,
   controlled by `scripts/research_fanout.py`.
 

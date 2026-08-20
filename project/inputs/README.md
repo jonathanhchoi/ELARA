@@ -14,7 +14,7 @@ or stay wherever it already is (in the folder ELARA was installed into, which
 hashes it in place, then copies the usable files unchanged into
 `project/artifacts/imported_vNNN/` and pins them as the artifacts later stages
 use; your originals are never moved or edited. Anything too large to copy is
-inventoried by path and hash. Manuscript drafts for Stage 17 or the manuscript
+inventoried by path and hash. Manuscript drafts for Stage 18 or the manuscript
 utilities can go in `manuscript/`; a marked-up PDF for `elr-apply-markup` in
 `manuscript/markup/` — or, again, stay where they are.
 

@@ -3,7 +3,7 @@
 Copy this file to `project/PUBLICATION_PROFILE_v001.md`, fill it in, and pin it
 in `project/PROJECT_STATE.md` under `active_artifacts` as `publication_profile`.
 To change it later, save a new version (`_v002`, ...) and repin; never edit a
-version that a manuscript run has already recorded. Stages 17 and 19 and the
+version that a manuscript run has already recorded. Stages 18 and 20 and the
 manuscript utilities (`elr-proofread`, `elr-add-citations`, `elr-apply-markup`)
 read the active profile and record its version and SHA-256 hash in their run
 manifests. If no profile is active, those stages ask the researcher to supply one
