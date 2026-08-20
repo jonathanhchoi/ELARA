@@ -11,9 +11,11 @@ file.
 
 ## 1. Authorship boundary
 
-- ELARA does not write the first draft, turn an outline or notes into a paper,
+- ELARA does not write the substantive first draft, turn notes into a paper,
   or supply an original thesis, argument, or normative claim. Stage 17 may
-  propose an evidence-linked section architecture without article prose.
+  propose a complete article structure, verified results displays, and the
+  minimal methods and results prose needed to understand them. The researcher
+  writes the remaining prose.
   Manuscript stages work only on a substantive draft the researcher supplies.
 - An approved Stage 17 skeleton is planning context, not manuscript prose. A
   later manuscript stage may use its map to identify possible locations and

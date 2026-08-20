@@ -1,9 +1,9 @@
-"""Validate and render an ELARA article skeleton from one canonical Markdown source.
+"""Validate and render an ELARA skeleton draft from one canonical Markdown source.
 
 The source is an immutable, run-scoped planning artifact. The builder validates
-its section hierarchy and provenance references, then creates a new Word,
-LaTeX, or Markdown researcher-facing artifact, a machine-readable crosswalk,
-and a run manifest. Existing files are never overwritten.
+its article structure, restrained prose, and provenance references, then creates
+a new Word, LaTeX, or Markdown researcher-facing artifact and a run manifest.
+Existing files are never overwritten.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass
@@ -46,49 +47,67 @@ REQUIRED_METADATA = (
 )
 SUPPORTED_FORMATS = {"docx", "tex", "md"}
 REQUIRED_FIELDS = (
-    "Purpose",
-    "Claims",
-    "Evidence",
-    "Results",
-    "Tables and figures",
-    "Counterarguments",
-    "Limitations",
+    "Section role",
+    "Bare-bones content",
+    "Source support",
+    "Results presented",
+    "Displays",
+    "Author work",
     "Open questions",
     "Approximate length",
 )
-TRACE_FIELDS = {"Claims", "Evidence", "Results", "Tables and figures"}
-ALWAYS_TRACED_FIELDS = {"Evidence", "Results", "Tables and figures"}
+TRACE_FIELDS = {"Bare-bones content", "Source support", "Results presented", "Displays"}
+ALWAYS_TRACED_FIELDS = {"Source support", "Results presented", "Displays"}
+ALLOWED_ROLES = {
+    "abstract",
+    "introduction",
+    "background",
+    "methods",
+    "results",
+    "robustness",
+    "discussion",
+    "limitations",
+    "conclusion",
+    "appendix",
+    "other",
+}
+REQUIRED_TOP_LEVEL_ROLES = {
+    "introduction",
+    "methods",
+    "results",
+    "limitations",
+    "conclusion",
+}
+EMPIRICAL_ROLES = {"methods", "results", "robustness"}
+AUTHOR_TO_WRITE = "Author to write."
+MAX_CONTENT_WORDS = 120
+MAX_NONEMPIRICAL_CONTENT_WORDS = 35
 PLACEHOLDER_RE = re.compile(
     r"\b(?:TODO-SKELETON|TODO|TBD|PLACEHOLDER|INSERT|XXX)\b|<[^>]+>",
     re.IGNORECASE,
 )
-SECTION_HEADING_RE = re.compile(
-    r"^(#{2,6})\s+\[(S\d{2}(?:\.\d{2})*)\]\s+(.+?)\s*$"
-)
+SECTION_HEADING_RE = re.compile(r"^(#{2,6})\s+(.+?)\s*$")
 FIELD_RE = re.compile(r"^\*\*([^*]+):\*\*\s*(.*?)\s*$")
 PROJECT_REF_RE = re.compile(
     r"(?<![A-Za-z0-9_])(?P<path>project/[A-Za-z0-9_./-]+)#(?P<id>[A-Za-z0-9_.:-]+)"
 )
 BARE_PROJECT_REF_RE = re.compile(r"(?<![A-Za-z0-9_])project/[A-Za-z0-9_./-]+(?!#)")
-OMISSION_RE = re.compile(r"(?<![A-Za-z0-9_])omit:(?P<id>[A-Za-z0-9_.:-]+)")
 NUMBER_RE = re.compile(r"(?<![A-Za-z])\b\d+(?:\.\d+)?%?\b")
 LENGTH_RE = re.compile(r"\b\d[\d,]*(?:\s*[–-]\s*\d[\d,]*)?\s+(?:words?|pages?)\b", re.I)
-CROSSWALK_COLUMNS = (
-    "section_id",
-    "parent_id",
-    "section_order",
-    "section_title",
-    "field",
-    "artifact_path",
-    "artifact_id",
-    "disposition",
-    "note",
+DISPLAY_KINDS = {"table", "figure", "equation"}
+DISPLAY_SUFFIXES = {
+    "table": {".csv", ".tsv"},
+    "figure": {".png", ".jpg", ".jpeg"},
+    "equation": {".tex", ".txt"},
+}
+UNSAFE_TEX_RE = re.compile(
+    r"\\(?:input|include|write|openout|read|usepackage|documentclass|begin\s*\{document\}|end\s*\{document\})\b",
+    re.IGNORECASE,
 )
 
 
 @dataclass(frozen=True)
 class Section:
-    section_id: str
     title: str
     level: int
     order: int
@@ -96,11 +115,42 @@ class Section:
 
     @property
     def depth(self) -> int:
-        return self.section_id.count(".")
+        return self.level - 2
 
-    @property
-    def parent_id(self) -> str:
-        return self.section_id.rpartition(".")[0]
+
+@dataclass(frozen=True)
+class Display:
+    kind: str
+    reference: str
+    path: str
+    artifact_id: str
+    caption: str
+
+
+def parse_displays(value: str) -> list[Display]:
+    if value.strip().lower() == "none":
+        return []
+    displays: list[Display] = []
+    for raw_spec in value.split(" || "):
+        parts = [part.strip() for part in raw_spec.split("|", 2)]
+        if len(parts) != 3 or not all(parts):
+            raise ValueError(
+                "Displays entries must use kind|project/path#artifact-id|caption, separated by ' || '"
+            )
+        kind, reference, caption = parts
+        kind = kind.lower()
+        if kind not in DISPLAY_KINDS:
+            raise ValueError(f"unsupported display kind: {kind}")
+        match = PROJECT_REF_RE.fullmatch(reference)
+        if not match:
+            raise ValueError(f"display reference must use project/path#artifact-id: {reference}")
+        suffix = Path(match.group("path")).suffix.lower()
+        if suffix not in DISPLAY_SUFFIXES[kind]:
+            raise ValueError(f"{kind} display has unsupported file extension: {suffix or '(none)'}")
+        if PLACEHOLDER_RE.search(caption):
+            raise ValueError("display caption contains an unresolved placeholder")
+        displays.append(Display(kind, reference, match.group("path"), match.group("id"), caption))
+    return displays
 
 
 def _decode_value(raw: str) -> str:
@@ -168,29 +218,27 @@ def parse_source(text: str) -> tuple[dict[str, str], list[Section]]:
         raise ValueError("source contains an unresolved placeholder")
 
     sections: list[Section] = []
-    current_id = ""
     current_title = ""
     current_level = 0
     current_fields: dict[str, str] = {}
 
     def finish_section() -> None:
-        nonlocal current_id, current_title, current_level, current_fields
-        if not current_id:
+        nonlocal current_title, current_level, current_fields
+        if not current_title:
             return
         missing_fields = [field for field in REQUIRED_FIELDS if not current_fields.get(field)]
         if missing_fields:
             raise ValueError(
-                f"section {current_id} is missing required fields: {', '.join(missing_fields)}"
+                f"section {current_title} is missing required fields: {', '.join(missing_fields)}"
             )
         unknown_fields = sorted(set(current_fields) - set(REQUIRED_FIELDS))
         if unknown_fields:
             raise ValueError(
-                f"section {current_id} contains unknown fields: {', '.join(unknown_fields)}"
+                f"section {current_title} contains unknown fields: {', '.join(unknown_fields)}"
             )
         sections.append(
-            Section(current_id, current_title, current_level, len(sections) + 1, dict(current_fields))
+            Section(current_title, current_level, len(sections) + 1, dict(current_fields))
         )
-        current_id = ""
         current_title = ""
         current_level = 0
         current_fields = {}
@@ -202,21 +250,20 @@ def parse_source(text: str) -> tuple[dict[str, str], list[Section]]:
         if heading:
             finish_section()
             current_level = len(heading.group(1))
-            current_id = heading.group(2)
-            current_title = heading.group(3).strip()
+            current_title = heading.group(2).strip()
             continue
-        if not current_id:
+        if not current_title:
             raise ValueError(
                 f"line {line_number} is outside a section; only structured section records are allowed"
             )
         field = FIELD_RE.fullmatch(line.strip())
         if not field:
             raise ValueError(
-                f"line {line_number} is not a structured field; article paragraphs are not allowed"
+                f"line {line_number} is not a structured field; use the Bare-bones content field"
             )
         name, value = field.group(1).strip(), field.group(2).strip()
         if name in current_fields:
-            raise ValueError(f"section {current_id} repeats field {name}")
+            raise ValueError(f"section {current_title} repeats field {name}")
         current_fields[name] = value
     finish_section()
 
@@ -225,71 +272,104 @@ def parse_source(text: str) -> tuple[dict[str, str], list[Section]]:
 
 
 def validate_sections(sections: list[Section]) -> None:
-    if len([section for section in sections if section.depth == 0]) < 2:
-        raise ValueError("skeleton must contain at least two top-level sections")
-    ids = [section.section_id for section in sections]
-    if len(ids) != len(set(ids)):
-        raise ValueError("section IDs must be unique")
+    top_level = [section for section in sections if section.depth == 0]
+    if len(top_level) < 5:
+        raise ValueError("skeleton draft must contain at least five top-level sections")
+    titles = [section.title.casefold() for section in sections]
+    if len(titles) != len(set(titles)):
+        raise ValueError("section headings must be unique")
 
-    expected_by_parent: dict[str, int] = {}
-    seen: set[str] = set()
+    previous_level = 1
+    empirical_content_roles: set[str] = set()
     for section in sections:
-        expected_level = 2 + section.depth
-        if section.level != expected_level:
+        if section.level == 2:
+            previous_level = 2
+        elif section.level > previous_level + 1:
             raise ValueError(
-                f"section {section.section_id} must use Markdown heading level {expected_level}"
+                f"section {section.title} skips a Markdown heading level"
             )
-        if section.parent_id and section.parent_id not in seen:
+        previous_level = section.level
+
+        role = section.fields["Section role"].strip().lower()
+        if role not in ALLOWED_ROLES:
             raise ValueError(
-                f"section {section.section_id} appears before or without parent {section.parent_id}"
+                f"section {section.title} has unsupported Section role {section.fields['Section role']}"
             )
-        parent = section.parent_id
-        expected_number = expected_by_parent.get(parent, 1)
-        actual_number = int(section.section_id.rsplit(".", 1)[-1].removeprefix("S"))
-        if actual_number != expected_number:
-            expected_id = (
-                f"{parent}.{expected_number:02d}" if parent else f"S{expected_number:02d}"
-            )
+
+        content = section.fields["Bare-bones content"].strip()
+        word_count = len(re.findall(r"\b[\w'-]+\b", content))
+        if word_count > MAX_CONTENT_WORDS:
             raise ValueError(
-                f"section order is not sequential: expected {expected_id}, found {section.section_id}"
+                f"section {section.title} Bare-bones content exceeds {MAX_CONTENT_WORDS} words"
             )
-        expected_by_parent[parent] = expected_number + 1
-        seen.add(section.section_id)
+        if role not in EMPIRICAL_ROLES and content.casefold() != AUTHOR_TO_WRITE.casefold():
+            if word_count > MAX_NONEMPIRICAL_CONTENT_WORDS:
+                raise ValueError(
+                    f"section {section.title} leaves too much non-empirical prose for the agent"
+                )
+            if len(re.findall(r"[.!?](?:\s|$)", content)) > 1:
+                raise ValueError(
+                    f"section {section.title} non-empirical content must be one sentence or less"
+                )
+        if role in EMPIRICAL_ROLES and content.casefold() != AUTHOR_TO_WRITE.casefold():
+            empirical_content_roles.add(role)
+
+        displays = parse_displays(section.fields["Displays"])
+        results_value = section.fields["Results presented"].strip()
+        if role in {"results", "robustness"}:
+            if results_value.lower() == "none":
+                raise ValueError(
+                    f"section {section.title} must identify the results it presents"
+                )
+            if not displays:
+                raise ValueError(
+                    f"section {section.title} must present results through at least one table, figure, or equation"
+                )
 
         if not LENGTH_RE.search(section.fields["Approximate length"]):
             raise ValueError(
-                f"section {section.section_id} Approximate length must state words or pages"
+                f"section {section.title} Approximate length must state words or pages"
             )
+        section_refs = [
+            match
+            for field_name in TRACE_FIELDS
+            for match in PROJECT_REF_RE.finditer(section.fields[field_name])
+        ]
         for field_name in TRACE_FIELDS:
             value = section.fields[field_name]
             refs = list(PROJECT_REF_RE.finditer(value))
-            if BARE_PROJECT_REF_RE.search(value) and not refs:
+            value_without_refs = PROJECT_REF_RE.sub("", value)
+            if BARE_PROJECT_REF_RE.search(value_without_refs):
                 raise ValueError(
-                    f"section {section.section_id} {field_name} artifact references require #ID"
+                    f"section {section.title} {field_name} artifact references require #ID"
                 )
             if field_name in ALWAYS_TRACED_FIELDS and value.lower() != "none" and not refs:
                 raise ValueError(
-                    f"section {section.section_id} {field_name} must be 'none' or cite project/...#ID"
+                    f"section {section.title} {field_name} must be 'none' or cite project/...#ID"
                 )
-            if NUMBER_RE.search(value) and not refs:
+            if NUMBER_RE.search(value) and not section_refs:
                 raise ValueError(
-                    f"section {section.section_id} {field_name} contains an untraced number"
+                    f"section {section.title} {field_name} contains an untraced number"
                 )
-            ref_ids = {match.group("id") for match in refs}
-            for omission in OMISSION_RE.finditer(value):
-                if omission.group("id") not in ref_ids:
-                    raise ValueError(
-                        f"section {section.section_id} omission {omission.group('id')} lacks its source reference"
-                    )
+
+    top_roles = {section.fields["Section role"].strip().lower() for section in top_level}
+    missing_roles = sorted(REQUIRED_TOP_LEVEL_ROLES - top_roles)
+    if missing_roles:
+        raise ValueError(
+            "skeleton draft is not organizationally complete; missing top-level roles: "
+            + ", ".join(missing_roles)
+        )
+    for required_role in ("methods", "results"):
+        if required_role not in empirical_content_roles:
+            raise ValueError(
+                f"skeleton draft must include bare-bones {required_role} content"
+            )
 
 
 def validate_artifact_references(
     metadata: dict[str, str], sections: list[Section], project_root: Path
 ) -> None:
-    if project_root.name == "project":
-        repository_root = project_root.parent
-    else:
-        repository_root = project_root
+    repository_root = _repository_root(project_root)
     referenced = _source_version_paths(metadata["source_versions"])
     referenced.extend(
         match.group("path")
@@ -297,62 +377,62 @@ def validate_artifact_references(
         for value in section.fields.values()
         for match in PROJECT_REF_RE.finditer(value)
     )
-    missing = sorted(
-        item for item in set(referenced) if not (repository_root / Path(item)).exists()
-    )
+    resolved = {
+        item: _resolve_project_path(repository_root, item) for item in set(referenced)
+    }
+    missing = sorted(item for item, path in resolved.items() if not path.exists())
     if missing:
         raise ValueError("referenced project artifacts do not exist: " + ", ".join(missing))
 
-
-def make_crosswalk_rows(sections: list[Section]) -> list[dict[str, str]]:
-    rows: list[dict[str, str]] = []
     for section in sections:
-        for field_name in REQUIRED_FIELDS:
-            value = section.fields[field_name]
-            refs = list(PROJECT_REF_RE.finditer(value))
-            omissions = {match.group("id") for match in OMISSION_RE.finditer(value)}
-            for match in refs:
-                artifact_id = match.group("id")
-                rows.append(
-                    {
-                        "section_id": section.section_id,
-                        "parent_id": section.parent_id,
-                        "section_order": str(section.order),
-                        "section_title": section.title,
-                        "field": field_name,
-                        "artifact_path": match.group("path"),
-                        "artifact_id": artifact_id,
-                        "disposition": "omitted" if artifact_id in omissions else "placed",
-                        "note": value,
-                    }
-                )
-    validate_crosswalk(rows, sections)
+        for display in parse_displays(section.fields["Displays"]):
+            path = _resolve_project_path(repository_root, display.path)
+            if display.kind == "table":
+                _read_table(path)
+            elif display.kind == "equation":
+                _read_equation(path)
+
+
+def _repository_root(project_root: Path) -> Path:
+    return project_root.parent if project_root.name == "project" else project_root
+
+
+def _resolve_project_path(repository_root: Path, value: str) -> Path:
+    relative = Path(value)
+    if relative.is_absolute() or not relative.parts or relative.parts[0] != "project":
+        raise ValueError(f"artifact reference must remain under project/: {value}")
+    project_directory = (repository_root / "project").resolve()
+    resolved = (repository_root / relative).resolve()
+    try:
+        resolved.relative_to(project_directory)
+    except ValueError as exc:
+        raise ValueError(f"artifact reference escapes project/: {value}") from exc
+    return resolved
+
+
+def _read_table(path: Path) -> list[list[str]]:
+    delimiter = "\t" if path.suffix.lower() == ".tsv" else ","
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        rows = [[cell.strip() for cell in row] for row in csv.reader(handle, delimiter=delimiter)]
+    if not rows or not rows[0]:
+        raise ValueError(f"display table is empty: {path}")
+    width = len(rows[0])
+    if any(len(row) != width for row in rows):
+        raise ValueError(f"display table has inconsistent row widths: {path}")
+    if len(rows) > 200 or width > 25:
+        raise ValueError(f"display table is too large for a skeleton draft: {path}")
     return rows
 
 
-def validate_crosswalk(rows: list[dict[str, str]], sections: list[Section]) -> None:
-    section_map = {section.section_id: section for section in sections}
-    seen: set[tuple[str, str, str, str]] = set()
-    for index, row in enumerate(rows, 2):
-        if set(row) != set(CROSSWALK_COLUMNS):
-            raise ValueError(f"crosswalk row {index} has malformed columns")
-        section = section_map.get(row["section_id"])
-        if section is None or row["section_title"] != section.title:
-            raise ValueError(f"crosswalk row {index} has an unknown or mismatched section")
-        if row["parent_id"] != section.parent_id or row["section_order"] != str(section.order):
-            raise ValueError(f"crosswalk row {index} has inconsistent hierarchy or order")
-        if row["field"] not in REQUIRED_FIELDS:
-            raise ValueError(f"crosswalk row {index} has an unknown field")
-        if row["disposition"] not in {"placed", "omitted"}:
-            raise ValueError(f"crosswalk row {index} has an invalid disposition")
-        if not row["artifact_path"].startswith("project/") or not row["artifact_id"]:
-            raise ValueError(f"crosswalk row {index} lacks artifact provenance")
-        key = (row["section_id"], row["field"], row["artifact_path"], row["artifact_id"])
-        if key in seen:
-            raise ValueError(f"crosswalk row {index} duplicates an earlier mapping")
-        seen.add(key)
-    if not rows:
-        raise ValueError("crosswalk must contain at least one traceability row")
+def _read_equation(path: Path) -> str:
+    value = path.read_text(encoding="utf-8").strip()
+    if not value:
+        raise ValueError(f"display equation is empty: {path}")
+    if len(value) > 4000:
+        raise ValueError(f"display equation is too long: {path}")
+    if UNSAFE_TEX_RE.search(value):
+        raise ValueError(f"display equation contains an unsafe LaTeX command: {path}")
+    return value
 
 
 def _sha256(path: Path) -> str:
@@ -483,7 +563,51 @@ def _add_page_number(paragraph) -> None:
     run._r.extend([begin, instruction, end])
 
 
-def build_docx(metadata: dict[str, str], sections: list[Section], output: Path) -> None:
+def _add_docx_displays(doc: Document, section: Section, repository_root: Path) -> None:
+    for display in parse_displays(section.fields["Displays"]):
+        path = _resolve_project_path(repository_root, display.path)
+        label = display.kind.capitalize()
+        caption = doc.add_paragraph()
+        caption.paragraph_format.keep_with_next = True
+        caption.add_run(f"{label}. ").bold = True
+        caption.add_run(display.caption)
+        source = doc.add_paragraph()
+        source.paragraph_format.keep_with_next = True
+        source_run = source.add_run(display.reference)
+        source_run.italic = True
+        source_run.font.size = Pt(8.5)
+        source_run.font.color.rgb = RGBColor.from_string(MUTED)
+        if display.kind == "table":
+            rows = _read_table(path)
+            table = doc.add_table(rows=len(rows), cols=len(rows[0]))
+            table.style = "Table Grid"
+            if rows:
+                _repeat_header(table.rows[0])
+            widths = [CONTENT_WIDTH_DXA // len(rows[0])] * len(rows[0])
+            _set_table_geometry(table, widths)
+            for row_index, (word_row, values) in enumerate(zip(table.rows, rows)):
+                for cell, value in zip(word_row.cells, values):
+                    cell.text = value
+                    _set_cell_shading(cell, LIGHT_BLUE if row_index == 0 else WHITE)
+                    if row_index == 0:
+                        for run in cell.paragraphs[0].runs:
+                            run.bold = True
+        elif display.kind == "figure":
+            paragraph = doc.add_paragraph()
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = paragraph.add_run()
+            run.add_picture(str(path), width=Inches(6.2))
+        else:
+            paragraph = doc.add_paragraph()
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = paragraph.add_run(_read_equation(path))
+            run.font.name = "Cambria Math"
+            run.font.size = Pt(11)
+
+
+def build_docx(
+    metadata: dict[str, str], sections: list[Section], output: Path, repository_root: Path
+) -> None:
     doc = Document()
     _configure_document(doc)
     doc.core_properties.title = metadata["title"]
@@ -494,7 +618,7 @@ def build_docx(metadata: dict[str, str], sections: list[Section], output: Path) 
     doc.core_properties.modified = fixed_time
 
     header = doc.sections[0].header.paragraphs[0]
-    header.text = "ELARA  |  ARTICLE SKELETON"
+    header.text = "ELARA  |  SKELETON DRAFT"
     for run in header.runs:
         run.font.name = "Calibri"
         run.font.size = Pt(8.5)
@@ -505,7 +629,7 @@ def build_docx(metadata: dict[str, str], sections: list[Section], output: Path) 
 
     kicker = doc.add_paragraph()
     kicker.paragraph_format.space_after = Pt(3)
-    run = kicker.add_run("ELARA PLANNING ARTIFACT")
+    run = kicker.add_run("ELARA SKELETON DRAFT")
     run.bold = True
     run.font.size = Pt(9)
     run.font.color.rgb = RGBColor.from_string(BLUE)
@@ -516,9 +640,10 @@ def build_docx(metadata: dict[str, str], sections: list[Section], output: Path) 
     _set_table_geometry(callout, [CONTENT_WIDTH_DXA])
     _set_cell_shading(callout.cell(0, 0), LIGHT_GRAY)
     paragraph = callout.cell(0, 0).paragraphs[0]
-    paragraph.add_run("Planning boundary. ").bold = True
+    paragraph.add_run("Authoring boundary. ").bold = True
     paragraph.add_run(
-        "This document arranges verified claims and evidence. It is not article prose."
+        "This draft supplies the complete article structure and only minimal methods and "
+        "results language. The researcher writes the substantive prose."
     )
 
     for label, value in (
@@ -530,38 +655,49 @@ def build_docx(metadata: dict[str, str], sections: list[Section], output: Path) 
         paragraph.add_run(f"{label}: ").bold = True
         paragraph.add_run(value)
 
-    doc.add_paragraph("Proposed order", style="Heading 1")
+    doc.add_paragraph("Article structure", style="Heading 1")
     overview = doc.add_table(rows=1 + len(sections), cols=3)
     _repeat_header(overview.rows[0])
-    for cell, value in zip(overview.rows[0].cells, ("ID", "Section and purpose", "Approx. length")):
+    for cell, value in zip(overview.rows[0].cells, ("Section", "Role", "Approx. length")):
         _set_cell_shading(cell, LIGHT_BLUE)
         paragraph = cell.paragraphs[0]
         paragraph.add_run(value).bold = True
     for row, section in zip(overview.rows[1:], sections):
         cells = row.cells
         values = (
-            section.section_id,
-            f"{section.title}. {section.fields['Purpose']}",
+            f"{'  ' * section.depth}{section.title}",
+            section.fields["Section role"],
             section.fields["Approximate length"],
         )
         for cell, value in zip(cells, values):
             cell.text = value
             _set_cell_shading(cell, WHITE)
-    _set_table_geometry(overview, [1150, 6010, 2200])
+    _set_table_geometry(overview, [5250, 2010, 2100])
 
     doc.add_page_break()
-    doc.add_paragraph("Section-by-section map", style="Heading 1")
+    doc.add_paragraph("Skeleton draft", style="Heading 1")
     for section in sections:
         heading_level = min(section.depth + 1, 4)
-        doc.add_paragraph(
-            f"[{section.section_id}] {section.title}", style=f"Heading {heading_level}"
-        )
-        for field_name in REQUIRED_FIELDS:
+        doc.add_paragraph(section.title, style=f"Heading {heading_level}")
+        content = doc.add_paragraph()
+        content.paragraph_format.space_after = Pt(6)
+        content_run = content.add_run(section.fields["Bare-bones content"])
+        if section.fields["Bare-bones content"].casefold() == AUTHOR_TO_WRITE.casefold():
+            content_run.italic = True
+            content_run.font.color.rgb = RGBColor.from_string(MUTED)
+        for field_name in (
+            "Source support",
+            "Results presented",
+            "Author work",
+            "Open questions",
+            "Approximate length",
+        ):
             paragraph = doc.add_paragraph()
             paragraph.paragraph_format.left_indent = Inches(0.15)
             paragraph.paragraph_format.first_line_indent = Inches(-0.15)
             paragraph.add_run(f"{field_name}: ").bold = True
             paragraph.add_run(section.fields[field_name])
+        _add_docx_displays(doc, section, repository_root)
     doc.save(output)
 
 
@@ -592,7 +728,41 @@ def _latex_text_with_refs(value: str) -> str:
     return "".join(pieces)
 
 
-def build_tex(metadata: dict[str, str], sections: list[Section], output: Path) -> None:
+def _latex_displays(display_value: str, repository_root: Path, output: Path) -> list[str]:
+    lines: list[str] = []
+    for display in parse_displays(display_value):
+        path = _resolve_project_path(repository_root, display.path)
+        lines.append(
+            rf"\textbf{{{display.kind.capitalize()}.}} {_latex_escape(display.caption)}"
+        )
+        lines.append(rf"\textit{{Source:}} \path{{{display.reference}}}")
+        if display.kind == "table":
+            rows = _read_table(path)
+            columns = "l" * len(rows[0])
+            lines.extend([r"\begin{center}", r"\resizebox{\linewidth}{!}{%", rf"\begin{{tabular}}{{{columns}}}", r"\hline"])
+            for index, row in enumerate(rows):
+                content = " & ".join(_latex_escape(cell) for cell in row) + r" \\"
+                if index == 0:
+                    content = r"\textbf{" + (r"} & \textbf{".join(_latex_escape(cell) for cell in row)) + r"} \\ \hline"
+                lines.append(content)
+            lines.extend([r"\hline", r"\end{tabular}%", r"}", r"\end{center}"])
+        elif display.kind == "figure":
+            relative = Path(os.path.relpath(path, output.parent)).as_posix()
+            lines.extend(
+                [
+                    r"\begin{center}",
+                    rf"\includegraphics[width=0.92\linewidth]{{\detokenize{{{relative}}}}}",
+                    r"\end{center}",
+                ]
+            )
+        else:
+            lines.extend([r"\[", _read_equation(path), r"\]"])
+    return lines
+
+
+def build_tex(
+    metadata: dict[str, str], sections: list[Section], output: Path, repository_root: Path
+) -> None:
     heading_commands = ("section", "subsection", "subsubsection", "paragraph")
     lines = [
         r"\documentclass[11pt]{article}",
@@ -601,14 +771,15 @@ def build_tex(metadata: dict[str, str], sections: list[Section], output: Path) -
         r"\usepackage{lmodern}",
         r"\usepackage{xcolor}",
         r"\usepackage{tabularx}",
+        r"\usepackage{graphicx}",
         r"\usepackage{fancyhdr}",
         r"\usepackage[hidelinks]{hyperref}",
         r"\definecolor{ELARABlue}{HTML}{2E74B5}",
         r"\pagestyle{fancy}",
         r"\fancyhf{}",
-        r"\lhead{\small\color{gray} ELARA | ARTICLE SKELETON}",
+        r"\lhead{\small\color{gray} ELARA | SKELETON DRAFT}",
         r"\rfoot{\thepage}",
-        r"\fancypagestyle{plain}{\fancyhf{}\lhead{\small\color{gray} ELARA | ARTICLE SKELETON}\rfoot{\thepage}}",
+        r"\fancypagestyle{plain}{\fancyhf{}\lhead{\small\color{gray} ELARA | SKELETON DRAFT}\rfoot{\thepage}}",
         r"\setlength{\parindent}{0pt}",
         r"\setlength{\parskip}{5pt}",
         r"\setlength{\emergencystretch}{3em}",
@@ -619,7 +790,7 @@ def build_tex(metadata: dict[str, str], sections: list[Section], output: Path) -
         r"\date{}",
         r"\begin{document}",
         r"\maketitle",
-        r"\begin{center}\fcolorbox{ELARABlue}{gray!8}{\parbox{0.88\linewidth}{\textbf{Planning boundary.} This document arranges verified claims and evidence. It is not article prose.}}\end{center}",
+        r"\begin{center}\fcolorbox{ELARABlue}{gray!8}{\parbox{0.88\linewidth}{\textbf{Authoring boundary.} This draft supplies the complete article structure and only minimal methods and results language. The researcher writes the substantive prose.}}\end{center}",
         r"\begin{itemize}",
         rf"\item \textbf{{Target venue:}} {_latex_escape(metadata['target_venue'])}",
         rf"\item \textbf{{Target length:}} {_latex_escape(metadata['target_length'])}",
@@ -631,78 +802,114 @@ def build_tex(metadata: dict[str, str], sections: list[Section], output: Path) -
         ),
         r"\end{itemize}",
         r"\end{itemize}",
-        r"\section*{Proposed order}",
-        r"\begin{tabularx}{\linewidth}{@{}p{0.11\linewidth}X p{0.19\linewidth}@{}}",
-        r"\textbf{ID} & \textbf{Section and purpose} & \textbf{Approx. length} \\\hline",
+        r"\section*{Article structure}",
+        r"\begin{tabularx}{\linewidth}{@{}X p{0.19\linewidth}p{0.19\linewidth}@{}}",
+        r"\textbf{Section} & \textbf{Role} & \textbf{Approx. length} \\\hline",
     ]
     for section in sections:
         lines.append(
-            f"{_latex_escape(section.section_id)} & "
-            f"{_latex_escape(section.title + '. ' + section.fields['Purpose'])} & "
+            f"{_latex_escape('  ' * section.depth + section.title)} & "
+            f"{_latex_escape(section.fields['Section role'])} & "
             f"{_latex_escape(section.fields['Approximate length'])} \\\\"
         )
-    lines.extend([r"\end{tabularx}", r"\clearpage", r"\section*{Section-by-section map}"])
+    lines.extend([r"\end{tabularx}", r"\clearpage", r"\section*{Skeleton draft}"])
     for section in sections:
         command = heading_commands[min(section.depth, len(heading_commands) - 1)]
-        lines.append(
-            rf"\{command}*{{[{_latex_escape(section.section_id)}] {_latex_escape(section.title)}}}"
-        )
+        lines.append(rf"\{command}*{{{_latex_escape(section.title)}}}")
+        content = _latex_text_with_refs(section.fields["Bare-bones content"])
+        if section.fields["Bare-bones content"].casefold() == AUTHOR_TO_WRITE.casefold():
+            lines.append(rf"\textcolor{{gray}}{{\emph{{{content}}}}}")
+        else:
+            lines.append(content)
         lines.append(r"\begin{description}")
-        for field_name in REQUIRED_FIELDS:
+        for field_name in (
+            "Source support",
+            "Results presented",
+            "Author work",
+            "Open questions",
+            "Approximate length",
+        ):
             lines.append(
                 rf"\item[{_latex_escape(field_name)}] {_latex_text_with_refs(section.fields[field_name])}"
             )
         lines.append(r"\end{description}")
+        lines.extend(_latex_displays(section.fields["Displays"], repository_root, output))
     lines.extend([r"\end{document}", ""])
     output.write_text("\n".join(lines), encoding="utf-8", newline="\n")
 
 
-def build_markdown(metadata: dict[str, str], sections: list[Section], output: Path) -> None:
+def _markdown_displays(display_value: str, repository_root: Path, output: Path) -> list[str]:
+    lines: list[str] = []
+    for display in parse_displays(display_value):
+        path = _resolve_project_path(repository_root, display.path)
+        lines.extend(
+            [
+                f"**{display.kind.capitalize()}.** {display.caption}",
+                "",
+                f"*Source: `{display.reference}`*",
+                "",
+            ]
+        )
+        if display.kind == "table":
+            rows = _read_table(path)
+            lines.append("| " + " | ".join(rows[0]) + " |")
+            lines.append("|" + "|".join("---" for _ in rows[0]) + "|")
+            lines.extend("| " + " | ".join(row) + " |" for row in rows[1:])
+        elif display.kind == "figure":
+            relative = Path(os.path.relpath(path, output.parent)).as_posix()
+            lines.append(f"![{display.caption}]({relative})")
+        else:
+            lines.extend(["$$", _read_equation(path), "$$"])
+        lines.append("")
+    return lines
+
+
+def build_markdown(
+    metadata: dict[str, str], sections: list[Section], output: Path, repository_root: Path
+) -> None:
     lines = [
         f"# {metadata['title']}",
         "",
         f"*{metadata['subtitle']}*",
         "",
-        "> **Planning boundary.** This document arranges verified claims and evidence. It is not article prose.",
+        "> **Authoring boundary.** This draft supplies the complete article structure and only minimal methods and results language. The researcher writes the substantive prose.",
         "",
         f"- **Target venue:** {metadata['target_venue']}",
         f"- **Target length:** {metadata['target_length']}",
         f"- **Verified source set:** {metadata['source_versions']}",
         "",
-        "## Proposed order",
+        "## Article structure",
         "",
-        "| ID | Section and purpose | Approximate length |",
+        "| Section | Role | Approximate length |",
         "|---|---|---|",
     ]
     for section in sections:
         lines.append(
-            f"| {section.section_id} | {section.title}. {section.fields['Purpose']} | "
+            f"| {'&nbsp;' * (section.depth * 4)}{section.title} | {section.fields['Section role']} | "
             f"{section.fields['Approximate length']} |"
         )
-    lines.extend(["", "## Section-by-section map", ""])
+    lines.extend(["", "## Skeleton draft", ""])
     for section in sections:
         level = min(3 + section.depth, 6)
-        lines.append(f"{'#' * level} [{section.section_id}] {section.title}")
+        lines.append(f"{'#' * level} {section.title}")
         lines.append("")
-        for field_name in REQUIRED_FIELDS:
+        content = section.fields["Bare-bones content"]
+        if content.casefold() == AUTHOR_TO_WRITE.casefold():
+            lines.append(f"*{content}*")
+        else:
+            lines.append(content)
+        lines.append("")
+        for field_name in (
+            "Source support",
+            "Results presented",
+            "Author work",
+            "Open questions",
+            "Approximate length",
+        ):
             lines.append(f"**{field_name}:** {section.fields[field_name]}")
             lines.append("")
+        lines.extend(_markdown_displays(section.fields["Displays"], repository_root, output))
     output.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8", newline="\n")
-
-
-def _write_crosswalk(path: Path, rows: list[dict[str, str]]) -> None:
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=CROSSWALK_COLUMNS, lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def _validate_written_crosswalk(path: Path, sections: list[Section]) -> None:
-    with path.open("r", encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle)
-        if tuple(reader.fieldnames or ()) != CROSSWALK_COLUMNS:
-            raise ValueError("written crosswalk has malformed columns")
-        validate_crosswalk(list(reader), sections)
 
 
 def _validate_output(path: Path, output_format: str, sections: list[Section]) -> None:
@@ -713,18 +920,14 @@ def _validate_output(path: Path, output_format: str, sections: list[Section]) ->
             for paragraph in reopened.paragraphs
             if paragraph.style is not None and paragraph.style.name.startswith("Heading")
         }
-        missing = [
-            section.section_id
-            for section in sections
-            if f"[{section.section_id}] {section.title}" not in headings
-        ]
+        missing = [section.title for section in sections if section.title not in headings]
         if missing:
             raise ValueError("generated Word artifact is missing sections: " + ", ".join(missing))
         if not reopened.tables:
             raise ValueError("generated Word artifact is missing table geometry")
     else:
         text = path.read_text(encoding="utf-8")
-        missing = [section.section_id for section in sections if section.section_id not in text]
+        missing = [section.title for section in sections if section.title not in text]
         if missing:
             raise ValueError("generated artifact is missing sections: " + ", ".join(missing))
         if PLACEHOLDER_RE.search(text):
@@ -734,7 +937,6 @@ def _validate_output(path: Path, output_format: str, sections: list[Section]) ->
 def build(
     source: Path,
     output: Path,
-    crosswalk: Path,
     manifest: Path,
     project_root: Path,
 ) -> None:
@@ -742,11 +944,9 @@ def build(
         raise ValueError("source must be a .md file")
     if not source.is_file():
         raise ValueError(f"source does not exist: {source}")
-    for path in (output, crosswalk, manifest):
+    for path in (output, manifest):
         if path.exists():
             raise ValueError(f"refusing to overwrite existing artifact: {path}")
-    if crosswalk.suffix.lower() != ".csv":
-        raise ValueError("crosswalk must be a .csv file")
     if manifest.suffix.lower() != ".json":
         raise ValueError("manifest must be a .json file")
 
@@ -757,27 +957,23 @@ def build(
             f"output extension {output.suffix or '(none)'} does not match output_format {output_format}"
         )
     validate_artifact_references(metadata, sections, project_root)
-    rows = make_crosswalk_rows(sections)
+    repository_root = _repository_root(project_root)
 
-    for path in (output, crosswalk, manifest):
+    for path in (output, manifest):
         path.parent.mkdir(parents=True, exist_ok=True)
     created: list[Path] = []
     try:
         if output_format == "docx":
-            build_docx(metadata, sections, output)
+            build_docx(metadata, sections, output, repository_root)
         elif output_format == "tex":
-            build_tex(metadata, sections, output)
+            build_tex(metadata, sections, output, repository_root)
         else:
-            build_markdown(metadata, sections, output)
+            build_markdown(metadata, sections, output, repository_root)
         created.append(output)
         _validate_output(output, output_format, sections)
 
-        _write_crosswalk(crosswalk, rows)
-        created.append(crosswalk)
-        _validate_written_crosswalk(crosswalk, sections)
-
         manifest_payload = {
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "stage_id": "17-skeleton-draft",
             "source": {"path": source.as_posix(), "sha256": _sha256(source)},
             "output": {
@@ -785,12 +981,25 @@ def build(
                 "format": output_format,
                 "sha256": _sha256(output),
             },
-            "crosswalk": {
-                "path": crosswalk.as_posix(),
-                "sha256": _sha256(crosswalk),
-                "rows": len(rows),
-            },
-            "sections": [section.section_id for section in sections],
+            "sections": [
+                {
+                    "title": section.title,
+                    "level": section.level,
+                    "order": section.order,
+                    "role": section.fields["Section role"],
+                }
+                for section in sections
+            ],
+            "displays": [
+                {
+                    "section": section.title,
+                    "kind": display.kind,
+                    "reference": display.reference,
+                    "caption": display.caption,
+                }
+                for section in sections
+                for display in parse_displays(section.fields["Displays"])
+            ],
             "verified_source_versions": _source_version_paths(metadata["source_versions"]),
         }
         manifest.write_text(
@@ -809,7 +1018,6 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("source", type=Path, help="immutable run-scoped Markdown source")
     parser.add_argument("output", type=Path, help="new .docx, .tex, or .md artifact")
-    parser.add_argument("--crosswalk", type=Path, required=True, help="new crosswalk CSV")
     parser.add_argument("--manifest", type=Path, required=True, help="new run manifest JSON")
     parser.add_argument(
         "--project-root",
@@ -822,14 +1030,13 @@ def main() -> int:
         build(
             args.source.resolve(),
             args.output.resolve(),
-            args.crosswalk.resolve(),
             args.manifest.resolve(),
             args.project_root.resolve(),
         )
     except (OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
-    print(f"Created {args.output}, {args.crosswalk}, and {args.manifest}")
+    print(f"Created {args.output} and {args.manifest}")
     return 0
 
 
