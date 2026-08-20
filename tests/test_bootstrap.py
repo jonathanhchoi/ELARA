@@ -235,7 +235,7 @@ class ExistingFolderTests(unittest.TestCase):
             # Simulate an older kit file and a locally edited stage; --update refreshes both,
             # never the project state, the researcher's files, or their text in merged files.
             (target / "PIPELINE.md").write_text("old kit map\n", encoding="utf-8")
-            (target / "workflow" / "stages" / "18-cite-check.md").write_text("old\n", encoding="utf-8")
+            (target / "workflow" / "stages" / "19-cite-check.md").write_text("old\n", encoding="utf-8")
             state = target / "project" / "PROJECT_STATE.md"
             state_text = state.read_text(encoding="utf-8").replace("project_slug: null", 'project_slug: "mine"')
             state.write_text(state_text, encoding="utf-8")

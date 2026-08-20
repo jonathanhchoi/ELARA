@@ -183,7 +183,7 @@ At minimum, apply these rules:
 | Corpus population, coverage, provenance, exclusions, OCR treatment, or deduplication rule | Return to stage 10; also return to stages 06 or 09 if authorization or preregistered scope is affected. |
 | Human-validation sample, coding, adjudication, or error model | Invalidate validation acceptance and corrected analysis; return to stage 13. |
 | Analysis or robustness code | Rebuild stages 14–16 and any publication artifacts that use the changed results. |
-| Manuscript text or citation support | Create a new manuscript version and repeat stages 18–19 as applicable. |
+| Article skeleton, manuscript text, or citation support | Create a new skeleton or manuscript version and repeat stages 17–20 as applicable. |
 
 Do not narrow an invalidation because rerunning is expensive. If the effect is
 uncertain, treat it as potentially material and ask the researcher.

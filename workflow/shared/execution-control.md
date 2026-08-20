@@ -56,7 +56,7 @@ infer completion from a tracker left by an earlier session.
   first. Complete that phase before any project write. Continue into execution
   in the same session when no stop condition applies. Enter Plan Mode and pause
   only when `workflow/shared/guardrails.md` section 11 requires a researcher
-  handoff; Stages 17 and 19 always do because their plan is the manuscript-edit
+  handoff; Stages 18 and 20 always do because their plan is the manuscript-edit
   gate.
 
 This distinction preserves low-touch work between gates. The native tracker is

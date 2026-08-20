@@ -55,6 +55,35 @@ class WorkflowContractTests(unittest.TestCase):
         for stage_id, gate in HARD_GATES.items():
             self.assertEqual(by_id[stage_id]["human_gate"], gate)
 
+    def test_skeleton_stage_contract_and_public_routes(self) -> None:
+        stages = {meta["stage_id"]: (meta, body) for _, meta, body in load_stages(ROOT)}
+        metadata, body = stages["17-skeleton-draft"]
+        self.assertEqual(metadata["paper_steps"], ["6"])
+        self.assertFalse(metadata["core"])
+        self.assertEqual(metadata["interaction_profile"], "normal")
+        self.assertFalse(metadata["long_running"])
+        self.assertEqual(metadata["prerequisites"], ["16-replication-package"])
+        self.assertEqual(metadata["human_gate"], "skeleton-draft-approval")
+        self.assertEqual(metadata["next_stage"], "18-integrate-manuscript")
+        for phrase in (
+            "create the skeleton draft",
+            "skip",
+            "Word as the default",
+            "LaTeX",
+            "Markdown",
+            "article prose",
+            "waiting_for_user",
+        ):
+            self.assertIn(phrase.lower(), body.lower())
+        self.assertEqual(stages["16-replication-package"][0]["next_stage"], "17-skeleton-draft")
+        self.assertEqual(stages["18-integrate-manuscript"][0]["prerequisites"], ["17-skeleton-draft"])
+        stage_eighteen = stages["18-integrate-manuscript"][1]
+        self.assertIn("planning context", stage_eighteen)
+        self.assertIn("waiting_for_user", stage_eighteen)
+        pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
+        self.assertIn("elr-17-skeleton-draft", pipeline)
+        self.assertIn("Workflow 2.0 state compatibility", pipeline)
+
     def test_plan_profiles_cannot_claim_automatic_mode_switching(self) -> None:
         for path, meta, body in load_stages(ROOT):
             if meta["interaction_profile"] in {"plan", "plan_then_execute"}:
@@ -153,18 +182,18 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("publication profile", contract_text.lower())
         self.assertIn("first draft", contract_text)
         stages = {meta["stage_id"]: body for _, meta, body in load_stages(ROOT)}
-        for stage_id in ("17-integrate-manuscript", "19-revise-and-respond"):
+        for stage_id in ("18-integrate-manuscript", "20-revise-and-respond"):
             body = stages[stage_id]
             self.assertIn("workflow/shared/manuscript-editing-contract.md", body, stage_id)
             self.assertIn("PUBLICATION_PROFILE_vNNN.md", body, stage_id)
             self.assertIn("hash", body.lower(), stage_id)
         # Stage 00 may offer to create the profile; no coding or analysis stage reads it.
         for stage_id, body in stages.items():
-            if stage_id in ("00-initialize", "17-integrate-manuscript", "19-revise-and-respond"):
+            if stage_id in ("00-initialize", "18-integrate-manuscript", "20-revise-and-respond"):
                 continue
             self.assertNotIn("PUBLICATION_PROFILE", body, stage_id)
         for platform in (".agents", ".claude"):
-            for stage_id in ("17-integrate-manuscript", "19-revise-and-respond"):
+            for stage_id in ("18-integrate-manuscript", "20-revise-and-respond"):
                 wrapper = ROOT / platform / "skills" / f"elr-{stage_id}" / "SKILL.md"
                 self.assertIn("manuscript-editing-contract.md", wrapper.read_text(encoding="utf-8"))
         # The profile is loaded on demand only; never from the always-on instructions.
@@ -205,7 +234,7 @@ class WorkflowContractTests(unittest.TestCase):
             for _, meta, body in load_stages(ROOT)
             if "workflow/shared/fresh-review.md" in body
         ]
-        for stage_id in ("02-preemption-review", "12-interpretive-verification", "18-cite-check"):
+        for stage_id in ("02-preemption-review", "12-interpretive-verification", "19-cite-check"):
             self.assertIn(stage_id, referencing)
 
     def test_long_work_requires_progress_and_eta_updates(self) -> None:
@@ -386,7 +415,7 @@ class WorkflowContractTests(unittest.TestCase):
                          "08-pilot", "09-freeze-and-preregister", "13-human-validation", "14-analysis-and-correction"):
             body = (ROOT / "workflow" / "stages" / f"{stage_id}.md").read_text(encoding="utf-8")
             self.assertIn("continue into execution in the same session", body, stage_id)
-        for stage_id in ("17-integrate-manuscript", "19-revise-and-respond"):
+        for stage_id in ("18-integrate-manuscript", "20-revise-and-respond"):
             body = (ROOT / "workflow" / "stages" / f"{stage_id}.md").read_text(encoding="utf-8")
             self.assertIn("manuscript-edit-permission", body, stage_id)
             self.assertNotIn("continue into execution in the same session", body, stage_id)
@@ -461,7 +490,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn(".codex/agents/", agents)
         self.assertIn("## How parallel work runs", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
         stages = {meta["stage_id"]: body for _, meta, body in load_stages(ROOT)}
-        for stage_id in ("02-preemption-review", "07-adversarial-review", "18-cite-check"):
+        for stage_id in ("02-preemption-review", "07-adversarial-review", "19-cite-check"):
             self.assertIn("elr-research-fanout", stages[stage_id], stage_id)
             self.assertIn("elr_research_worker", stages[stage_id], stage_id)
         for stage_id in ("08-pilot", "11-scale-up", "12-interpretive-verification", "15-robustness"):

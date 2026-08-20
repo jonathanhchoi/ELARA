@@ -1,15 +1,14 @@
 ---
-name: "elr-17-integrate-manuscript"
-description: "Run ELR stage 17-integrate-manuscript: Integrate validated results into the researcher's manuscript. Use when this is the current stage in project/PROJECT_STATE.md or when the researcher explicitly requests this recovery stage."
+name: "elr-17-skeleton-draft"
+description: "Run ELR stage 17-skeleton-draft: Create and approve the article skeleton. Use when this is the current stage in project/PROJECT_STATE.md or when the researcher explicitly requests this recovery stage."
+disable-model-invocation: true
 ---
 
-# Run elr-17-integrate-manuscript
+# Run elr-17-skeleton-draft
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.
-   Then read `workflow/shared/manuscript-editing-contract.md` and the active publication profile pinned in
-   `project/PROJECT_STATE.md` (`project/PUBLICATION_PROFILE_vNNN.md`), if any.
-2. Read `workflow/stages/17-integrate-manuscript.md` completely and follow it as the single source of substantive
+2. Read `workflow/stages/17-skeleton-draft.md` completely and follow it as the single source of substantive
    instructions for this stage.
 3. Confirm that the stage is current and its prerequisites and approvals are satisfied
    (imported artifacts and researcher-asserted approvals count). If the project is
@@ -18,7 +17,7 @@ description: "Run ELR stage 17-integrate-manuscript: Integrate validated results
    the menu, or by name), first satisfy its prerequisites through Stage 00's adoption path,
    then run it; otherwise stop.
 4. Create or reconcile the host-native stage plan before work and update it at every phase
-   boundary as required; On Codex use `update_plan` and keep exactly one item `in_progress`.
+   boundary as required; On Claude Code use `TaskCreate`, `TaskUpdate`, and `TaskList`.
 5. Honor the mode handoff. For `long_running: true`, resume the matching active goal or give
    the exact `/goal <goal_condition>` handoff and stop; never replace another active goal.
    Otherwise work low-touch under `workflow/shared/guardrails.md` section 11.

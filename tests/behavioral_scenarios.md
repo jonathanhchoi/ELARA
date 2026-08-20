@@ -42,7 +42,7 @@ forward-test target.
    controllers' `status` reconciles the counts.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
-success transition, and at least one valid failure route for every canonical stage 00–19.
+success transition, and at least one valid failure route for every canonical stage 00–20.
 `test_acceptance.py` checks those records against the canonical front matter, exercises clean-copy
 and Download-ZIP discovery for both Codex and Claude, and runs the no-network public-domain fixture
 twice: once to build the package and once from that package in a fresh directory.

@@ -325,7 +325,7 @@ issue. This section is the complete list of reasons to stop; nothing else is.
 - **Plan-then-execute stages** plan first, read-only, then execute in the same
   session; the stage's own gate is where the researcher decides. Maintain the
   native plan tracker throughout. Enter Plan Mode, stop, and hand off only when
-  a stop condition above holds. Stages 17 and 19 are the exception by design:
+  a stop condition above holds. Stages 18 and 20 are the exception by design:
   their plan is the `manuscript-edit-permission` gate. A long-running execution
   phase also performs the one-time goal handoff in item 7.
 - **Between stages** in `pipeline` mode, when a stage ends with no gate or

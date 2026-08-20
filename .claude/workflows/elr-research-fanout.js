@@ -2,7 +2,7 @@ export const meta = {
   name: 'elr-research-fanout',
   description: 'Run one bounded empirical-legal-research assignment (search, retrieval, cite-check, review) per isolated research worker',
   whenToUse:
-    'ELARA research fan-outs under workflow/shared/observation-fanout.md, "Research fan-outs": Stage 02 query, author, citation-chain, and retrieval waves; Stage 07 independent critics; Stage 18 claim-citation pairs; add-citations retrieval; fresh reviews. After scripts/research_fanout.py prepare has sealed a fan-out directory, run every pending assignment as one restricted elr-research-worker subagent. Launched by the assistant as part of the stage; the researcher does not need to type it.',
+    'ELARA research fan-outs under workflow/shared/observation-fanout.md, "Research fan-outs": Stage 02 query, author, citation-chain, and retrieval waves; Stage 07 independent critics; Stage 19 claim-citation pairs; add-citations retrieval; fresh reviews. After scripts/research_fanout.py prepare has sealed a fan-out directory, run every pending assignment as one restricted elr-research-worker subagent. Launched by the assistant as part of the stage; the researcher does not need to type it.',
   phases: [
     { title: 'Discover', detail: 'controller status: pending assignments, launches recorded' },
     { title: 'Workers', detail: 'one elr-research-worker per pending assignment, in bounded waves' },

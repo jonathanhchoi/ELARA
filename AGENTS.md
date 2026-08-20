@@ -39,7 +39,7 @@ very fast research assistant whose work is verified, never trusted.
    an automatic permission switch: `normal` is interactive; `plan` produces no
    file changes; `execute` runs the tracked execution; `plan_then_execute`
    completes its tracked read-only plan phase before any write and continues in
-   the same session unless a §11 stop applies (Stages 17 and 19 always stop,
+   the same session unless a §11 stop applies (Stages 18 and 20 always stop,
    because their plan is the manuscript-edit gate). A stage marked
    `long_running: true` executes only under its exact front-matter
    `goal_condition`: inspect the current goal, resume it if it matches, or give
@@ -194,7 +194,7 @@ shared, and which are the researcher's, so a folder both use (for example
 - Code is not done until it runs on a sample and its output is inspected. A stage
   is not done until every declared artifact and invariant is verified. Finish any
   file-editing task with a self-review and a complete, accurate list of changes.
-- Manuscript work (Stages 17–19 and the optional utilities in
+- Manuscript work (Stages 18–20 and the optional utilities in
   `workflow/utilities/`) follows `workflow/shared/manuscript-editing-contract.md`
   and the researcher's publication profile (`project/PUBLICATION_PROFILE_vNNN.md`),
   which those stages read on demand. The profile governs prose and deliverable

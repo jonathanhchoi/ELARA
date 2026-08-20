@@ -1,6 +1,0 @@
-interface:
-  display_name: "ELR 18 Cite Check"
-  short_description: "Audit manuscript citations against sources"
-  default_prompt: "Use $elr-18-cite-check for the current empirical legal research project."
-policy:
-  allow_implicit_invocation: false

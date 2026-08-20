@@ -51,9 +51,9 @@ and can't do.
 
 Next, it asks whether you want the whole pipeline or a specific tool. The whole
 pipeline proceeds in order from project selection through replication, with
-optional publication steps at the end. The tools menu lets you go directly to
+optional article-planning and publication steps at the end. The tools menu lets you go directly to
 tasks such as a preemption review, feasibility audit, methods design, codebook,
-human validation, manuscript integration, citation checking, or proofreading.
+human validation, a skeleton draft, manuscript integration, citation checking, or proofreading.
 See [PIPELINE.md](PIPELINE.md) for the complete menu.
 
 ELARA then works out what it can from your files, asks the few things it still
@@ -228,14 +228,14 @@ files are never moved, renamed, or edited.
 | Question only | A chosen question and contribution | `02-preemption-review` after skipping Stage 01 |
 | Design in hand | Methods, a codebook, schema, or prompt | `06-data-authorization`, or `07`/`08` if you also assert authorization and adversarial review |
 | Data in hand | Coded data, with or without a codebook | `12-interpretive-verification`, or `13`/`14` if you also assert verification and human validation |
-| Results in hand | Analysis code and results | `16-replication-package`, or `17-integrate-manuscript` if you assert a package |
-| Publication only | A draft and perhaps a referee letter | `17-integrate-manuscript` for results integration, otherwise `18-cite-check`. The manuscript utilities are immediately available |
+| Results in hand | Analysis code and results | `16-replication-package`, or `17-skeleton-draft` if you assert a verified package |
+| Publication only | A draft and perhaps a referee letter | `18-integrate-manuscript` for results integration, otherwise `19-cite-check`. Stage 17 may be recorded as skipped, and the manuscript utilities are immediately available |
 
 Adoption cannot reconstruct facts that were never recorded. An analysis without
 a dated preregistration remains labeled as not preregistered. A human-validation
 sample remains labeled as not held out if you cannot identify which units were
 used to tune the prompt or codebook. Work you already audited is audited again
-when Stages 12 or 18 run. These limitations don't block the pipeline, but they
+when Stages 12 or 19 run. These limitations don't block the pipeline, but they
 change what ELARA reports as verified.
 
 ## Can I try a short demonstration?
@@ -256,7 +256,7 @@ real project.
 
 ## How does the kit correspond to the paper?
 
-ELARA's nineteen operational stages implement the paper's six-step framework.
+ELARA's twenty operational stages implement the paper's six-step framework.
 
 | Paper step | ELARA stages | Purpose |
 |---|---|---|
@@ -266,7 +266,7 @@ ELARA's nineteen operational stages implement the paper's six-step framework.
 | 3. Data acquisition | `10` through `11` | Assemble the corpus and generate structured data |
 | 4. Validation | `12` through `13` | Verify interpretive support and benchmark against blinded human coding |
 | 5. Analysis, robustness, and replication | `14` through `16` | Analyze the data, correct for measurement error, test robustness, and build a verified replication package |
-| 6. Publication | `17` through `19` | Integrate results into the researcher's draft, audit citations, and revise with permission |
+| 6. Publication | `17` through `20` | Map the article without prose, integrate results into the researcher's draft, audit citations, and revise with permission |
 
 Stage 02's formatted Word literature review begins with a decision-focused
 executive summary, normally no more than two or three pages, that compares what
@@ -274,16 +274,31 @@ each closest match actually says with the intended contribution and identifies
 exactly what it preempts and what remains. The detailed map of the closest work
 and the supporting search record follow.
 
-The publication steps are optional. Stage 17 only integrates results into an
-existing substantive draft. ELARA won't write the first draft or turn an
-outline into a paper. The researcher retains control over the thesis, framing,
-organization, and voice.
+The publication steps are optional. Stage 17 offers a default, skippable article
+skeleton after the replication package is verified. It maps section purposes,
+claims, evidence, results, tables, figures, limitations, and open questions in
+Word by default, with LaTeX and Markdown alternatives. It writes no article
+paragraphs. Stage 18 only integrates results into an existing substantive draft.
+ELARA won't write the first draft or turn an outline into a paper. The
+researcher retains control over the thesis, framing, organization, and voice.
+
+Workflow version 2.0.0 inserted Stage 17 and renumbered the former publication
+Stages 17–19 as 18–20. Existing projects whose state points to one of those old
+IDs are not migrated automatically. Repair the state against its ledgers and
+active artifact hashes, or use Stage 00's adoption path to record the correct
+2.0 landing.
 
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
 ## How does ELARA handle manuscript work?
 
-Voice, venue, and formatting belong to the researcher. Before Stage 17, copy
+The Stage 17 skeleton is a planning artifact, not a first draft. It stays active
+through as many versioned iterations as the researcher wants, then advances only
+after explicit approval or a recorded skip. Stage 18 may consult an approved
+skeleton, but the researcher's substantive draft and explicit instructions
+control.
+
+Voice, venue, and formatting belong to the researcher. Before Stage 18, copy
 `workflow/templates/publication_profile_template.md` to
 `project/PUBLICATION_PROFILE_v001.md`. Use the profile to record the venue,
 audience, tone, relevant examples, citation style, and whether ELARA should
@@ -300,7 +315,7 @@ ELARA asks for one before writing prose.
 
 Three optional utilities address manuscript tasks outside the sequential
 pipeline. `$elr-add-citations` retrieves and adds only the citations you marked,
-then sends the new version through the audit-only Stage 18. `$elr-proofread`
+then sends the new version through the audit-only Stage 19. `$elr-proofread`
 reports issues involving grammar, clarity, tone, style, consistency, and venue
 rules. It fixes only clear errors that you permit. `$elr-apply-markup`
 transcribes a hand-marked PDF into an edit list, stops for your review, and then
@@ -422,8 +437,9 @@ requirements.txt                Bounded Python dependencies
 workflow/stages/NN-*.md         Canonical sequential stage instructions
 workflow/utilities/             Optional manuscript utilities
 workflow/shared/                Guardrails and artifact, fan-out, and manuscript contracts
-workflow/templates/             Preemption-review, preregistration, and publication-profile templates
+workflow/templates/             Preemption-review, preregistration, skeleton-draft, and publication-profile templates
 scripts/build_preemption_review.py  Build the formatted Stage 02 Word report
+scripts/build_skeleton_draft.py Build and validate Stage 17 Word, LaTeX, or Markdown skeletons
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
 .claude/agents/                 Claude restricted worker subagents
@@ -486,7 +502,8 @@ python scripts/doctor.py --json
 ```
 
 Python, `jsonschema`, and `python-docx` are required for the deterministic
-fan-out controller, validators, and formatted Stage 02 Word report. They aren't
+fan-out controller, validators, formatted Stage 02 Word report, and Stage 17
+skeleton builder. They aren't
 required for the earliest design discussion.
 
 ## What about plugins, MCP servers, and hooks?

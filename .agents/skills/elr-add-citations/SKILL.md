@@ -1,6 +1,6 @@
 ---
 name: "elr-add-citations"
-description: "Research, retrieve, and add only the citations the researcher marked as needed, in the publication profile's citation style, then route the new manuscript version through the audit-only Stage 18. Use when the researcher asks to add or supply citations for specific passages."
+description: "Research, retrieve, and add only the citations the researcher marked as needed, in the publication profile's citation style, then route the new manuscript version through the audit-only Stage 19. Use when the researcher asks to add or supply citations for specific passages."
 ---
 
 # Run elr-add-citations
@@ -20,5 +20,5 @@ description: "Research, retrieve, and add only the citations the researcher mark
    On Codex use `update_plan` and keep exactly one item `in_progress`.
 5. Honor the utility's phases. Do not edit any manuscript file before the researcher grants
    the permission the canonical file names; a skill cannot switch Plan or Goal mode by itself.
-6. Afterwards follow the route the canonical file names (`workflow/stages/18-cite-check.md`) rather than
+6. Afterwards follow the route the canonical file names (`workflow/stages/19-cite-check.md`) rather than
    treating the utility's output as final.

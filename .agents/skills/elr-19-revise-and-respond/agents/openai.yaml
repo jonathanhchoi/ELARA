@@ -1,6 +1,0 @@
-interface:
-  display_name: "ELR 19 Revise and Respond"
-  short_description: "Revise for review and draft the response"
-  default_prompt: "Use $elr-19-revise-and-respond for the current empirical legal research project."
-policy:
-  allow_implicit_invocation: false

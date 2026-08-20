@@ -92,7 +92,7 @@ CLAUDE_WORKFLOW_FILES = (
     (".claude/workflows/elr-research-fanout.js", "elr-research-worker"),
 )
 
-EXPECTED_STAGE_COUNT = 20
+EXPECTED_STAGE_COUNT = 21
 JSONSCHEMA_RANGE = ">=4.18,<5"
 PYTHON_DOCX_RANGE = ">=1.1,<2"
 MIN_CLAUDE_WORKFLOW_VERSION = (2, 1, 154)
