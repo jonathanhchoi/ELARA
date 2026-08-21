@@ -123,7 +123,7 @@ what the researcher needs to bring (or point to) so that the tool can start.
 |---|---|---|
 | Find and choose a research question | Stage 01, `elr-01-conceive` | prior papers, a CV, or notes (optional) |
 | Find out whether your idea has already been done | Stage 02, `elr-02-preemption-review` | your question and claimed contribution |
-| Find out whether it is feasible, and what it would cost | Stage 03, `elr-03-feasibility-audit` | your question, intended data, and method |
+| Find out whether it is feasible, how long sub-agent coding would take, and what the optional API route would cost | Stage 03, `elr-03-feasibility-audit` | your question, intended data, and method |
 | Design the methods (hypotheses, sample, measurement, analysis plan) | Stage 04, `elr-04-methods-design` | your question |
 | Write the codebook, coding schema, and coding prompt | Stage 05, `elr-05-codebook-and-schema` | the methods plan, or a description of what should be coded |
 | Check whether you may use the data (license, terms, IRB or ethics) | Stage 06, `elr-06-data-authorization` | your sources |
@@ -212,7 +212,7 @@ and 19 are long-running. See `workflow/shared/execution-control.md`.
 | `00-initialize` | setup | yes | `normal` | State, charter, access/model snapshot, and input inventory | `project-charter-approval` |
 | `01-conceive` | 1 (optional) | yes | `plan_then_execute` | Researcher profile and ranked, source-checked shortlist | `project-selection` |
 | `02-preemption-review` | 1 | yes | `execute` | Formatted Word literature review with a closest-match preemption summary, search log, source manifest, and novelty assessment | `preemption-disposition` |
-| `03-feasibility-audit` | 1 | yes | `execute` | Live probes, acquisition funnel, current cost/time/risk model, and verdict | `feasibility-go-no-go` |
+| `03-feasibility-audit` | 1 | yes | `execute` | Live probes, acquisition funnel, sub-agent completion-time model, counterfactual API-price comparison, risks, and verdict | `feasibility-go-no-go` |
 | `04-methods-design` | 2 | yes | `plan_then_execute` | Hypotheses, estimands, sampling, measurement, validation, and analysis plan | `methods-plan-approval` |
 | `05-codebook-and-schema` | 2 | yes | `plan_then_execute` | Codebook, schema, edge cases, `uncertain` route, and closed unit space | `codebook-schema-approval` |
 | `06-data-authorization` | 2 | yes | `normal` | Confirmed legal, ethical, confidentiality, and model-processing route | `data-authorization` |

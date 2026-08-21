@@ -535,10 +535,16 @@ repository copy remains the authoritative workspace for one project.
 
 ## What does ELARA cost, and what does it require?
 
-Stage 00 records a spending limit. Stage 03 retrieves current prices and makes
-project-specific estimates of cost and time before expensive work begins.
-Nothing beyond conception and feasibility proceeds until the researcher
-approves the feasibility decision.
+Stage 00 records a spending limit. Stage 03 treats ELARA's sub-agent harness as
+the default route for later coding and estimates its completion time under low,
+central, and high scenarios. It does not invent a dollar value for
+subscription-backed sub-agent use. Every audit also gives a separately labeled,
+counterfactual estimate of what the optional API route would cost using current
+provider prices, projected tokens, retries, model tiers, and available batch
+discounts. Human validation and other resource burdens are stated primarily as
+time or capacity requirements; known fixed charges are recorded and nontrivial
+spending is flagged for the researcher. Nothing beyond conception and
+feasibility proceeds until the researcher approves the feasibility decision.
 
 ELARA runs on macOS, Windows, and Linux. It requires Python 3.10 or newer with
 the packages in `requirements.txt`, plus Codex or Claude Code with
