@@ -55,6 +55,56 @@ class WorkflowContractTests(unittest.TestCase):
         for stage_id, gate in HARD_GATES.items():
             self.assertEqual(by_id[stage_id]["human_gate"], gate)
 
+    def test_feasibility_gates_use_plain_questions_and_default_to_subagents(self) -> None:
+        body = next(
+            body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "03-feasibility-audit"
+        )
+        headings = (
+            "Is the coding task one that LLMs are good at?",
+            "Can a careful human verify each coding decision from the source?",
+            "Would this be an interesting contribution to the literature regardless of the direction of the results?",
+            "Can we obtain and use the data the project needs?",
+            "Will there be enough usable data to answer the research question?",
+            "Can the project be completed in a reasonable amount of time with the available resources?",
+            "Could coding errors change the answer, and can the analysis account for them?",
+            "Does a legal, ethical, data-use, or spending issue require the researcher’s decision?",
+        )
+        for number, heading in enumerate(headings, start=1):
+            self.assertIn(f"**Gate {number}: {heading}**", body)
+        for internal_id in (
+            "task-type",
+            "variable-verifiability",
+            "either-way-contribution",
+            "data-access",
+            "base-rate-and-power",
+            "time-and-resources",
+            "measurement-error",
+            "researcher-decision",
+        ):
+            self.assertIn(f"stable internal ID is `{internal_id}`", body)
+        self.assertNotIn("Write a gate-by-gate table", body)
+
+        flat = " ".join(body.split())
+        for requirement in (
+            "sub-agent harness as the default route",
+            "low, central, and high scenarios",
+            "Do not assign a dollar value to subscription-backed sub-agent use",
+            "counterfactual API-price comparison in every audit",
+            "current provider prices",
+            "available batch discounts",
+            "Mark the sub-agent dollar cost as not estimated, not zero",
+            "one prose section for each gate",
+            "Do not use a gate table",
+            "project/artifacts/feasibility_audit_vNNN.pdf",
+        ):
+            self.assertIn(requirement, flat)
+
+        readme = " ".join((ROOT / "README.md").read_text(encoding="utf-8").split())
+        pipeline = " ".join((ROOT / "PIPELINE.md").read_text(encoding="utf-8").split())
+        for public_doc in (readme, pipeline):
+            self.assertIn("sub-agent", public_doc)
+            self.assertIn("API", public_doc)
+
     def test_skeleton_stage_contract_and_public_routes(self) -> None:
         stages = {meta["stage_id"]: (meta, body) for _, meta, body in load_stages(ROOT)}
         metadata, body = stages["17-skeleton-draft"]
@@ -68,7 +118,7 @@ class WorkflowContractTests(unittest.TestCase):
         for phrase in (
             "create the skeleton draft",
             "skip",
-            "Word as the default",
+            "default is a LaTeX-generated PDF",
             "LaTeX",
             "Markdown",
             "article prose",
@@ -83,6 +133,17 @@ class WorkflowContractTests(unittest.TestCase):
         pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
         self.assertIn("elr-17-skeleton-draft", pipeline)
         self.assertIn("Workflow 2.0 state compatibility", pipeline)
+
+        artifact_contract = (ROOT / "workflow" / "shared" / "artifact-contract.md").read_text(
+            encoding="utf-8"
+        )
+        artifact_contract_flat = " ".join(artifact_contract.split())
+        self.assertIn(
+            "default active artifact is a PDF compiled from a versioned LaTeX source",
+            artifact_contract_flat,
+        )
+        self.assertIn("only when the researcher expressly asks for it", artifact_contract_flat)
+        self.assertIn("CSV", artifact_contract_flat)
 
     def test_plan_profiles_cannot_claim_automatic_mode_switching(self) -> None:
         for path, meta, body in load_stages(ROOT):

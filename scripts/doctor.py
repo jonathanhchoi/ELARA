@@ -55,6 +55,7 @@ DISCOVERY_SURFACES = (
     "workflow/shared/observation-fanout.md",
     "workflow/templates/preregistration_template.md",
     "workflow/templates/preemption_review_template.md",
+    "workflow/templates/feasibility_audit_template.md",
     "project/PROJECT_STATE.md",
     ".agents/skills/elr/SKILL.md",
     ".agents/skills/elr-code-observations/SKILL.md",
@@ -69,6 +70,8 @@ DISCOVERY_SURFACES = (
     "scripts/unit_fanout.py",
     "scripts/research_fanout.py",
     "scripts/build_preemption_review.py",
+    "scripts/build_feasibility_audit.py",
+    "scripts/latex_report.py",
 )
 
 # The restricted worker subagent types every fan-out must use (see

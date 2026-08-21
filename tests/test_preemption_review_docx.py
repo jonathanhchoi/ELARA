@@ -197,6 +197,22 @@ class PreemptionReviewBuilderTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "refusing to overwrite"):
                 build(source, output)
 
+    def test_builds_latex_report_as_the_default_route(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source = root / "preemption_review_source.md"
+            output = root / "preemption_review_v001.tex"
+            source.write_text(SAMPLE_SOURCE, encoding="utf-8")
+            build(source, output)
+            latex = output.read_text(encoding="utf-8")
+            self.assertTrue(latex.startswith(r"\documentclass"))
+            self.assertIn(r"\section{Executive summary}", latex)
+            self.assertIn(r"\clearpage", latex)
+            self.assertIn(r"\section{Annotated map of closest work}", latex)
+            self.assertIn(r"\begin{tabularx}", latex)
+            self.assertIn(r"\href{https://example.org/rivera}{archived source}", latex)
+            self.assertIn(r"\end{document}", latex)
+
     def test_unresolved_template_marker_is_rejected(self) -> None:
         template = (ROOT / "workflow" / "templates" / "preemption_review_template.md").read_text(
             encoding="utf-8"
@@ -273,12 +289,19 @@ class PreemptionReviewBuilderTests(unittest.TestCase):
 
 
 class PreemptionReviewStageContractTests(unittest.TestCase):
-    def test_word_report_is_the_active_stage_02_artifact(self) -> None:
+    def test_pdf_report_is_the_default_stage_02_artifact(self) -> None:
         stages = {meta["stage_id"]: (meta, body) for _, meta, body in load_stages(ROOT)}
         stage_two, body = stages["02-preemption-review"]
         self.assertIn(
-            "project/artifacts/preemption_review_vNNN.docx",
+            "project/artifacts/preemption_review_vNNN.pdf",
             stage_two["declared_outputs"],
+        )
+        self.assertIn(
+            "project/artifacts/preemption_review_vNNN.tex",
+            stage_two["declared_outputs"],
+        )
+        self.assertTrue(
+            any("preemption_review_vNNN.docx" in item for item in stage_two["declared_outputs"])
         )
         self.assertNotIn(
             "project/artifacts/preemption_review_vNNN.md",
@@ -293,9 +316,11 @@ class PreemptionReviewStageContractTests(unittest.TestCase):
         self.assertIn("claim-evidence IDs or pinpoint pages", body)
         self.assertIn("1,200-word limit", body)
         self.assertIn("inspect every page at 100 percent zoom", body)
+        self.assertIn("compile it to `project/artifacts/preemption_review_vNNN.pdf`", body)
+        self.assertIn("If the researcher selected Word", body)
         for stage_id in ("03-feasibility-audit", "04-methods-design"):
             self.assertIn(
-                "project/artifacts/preemption_review_vNNN.docx",
+                "project/artifacts/preemption_review_vNNN.pdf (or the explicit researcher-selected alternative)",
                 stages[stage_id][0]["required_inputs"],
             )
 

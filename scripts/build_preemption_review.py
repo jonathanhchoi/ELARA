@@ -1,8 +1,8 @@
-"""Build the Stage 02 preemption review as a polished Word document.
+"""Build the Stage 02 preemption review as a polished formatted report.
 
-The Markdown input is a run-scoped, auditable build source. The DOCX output is
-the versioned researcher-facing artifact. This script refuses to overwrite an
-existing output so that ELARA's artifact versioning contract remains intact.
+The Markdown input is a run-scoped, auditable build source. LaTeX is the default
+output and compiles to the active PDF. DOCX remains available when the researcher
+explicitly requests Word. This script refuses to overwrite an existing output.
 """
 
 from __future__ import annotations
@@ -22,6 +22,8 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.opc.constants import RELATIONSHIP_TYPE
 from docx.shared import Inches, Pt, RGBColor
+
+from latex_report import render_latex_report, validate_latex_output
 
 
 CONTENT_WIDTH_DXA = 9360
@@ -850,7 +852,7 @@ def build_document(metadata: dict[str, str], blocks: list[Block]) -> Document:
     return doc
 
 
-def validate_output(path: Path) -> None:
+def validate_docx_output(path: Path) -> None:
     reopened = Document(path)
     if not reopened.tables:
         raise ValueError("generated document is missing its metadata table")
@@ -869,8 +871,9 @@ def validate_output(path: Path) -> None:
 def build(source: Path, output: Path) -> None:
     if source.suffix.lower() != ".md":
         raise ValueError("source must be a .md file")
-    if output.suffix.lower() != ".docx":
-        raise ValueError("output must be a .docx file")
+    output_format = output.suffix.lower()
+    if output_format not in {".tex", ".docx"}:
+        raise ValueError("output must be a .tex file, or .docx when Word was requested")
     if not source.is_file():
         raise ValueError(f"source does not exist: {source}")
     if output.exists():
@@ -879,10 +882,28 @@ def build(source: Path, output: Path) -> None:
     blocks = parse_blocks(body)
     validate_sections(blocks)
     output.parent.mkdir(parents=True, exist_ok=True)
-    document = build_document(metadata, blocks)
-    document.save(output)
     try:
-        validate_output(output)
+        if output_format == ".tex":
+            latex = render_latex_report(
+                title=metadata["title"],
+                subtitle=metadata["subtitle"],
+                kicker="ELARA Preemption Review",
+                metadata_rows=(
+                    ("Verdict", metadata["verdict"].title()),
+                    ("Recommended disposition", metadata["recommended_disposition"]),
+                    ("Scoop risk", metadata["scoop_risk"].title()),
+                    ("Review date", metadata["review_date"]),
+                    ("Recheck date", metadata["recheck_date"]),
+                ),
+                blocks=blocks,
+                page_break_before=(ANNOTATED_MAP_SECTION,),
+            )
+            output.write_text(latex, encoding="utf-8", newline="\n")
+            validate_latex_output(output, REQUIRED_SECTIONS, PLACEHOLDER_RE)
+        else:
+            document = build_document(metadata, blocks)
+            document.save(output)
+            validate_docx_output(output)
     except Exception:
         output.unlink(missing_ok=True)
         raise
@@ -891,7 +912,11 @@ def build(source: Path, output: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("source", type=Path, help="run-scoped Markdown build source")
-    parser.add_argument("output", type=Path, help="new versioned .docx artifact")
+    parser.add_argument(
+        "output",
+        type=Path,
+        help="new versioned .tex artifact, or .docx after an explicit Word preference",
+    )
     args = parser.parse_args()
     try:
         build(args.source.resolve(), args.output.resolve())

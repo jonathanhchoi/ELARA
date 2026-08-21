@@ -75,6 +75,22 @@ An artifact becomes active only after verification. Record its logical name and
 exact repository-relative path in `active_artifacts`; downstream work must use
 that pinned path, not “latest” globbing or a filename guess.
 
+### Default format for researcher-facing reports
+
+When a stage produces a formatted narrative report for the researcher, the
+default active artifact is a PDF compiled from a versioned LaTeX source. Keep
+the auditable Markdown or other structured build source and the generated
+`.tex` file with the run record. Compile the PDF, archive the build log, render
+every page, and inspect it before activation. Do not treat a source file alone
+as the finished report.
+
+Use Word, Markdown, HTML, or another researcher-facing format only when the
+researcher expressly asks for it or an active publication profile records that
+preference. Record the preference and build the requested format from the same
+immutable source. Machine-readable evidence and working artifacts such as CSV,
+JSON, JSONL, code, schemas, ledgers, and manifests remain in their appropriate
+native formats; this PDF default does not convert them into page documents.
+
 ## 4. Immutable inputs
 
 - Stage 00 inventories each file in `project/inputs/` with a repository-relative
