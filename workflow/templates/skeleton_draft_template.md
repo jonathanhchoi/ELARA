@@ -1,7 +1,7 @@
 ---
 title: "TODO-SKELETON: Article title"
 subtitle: "Skeleton draft"
-output_format: "docx"
+output_format: "tex"
 target_venue: "TODO-SKELETON: Venue or unknown"
 target_length: "TODO-SKELETON: Approximate words or pages"
 source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifacts/other_vNNN.ext"

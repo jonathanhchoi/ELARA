@@ -205,9 +205,9 @@ out of sequence, its reports distinguish decisions you vouch for from work that
 ELARA independently verified. The menu returns when the task is done.
 
 Stages 02, 03, and 11 can take a long time. You can start them and return later.
-Stage 02 delivers its literature review as a formatted Word document; its
-search log, source manifest, and claim-evidence table remain separate audit
-files.
+Stage 02 delivers its literature review as a LaTeX-generated PDF by default;
+its search log, source manifest, and claim-evidence table remain separate audit
+files. Word or another report format is used only when you ask for it.
 
 ## Can I bring an existing project?
 
@@ -268,7 +268,7 @@ ELARA's twenty-one operational stages implement the paper's six-step framework.
 | 5. Analysis, robustness, and replication | `14` through `16` | Analyze the data, correct for measurement error, test robustness, and build a verified replication package |
 | 6. Publication | `17` through `20` | Map the article without prose, integrate results into the researcher's draft, audit citations, and revise with permission |
 
-Stage 02's formatted Word literature review begins with a decision-focused
+Stage 02's formatted PDF literature review begins with a decision-focused
 executive summary, normally no more than two or three pages, that compares what
 each closest match actually says with the intended contribution and identifies
 exactly what it preempts and what remains. The detailed map of the closest work
@@ -277,11 +277,12 @@ and the supporting search record follow.
 The publication steps are optional. Stage 17 offers a default, skippable article
 skeleton after the replication package is verified. It supplies a complete
 article structure and presents the full results through verified tables,
-figures, and equations with sufficient captions and notes. Word is the default,
-with LaTeX and Markdown alternatives. It leaves the remaining prose
-to the author. Stage 18 only integrates results into an existing substantive
-draft. ELARA won't write the first draft or turn notes into a paper. The
-researcher retains control over the thesis, framing, organization, and voice.
+figures, and equations with sufficient captions and notes. LaTeX-generated PDF
+is the default, with Word and Markdown available on request. It leaves the
+remaining prose to the author. Stage 18 only integrates results into an
+existing substantive draft. ELARA won't write the first draft or turn notes
+into a paper. The researcher retains control over the thesis, framing,
+organization, and voice.
 
 Workflow version 2.0.0 inserted Stage 17 and renumbered the former publication
 Stages 17–19 as 18–20. Existing projects whose state points to one of those old
@@ -443,8 +444,10 @@ requirements.txt                Bounded Python dependencies
 workflow/stages/NN-*.md         Canonical sequential stage instructions
 workflow/utilities/             Optional manuscript utilities
 workflow/shared/                Guardrails and artifact, fan-out, and manuscript contracts
-workflow/templates/             Preemption-review, preregistration, skeleton-draft, and publication-profile templates
-scripts/build_preemption_review.py  Build the formatted Stage 02 Word report
+workflow/templates/             Preemption-review, feasibility, preregistration, skeleton-draft, and publication-profile templates
+scripts/latex_report.py         Render shared formatted-report LaTeX
+scripts/build_preemption_review.py  Build the formatted Stage 02 report
+scripts/build_feasibility_audit.py   Build the question-led Stage 03 report
 scripts/build_skeleton_draft.py Build and validate Stage 17 Word, LaTeX, or Markdown skeletons
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
@@ -508,9 +511,9 @@ python scripts/doctor.py --json
 ```
 
 Python, `jsonschema`, and `python-docx` are required for the deterministic
-fan-out controller, validators, formatted Stage 02 Word report, and Stage 17
-skeleton builder. They aren't
-required for the earliest design discussion.
+fan-out controller, validators, optional Word reports, and Stage 17 skeleton
+builder. Formatted reports default to PDF and require a working LaTeX toolchain.
+These tools aren't required for the earliest design discussion.
 
 ## What about plugins, MCP servers, and hooks?
 
@@ -535,16 +538,19 @@ repository copy remains the authoritative workspace for one project.
 
 ## What does ELARA cost, and what does it require?
 
-Stage 00 records a spending limit. Stage 03 treats ELARA's sub-agent harness as
-the default route for later coding and estimates its completion time under low,
-central, and high scenarios. It does not invent a dollar value for
-subscription-backed sub-agent use. Every audit also gives a separately labeled,
-counterfactual estimate of what the optional API route would cost using current
-provider prices, projected tokens, retries, model tiers, and available batch
-discounts. Human validation and other resource burdens are stated primarily as
-time or capacity requirements; known fixed charges are recorded and nontrivial
-spending is flagged for the researcher. Nothing beyond conception and
-feasibility proceeds until the researcher approves the feasibility decision.
+Stage 00 records a spending limit. Stage 03 produces a LaTeX-generated PDF
+organized around eight plain-language questions, with one prose section per
+question and no gate table. Word or another format is available on request. It
+treats ELARA's sub-agent harness as the default route for later coding and
+estimates its completion time under low, central, and high scenarios. It does
+not invent a dollar value for subscription-backed sub-agent use. Every audit
+also gives a separately labeled, counterfactual estimate of what the optional
+API route would cost using current provider prices, projected tokens, retries,
+model tiers, and available batch discounts. Human validation and other resource
+burdens are stated primarily as time or capacity requirements; known fixed
+charges are recorded and nontrivial spending is flagged for the researcher.
+Nothing beyond conception and feasibility proceeds until the researcher
+approves the feasibility decision.
 
 ELARA runs on macOS, Windows, and Linux. It requires Python 3.10 or newer with
 the packages in `requirements.txt`, plus Codex or Claude Code with

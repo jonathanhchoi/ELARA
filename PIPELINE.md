@@ -211,8 +211,8 @@ and 19 are long-running. See `workflow/shared/execution-control.md`.
 |---|---:|:---:|---|---|---|
 | `00-initialize` | setup | yes | `normal` | State, charter, access/model snapshot, and input inventory | `project-charter-approval` |
 | `01-conceive` | 1 (optional) | yes | `plan_then_execute` | Researcher profile and ranked, source-checked shortlist | `project-selection` |
-| `02-preemption-review` | 1 | yes | `execute` | Formatted Word literature review with a closest-match preemption summary, search log, source manifest, and novelty assessment | `preemption-disposition` |
-| `03-feasibility-audit` | 1 | yes | `execute` | Live probes, acquisition funnel, sub-agent completion-time model, counterfactual API-price comparison, risks, and verdict | `feasibility-go-no-go` |
+| `02-preemption-review` | 1 | yes | `execute` | LaTeX-generated PDF literature review with a closest-match preemption summary, search log, source manifest, and novelty assessment | `preemption-disposition` |
+| `03-feasibility-audit` | 1 | yes | `execute` | Question-led LaTeX-generated PDF feasibility report, live probes, acquisition funnel, sub-agent completion-time model, counterfactual API-price comparison, risks, and verdict | `feasibility-go-no-go` |
 | `04-methods-design` | 2 | yes | `plan_then_execute` | Hypotheses, estimands, sampling, measurement, validation, and analysis plan | `methods-plan-approval` |
 | `05-codebook-and-schema` | 2 | yes | `plan_then_execute` | Codebook, schema, edge cases, `uncertain` route, and closed unit space | `codebook-schema-approval` |
 | `06-data-authorization` | 2 | yes | `normal` | Confirmed legal, ethical, confidentiality, and model-processing route | `data-authorization` |

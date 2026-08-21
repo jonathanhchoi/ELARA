@@ -71,17 +71,18 @@ class WorkflowContractTests(unittest.TestCase):
         )
         for number, heading in enumerate(headings, start=1):
             self.assertIn(f"**Gate {number}: {heading}**", body)
-        for legacy_label in (
-            "task-type gate",
-            "verifiability gate",
-            "either-way gate",
-            "data gate",
-            "base-rate and power gate",
-            "cost and time gate",
-            "inference gate",
-            "escalation gate",
+        for internal_id in (
+            "task-type",
+            "variable-verifiability",
+            "either-way-contribution",
+            "data-access",
+            "base-rate-and-power",
+            "time-and-resources",
+            "measurement-error",
+            "researcher-decision",
         ):
-            self.assertNotIn(legacy_label, body.lower())
+            self.assertIn(f"stable internal ID is `{internal_id}`", body)
+        self.assertNotIn("Write a gate-by-gate table", body)
 
         flat = " ".join(body.split())
         for requirement in (
@@ -92,7 +93,9 @@ class WorkflowContractTests(unittest.TestCase):
             "current provider prices",
             "available batch discounts",
             "Mark the sub-agent dollar cost as not estimated, not zero",
-            "using the eight exact question headings above",
+            "one prose section for each gate",
+            "Do not use a gate table",
+            "project/artifacts/feasibility_audit_vNNN.pdf",
         ):
             self.assertIn(requirement, flat)
 
@@ -115,7 +118,7 @@ class WorkflowContractTests(unittest.TestCase):
         for phrase in (
             "create the skeleton draft",
             "skip",
-            "Word as the default",
+            "default is a LaTeX-generated PDF",
             "LaTeX",
             "Markdown",
             "article prose",
@@ -130,6 +133,17 @@ class WorkflowContractTests(unittest.TestCase):
         pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
         self.assertIn("elr-17-skeleton-draft", pipeline)
         self.assertIn("Workflow 2.0 state compatibility", pipeline)
+
+        artifact_contract = (ROOT / "workflow" / "shared" / "artifact-contract.md").read_text(
+            encoding="utf-8"
+        )
+        artifact_contract_flat = " ".join(artifact_contract.split())
+        self.assertIn(
+            "default active artifact is a PDF compiled from a versioned LaTeX source",
+            artifact_contract_flat,
+        )
+        self.assertIn("only when the researcher expressly asks for it", artifact_contract_flat)
+        self.assertIn("CSV", artifact_contract_flat)
 
     def test_plan_profiles_cannot_claim_automatic_mode_switching(self) -> None:
         for path, meta, body in load_stages(ROOT):
