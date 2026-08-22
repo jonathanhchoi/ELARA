@@ -16,7 +16,7 @@ failure_routes: ["04-methods-design", "05-codebook-and-schema", "06-data-authori
 
 ## Objective
 
-Freeze the complete result-generating specification by exact version and hash, create a clean result-free preregistration in source and inspected PDF form, obtain the researcher's approval before external action, and record the completed registration before any full-corpus acquisition, coding, or outcome analysis.
+Freeze the complete result-generating specification by recording the exact version of every file and the values used to verify that none has changed, create a clean result-free preregistration in source and inspected PDF form, obtain the researcher's approval before external action, and record the completed registration before any full-corpus acquisition, coding, or outcome analysis.
 
 ## Prerequisite checks
 
@@ -43,7 +43,7 @@ External submission, creation of a public record, or acceptance of registry term
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. Plan first, read-only. Audit the proposed frozen package, crosswalk
-the preregistration sections to active artifacts, identify unresolved choices,
+the preregistration sections to the exact project files currently in use, identify unresolved choices,
 choose the PDF and registry workflow, and define amendment rules; do not write
 any project file, hash into a manifest, render a PDF, update state, or contact a
 registry until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in
@@ -71,7 +71,7 @@ native plan but do not start a goal.
 
 ## Artifacts
 
-The manifest, source, PDF, amendment policy, frozen analysis code, and completed registration record form the freeze package. rendered_pages/ is visual-QA evidence. Before external registration, the registration record may not exist and the stage remains at its gate. After registration, no frozen artifact is edited; corrections create a new version and, when material, an external amendment linked to the original.
+The list of frozen files, source, PDF, amendment policy, frozen analysis code, and completed registration record form the freeze package. `rendered_pages/` contains the visual-review evidence. Before external registration, the registration record may not exist and the stage remains at its gate. After registration, no frozen file is edited; corrections create a new version and, when material, an external amendment linked to the original.
 
 ## Verification
 
@@ -91,4 +91,4 @@ Only after explicit PDF approval and verified external registration create and a
 
 ## Next-stage handoff
 
-Report the registration URL or identifier, timestamp, registered PDF hash, frozen manifest version, unit-space count and hash, and amendment rules. Provide the exact next task: execute 10-corpus-acquisition against only the registered unit space and authorized sources, treating any material corpus deviation as an amendment rather than silently changing the denominator.
+Report the registration URL or identifier, timestamp, the value used to verify that the registered PDF has not changed, the version of the frozen-file list, the number of eligible coding units and the value used to verify that list, and the amendment rules. Provide the exact next task: execute 10-corpus-acquisition against only the registered list of eligible units and authorized sources, treating any material corpus deviation as an amendment rather than silently changing the denominator.

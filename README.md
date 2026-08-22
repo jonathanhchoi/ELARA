@@ -110,11 +110,12 @@ and public-domain test fixtures. The repository doesn't include the data,
 prompts, model calls, code, run records, or results from the paper's validation
 study. You don't need those materials to use the kit.
 
-Canonical instructions live in `workflow/stages/`. The `$elr` command in Codex
+The authoritative instructions live in `workflow/stages/`. The `$elr` command in Codex
 and `/elr` in Claude Code route to those same files using
 `project/PROJECT_STATE.md`. Stages that need independent model judgments also
 provide `$elr-code-observations` and `/elr-code-observations`. Both use the same
-one-unit assignment and serial-validation procedure.
+procedure of giving one unit to each assignment and validating returned files
+one at a time.
 
 ### 1. Get a clean copy
 
@@ -175,9 +176,10 @@ installations, and use the platform's diagnostic command if needed.
 ### 4. Add your materials
 
 Read `project/inputs/README.md`. Then place papers, notes, seed citations, data
-dictionaries, and authorized source files in `project/inputs/`. Stage 00
-inventories and hashes them. After that inventory, add a correction or
-replacement under a new name instead of overwriting the earlier file.
+dictionaries, and authorized source files in `project/inputs/`. Stage 00 lists
+them and records enough information to detect a later change. After that
+inventory, add a correction or replacement under a new name instead of
+overwriting the earlier file.
 
 Before starting, be ready to describe the following items.
 
@@ -206,8 +208,9 @@ ELARA independently verified. The menu returns when the task is done.
 
 Stages 02, 03, and 11 can take a long time. You can start them and return later.
 Stage 02 delivers its literature review as a LaTeX-generated PDF by default;
-its search log, source manifest, and claim-evidence table remain separate audit
-files. Word or another report format is used only when you ask for it.
+its search log, source list, and table linking claims to evidence remain
+separate audit files. Word or another report format is used only when you ask
+for it.
 
 ## Can I bring an existing project?
 
@@ -217,16 +220,16 @@ adopt`, or choose a tool from the menu. Large files can remain at a path you
 identify rather than being copied into the workspace.
 
 ELARA inventories the existing work and imports unchanged copies into
-`project/artifacts/imported_v001/`. It pins those copies as the active artifacts
-for later stages. It can record any gate you explicitly vouch for with the basis
-`researcher-asserted`. The resulting adoption map identifies what each stage has
-and places the project at the first stage that still needs to run. Your original
-files are never moved, renamed, or edited.
+`project/artifacts/imported_v001/`. It records those copies as the versions that
+later stages should use. It can record any gate you explicitly vouch for with
+the basis `researcher-asserted`. The resulting adoption map identifies what each
+stage has and places the project at the first stage that still needs to run.
+Your original files are never moved, renamed, or edited.
 
 | Preset | You have | ELARA begins at |
 |---|---|---|
 | Question only | A chosen question and contribution | `02-preemption-review` after skipping Stage 01 |
-| Design in hand | Methods, a codebook, schema, or prompt | `06-data-authorization`, or `07`/`08` if you also assert authorization and adversarial review |
+| Design in hand | Methods, a codebook, a required coding-output format (a schema), or a prompt | `06-data-authorization`, or `07`/`08` if you also assert authorization and adversarial review |
 | Data in hand | Coded data, with or without a codebook | `12-interpretive-verification`, or `13`/`14` if you also assert verification and human validation |
 | Results in hand | Analysis code and results | `16-replication-package`, or `17-skeleton-draft` if you assert a verified package |
 | Publication only | A draft and perhaps a referee letter | `18-integrate-manuscript` for results integration, otherwise `19-cite-check`. Stage 17 may be recorded as skipped, and the manuscript utilities are immediately available |
@@ -246,9 +249,10 @@ Use a scratch copy of ELARA rather than the copy for a real project.
    `tests/fixtures/minimal_public_domain/inputs/` and its `project_question.md`
    into `project/inputs/`. Run `$elr start` or `/elr start`, then use the
    fixture's project question in the interview.
-2. The deterministic demonstration is free and requires Python. Run
+2. The fully scripted demonstration is free and requires Python. The same
+   inputs and rules always produce the same outputs. Run
    `python tests/fixtures/public_domain_e2e/rebuild.py --output build`. It makes
-   a miniature deterministic pass over Stages 08 through 16 without a model or
+   a miniature pass over Stages 08 through 16 without a model or
    network call.
 
 Delete the scratch copy when you are finished. Its outputs do not belong in a
@@ -287,13 +291,17 @@ organization, and voice.
 Workflow version 2.0.0 inserted Stage 17 and renumbered the former publication
 Stages 17–19 as 18–20. Existing projects whose state points to one of those old
 IDs are not migrated automatically. Repair the state against its ledgers and
-active artifact hashes, or use Stage 00's adoption path to record the correct
-2.0 landing.
+the exact active file versions, or use Stage 00's adoption path to record the
+correct 2.0 landing.
 
 Workflow version 2.0.1 refines Stage 17 into an organizationally complete draft
 that presents the full verified results through displays and leaves the
-remaining prose to the researcher. A project with an earlier Stage 17 artifact
+remaining prose to the researcher. A project with an earlier Stage 17 output
 should create a new Stage 17 version or record a skip before entering Stage 18.
+
+Workflow version 2.0.2 makes ELARA's researcher-facing language more concrete.
+It does not change project state, stage order, approval gates, file formats, or
+research safeguards, and existing 2.0 projects need no migration.
 
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
@@ -314,11 +322,12 @@ avoid and specify the quality checks and deliverables you want. These may
 include compilation, inspection of every page, a change log, a redline, and a
 set number of review passes.
 
-Pin the profile in `project/PROJECT_STATE.md` as `publication_profile`. Save and
-pin a new version whenever you change it. The publication stages record the
-active profile's version and hash. The profile governs prose and deliverables,
-but it cannot relax an approval gate or shared guardrail. If no profile exists,
-ELARA asks for one before writing prose.
+Record the profile in `project/PROJECT_STATE.md` as the active
+`publication_profile`. Save and record a new active version whenever you change
+it. The publication stages record the exact version and verify that it has not
+changed. The profile governs prose and deliverables, but it cannot relax an
+approval gate or shared guardrail. If no profile exists, ELARA asks for one
+before writing prose.
 
 Three optional utilities address manuscript tasks outside the sequential
 pipeline. `$elr-add-citations` retrieves and adds only the citations you marked,
@@ -329,7 +338,7 @@ transcribes a hand-marked PDF into an edit list, stops for your review, and then
 applies only the approved edits. Claude Code uses the same command names with a
 leading slash.
 
-The canonical utility instructions are in `workflow/utilities/`. The shared
+The authoritative utility instructions are in `workflow/utilities/`. The shared
 rules for manuscript edits are in
 `workflow/shared/manuscript-editing-contract.md`.
 
@@ -338,16 +347,18 @@ rules for manuscript edits are in
 ELARA uses the planning surface in the tool you opened for every substantive
 stage. In Codex that is the native plan updated with `update_plan`. In Claude
 Code it is the task list maintained with `TaskCreate`, `TaskUpdate`, and
-`TaskList`. The plan follows the canonical stage: prerequisites, any read-only
+`TaskList`. The plan follows the authoritative stage instructions: prerequisites, any read-only
 design phase, execution, verification, and the gate or handoff. ELARA updates it
-as each phase actually finishes. The plan display is useful for orientation, but
-the project state, run manifest, ledger, and validated files remain the record.
+as each phase actually finishes. The plan display is useful for orientation,
+but the project state, the record of each run, the ledger, and the validated
+files remain authoritative.
 
-A stage marked `long_running: true` also declares an exact `goal_condition`.
-Before execution starts, ELARA checks the active goal. If the right one is not
-running, it gives you one complete `/goal ...` line to paste. That goal covers
-one stage, including all waves and final reconciliation. It never covers the
-whole pipeline, and workers do not create goals of their own. If goals are not
+A long-running stage also states exactly what must be true before it is done.
+Before execution starts, ELARA checks whether the matching durable goal is
+active. If it is not, ELARA gives you one complete `/goal ...` line to paste.
+That goal covers one stage, including every group of parallel assignments and
+the final check that the records and counts agree. It never covers the whole
+pipeline, and workers do not create goals of their own. If goals are not
 available in the host, ELARA records the fallback and uses the same plan and
 completion condition with durable file checkpoints.
 
@@ -361,20 +372,22 @@ The complete contract is in `workflow/shared/execution-control.md`.
 
 ## How does parallel work run?
 
-ELARA gives one observation or coding unit to each fresh worker context. The
-approved codebook and unit-space manifest define the coding unit, which may
-contain one document or several related documents. File boundaries do not
-silently determine the unit of observation. Searches, retrieval, cite-checks,
-critiques, and reviews are fanned out the same way, one bounded unit per worker.
+ELARA gives one observation or coding unit to each fresh sub-agent. The approved
+codebook and the complete list of units eligible for coding define a coding
+unit, which may contain one document or several related documents. File
+boundaries do not silently determine the unit of observation. Searches,
+retrieval, cite-checks, critiques, and reviews also run in parallel, with one
+bounded assignment per sub-agent.
 
-The fan-out itself is run by the tool you are using, not by hand: in Claude Code
-the assistant launches ELARA's saved workflows (`elr-observation-fanout` for
+The tool you are using coordinates this parallel work: in Claude Code the
+assistant launches ELARA's saved workflows (`elr-observation-fanout` for
 coding, `elr-research-fanout` for research units), which you can watch in
 `/workflows`; in Codex it spawns ELARA's custom sub-agents (`elr_worker`,
 `elr_research_worker`) in bounded waves. Workers have a fixed, minimal set of
 tools — coding workers have no web access, research workers have web search and
-fetch, and none can reach a browser, desktop, or MCP tool — and each writes one
-unique return.
+fetch, and none can reach a browser, desktop, or external tool or data connection
+provided through the Model Context Protocol (MCP) — and each writes one unique
+return.
 
 Stage 02 adds a parent-only browser-control fallback without broadening those
 worker permissions. After each literature-search wave, the parent session
@@ -382,19 +395,21 @@ reviews download gaps for potentially material papers, tries lawful open routes,
 and then makes one ordinary browser-control attempt in your authorized session
 when a bot restriction still blocks full text. It never bypasses a CAPTCHA,
 paywall, login, license, or terms. Successful downloads are checked, archived,
-and hashed; failed attempts remain explicit access gaps in the manual search
-packet.
+and recorded so a later change can be detected; failed attempts remain listed,
+with the reason for each failure, in the list of searches requiring researcher
+access.
 
-Each coding worker submits its response through the deterministic controller.
-The controller checks the sealed assignment, schema, identifiers, and unique
-output path before creating the canonical return. It refuses overwrites and
-merges validated returns serially. A second controller does the same
-bookkeeping for research fan-outs (sealed manifest, pending list, bounded
-attempts), so an interrupted run resumes from the files in a later session.
+Each coding worker submits its response through software that applies the same
+mechanical rules every time. It checks the fixed assignment, required output
+format, identifiers, and unique output path before accepting the return. It
+refuses overwrites and merges validated returns one at a time. The research
+controller similarly records the fixed assignment list, pending work, and
+allowed attempts, so an interrupted run resumes from the files in a later
+session.
 
 ## What are the interaction modes and approval rules?
 
-Each stage declares an `interaction_profile`.
+Each stage uses one of four interaction modes:
 
 - `normal` tracks and gathers a short interactive researcher decision.
 - `plan` uses Plan Mode and returns a plan without changing project files.
@@ -418,20 +433,21 @@ approval.
   paths for relational or synthesized labels, and include an `uncertain` escape
   valve.
 - Preserve inputs, raw prompts, raw outputs, approvals, and audit history. A
-  rerun creates a new timestamped or `_vNNN` artifact.
-- Reconcile exact attempted, succeeded, failed, unusable, and outstanding
-  counts. Record missing or unusable units as typed gaps rather than excluding
-  them silently.
-- Retrieve and read a source before relying on it. Record its provenance and
-  supporting evidence, and report an unavailable source as unavailable.
+  rerun creates a new timestamped or `_vNNN` output.
+- Make the attempted, succeeded, failed, unusable, and outstanding counts add
+  up exactly. List every missing or unusable unit and the reason it is missing
+  or unusable rather than excluding it silently.
+- Retrieve and read a source before relying on it. Record where it came from,
+  how it was processed, and the supporting evidence; report an unavailable
+  source as unavailable.
 - Keep an audit separate from the correction it may prompt.
 - Leave research questions, framing, design, gates, adjudication, amendments,
   and publication decisions to the researcher.
 - Recheck named techniques and numeric defaults when designing a project. Treat
-  authorization, gates, blinding, quarantine, preregistration, and audit
-  separation as fixed safeguards.
+  authorization, gates, blinding, keeping tuning and pilot material out of the
+  validation sample, preregistration, and audit separation as fixed safeguards.
 
-The complete shared rules are in [AGENTS.md](AGENTS.md). Artifact and audit
+The complete shared rules are in [AGENTS.md](AGENTS.md). File, output, and audit
 requirements are in `workflow/shared/`.
 
 ## What is in the repository?
@@ -441,9 +457,9 @@ AGENTS.md                       Shared rules and state router
 CLAUDE.md                       Claude-specific adapter
 PIPELINE.md                     Workflow map, router commands, and tools menu
 requirements.txt                Bounded Python dependencies
-workflow/stages/NN-*.md         Canonical sequential stage instructions
+workflow/stages/NN-*.md         Authoritative sequential stage instructions
 workflow/utilities/             Optional manuscript utilities
-workflow/shared/                Guardrails and artifact, fan-out, and manuscript contracts
+workflow/shared/                Guardrails and contracts for files, parallel work, and manuscripts
 workflow/templates/             Preemption-review, feasibility, preregistration, skeleton-draft, and publication-profile templates
 scripts/latex_report.py         Render shared formatted-report LaTeX
 scripts/build_preemption_review.py  Build the formatted Stage 02 report
@@ -451,12 +467,12 @@ scripts/build_feasibility_audit.py   Build the question-led Stage 03 report
 scripts/build_skeleton_draft.py Build and validate Stage 17 Word, LaTeX, or Markdown skeletons
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
-.claude/agents/                 Claude restricted worker subagents
-.claude/workflows/              Claude saved fan-out workflows (coding, research)
+.claude/agents/                 Claude restricted worker sub-agents
+.claude/workflows/              Claude saved workflows for parallel coding and research
 .codex/agents/                  Codex restricted worker sub-agents
 project/                        Blank project state, inputs, logs, and outputs
 scripts/bootstrap.py            Safe installer and setup check
-scripts/                        Validators and the two fan-out controllers
+scripts/                        Validators and the two parallel-work controllers
 tests/                          Maintenance tests and public fixtures
 ```
 
@@ -487,8 +503,8 @@ An agent may also run the maintenance test suite from an initialized project.
 The tests use `project/ELARA_MANIFEST.json` to build a temporary clean view of
 that installed kit and substitute blank fixtures for the four live project
 records. They never treat the project's state or append-only ledgers as clean
-installation templates, and they fail closed if the manifest is unavailable or
-malformed.
+installation templates. They stop safely rather than guessing if that file is
+unavailable or malformed.
 
 ## What else can the preflight check?
 
@@ -510,30 +526,34 @@ that contains no secrets.
 python scripts/doctor.py --json
 ```
 
-Python, `jsonschema`, and `python-docx` are required for the deterministic
-fan-out controller, validators, optional Word reports, and Stage 17 skeleton
-builder. Formatted reports default to PDF and require a working LaTeX toolchain.
-These tools aren't required for the earliest design discussion.
+Python, `jsonschema`, and `python-docx` are required for the software that
+coordinates parallel sub-agents, the validators, optional Word reports, and the
+Stage 17 skeleton builder. Formatted reports default to PDF and require a
+working LaTeX toolchain. These tools aren't required for the earliest design
+discussion.
 
 ## What about plugins, MCP servers, and hooks?
 
 ELARA installs no third-party plugin, MCP server, credential, or repository
-hook. Projects use different databases, storage systems, browsers, reference
+hook. An MCP server connects an agent to outside tools or data through the Model
+Context Protocol; a hook automatically runs a command in response to a specified
+event. Projects use different databases, storage systems, browsers, reference
 managers, and provider APIs. These tools may also expose licensed or restricted
 material.
 
 Add an integration only after Stage 06 authorizes the exact source, action,
 account, model route, and data exposure. Record its name, version, permissions,
-and limitations in the active access snapshot and run manifest.
+and limitations in the active access snapshot and the record for that run.
 
-For a large run, ELARA's workers already have a fixed, minimal tool surface:
-the restricted subagent definitions in `.claude/agents/` (Claude Code) and
+For a large run, ELARA's workers already have a fixed, limited set of tools:
+the restricted sub-agent definitions in `.claude/agents/` (Claude Code) and
 `.codex/agents/` (Codex) give coding workers no web access, research workers web
 search and fetch only, and no worker a browser, desktop, MCP, or user-prompt
-tool. Add host permission rules or trusted deterministic hooks where supported
+tool. Add host permission rules or trusted automated checks where supported
 to also prevent sibling-return reads and writes outside the assigned path. The
-strict `submit` command validates and creates canonical returns, but it isn't a
-host sandbox. An optional plugin may distribute later ELARA updates. A clean
+strict `submit` command validates and creates return files in the required
+format, but it is not an operating-system or host-enforced restriction on tool
+and file access (a sandbox). An optional plugin may distribute later ELARA updates. A clean
 repository copy remains the authoritative workspace for one project.
 
 ## What does ELARA cost, and what does it require?
@@ -541,14 +561,16 @@ repository copy remains the authoritative workspace for one project.
 Stage 00 records a spending limit. Stage 03 produces a LaTeX-generated PDF
 organized around eight plain-language questions, with one prose section per
 question and no gate table. Word or another format is available on request. It
-treats ELARA's sub-agent harness as the default route for later coding and
-estimates its completion time under low, central, and high scenarios. It does
-not invent a dollar value for subscription-backed sub-agent use. Every audit
-also gives a separately labeled, counterfactual estimate of what the optional
-API route would cost using current provider prices, projected tokens, retries,
-model tiers, and available batch discounts. Human validation and other resource
-burdens are stated primarily as time or capacity requirements; known fixed
-charges are recorded and nontrivial spending is flagged for the researcher.
+treats the software infrastructure surrounding an LLM that enables it to
+operate as an agent (the agent harness) as the default route for later coding
+and estimates its completion time under low, central, and high scenarios. It
+does not invent a dollar value for subscription-backed sub-agent use. Every
+audit also gives a separately labeled estimate of what the same work would cost
+through the optional API route, using current provider prices, projected
+tokens, retries, model tiers, and available batch discounts. Human validation
+and other resource burdens are stated primarily as time or capacity
+requirements; known fixed charges are recorded and nontrivial spending is
+flagged for the researcher.
 Nothing beyond conception and feasibility proceeds until the researcher
 approves the feasibility decision.
 

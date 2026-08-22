@@ -64,7 +64,7 @@ change report. Do not start a goal.
 
 ## Artifacts
 
-The revision plan preserves the researcher-approved disposition and route for every comment and citation finding. `revised_manuscript_vNNN/` is a versioned copy, never the researcher input or prior manuscript. Revision code and results contain only authorized reruns or extensions and retain their tests and command provenance. The citation-disposition table links each audit finding to actual evidence and action. `peer_review_response_vNNN.md` is the journal-facing cooperative response; `revision_internal_report_vNNN.md` is the complete, frank project record. Run logs preserve comment order, builds, tests, renders, and upstream handoffs.
+The revision plan preserves the researcher-approved disposition and route for every comment and citation finding. `revised_manuscript_vNNN/` is a versioned copy, never the researcher input or prior manuscript. Revision code and results contain only authorized reruns or extensions and retain their tests and the exact commands that produced them. The citation-disposition table links each audit finding to actual evidence and action. `peer_review_response_vNNN.md` is the journal-facing cooperative response; `revision_internal_report_vNNN.md` is the complete, frank project record. Run logs preserve comment order, builds, tests, renders, and handoffs to earlier stages.
 
 ## Verification
 
@@ -85,4 +85,4 @@ After manuscript edits, set `current_stage` to `19-cite-check` and `status` to `
 
 ## Next-stage handoff
 
-Tell the researcher every comment and audit disposition, upstream stage rerun, file changed, analysis command and result, citation resolution, declined suggestion, build and test result, post-edit audit version, unresolved risk, and exact final artifact versions. State whether the optional publication workflow is complete. If any manuscript edit occurs later, explain that Stage 19 must audit that new version before another Stage 20 completion.
+Tell the researcher every comment and audit disposition, earlier stage rerun, file changed, analysis command and result, citation resolution, declined suggestion, build and test result, post-edit audit version, unresolved risk, and exact final file versions. State whether the optional publication workflow is complete. If any manuscript edit occurs later, explain that Stage 19 must audit that new version before another Stage 20 completion.

@@ -29,7 +29,7 @@ Read `AGENTS.md` and route this stage from `project/PROJECT_STATE.md` before doi
 
 ## Researcher decisions
 
-The researcher approves the sample and coder architecture, selects and instructs the human coders, resolves scope mismatches, personally performs or supervises blind adjudication, decides what counts as ground truth under the approved design, and renders the final pass, revise, or abandon disposition. The agent may randomize, package, match, calculate, and surface disagreements. It may not reveal provenance during blind review, infer missing human codes, exclude inconvenient disagreements, move an acceptance threshold, or approve the pipeline.
+The researcher approves the sample and coder design, selects and instructs the human coders, resolves scope mismatches, personally performs or supervises blind adjudication, decides what counts as ground truth under the approved design, and renders the final pass, revise, or abandon disposition. The agent may randomize, package, match, calculate, and surface disagreements. It may not reveal which source produced a judgment during blind review, infer missing human codes, exclude inconvenient disagreements, move an acceptance threshold, or approve the pipeline.
 
 ## Mode handoff
 
@@ -63,7 +63,7 @@ do not start a goal.
 
 ## Artifacts
 
-The validation plan records the approved architecture and criteria. The held-out sample preserves blind IDs, sampling probabilities, and provenance in a restricted research copy. The coder pack contains only authorized blinded material. The local interface and adjudication queue make every required disagreement reviewable without origin cues. The crosswalk and adjudicated dataset preserve comparability and final ground truth. `validation_metrics_vNNN.json` is machine-readable and `human_validation_report_vNNN.md` reports design, coder protocol, deviations, error profiles, uncertainty, subgroup results, and limitations. The disposition memo records the researcher's explicit decision and the exact artifact versions it covers.
+The validation plan records the approved design and criteria. The held-out sample preserves blind IDs, sampling probabilities, and source information in a restricted research copy. The coder pack contains only authorized blinded material. The local interface and adjudication queue make every required disagreement reviewable without origin cues. The crosswalk and adjudicated dataset preserve comparability and final ground truth. `validation_metrics_vNNN.json` is machine-readable and `human_validation_report_vNNN.md` reports design, coder protocol, deviations, error profiles, uncertainty, subgroup results, and limitations. The disposition memo records the researcher's explicit decision and the exact file versions it covers.
 
 ## Verification
 

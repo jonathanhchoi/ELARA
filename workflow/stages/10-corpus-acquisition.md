@@ -16,7 +16,7 @@ failure_routes: ["05-codebook-and-schema", "06-data-authorization", "08-pilot", 
 
 ## Objective
 
-Acquire the full frozen unit space through authorized routes and produce an immutable, source-level corpus with complete provenance, integrity checks, explicit denominators, and typed gaps. Do not silently change the population, source hierarchy, period, exclusions, or evidence policy to make acquisition easier.
+Acquire every unit on the frozen list through authorized routes and produce a source-level corpus that is preserved unchanged, records where every file came from and how it was processed, passes integrity checks, states explicit denominators, and gives a reason for every missing or unusable item. Do not silently change the population, source hierarchy, period, exclusions, or evidence policy to make acquisition easier.
 
 ## Prerequisite checks
 
@@ -35,8 +35,9 @@ The researcher alone decides whether to change the unit space, accept a substitu
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. This is a long-running execution stage: its front-matter
-`goal_condition` must be the active goal before execution begins. If it is not
+before work. This is a long-running execution stage: the `goal_condition`
+recorded in the settings at the top of this file must be the active goal before
+execution begins. If it is not
 active, provide `/goal <goal_condition>` and stop. Do not execute acquisition in
 Plan Mode. Keep the native plan and durable ledger checkpoints aligned while
 acquiring the frozen unit space. If goals are unavailable, record the fallback
@@ -57,7 +58,7 @@ and use normal approved execution with the same condition and checkpoints.
 
 ## Artifacts
 
-`corpus_vNNN/` contains immutable retrieved sources and separately identified derived text. `corpus_manifest_vNNN.csv` accounts for every frozen unit and its terminal status. `provenance_manifest_vNNN.csv` traces each usable file from source through transformations and hashes. `corpus_gap_register_vNNN.csv` records typed gaps, searches, conflicts, and proposed resolutions. `corpus_acquisition_report_vNNN.md` states the denominator, acquisition funnel, coverage by approved subgroups, integrity incidents, restrictions, costs, and all deviations. The run logs and manifest preserve each attempt and the exact frozen inputs.
+`corpus_vNNN/` contains retrieved sources preserved unchanged and separately identified derived text. `corpus_manifest_vNNN.csv` accounts for every frozen unit and its final status. `provenance_manifest_vNNN.csv` traces each usable file from its source through every transformation and the values used to verify that the files have not changed. `corpus_gap_register_vNNN.csv` records every missing or unusable item, the reason, searches, conflicts, and proposed resolutions. `corpus_acquisition_report_vNNN.md` states the starting count, expected counts at each acquisition step, coverage by approved subgroups, integrity incidents, restrictions, costs, and all deviations. The run logs and record of the run preserve each attempt and the exact frozen inputs.
 
 ## Verification
 

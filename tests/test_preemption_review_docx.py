@@ -74,7 +74,7 @@ the post-2024 period, unless a working paper using the same corpus appears.
 **Scoop risk and access gaps:** Risk is moderate; monitor two active researchers,
 complete the HeinOnline search packet, and recheck by 2026-11-19.
 
-## Annotated map of closest work
+## Detailed review of closest work
 
 ### Rivera, *Authenticating Synthetic Media* (2025)
 
@@ -89,15 +89,15 @@ applies to synthetic media and argues for a reliability-focused approach.
 does not estimate court-level treatment using the proposed opinion corpus. See
 [archived source](https://example.org/rivera).
 
-## Verdict and flip conditions
+## Verdict and what would change it
 
 > **Verdict:** Partially preempted. The doctrinal thesis is occupied, but the
 proposed empirical comparison remains open.
 
-- A working paper using the same opinion corpus would flip the verdict.
+- A working paper using the same opinion corpus would change the verdict.
 - A broader corpus can distinguish the project from the closest work.
 
-## Positioning and lineage
+## Positioning in prior literature
 
 **Honest contribution sentence:** The project measures how authentication
 reasoning varies across courts after synthetic evidence became practically
@@ -107,11 +107,11 @@ available.
 
 The risk is moderate because two active researchers have adjacent projects.
 
-## Search methods and saturation evidence
+## Search methods and evidence that further searching was no longer finding relevant work
 
 1. Ran sixteen distinct queries across four routes.
 2. Searched the closest authors and their coauthors.
-3. Logged three saturation queries that produced no unseen close work.
+3. Ran three additional checks that produced no previously unseen close work.
 
 | Route | Queries | Close works |
 | --- | --- | --- |
@@ -119,7 +119,7 @@ The risk is moderate because two active researchers have adjacent projects.
 | Repositories | 5 | 1 |
 | Open web | 5 | 0 |
 
-## Access limitations and manual search packet
+## Access limitations and searches requiring researcher access
 
 HeinOnline remained inaccessible. Run `"synthetic evidence" AND authentication`
 and return any result published since 2024.
@@ -208,7 +208,7 @@ class PreemptionReviewBuilderTests(unittest.TestCase):
             self.assertTrue(latex.startswith(r"\documentclass"))
             self.assertIn(r"\section{Executive summary}", latex)
             self.assertIn(r"\clearpage", latex)
-            self.assertIn(r"\section{Annotated map of closest work}", latex)
+            self.assertIn(r"\section{Detailed review of closest work}", latex)
             self.assertIn(r"\begin{tabularx}", latex)
             self.assertIn(r"\href{https://example.org/rivera}{archived source}", latex)
             self.assertIn(r"\end{document}", latex)

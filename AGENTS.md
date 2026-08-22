@@ -85,22 +85,49 @@ shared, and which are the researcher's, so a folder both use (for example
 
 ## Working with the researcher
 
-- Assume a legal scholar who may never have used a terminal. Use plain language,
-  define a technical term the first time it matters, and say what will happen
-  before it happens. Ask as little as possible: infer what the folder and the
-  record already answer, and when you must ask, put everything you still need
-  in one message, each question concrete, with an example answer and the
-  default you will use if they say "you decide". Accept "go with the defaults",
-  and accept "don't know" as an answer to record, not a gap to fill silently.
-- The assistant runs the commands (`scripts/doctor.py`, validators, the fan-out
-  controller). Never ask the researcher to edit state, YAML, or a ledger by hand,
-  and never make them retype an instruction the kit already contains.
+- Assume a well-informed empirical legal researcher who may never have used a
+  terminal and is not expected to know ELARA's internal vocabulary. This rule
+  governs orientations, menus, questions, approval requests, progress and
+  completion reports, decision documents, report prose, and handoffs.
+- Unnecessary, invented, or purely internal jargon is prohibited. Use concrete
+  language. Do not expose invented, ELARA-specific, or avoidable
+  shorthand such as "fan-out," "typed gap," "unit-space manifest," "pinned,"
+  "front matter," or "quarantine." Say what the thing is or what will happen:
+  "parallel sub-agents," "a missing item with the reason it is missing," "the
+  complete list of documents or other units eligible for coding," "recorded as
+  the active version,"
+  "the settings at the top of the file," or "kept out of the validation sample."
+- Use a genuine term from statistics, computer science, AI-agent engineering,
+  law, or another established literature only when it adds useful precision or
+  avoids cumbersome repetition. If a well-informed empirical legal researcher
+  may not know it, define it in ordinary language at its first use in each
+  standalone context. If "agent harness" is useful, introduce it as "the
+  software infrastructure surrounding an LLM that enables it to operate as an
+  agent (the agent harness)." A term is not justified merely because it can be
+  defined.
+- Treat "artifact" as a context-dependent term, not a preferred word. Use it
+  only when its established broad meaning is useful and define it if needed;
+  otherwise say "file," "report," "dataset," "record," or "output." Preserve
+  literal filenames, commands, state fields, and code values, but show them only
+  when the researcher needs to locate or use them, in code formatting, and do
+  not turn them into prose vocabulary.
+- Say what will happen before it happens. Ask as little as possible: infer what
+  the folder and the record already answer, and when you must ask, put everything
+  you still need in one message, each question concrete, with an example answer
+  and the default you will use if they say "you decide". Accept "go with the
+  defaults", and accept "don't know" as an answer to record, not a gap to fill
+  silently.
+- The assistant runs the commands (`scripts/doctor.py`, validators, and the
+  software that manages parallel sub-agents). Never ask the researcher to edit
+  state, YAML, or a ledger by hand, and never make them retype an instruction the
+  kit already contains.
 - Speak in terms of the researcher's project ("your codebook", "the 400 opinions
   you sent"), not the kit's internals, and translate stage numbers into what
   they do. Name the exact file when they want to look at something.
 - Before work likely to take more than about two minutes, give a rough duration
   or range and say what it is based on. While it runs, send brief progress and
-  revised time-remaining updates after each major phase or fan-out wave and at
+  revised time-remaining updates after each major phase or group of parallel
+  sub-agent assignments and at
   least about every five minutes when the host permits. Include exact completed
   and total counts where a denominator exists, elapsed time, retries or delays,
   and an ETA range based on observed throughput. If there is not yet enough

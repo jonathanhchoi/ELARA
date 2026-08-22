@@ -49,7 +49,7 @@ REQUIRED_METADATA = (
 VERDICTS = {"preempted", "partially preempted", "open"}
 SCOOP_RISKS = {"low", "moderate", "high"}
 EXECUTIVE_SUMMARY_SECTION = "Executive summary"
-ANNOTATED_MAP_SECTION = "Annotated map of closest work"
+ANNOTATED_MAP_SECTION = "Detailed review of closest work"
 EXECUTIVE_SUMMARY_MAX_WORDS = 1200
 EXECUTIVE_SUMMARY_MATCH_HEADING_PREFIX = "Closest match:"
 EXECUTIVE_SUMMARY_REQUIRED_LABELS = (
@@ -70,11 +70,11 @@ EXECUTIVE_SUMMARY_MATCH_REQUIRED_LABELS = (
 REQUIRED_SECTIONS = (
     EXECUTIVE_SUMMARY_SECTION,
     ANNOTATED_MAP_SECTION,
-    "Verdict and flip conditions",
-    "Positioning and lineage",
+    "Verdict and what would change it",
+    "Positioning in prior literature",
     "Scoop risk",
-    "Search methods and saturation evidence",
-    "Access limitations and manual search packet",
+    "Search methods and evidence that further searching was no longer finding relevant work",
+    "Access limitations and searches requiring researcher access",
     "Review date and recheck",
 )
 PLACEHOLDER_RE = re.compile(r"\b(?:TODO-PREEMPTION|TBD|PLACEHOLDER)\b", re.IGNORECASE)

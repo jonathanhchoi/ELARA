@@ -16,7 +16,7 @@ failure_routes: ["05-codebook-and-schema", "06-data-authorization", "08-pilot", 
 
 ## Objective
 
-Apply the exact frozen coding instrument to the authorized corpus in resumable, auditable batches. Produce one independently generated, raw, schema-checked, quote-checked result per rostered coding unit, preserve every failed attempt, and reconcile the final ledger to the acquisition denominator. A coding unit may contain one document or several related documents, as fixed by the approved codebook and unit-space manifest.
+Apply the exact frozen coding instructions to the authorized corpus in resumable, auditable batches. Produce one independently generated raw result per listed coding unit, check it against the required output format and quoted source text, preserve every failed attempt, and make the final ledger add up to the acquisition count. A coding unit may contain one document or several related documents, as fixed by the approved codebook and the complete list of units eligible for coding.
 
 ## Prerequisite checks
 
@@ -34,8 +34,9 @@ The researcher decides any change to the instrument, model route, exclusion rule
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. This is a long-running execution stage: its front-matter
-`goal_condition` must be the active goal before execution begins. If it is not
+before work. This is a long-running execution stage: the `goal_condition`
+recorded in the settings at the top of this file must be the active goal before
+execution begins. If it is not
 active, provide `/goal <goal_condition>` and stop. Do not run the scale-up in
 Plan Mode. The parent keeps the goal and plan current while the host orchestrator
 runs coding waves under `workflow/shared/observation-fanout.md`: Codex spawns the
@@ -60,7 +61,7 @@ and record the fallback; never code units serially in the parent's context.
 
 ## Artifacts
 
-`coding_dataset_vNNN.jsonl` is the immutable machine-readable result with one roster-accounting record per unit and evidence-backed observations. `coding_ledger_vNNN.csv` links units to every attempt and terminal status. The schema and evidence files record mechanical checks at observation level. The revision queue records frozen-rule problems without resolving them. `scale_up_report_vNNN.md` reports the funnel, model and settings, dates, cumulative cost against the approved budget ceiling, runtime, batch incidents, retries, failure statuses, coverage, and open queue items. Run directories contain the exact prompts, raw responses, checks, and manifest needed to audit or resume the run.
+`coding_dataset_vNNN.jsonl` is the machine-readable result, preserved unchanged, with one accounting record per listed unit and evidence-backed observations. `coding_ledger_vNNN.csv` links units to every attempt and final status. The output-format and evidence files record mechanical checks at the observation level. The revision queue records problems with the frozen rules without resolving them. `scale_up_report_vNNN.md` reports expected counts at each processing step, model and settings, dates, cumulative cost against the approved budget ceiling, runtime, batch incidents, retries, failure statuses, coverage, and open queue items. Run directories contain the exact prompts, raw responses, checks, and record needed to audit or resume the run.
 
 ## Verification
 

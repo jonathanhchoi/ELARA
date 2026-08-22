@@ -1,6 +1,6 @@
 ---
 name: "elr-14-analysis-and-correction"
-description: "Run ELR stage 14-analysis-and-correction: Run deterministic analysis and measurement-error correction. Use when this is the current stage in project/PROJECT_STATE.md or when the researcher explicitly requests this recovery stage."
+description: "Run ELR stage 14-analysis-and-correction: Run the approved analysis and correct for coding errors. Use when this is the current stage in project/PROJECT_STATE.md or when the researcher explicitly requests this recovery stage."
 ---
 
 # Run elr-14-analysis-and-correction

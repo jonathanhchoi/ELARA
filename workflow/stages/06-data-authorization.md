@@ -64,7 +64,7 @@ webpage as authorization.
 
 ## Artifacts
 
-The authorization record is scoped, versioned, and nontransferable to another corpus, model route, purpose, or project. The handling plan operationalizes it. The evidence manifest distinguishes agent-verified official material, researcher-supplied material, and unresolved authority. Sensitive governing records may remain in an approved secure location referenced by hash rather than copied into the repository.
+The authorization record is limited to the named corpus, model route, purpose, and project and is saved as a specific version; it does not transfer to another use. The handling plan states how to carry out those limits. The evidence list distinguishes official material the agent verified, material the researcher supplied, and questions of authority that remain unresolved. Sensitive governing records may remain in an approved secure location, identified by a value that verifies the file has not changed, rather than being copied into the repository.
 
 ## Verification
 

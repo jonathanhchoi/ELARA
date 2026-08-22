@@ -36,8 +36,9 @@ explain precisely why the overlap is only topical.
 **What remains:** TODO-PREEMPTION: State the contribution left unoccupied after
 this match, if any, and the concrete distinction on which it depends.
 
-**Evidence:** TODO-PREEMPTION: Give the source-manifest ID and claim-evidence
-IDs or pinpoint pages supporting both the description and preemption analysis.
+**Evidence:** TODO-PREEMPTION: Give the source-list ID and the IDs from the table
+linking claims to evidence, or pinpoint pages, that support both the description
+and preemption analysis.
 
 TODO-PREEMPTION: Repeat the Closest match subsection for every work that
 materially affects the verdict.
@@ -47,7 +48,8 @@ sentence after comparing all closest matches. Do not claim novelty merely
 because the proposed wording, framing, or topic label differs.
 
 **Recommended disposition:** TODO-PREEMPTION: Recommend proceed, reposition,
-return to conception, or stop, with the central reason and any flip condition.
+return to conception, or stop, with the central reason and any condition that
+would change the recommendation.
 
 **Scoop risk and access gaps:** TODO-PREEMPTION: State the risk level, active
 researchers or developments to watch, material inaccessible sources, and the
@@ -59,7 +61,7 @@ three rendered pages and no more than 1,200 words. Synthesize only findings
 supported in the detailed review and its source record; introduce no new claim
 or source.
 
-## Annotated map of closest work
+## Detailed review of closest work
 
 ### TODO-PREEMPTION: Full citation for the closest work
 
@@ -71,9 +73,9 @@ or source.
 
 **Relationship to this project:** TODO-PREEMPTION: Explain precisely why the
 work does or does not occupy the same contribution, with source and
-claim-evidence IDs.
+IDs from the table linking claims to evidence.
 
-## Verdict and flip conditions
+## Verdict and what would change it
 
 > **Verdict:** TODO-PREEMPTION: Give one verdict and the short reason. Do not
 report a confidence score.
@@ -81,7 +83,7 @@ report a confidence score.
 TODO-PREEMPTION: Test the required escape routes and state what later discovery
 would change the verdict.
 
-## Positioning and lineage
+## Positioning in prior literature
 
 **Honest contribution sentence:** TODO-PREEMPTION
 
@@ -93,13 +95,14 @@ researchers, and the project's defensible position among them.
 TODO-PREEMPTION: Explain the recorded risk level, live threats, and what should
 be watched before the recommended recheck date.
 
-## Search methods and saturation evidence
+## Search methods and evidence that further searching was no longer finding relevant work
 
-TODO-PREEMPTION: Summarize the query matrix, routes, author and citation-chain
-searches, saturation queries, date range, and any decisive-preemption
-truncation. Link the exact search-log and source-manifest paths.
+TODO-PREEMPTION: Summarize the planned combinations of search terms, search
+routes, author and citation-chain searches, checks for whether further searches
+still find relevant work, date range, and any early stopping because decisive
+prior work was found. Link the exact search-log and source-list paths.
 
-## Access limitations and manual search packet
+## Access limitations and searches requiring researcher access
 
 TODO-PREEMPTION: List every inaccessible route and unverified attribution. For
 each manual search, give the database or site, exact query, title or locator,

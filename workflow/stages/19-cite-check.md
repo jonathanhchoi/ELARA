@@ -34,11 +34,12 @@ The researcher decides which unavailable sources to supply, the governing citati
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. This is a long-running audit stage: its front-matter
-`goal_condition` must be the active goal before execution begins. If it is not
+before work. This is a long-running audit stage: the `goal_condition` recorded
+in the settings at the top of this file must be the active goal before
+execution begins. If it is not
 active, provide `/goal <goal_condition>` and stop. Do not use Plan Mode for the
 audit. The parent keeps the goal and plan current while claim-citation pairs run
-as a research fan-out under `workflow/shared/observation-fanout.md`: one pair per
+as parallel research assignments under `workflow/shared/observation-fanout.md`: one pair per
 brief, sealed by `scripts/research_fanout.py prepare`; Claude Code launches the
 saved `elr-research-fanout` workflow and Codex spawns `elr_research_worker`
 sub-agents in bounded waves. Never use hand-launched or all-tools workers. If
@@ -60,7 +61,7 @@ with the same completion condition and durable checkpoints.
 
 ## Artifacts
 
-`citation_audit_vNNN.jsonl` contains one immutable record per claim-citation pair with manuscript location, proposition, source ID, disposition, explanation, pinpoint, evidence, and review status. The source manifest records bibliographic identity, URLs, access dates, local paths, hashes, versions, restrictions, and verification status. The search log supports unavailable-source findings. Retrieved files contain only lawful copies. `citation_audit_report_vNNN.md` summarizes coverage, severe errors, qualifications, pinpoint and metadata issues, unverified items and exact retrieval requests, internal-integrity findings, and fresh-review results. No output is a revised manuscript.
+`citation_audit_vNNN.jsonl` contains one record preserved unchanged per claim-citation pair with manuscript location, proposition, source ID, disposition, explanation, pinpoint, evidence, and review status. The source list records bibliographic identity, URLs, access dates, local paths, values used to verify that files have not changed, versions, restrictions, and verification status. The search log supports unavailable-source findings. Retrieved files contain only lawful copies. `citation_audit_report_vNNN.md` summarizes coverage, severe errors, qualifications, pinpoint and metadata issues, unverified items and exact retrieval requests, internal-integrity findings, and fresh-review results. No output is a revised manuscript.
 
 ## Verification
 

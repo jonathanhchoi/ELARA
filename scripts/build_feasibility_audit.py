@@ -74,7 +74,7 @@ GATES = (
 )
 
 DECISION_SUMMARY = "Decision summary"
-BINDING_CONSTRAINT = "Binding constraint"
+BINDING_CONSTRAINT = "Controlling limitation"
 RECOMMENDATION = "Recommendation and what would change it"
 LIMITATIONS = "Evidence gaps and limitations"
 REQUIRED_SECTIONS = (
