@@ -303,6 +303,13 @@ Workflow version 2.0.2 makes ELARA's researcher-facing language more concrete.
 It does not change project state, stage order, approval gates, file formats, or
 research safeguards, and existing 2.0 projects need no migration.
 
+Workflow version 2.1.0 separates the Stage 03 evidence audit from its final
+report. After the live checks and preliminary analysis, ELARA puts every
+material researcher-owned choice to the researcher in one chat message, records
+the answers, and only then produces the full feasibility-analysis PDF. A project
+that has already passed the feasibility gate needs no migration. An unfinished
+Stage 03 run should complete the consultation and create a new report version.
+
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
 ## How does ELARA handle manuscript work?
@@ -460,7 +467,7 @@ requirements.txt                Bounded Python dependencies
 workflow/stages/NN-*.md         Authoritative sequential stage instructions
 workflow/utilities/             Optional manuscript utilities
 workflow/shared/                Guardrails and contracts for files, parallel work, and manuscripts
-workflow/templates/             Preemption-review, feasibility, preregistration, skeleton-draft, and publication-profile templates
+workflow/templates/             Preemption-review, feasibility consultation and analysis, preregistration, skeleton-draft, and publication-profile templates
 scripts/latex_report.py         Render shared formatted-report LaTeX
 scripts/build_preemption_review.py  Build the formatted Stage 02 report
 scripts/build_feasibility_audit.py   Build the question-led Stage 03 report
@@ -558,19 +565,24 @@ repository copy remains the authoritative workspace for one project.
 
 ## What does ELARA cost, and what does it require?
 
-Stage 00 records a spending limit. Stage 03 produces a LaTeX-generated PDF
-organized around eight plain-language questions, with one prose section per
-question and no gate table. Word or another format is available on request. It
-treats the software infrastructure surrounding an LLM that enables it to
-operate as an agent (the agent harness) as the default route for later coding
-and estimates its completion time under low, central, and high scenarios. It
-does not invent a dollar value for subscription-backed sub-agent use. Every
-audit also gives a separately labeled estimate of what the same work would cost
-through the optional API route, using current provider prices, projected
-tokens, retries, model tiers, and available batch discounts. Human validation
-and other resource burdens are stated primarily as time or capacity
-requirements; known fixed charges are recorded and nontrivial spending is
-flagged for the researcher.
+Stage 00 records a spending limit. In Stage 03, ELARA first completes the live
+checks and preliminary feasibility analysis. It then consults the researcher in
+chat on the material choices the evidence cannot settle, presenting all of the
+questions together with recommendations, alternatives, and consequences. The
+researcher's answers are recorded before ELARA drafts the report. The resulting
+LaTeX-generated PDF is the full analysis, not merely a verdict: it contains the
+evidence, calculations, alternatives, tradeoffs, risks, and researcher
+decisions, organized around eight plain-language questions with no gate table.
+Word or another format is available on request. The analysis treats the
+software infrastructure surrounding an LLM that enables it to operate as an
+agent (the agent harness) as the default route for later coding and estimates
+its completion time under low, central, and high scenarios. It does not invent
+a dollar value for subscription-backed sub-agent use. Every audit also gives a
+separately labeled estimate of what the same work would cost through the
+optional API route, using current provider prices, projected tokens, retries,
+model tiers, and available batch discounts. Human validation and other resource
+burdens are stated primarily as time or capacity requirements; known fixed
+charges are recorded and nontrivial spending is flagged for the researcher.
 Nothing beyond conception and feasibility proceeds until the researcher
 approves the feasibility decision.
 

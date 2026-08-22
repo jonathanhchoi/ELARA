@@ -1,9 +1,10 @@
-"""Build the Stage 03 feasibility audit as a question-led formatted report.
+"""Build the Stage 03 full feasibility analysis as a formatted report.
 
 The Markdown input is the immutable, run-scoped build source. LaTeX is the
 default output and compiles to the active PDF. DOCX remains available when the
 researcher explicitly requests Word. The builder enforces the display questions,
-rejects table-based reports, and refuses to overwrite an artifact.
+the completed researcher consultation, and detailed analysis for every gate;
+rejects table-based reports; and refuses to overwrite an artifact.
 """
 
 from __future__ import annotations
@@ -74,12 +75,14 @@ GATES = (
 )
 
 DECISION_SUMMARY = "Decision summary"
+CONSULTATION = "Researcher consultation and decisions"
 BINDING_CONSTRAINT = "Controlling limitation"
 RECOMMENDATION = "Recommendation and what would change it"
 LIMITATIONS = "Evidence gaps and limitations"
 REQUIRED_SECTIONS = (
     DECISION_SUMMARY,
     *(gate.question for gate in GATES),
+    CONSULTATION,
     BINDING_CONSTRAINT,
     RECOMMENDATION,
     LIMITATIONS,
@@ -89,14 +92,19 @@ REQUIRED_METADATA = (
     "subtitle",
     "recommendation",
     "audit_date",
+    "consultation_date",
+    "consultation_record",
     "report_version",
 )
 RECOMMENDATIONS = {"go", "go with modifications", "no-go"}
 GATE_DECISIONS = {"pass", "pass with conditions", "fail"}
+CONSULTATION_STATUSES = {"complete", "complete with unresolved choices"}
 REQUIRED_GATE_LABELS = (
     "Decision",
     "Evidence",
+    "Analysis",
     "What this means",
+    "Researcher input",
     "Conditions or next step",
 )
 RESOURCE_LABELS = (
@@ -104,8 +112,24 @@ RESOURCE_LABELS = (
     "API-price comparison",
     "Human and other resources",
 )
+CONSULTATION_LABELS = (
+    "Consultation status",
+    "Decisions incorporated",
+)
+CONSULTATION_DECISION_LABELS = (
+    "Question",
+    "Evidence",
+    "Recommendation",
+    "Alternatives and consequences",
+    "Researcher response",
+    "Effect on analysis",
+)
 PLACEHOLDER_RE = re.compile(r"\b(?:TODO-FEASIBILITY|TBD|PLACEHOLDER)\b", re.IGNORECASE)
+CONSULTATION_PLACEHOLDER_RE = re.compile(r"\bTODO-CONSULTATION\b", re.IGNORECASE)
 LABELED_FIELD_RE = re.compile(r"^\*\*([^*]+):\*\*\s*(.+)$", re.MULTILINE)
+CONSULTATION_DECISION_RE = re.compile(
+    r"^##\s+(D-[A-Za-z0-9][A-Za-z0-9._-]*)\s*$", re.MULTILINE
+)
 LEGACY_HEADINGS = {
     "task type",
     "variable verifiability",
@@ -168,10 +192,23 @@ def parse_source(text: str) -> tuple[dict[str, str], str]:
     if recommendation not in RECOMMENDATIONS:
         raise ValueError("recommendation must be go, go with modifications, or no-go")
     metadata["recommendation"] = recommendation
-    try:
-        date.fromisoformat(metadata["audit_date"])
-    except ValueError as exc:
-        raise ValueError("audit_date must use YYYY-MM-DD") from exc
+    for field in ("audit_date", "consultation_date"):
+        try:
+            date.fromisoformat(metadata[field])
+        except ValueError as exc:
+            raise ValueError(f"{field} must use YYYY-MM-DD") from exc
+    consultation_record = metadata["consultation_record"].replace("\\", "/")
+    record_parts = tuple(part for part in consultation_record.split("/") if part)
+    if (
+        not consultation_record.startswith("project/runs/")
+        or not consultation_record.endswith("/feasibility_consultation.md")
+        or ".." in record_parts
+        or ":" in consultation_record
+    ):
+        raise ValueError(
+            "consultation_record must be a project/runs/<run_id>/feasibility_consultation.md path"
+        )
+    metadata["consultation_record"] = consultation_record
 
     body = "\n".join(lines[end + 1 :]).strip()
     if not body:
@@ -206,6 +243,41 @@ def _labeled_fields(section_text: str) -> dict[str, str]:
         label = match.group(1).strip()
         fields.setdefault(label, match.group(2).strip())
     return fields
+
+
+def validate_consultation_record(source: Path, relative_record: str) -> Path:
+    project_dir = next((parent for parent in source.parents if parent.name == "project"), None)
+    if project_dir is None:
+        raise ValueError("source must be under project/runs/<run_id>")
+    repo_root = project_dir.parent.resolve()
+    record = (repo_root / Path(relative_record)).resolve()
+    try:
+        record.relative_to(repo_root)
+    except ValueError as exc:
+        raise ValueError("consultation record escapes the ELARA project root") from exc
+    if record.parent != source.parent.resolve():
+        raise ValueError("consultation record must be in the same run directory as the source")
+    if not record.is_file():
+        raise ValueError(f"consultation record does not exist: {relative_record}")
+
+    text = record.read_text(encoding="utf-8")
+    if CONSULTATION_PLACEHOLDER_RE.search(text):
+        raise ValueError("consultation record still contains an unresolved placeholder")
+    if not re.search(r"^\*\*Consultation status:\*\*\s*Complete\.?\s*$", text, re.MULTILINE | re.IGNORECASE):
+        raise ValueError("consultation record must state a complete consultation status")
+    decisions = list(CONSULTATION_DECISION_RE.finditer(text))
+    if not decisions:
+        raise ValueError("consultation record must contain at least one decision section")
+    for index, match in enumerate(decisions):
+        end = decisions[index + 1].start() if index + 1 < len(decisions) else len(text)
+        fields = _labeled_fields(text[match.end() : end])
+        missing = [label for label in CONSULTATION_DECISION_LABELS if not fields.get(label)]
+        if missing:
+            raise ValueError(
+                f"consultation decision '{match.group(1)}' is missing labeled content: "
+                + ", ".join(missing)
+            )
+    return record
 
 
 def validate_sections(blocks) -> None:
@@ -247,6 +319,23 @@ def validate_sections(blocks) -> None:
                 f"gate section '{gate.question}' must decide pass, pass with conditions, or fail"
             )
 
+    consultation_fields = _labeled_fields(_section_text(blocks, CONSULTATION))
+    missing_consultation = [
+        label for label in CONSULTATION_LABELS if not consultation_fields.get(label)
+    ]
+    if missing_consultation:
+        raise ValueError(
+            "researcher-consultation section is missing labeled content: "
+            + ", ".join(missing_consultation)
+        )
+    consultation_status = (
+        consultation_fields["Consultation status"].splitlines()[0].strip().lower().rstrip(".")
+    )
+    if consultation_status not in CONSULTATION_STATUSES:
+        raise ValueError(
+            "consultation status must be complete or complete with unresolved choices"
+        )
+
     resource_fields = _labeled_fields(_section_text(blocks, GATES[5].question))
     missing_resources = [label for label in RESOURCE_LABELS if not resource_fields.get(label)]
     if missing_resources:
@@ -285,14 +374,14 @@ def build_document(metadata: dict[str, str], blocks) -> Document:
     doc = Document()
     configure_document(doc)
     doc.core_properties.title = metadata["title"]
-    doc.core_properties.subject = "ELARA Stage 03 feasibility audit"
+    doc.core_properties.subject = "ELARA Stage 03 full feasibility analysis"
     doc.core_properties.author = "ELARA"
     doc.core_properties.keywords = "feasibility audit, empirical legal research, research design"
 
     kicker = doc.add_paragraph()
     kicker.paragraph_format.space_after = Pt(4)
     kicker.paragraph_format.keep_with_next = True
-    kicker_run = kicker.add_run("ELARA FEASIBILITY AUDIT")
+    kicker_run = kicker.add_run("ELARA FEASIBILITY ANALYSIS")
     _format_run(kicker_run, "Calibri", 9, BLUE, bold=True)
     title = doc.add_paragraph(metadata["title"], style="ELARA Report Title")
     title.paragraph_format.keep_with_next = True
@@ -300,6 +389,8 @@ def build_document(metadata: dict[str, str], blocks) -> Document:
     subtitle.paragraph_format.keep_with_next = True
     _add_metadata_line(doc, "Recommendation", metadata["recommendation"].title())
     _add_metadata_line(doc, "Audit date", metadata["audit_date"])
+    _add_metadata_line(doc, "Researcher consultation", metadata["consultation_date"])
+    _add_metadata_line(doc, "Consultation record", metadata["consultation_record"])
     _add_metadata_line(doc, "Report version", metadata["report_version"])
     _add_rule(doc)
 
@@ -371,6 +462,7 @@ def build(source: Path, output: Path) -> None:
     if output.exists():
         raise ValueError(f"refusing to overwrite existing artifact: {output}")
     metadata, body = parse_source(source.read_text(encoding="utf-8"))
+    validate_consultation_record(source, metadata["consultation_record"])
     blocks = parse_blocks(body)
     validate_sections(blocks)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -379,10 +471,12 @@ def build(source: Path, output: Path) -> None:
             latex = render_latex_report(
                 title=metadata["title"],
                 subtitle=metadata["subtitle"],
-                kicker="ELARA Feasibility Audit",
+                kicker="ELARA Feasibility Analysis",
                 metadata_rows=(
                     ("Recommendation", metadata["recommendation"].title()),
                     ("Audit date", metadata["audit_date"]),
+                    ("Researcher consultation", metadata["consultation_date"]),
+                    ("Consultation record", metadata["consultation_record"]),
                     ("Report version", metadata["report_version"]),
                 ),
                 blocks=blocks,
