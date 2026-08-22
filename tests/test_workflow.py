@@ -192,6 +192,12 @@ class WorkflowContractTests(unittest.TestCase):
             "one prose section for each gate",
             "Do not use a gate table",
             "project/artifacts/feasibility_audit_vNNN.pdf",
+            "ask all still-needed questions in one chat message",
+            "feasibility-report-consultation",
+            "Do not draft or build the final report yet",
+            "This is the full feasibility analysis",
+            "every material analysis performed during the audit",
+            "Researcher consultation and decisions",
         ):
             self.assertIn(requirement, flat)
 
@@ -200,6 +206,8 @@ class WorkflowContractTests(unittest.TestCase):
         for public_doc in (readme, pipeline):
             self.assertIn("sub-agent", public_doc)
             self.assertIn("API", public_doc)
+            self.assertIn("consult", public_doc.lower())
+            self.assertIn("full", public_doc.lower())
 
     def test_skeleton_stage_contract_and_public_routes(self) -> None:
         stages = {meta["stage_id"]: (meta, body) for _, meta, body in load_stages(ROOT)}

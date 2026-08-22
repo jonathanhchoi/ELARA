@@ -56,6 +56,7 @@ DISCOVERY_SURFACES = (
     "workflow/templates/preregistration_template.md",
     "workflow/templates/preemption_review_template.md",
     "workflow/templates/feasibility_audit_template.md",
+    "workflow/templates/feasibility_consultation_template.md",
     "project/PROJECT_STATE.md",
     ".agents/skills/elr/SKILL.md",
     ".agents/skills/elr-code-observations/SKILL.md",
