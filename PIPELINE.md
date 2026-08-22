@@ -194,7 +194,7 @@ version.
 | `normal` | Track the short stage in the native plan and gather a researcher decision; no Plan Mode or goal. |
 | `plan` | Track the work, inspect in Plan Mode, make no file changes, and return the exact execution handoff. |
 | `execute` | Track and run approved execution. If `long_running: true`, use the stage's exact completion condition as the durable goal. The host coordinates any parallel sub-agents under `workflow/shared/observation-fanout.md`. |
-| `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 18 and 20 always stop because their plan is the manuscript-edit gate). A long execution phase uses the exact stage goal. |
+| `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Stage 04 always uses Plan Mode and the host's question interface for its interactive methods interview. Other stages enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 18 and 20 always stop because their plan is the manuscript-edit gate). A long execution phase uses the exact stage goal. |
 
 Plan phases do not alter state, ledgers, or research files. A mode or permission
 setting never waives a human gate, data restriction, or version rule.
@@ -217,7 +217,7 @@ long-running. See `workflow/shared/execution-control.md`.
 | `01-conceive` | 1 (optional) | yes | `plan_then_execute` | Researcher profile and ranked, source-checked shortlist | `project-selection` |
 | `02-preemption-review` | 1 | yes | `execute` | LaTeX-generated PDF literature review with a closest-match preemption summary, search log, source list, and novelty assessment | `preemption-disposition` |
 | `03-feasibility-audit` | 1 | yes | `execute` | Live feasibility audit, one consolidated chat consultation on material researcher choices, and a question-led full-analysis PDF containing the evidence, calculations, alternatives, expected observation counts, sub-agent timing, optional API cost comparison, risks, decisions, and verdict | `feasibility-go-no-go` |
-| `04-methods-design` | 2 | yes | `plan_then_execute` | Hypotheses, quantities to estimate, sampling, measurement, validation, and analysis plan | `methods-plan-approval` |
+| `04-methods-design` | 2 | yes | `plan_then_execute` | Interactive Plan-Mode methods interview, then hypotheses, quantities to estimate, sampling, measurement, validation, and analysis plan | `methods-plan-approval` |
 | `05-codebook-and-schema` | 2 | yes | `plan_then_execute` | Codebook, required output format, edge cases, `uncertain` route, and complete list of units eligible for coding | `codebook-schema-approval` |
 | `06-data-authorization` | 2 | yes | `normal` | Confirmed legal, ethical, confidentiality, and model-processing route | `data-authorization` |
 | `07-adversarial-review` | 2 | yes | `plan_then_execute` | Independent critiques, issue disposition, and revised frozen design | `design-freeze` |
@@ -354,6 +354,11 @@ Version 2.1.0 adds a required Stage 03 consultation after the evidence audit and
 before the full feasibility-analysis report. Completed feasibility approvals
 remain valid. An unfinished Stage 03 run completes the consultation and creates
 a new report version under the updated contract.
+
+Version 2.2.0 makes the Stage 04 read-only design phase an interactive Plan-Mode
+methods interview. Existing approved methods remain valid. An unfinished Stage
+04 run repeats the interview against the active evidence before writing a new
+design version; accepting the host plan is not the final methods approval.
 
 ## Persistent state
 

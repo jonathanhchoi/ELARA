@@ -37,11 +37,16 @@ the canonical `interaction_profile` as follows:
   `workflow/shared/observation-fanout.md`. Do not launch workers one at a time
   with the Agent tool while workflows are available, and do not process the
   units serially in your own context.
-- `plan_then_execute`: put the read-only plan phase first in the task list. Plan
-  in normal mode without writing any project file, then continue into execution
-  in the same session. Enter Plan Mode and stop only when a stop condition in
+- `plan_then_execute`: put the read-only plan phase first in the task list. For
+  Stage 04, enter Plan Mode, use `AskUserQuestion` in short adaptive rounds to
+  elicit the researcher's methods preferences, and leave Plan Mode only after
+  the researcher accepts the proposed plan. For other stages, plan in normal
+  mode without writing any project file, then continue into execution in the
+  same session. Enter Plan Mode and stop only when a stop condition in
   `workflow/shared/guardrails.md` §11 holds, and always for Stages 18 and 20,
-  whose plan is the manuscript-edit gate.
+  whose plan is the manuscript-edit gate. Accepting a Stage 04 plan authorizes
+  drafting the design files; it does not approve the `methods-plan-approval`
+  gate.
 
 For every stage marked `long_running: true`, inspect `/goal` status before its
 first execution write. Resume only if the exact front-matter `goal_condition`

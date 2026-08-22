@@ -310,6 +310,14 @@ the answers, and only then produces the full feasibility-analysis PDF. A project
 that has already passed the feasibility gate needs no migration. An unfinished
 Stage 03 run should complete the consultation and create a new report version.
 
+Workflow version 2.2.0 makes Stage 04 an interactive methods-design interview
+in Codex or Claude Code Plan Mode. ELARA inspects the existing evidence first,
+asks only the material open choices in short adaptive rounds, and drafts the
+versioned design files only after the researcher accepts the proposed plan.
+Completed methods approvals remain valid. An unfinished Stage 04 run should
+repeat the read-only interview against its current active inputs before writing
+a new design version.
+
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
 ## How does ELARA handle manuscript work?
@@ -370,10 +378,14 @@ available in the host, ELARA records the fallback and uses the same plan and
 completion condition with durable file checkpoints.
 
 Plan Mode is narrower. ELARA uses it when the result should be a read-only plan
-or when your approval is the boundary between planning and writing. Otherwise a
-`plan_then_execute` stage completes the no-write plan item in the native tracker
-and continues in the same session. This keeps routine work moving between the
-research gates you control.
+or when your approval is the boundary between planning and writing. Stage 04
+always uses it for a short, adaptive methods interview: the assistant recommends
+options, explains tradeoffs, and asks for your preferences through Codex's or
+Claude Code's question interface before drafting the design files. Accepting
+that proposed plan permits the draft; it does not approve the final methods
+gate. Otherwise a `plan_then_execute` stage completes the no-write plan item in
+the native tracker and continues in the same session. This keeps routine work
+moving between the research gates you control.
 
 The complete contract is in `workflow/shared/execution-control.md`.
 
