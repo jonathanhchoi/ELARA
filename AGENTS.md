@@ -95,7 +95,8 @@ shared, and which are the researcher's, so a folder both use (for example
 - Unnecessary, invented, or purely internal jargon is prohibited. Use concrete
   language. Do not expose invented, ELARA-specific, or avoidable
   shorthand such as "fan-out," "typed gap," "unit-space manifest," "pinned,"
-  "front matter," or "quarantine." Say what the thing is or what will happen:
+  "front matter," "quarantine," or "confirmatory core." Say what the thing is
+  or what will happen:
   "parallel sub-agents," "a missing item with the reason it is missing," "the
   complete list of documents or other units eligible for coding," "recorded as
   the active version,"
