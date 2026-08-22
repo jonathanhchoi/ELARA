@@ -59,6 +59,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn(definition, flat_agents)
         for concrete_rule in (
             "Unnecessary, invented, or purely internal jargon is prohibited",
+            "confirmatory core",
             "parallel sub-agents",
             "the complete list of documents or other units eligible for coding",
             "Preserve literal filenames, commands, state fields, and code values",
@@ -111,6 +112,7 @@ class WorkflowContractTests(unittest.TestCase):
             "pinned": r"\bpinned\b",
             "quarantine": r"\bquarantin(?:e|ed|es|ing)\b",
             "serial writer": r"\bserial writers?\b",
+            "confirmatory core": r"\bconfirmatory core\b",
             "goal_condition": r"\bgoal_condition\b",
             "interaction_profile": r"\binteraction_profile\b",
             "active_artifacts": r"\bactive_artifacts\b",
@@ -129,7 +131,7 @@ class WorkflowContractTests(unittest.TestCase):
     def test_generated_wrappers_inherit_plain_language_rule(self) -> None:
         prohibited = re.compile(
             r"\b(?:fan[- ]outs?|typed gaps?|unit[- ]space manifests?|front[- ]matter|"
-            r"serial writers?|goal_condition|interaction_profile|active_artifacts)\b",
+            r"serial writers?|confirmatory core|goal_condition|interaction_profile|active_artifacts)\b",
             flags=re.IGNORECASE,
         )
         wrappers = sorted((ROOT / ".agents" / "skills").glob("elr-*/SKILL.md"))
