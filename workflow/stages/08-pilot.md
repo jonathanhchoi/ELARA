@@ -53,9 +53,10 @@ is complete. Then continue into execution in the same session, without waiting,
 unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then enter Plan Mode, stop, and
 give the exact execution handoff. State the projected model-call cost in the
 plan and stop if it exceeds the recorded budget. Because this stage is
-long-running, its front-matter `goal_condition` must be the active goal before
+long-running, the `goal_condition` recorded in the settings at the top of this
+file must be the active goal before
 execution begins. If it is not active, provide `/goal <goal_condition>` and stop.
-Once assignments are fixed, the host orchestrator runs the fan-out under
+Once assignments are fixed, the host coordinates the parallel sub-agent assignments under
 `workflow/shared/observation-fanout.md`: Claude Code launches the saved
 `elr-observation-fanout` workflow and Codex spawns the kit's `elr_worker`
 sub-agents in bounded waves. The goal stays with the parent through serial
@@ -81,7 +82,7 @@ the pilot.
 
 ## Artifacts
 
-All code and run-level data are immutable under the unique run directory. Raw model outputs are irreplaceable and must be saved before parsing. The researcher review, disagreement table, and revision queue are versioned diagnostic artifacts; pilot units and tuned examples are permanently excluded from held-out validation. Create pilot_acceptance_vNNN.md only after the researcher acts on the gate; it records the accepted run, frozen versions and hashes, thresholds, known limitations, and deferred nonblocking items.
+All code and run-level data are preserved unchanged under the unique run directory. Raw model outputs are irreplaceable and must be saved before parsing. The researcher review, disagreement table, and revision queue are versioned diagnostic records; pilot units and tuning examples are permanently kept out of held-out validation. Create pilot_acceptance_vNNN.md only after the researcher acts on the gate; it records the accepted run, exact frozen versions, the values used to verify that they have not changed, thresholds, known limitations, and deferred nonblocking items.
 
 ## Verification
 
@@ -101,4 +102,4 @@ After the report verifies, activate the pilot artifacts except the acceptance me
 
 ## Next-stage handoff
 
-After acceptance, report exact completion and compliance counts, active pilot and frozen-package versions, and deferred limitations. Provide the exact next task: enter Plan Mode for 09-freeze-and-preregister, prepare a result-free preregistration and hash manifest, and stop before any external registration until the researcher approves it.
+After acceptance, report exact completion and compliance counts, active pilot and frozen-package versions, and deferred limitations. Provide the exact next task: enter Plan Mode for 09-freeze-and-preregister, prepare a result-free preregistration and a list of the frozen files with the values used to verify that they have not changed, and stop before any external registration until the researcher approves it.

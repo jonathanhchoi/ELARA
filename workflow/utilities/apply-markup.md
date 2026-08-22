@@ -16,10 +16,10 @@ Turn a researcher's hand-marked PDF into an explicit, reviewable list of propose
 
 Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`, `workflow/shared/artifact-contract.md`, and `workflow/shared/manuscript-editing-contract.md` before doing any work.
 
-1. Resolve the manuscript version the markup was made on and record its path and hash. If the markup was made on a redline or an older version, say so and map page numbers accordingly.
-2. Resolve the marked-up PDF under `project/inputs/manuscript/markup/` and hash it. Never modify it.
+1. Resolve the manuscript version the markup was made on and record its path and a hash (a value used to verify that its contents have not changed). If the markup was made on a redline or an older version, say so and map page numbers accordingly.
+2. Resolve the marked-up PDF under `project/inputs/manuscript/markup/` and record the same kind of verification value for it. Never modify it.
 3. Resolve the proofreaders' marks legend from the active publication profile or from the researcher's instruction for this run. If no legend exists, ask; do not guess what a symbol means. Record the legend used in the transcription.
-4. Confirm the tools needed to split the PDF into page images and to read them are available; record versions in the run manifest.
+4. Confirm the tools needed to split the PDF into page images and to read them are available; record their versions in the record of the run.
 
 ## Researcher decisions
 
@@ -40,7 +40,7 @@ bounded work; do not start a goal.
 
 Phase 1, transcription:
 
-1. Allocate a unique run ID and output versions, record the manuscript and PDF hashes and the publication profile version and hash, and append a ledger start.
+1. Allocate a unique run ID and output versions, record the values used to verify the manuscript and PDF and the exact publication-profile version, and append a ledger start.
 2. Split the PDF into one image per page under `project/runs/<run_id>/page_images/`. Read every page. Transcribe every mark into `markup_transcription_vNNN.csv` and a readable `markup_transcription_vNNN.md`: page, anchor text in the manuscript, mark type under the legend, the exact proposed edit (deletion, insertion, replacement, move, or comment), and a flag when the reading is uncertain. Do not interpret arrows or symbols the legend does not define; flag them.
 3. For marks that are comments or instructions rather than literal edits, propose the edit that would carry them out under the active publication profile, and label it as proposed prose rather than a literal transcription.
 4. Conduct two review passes over the transcription against the page images: first for completeness (every mark captured), second for correctness (each edit matches its mark). Present the transcription and every flagged item to the researcher and stop.
@@ -56,9 +56,9 @@ Phase 2, application (after approval):
 - Every mark on every page appears once in the transcription with a legend-defined type or an explicit ambiguity flag; the two transcription review passes are recorded.
 - The diff against the source contains only approved edits; every approved edit is applied or expressly declined with a reason.
 - No number, quotation, canonical language, defined label, or citation changed except as an approved edit directs.
-- The run manifest records the legend used, the tool versions, and the publication profile version and hash.
+- The record of the run states the legend used, the tool versions, and the exact publication-profile version.
 - `current_stage` is unchanged; the run and the permission are recorded in the ledgers.
 
 ## State transition
 
-Do not change `current_stage`. Append the run to `RUN_LEDGER.md` and the transcription approval and permission to `DECISIONS.md`. Pin the new manuscript version only after the researcher accepts the applied result and any required Stage 19 audit is clean or expressly accepted.
+Do not change `current_stage`. Append the run to `RUN_LEDGER.md` and the transcription approval and permission to `DECISIONS.md`. Record the new manuscript version as the version currently in use only after the researcher accepts the applied result and any required Stage 19 audit is clean or expressly accepted.

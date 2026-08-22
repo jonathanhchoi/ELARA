@@ -16,7 +16,7 @@ failure_routes: ["00-initialize", "01-conceive"]
 
 ## Objective
 
-Infer and confirm the researcher's interests and reusable methods, survey landmark empirical work, generate genuinely new LLM-enabled project ideas, conduct a proportionate live novelty screen for every surviving idea, and return a ranked shortlist. The agent generates and stress-tests candidates; the researcher selects the project.
+Infer and confirm the researcher's interests and reusable methods, survey important empirical work, generate genuinely new LLM-enabled project ideas, conduct a proportionate live review of whether every surviving idea appears new, and return a ranked shortlist. The agent generates and stress-tests candidates; the researcher selects the project.
 
 ## Prerequisite checks
 
@@ -46,8 +46,9 @@ verification passes, and make the plan decision-complete; do not write any
 project file, create a run, update state, or browse-download files until the plan
 is complete. Then continue into execution in the same session, without waiting,
 unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then
-enter Plan Mode, stop, and give the exact execution handoff. Because this stage is long-running, its
-front-matter `goal_condition` must be the active goal before execution begins.
+enter Plan Mode, stop, and give the exact execution handoff. Because this stage
+is long-running, the `goal_condition` recorded in the settings at the top of this file must be
+the active goal before execution begins.
 If it is not active, provide `/goal <goal_condition>` and stop. Neither the plan,
 the goal, nor a mode change approves the final project; the researcher decides at
 `project-selection`.
@@ -55,19 +56,19 @@ the goal, nor a mode change approves the final project; the researcher decides a
 ## Work
 
 1. Allocate a unique run ID and archive the exact inputs and active artifact hashes in the run manifest.
-2. Read every supplied prior paper in full. Draft a concise profile covering recurring substantive themes, actual methodological signature, familiar corpora, theoretical commitments, and reusable pipeline architecture. Separately list every future-research passage, limitation, footnote, or announced project as a claimed-agenda exclusion. Cite the input file and page or section for every inference.
+2. Read every supplied prior paper in full. Draft a concise profile covering recurring substantive themes, actual methodological approach, familiar collections of documents or data, theoretical commitments, and reusable sequences of research steps. Separately list every future-research passage, limitation, footnote, or announced project as a topic ELARA should not duplicate. Cite the input file and page or section for every inference.
 3. Present the profile for correction. Record the researcher's response in DECISIONS.md. If material corrections arrive, version the profile before continuing.
-4. Using live web research, identify the important and widely cited empirical works in the confirmed fields. Ground canonical status in retrieved evidence such as reviews, handbooks, syllabi, or citation data. For each landmark, state its question, importance, binding data limitation, and the extension or adjacent test made newly feasible by LLM-scale text measurement.
+4. Using live web research, identify the important and widely cited empirical works in the confirmed fields. Support their recognized importance with retrieved evidence such as reviews, handbooks, syllabi, or citation data. For each landmark, state its question, importance, principal data limitation, and the extension or adjacent test made newly feasible by LLM-scale text measurement.
 5. Brainstorm broadly from the confirmed profile and landmark limitations, not by executing the researcher's prior-paper to-do list. Generate at least ten distinct candidates before filtering. Exclude near-duplicates of prior work and claimed-agenda items unless the researcher expressly reopens them.
-6. Apply all selection tests to each candidate: the question is important and intelligible in one sentence; either plausible result is interesting; LLM-scale measurement makes the project newly feasible; the task is estimation from researcher-supplied text rather than outcome prediction; variables are auditable and preferably quote-anchored; the corpus has a plausible lawful route; and execution is feasible in weeks rather than years. Decompose holistic judgments into observable components. Reject candidates that fail and preserve the reason in the report.
-7. For each surviving candidate, run a proportionate, live novelty screen rather than the exhaustive Stage 02 review. Search multiple phrasings across at least three relevant routes, inspect the most similar results, search the nearest author's related work, and check that the proposed corpus appears to exist. Log queries verbatim. Retrieve and archive the closest openly downloadable sources; list inaccessible sources and exact manual database searches. Label sources read in full as verified and snippets or second-hand mentions as unverified.
-8. Give each survivor a provisional screen of open, crowded-but-distinguishable, or apparently already done. This is triage, not a final preemption verdict. Kill or reshape apparently completed ideas; do not inflate novelty to preserve a favorite.
-9. Rank approximately five candidates. For each, report the one-sentence question, landmark lineage and lifted limitation, either-way payoff, fit with the profile, closest literature and provisional novelty screen, unit of observation, variables, quote-anchoring prospects, corpus and access route, permission risks, pilot-killing risks, and decisions reserved for the researcher.
+6. Apply all selection tests to each candidate: the question is important and intelligible in one sentence; either plausible result is interesting; LLM-scale measurement makes the project newly feasible; the task determines values from researcher-supplied text rather than predicting an outcome beyond that text; variables can be checked and preferably supported by exact quotations; the collection of documents or data has a plausible lawful route; and execution is feasible in weeks rather than years. Break overall judgments into observable components. Reject candidates that fail and preserve the reason in the report.
+7. For each surviving candidate, run a proportionate live review of whether it appears new, rather than the exhaustive Stage 02 review. Search multiple phrasings across at least three relevant routes, inspect the most similar results, search the nearest author's related work, and check that the proposed collection appears to exist. Log queries verbatim. Retrieve and preserve the closest openly downloadable sources; list inaccessible sources and exact database searches requiring researcher access. Label sources read in full as verified and snippets or second-hand mentions as unverified.
+8. Give each survivor a provisional assessment of open, crowded but distinguishable, or apparently already done. This is a preliminary review, not a final preemption verdict. Reject or reshape apparently completed ideas; do not inflate novelty to preserve a favorite.
+9. Rank approximately five candidates. For each, report the one-sentence question, the important prior work and limitation it overcomes, why either result direction would matter, fit with the profile, closest literature and provisional review of novelty, unit of observation, variables, ability to support coding with exact quotations, collection and access route, permission risks, pilot results that would show the project cannot work, and decisions reserved for the researcher.
 10. Before delivery, have a fresh reviewer (per `workflow/shared/fresh-review.md`) check a sample from every candidate's screen by reopening sources and comparing the report's claims. Correct unsupported factual statements or mark them unverified; never invent a citation.
 
 ## Artifacts
 
-The active outputs are researcher_profile_vNNN.md, landmark_survey_vNNN.md, and conception_report_vNNN.md. Preserve the complete search log, source manifest, lawfully retrieved copies, and run manifest under the run ID. The source manifest must include citation, URL, access date, retrieval status, local path, hash, full-text-read status, and candidate IDs. Do not overwrite an earlier shortlist when rerunning with a new lens.
+The active outputs are researcher_profile_vNNN.md, landmark_survey_vNNN.md, and conception_report_vNNN.md. Preserve the complete search log, source list, lawfully retrieved copies, and record of the run under the run ID. The source list must include citation, URL, access date, retrieval status, local path, the value used to verify that the file has not changed, full-text-read status, and candidate IDs. Do not overwrite an earlier shortlist when rerunning with a new lens.
 
 ## Verification
 
@@ -86,4 +87,4 @@ After verified artifacts exist, make them active, set status to awaiting_approva
 
 ## Next-stage handoff
 
-After selection, state that the idea has only a proportionate novelty screen. Provide the exact next task: run 02-preemption-review on the selected question, using the selected candidate entry and its source manifest as seeds; Stage 02 begins with a bounded smoke screen of corpus access before any exhaustive searching, then stops for the researcher's preemption disposition.
+After selection, state that the idea has received only a proportionate preliminary novelty review. Provide the exact next task: run 02-preemption-review on the selected question, using the selected candidate entry and its source list as starting points; Stage 02 begins with a short preliminary check of corpus access before any exhaustive searching, then stops for the researcher's preemption decision.

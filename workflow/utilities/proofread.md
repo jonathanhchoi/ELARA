@@ -16,7 +16,7 @@ Read the manuscript as a careful proofreader and report what should change, with
 
 Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`, `workflow/shared/artifact-contract.md`, and `workflow/shared/manuscript-editing-contract.md` before doing any work.
 
-1. Resolve the manuscript to proofread (active version, or the researcher-supplied draft before Stage 18) and record its path and hash.
+1. Resolve the manuscript to proofread (the version currently in use, or the researcher-supplied draft before Stage 18) and record its path and a hash (a value used to verify that its contents have not changed).
 2. Resolve the active publication profile: venue and audience, prohibited constructions and punctuation preferences, word and grammar preferences, author-reference conventions, structure rules, venue format and length constraints, and whether uncontroversial fixes may be applied. If no profile is active, ask the researcher for the checks to apply and whether any fix may be made; do not assume.
 3. Confirm the manuscript builds, so page-level review is possible.
 
@@ -38,7 +38,7 @@ bounded execution. Do not start a goal.
 
 ## Work
 
-1. Allocate a unique run ID and output versions, record the manuscript hash and the publication profile version and hash, and append a ledger start.
+1. Allocate a unique run ID and output versions, record the value used to verify the manuscript and the exact publication-profile version, and append a ledger start.
 2. Read the entire manuscript, including footnotes, captions, tables, and appendices, page by page in the rendered output when the profile requires it. Record findings in `proofreading_findings_vNNN.csv` with location, category, the passage, the problem, a proposed fix, severity, and whether it was fixed. Categories, as the profile and researcher define them:
    - typos and clear grammatical errors, including tense consistency when the same kind of thing (prior literature, the article's own analysis) is described;
    - reasoning and clarity: awkward or unclear passages, identified but not fixed;
@@ -57,9 +57,9 @@ bounded execution. Do not start a goal.
 - Every finding names a location, category, and proposed fix; every applied fix is a clear typographical or grammatical error with one obvious correction and appears in the change log.
 - The diff against the source contains nothing beyond the permitted fixes.
 - No number, quotation, canonical language, defined label, or citation was changed.
-- The report records the two validation passes and the publication profile version and hash.
+- The report records the two validation passes and the exact publication-profile version.
 - `current_stage` is unchanged; the run and any permission are recorded in the ledgers.
 
 ## State transition
 
-Do not change `current_stage`. Append the run to `RUN_LEDGER.md` and any permission decision to `DECISIONS.md`. If fixes were applied, pin the new manuscript version only after the researcher accepts the report; a manuscript with changed text also needs a fresh Stage 19 audit before it is called final.
+Do not change `current_stage`. Append the run to `RUN_LEDGER.md` and any permission decision to `DECISIONS.md`. If fixes were applied, record the new manuscript version as the version currently in use only after the researcher accepts the report; a manuscript with changed text also needs a fresh Stage 19 audit before it is called final.

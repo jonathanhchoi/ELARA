@@ -16,7 +16,7 @@ failure_routes: ["02-preemption-review", "03-feasibility-audit", "04-methods-des
 
 ## Objective
 
-Attack every important assumption and artifact with independent reviewers, respond transparently to the critiques, produce a clean internally consistent revision, and obtain the researcher's final design-and-codebook freeze for the pilot. Critics report; they do not silently repair shared files.
+Attack every important assumption and project file with independent reviewers, respond transparently to the critiques, produce a clean internally consistent revision, and obtain the researcher's final design-and-codebook freeze for the pilot. Critics report; they do not silently repair shared files.
 
 ## Prerequisite checks
 
@@ -44,13 +44,14 @@ Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. Plan first, read-only. Design independent review assignments,
 attack surfaces, evidence requirements, non-overlapping file ownership,
 synthesis rules, and upstream invalidation tests; do not write any project file,
-create critiques, update artifacts, spawn editing work, allocate a run, or touch
+create critiques, update project files, spawn editing work, allocate a run, or touch
 state until the plan is complete. Then continue into execution in the same session, without waiting,
 unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then enter Plan
 Mode, stop, and give the exact execution handoff. Because this stage is
-long-running, its front-matter `goal_condition` must be the active goal before
+long-running, the `goal_condition` recorded in the settings at the top of this
+file must be the active goal before
 execution begins. If it is not active, provide `/goal <goal_condition>` and stop.
-The goal stays with the parent while independent critics run under the fan-out
+The goal stays with the parent while independent critics run in parallel under the
 contract. Stop at `design-freeze`; the goal does not approve that gate.
 
 ## Work
@@ -76,7 +77,7 @@ contract. Stop at `design-freeze`; the goal does not approve that gate.
 
 ## Artifacts
 
-Critique reports are immutable audit records. The synthesis and change matrix explain every disposition. Even if a component's substance remains unchanged, create a clean review-stage version or record an identical hash and explicit carry-forward in the freeze record so the package is closed and unambiguous. The design freeze names one mutually consistent version of every required component.
+Critique reports are preserved unchanged as audit records. The synthesis and change matrix explain every disposition. Even if a component's substance remains unchanged, create a clean review-stage version or record that its contents are identical and explicitly carry it forward in the freeze record so the package is closed and unambiguous. The design freeze names one mutually consistent version of every required component.
 
 ## Verification
 
@@ -95,4 +96,4 @@ After all in-scope verification passes, activate the proposed clean versions, se
 
 ## Next-stage handoff
 
-After approval, report the frozen-for-pilot versions, hashes, deferred tests, and authorization constraints. Provide the exact next task: enter Plan Mode for 08-pilot, agree on architecture and a five-to-ten-unit diagnostic sample, then execute the pilot without changing the frozen package during the run.
+After approval, report the exact versions frozen for the pilot, the values used to verify that they have not changed, deferred tests, and authorization constraints. Provide the exact next task: enter Plan Mode for 08-pilot, agree on architecture and a five-to-ten-unit diagnostic sample, then execute the pilot without changing the frozen package during the run.

@@ -246,7 +246,7 @@ def observation_skill_text(*, claude: bool) -> str:
         )
     return f'''---
 name: "{OBSERVATION_SKILL}"
-description: "Fan out frozen empirical legal research coding or audit work with exactly one observation or unit per isolated subagent. Use during Stages 08, 11, 12, or 15 after the unit manifest, prompt, schema, retry rule, and output paths are fixed."
+description: "Run empirical legal research coding or audit assignments in parallel, with exactly one observation or unit per isolated sub-agent. Use during Stages 08, 11, 12, or 15 after the complete assignment list, prompt, required output format, retry rule, and output paths are fixed."
 ---
 
 # Code observations with isolated subagents
@@ -274,7 +274,7 @@ def observation_openai_yaml() -> str:
     return '''interface:
   display_name: "ELARA Code Observations"
   short_description: "Code each observation in an isolated subagent"
-  default_prompt: "Use $elr-code-observations on the frozen assignment manifest."
+  default_prompt: "Use $elr-code-observations on the fixed assignment list."
 policy:
   allow_implicit_invocation: false
 '''

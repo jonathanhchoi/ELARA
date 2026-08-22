@@ -35,8 +35,9 @@ The researcher approves the paraphrase rule, second-model choice, comparison met
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. This is a long-running execution stage: its front-matter
-`goal_condition` must be the active goal before execution begins. If it is not
+before work. This is a long-running execution stage: the `goal_condition`
+recorded in the settings at the top of this file must be the active goal before
+execution begins. If it is not
 active, provide `/goal <goal_condition>` and stop. Do not execute the robustness
 search in Plan Mode. The parent keeps the goal and plan current while the host
 orchestrator runs condition units under
@@ -61,7 +62,7 @@ identical checks and downstream analysis; never tune on the comparison.
 
 ## Artifacts
 
-The robustness specification fixes conditions and comparisons before results. The paraphrase file contains full frozen prompts and hashes. `robustness_dataset_vNNN.jsonl` links every unit-condition prediction to its raw attempt and human benchmark only after unsealing. The metrics file contains condition-level validation and comparison statistics. `robustness_results_vNNN/` contains machine-readable downstream estimates and generated comparisons. The report describes model and prompt differences, failures, validation and coefficient spread, instability patterns, limitations, and any routed revision. Run files preserve exact prompts, responses, checks, and settings.
+The robustness specification fixes conditions and comparisons before results. The paraphrase file contains every full frozen prompt and the values used to verify that the prompts have not changed. `robustness_dataset_vNNN.jsonl` links every unit-condition prediction to its raw attempt and human benchmark only after unsealing. The metrics file contains condition-level validation and comparison statistics. `robustness_results_vNNN/` contains machine-readable downstream estimates and generated comparisons. The report describes model and prompt differences, failures, validation and coefficient spread, instability patterns, limitations, and any routed revision. Run files preserve exact prompts, responses, checks, and settings.
 
 ## Verification
 
@@ -81,4 +82,4 @@ After all approved conditions and comparisons pass verification, activate the sp
 
 ## Next-stage handoff
 
-Tell the researcher every condition run, model and settings, validation and downstream spread, materiality comparison if one was prespecified, instability patterns, missing conditions, routed revisions, and exact active versions. Then provide the exact next task: build `16-replication-package`, including every prompt variant and raw output, and prove in a clean environment that archived artifacts rebuild every reported number without calling a model vendor.
+Tell the researcher every condition run, model and settings, validation and downstream spread, materiality comparison if one was prespecified, instability patterns, missing conditions, routed revisions, and exact active versions. Then provide the exact next task: build `16-replication-package`, including every prompt variant and raw output, and prove in a clean environment that the preserved files rebuild every reported number without calling a model vendor.

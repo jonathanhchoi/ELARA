@@ -34,8 +34,9 @@ The researcher decides whether a recurring unsupported or ambiguous pattern reve
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. This is a long-running audit stage: its front-matter
-`goal_condition` must be the active goal before execution begins. If it is not
+before work. This is a long-running audit stage: the `goal_condition` recorded
+in the settings at the top of this file must be the active goal before
+execution begins. If it is not
 active, provide `/goal <goal_condition>` and stop. Do not run the audit in Plan
 Mode. The parent keeps the goal and plan current while the host orchestrator
 runs audit units under `workflow/shared/observation-fanout.md`: Codex spawns
@@ -59,7 +60,7 @@ corrections.
 
 ## Artifacts
 
-`interpretive_audit_vNNN.jsonl` contains one immutable finding per active observation and links it to the exact source, codebook, dataset, and raw audit attempt. `interpretive_audit_coverage_vNNN.csv` reconciles every active observation to a terminal audit status. `interpretive_recoding_queue_vNNN.csv` lists all findings requiring correction or expert disposition without changing the coding dataset. `interpretive_verification_report_vNNN.md` reports coverage, dispositions, patterns, fresh-review results, and routing decisions. The run directory preserves the exact prompts and raw verifier outputs.
+`interpretive_audit_vNNN.jsonl` contains one finding preserved unchanged per active observation and links it to the exact source, codebook, dataset, and raw audit attempt. `interpretive_audit_coverage_vNNN.csv` gives every active observation a final audit status, so the counts add up. `interpretive_recoding_queue_vNNN.csv` lists all findings requiring correction or expert disposition without changing the coding dataset. `interpretive_verification_report_vNNN.md` reports coverage, dispositions, patterns, fresh-review results, and routing decisions. The run directory preserves the exact prompts and raw verifier outputs.
 
 ## Verification
 

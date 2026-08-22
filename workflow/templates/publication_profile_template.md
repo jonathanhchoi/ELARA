@@ -1,13 +1,16 @@
 # Publication profile template
 
-Copy this file to `project/PUBLICATION_PROFILE_v001.md`, fill it in, and pin it
-in `project/PROJECT_STATE.md` under `active_artifacts` as `publication_profile`.
-To change it later, save a new version (`_v002`, ...) and repin; never edit a
-version that a manuscript run has already recorded. Stages 18 and 20 and the
+Copy this file to `project/PUBLICATION_PROFILE_v001.md`, fill it in, and record
+that file as the version currently in use in `project/PROJECT_STATE.md`, under
+the literal state field `active_artifacts` with the label `publication_profile`.
+To change it later, save a new version (`_v002`, ...) and record the new file as
+the version in use; never edit a version that a manuscript run has already
+recorded. Stages 18 and 20 and the
 manuscript utilities (`elr-proofread`, `elr-add-citations`, `elr-apply-markup`)
-read the active profile and record its version and SHA-256 hash in their run
-manifests. If no profile is active, those stages ask the researcher to supply one
-or to record a decision to proceed by matching the existing draft's voice only.
+read the current profile and record its exact version and a value used to verify
+that the file has not changed. If no profile is current, those stages ask the
+researcher to supply one or to record a decision to proceed by matching only the
+existing draft's voice.
 
 **Scope.** This profile governs prose, tone, formatting, and deliverable format
 only. It cannot relax any guardrail, gate, evidence rule, or audit separation in

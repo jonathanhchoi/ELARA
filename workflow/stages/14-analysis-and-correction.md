@@ -1,6 +1,6 @@
 ---
 stage_id: "14-analysis-and-correction"
-title: "Run deterministic analysis and measurement-error correction"
+title: "Run the approved analysis and correct for coding errors"
 paper_steps: ["5"]
 core: true
 interaction_profile: "plan_then_execute"
@@ -16,7 +16,7 @@ failure_routes: ["04-methods-design", "09-freeze-and-preregister", "11-scale-up"
 
 ## Objective
 
-Create and execute deterministic, separately runnable analysis code for every approved hypothesis and estimand, using the actual validated data structure. Produce naive and prespecified measurement-error-corrected results with appropriate uncertainty, generated tables and figures, and a complete script-to-output map. Do not edit a manuscript or choose analyses after seeing which result is attractive.
+Create and execute separately runnable analysis code that produces the same results from the same inputs and rules for every approved hypothesis and estimand (the quantity the analysis seeks to estimate), using the actual validated data structure. Produce uncorrected results and the prespecified results corrected for coding errors, with appropriate uncertainty, generated tables and figures, and a complete list linking each script to its outputs. Do not edit a manuscript or choose analyses after seeing which result is attractive.
 
 ## Prerequisite checks
 
@@ -29,7 +29,7 @@ Read `AGENTS.md` and route this stage from `project/PROJECT_STATE.md` before doi
 
 ## Researcher decisions
 
-The researcher decides the estimands and specifications, how hypotheses map to variables, any departure from the preregistration, the valid measurement-error correction, treatment of ambiguous or sparse classes, and what exploratory work to authorize. The agent may identify incompatibilities and implement approved mathematics. It may not add controls, outcomes, subgroups, exclusions, or transformations because they improve significance, nor may it reclassify an unregistered analysis as confirmatory.
+The researcher decides the quantities to estimate, model specifications, how hypotheses map to variables, any departure from the preregistration, the valid correction for coding errors, treatment of ambiguous or rare classes, and what exploratory work to authorize. The agent may identify incompatibilities and implement approved mathematics. It may not add controls, outcomes, subgroups, exclusions, or transformations because they improve significance, nor may it reclassify an unregistered analysis as confirmatory.
 
 ## Mode handoff
 
@@ -44,7 +44,8 @@ before executing, because it must be fixed before any result is seen; only
 operational choices take a provisional `assistant-default`. Then continue into execution in the same session, without waiting,
 unless a stop condition in `workflow/shared/guardrails.md` §11 holds;
 only then enter Plan Mode, stop, and give the exact execution handoff. Because
-the execution is long-running, the front-matter `goal_condition` must be the
+the execution is long-running, the `goal_condition` recorded in the settings at
+the top of this file must be the
 active goal before the first execution write. If it is not active, provide
 `/goal <goal_condition>` and stop. Keep each hypothesis separately runnable and
 the native plan current through the clean rebuild.
@@ -58,14 +59,14 @@ the native plan current through the clean rebuild.
 5. Implement tests for schema and type assumptions, unique keys, merge cardinality, denominators, missing values, weights, expected coefficient direction on synthetic fixtures, and deterministic output naming. Run tests on fixtures and a small real-data slice and inspect outputs before the full run.
 6. Produce the naive result and the approved validation-based correction from the same explicit estimand. Use the adjudicated confusion structure, inclusion probabilities, and subgroup information exactly as the approved method requires. Propagate first-stage or measurement-model uncertainty rather than treating estimated error rates as known.
 7. If the approved correction is unsupported by the observed validation design, sparse cells, or data shape, stop and report the incompatibility. Do not silently replace it with Aigner rescaling, regression calibration, a two-regression adjustment, design-based supervised learning, prediction-powered inference, or another method merely because code is available; workflow/shared/measurement-error-correction-guide.md informs the researcher's decision and never authorizes a substitution.
-8. Produce a scripted attrition funnel from the frozen denominator through analyzable observations, keyed to the Stage 10 and Stage 11 gap types; compare analyzed and non-analyzed rostered units on unit-space metadata; and execute the prespecified sensitivity treatment whenever the plan's gap-rate threshold is exceeded, reporting its results alongside the confirmatory estimates.
+8. Produce, by script, a table showing how many records are lost at each step from the fixed starting count through the analyzable observations, keyed to the Stage 10 and Stage 11 reasons for missing or unusable records; compare analyzed and non-analyzed listed units using the descriptive fields in the eligible-unit list; and execute the prespecified sensitivity treatment whenever the plan's gap-rate threshold is exceeded, reporting its results alongside the confirmatory estimates.
 9. Pin random seeds, sort orders, locale and time behavior, dependency versions, and numerical settings that affect results. Record every command and environment fact needed to reproduce the run. Nondeterministic procedures must use the approved reproducibility protocol.
 10. Write machine-readable estimates and generated tables and figures directly from code. Never retype a number or manually redraw a result. The script-output manifest maps every hypothesis, command, input, sample count, estimate, table, and figure.
 11. Run the confirmatory modules first and hash their machine-readable outputs into the run manifest before any exploratory module executes; a later change to shared transformation or confirmatory code invalidates that checkpoint and forces a confirmatory rerun. Then run each hypothesis alone and the complete build in a clean output directory. Compare shared results and hashes or approved numerical tolerances. Have a fresh reviewer (per `workflow/shared/fresh-review.md`) inspect code against the actual files and approved plan, rerun the build, and challenge confirmatory/exploratory labeling.
 
 ## Artifacts
 
-The execution plan is the approved analysis contract. `analysis_vNNN/` contains tested, versioned code and its dependency specification. `analysis_dataset_vNNN.csv` is a fully scripted derivation, not a hand-edited spreadsheet. `analysis_results_vNNN/` contains machine-readable estimates plus generated tables and figures. `measurement_error_correction_vNNN.json` records the validation inputs, method, assumptions, naive and corrected estimates, uncertainty, and diagnostics. The script-output manifest maps commands to every result. The report states samples, deviations, failures, confirmatory and exploratory results, and what remains provisional.
+The execution plan contains the approved analysis instructions. `analysis_vNNN/` contains tested, versioned code and its software requirements. `analysis_dataset_vNNN.csv` is produced entirely by code, not edited by hand. `analysis_results_vNNN/` contains estimates in structured data files plus generated tables and figures. `measurement_error_correction_vNNN.json` records the validation inputs, method, assumptions, uncorrected and corrected estimates, uncertainty, and checks on the method. `script_output_manifest_vNNN.csv` links commands to every result. The report states samples, deviations, failures, confirmatory and exploratory results, and what remains provisional.
 
 ## Verification
 
@@ -75,7 +76,7 @@ The execution plan is the approved analysis contract. `analysis_vNNN/` contains 
 - Confirm measurement-error inputs come from the exact approved validation version, sampling design is honored, and uncertainty includes the approved first-stage component.
 - Confirm the confirmatory build ran the frozen Stage 09 analysis code by hash, every departure from it is a logged deviation, and every enumerated open parameter was set by its outcome-blind rule.
 - Confirm every confirmatory estimate's standard errors implement the estimand's declared clustering level and the family-adjusted inference was computed from the preregistered family definition.
-- Confirm from run-manifest hashes and timestamps that no exploratory output predates the frozen confirmatory outputs, and that the attrition funnel, covariate comparison, and any triggered sensitivity treatment are reported.
+- Confirm from the values recorded to verify that files have not changed, along with timestamps, that no exploratory output predates the frozen confirmatory outputs, and that the table showing records lost at each step, covariate comparison, and any triggered sensitivity treatment are reported.
 - Confirm no specification was chosen or relabeled after inspecting results, and all departures and exploratory analyses are explicit.
 - Confirm a clean rerun succeeds, no manuscript was edited, and no prior code, result, validation input, or ledger row was overwritten.
 

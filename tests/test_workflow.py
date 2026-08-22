@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -48,6 +49,101 @@ class WorkflowContractTests(unittest.TestCase):
     def test_repository_contract(self) -> None:
         self.assertEqual(validate_repository(ROOT), [])
 
+    def test_researcher_facing_language_contract(self) -> None:
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        definition = (
+            "the software infrastructure surrounding an LLM that enables it to operate "
+            "as an agent (the agent harness)"
+        )
+        flat_agents = " ".join(agents.split())
+        self.assertIn(definition, flat_agents)
+        for concrete_rule in (
+            "Unnecessary, invented, or purely internal jargon is prohibited",
+            "parallel sub-agents",
+            "the complete list of documents or other units eligible for coding",
+            "Preserve literal filenames, commands, state fields, and code values",
+        ):
+            self.assertIn(concrete_rule, flat_agents)
+
+        selected_headings = {
+            "Objective",
+            "Researcher decisions",
+            "Mode handoff",
+            "Orientation (first session)",
+            "Usage mode: the whole pipeline or specific tools",
+            "Artifacts",
+            "Next-stage handoff",
+        }
+
+        def selected_sections(body: str) -> str:
+            matches = list(re.finditer(r"(?m)^## ([^\r\n]+)\r?$", body))
+            parts: list[str] = []
+            for index, match in enumerate(matches):
+                if match.group(1) not in selected_headings:
+                    continue
+                end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
+                parts.append(body[match.start() : end])
+            return "\n".join(parts)
+
+        surfaces: dict[str, str] = {
+            "README.md": (ROOT / "README.md").read_text(encoding="utf-8"),
+            "PIPELINE.md": (ROOT / "PIPELINE.md").read_text(encoding="utf-8"),
+            "project/PROJECT_STATE.md": parse_frontmatter(
+                ROOT / "project" / "PROJECT_STATE.md"
+            )[1],
+        }
+        for path in sorted((ROOT / "workflow" / "templates").glob("*.md")):
+            text = path.read_text(encoding="utf-8")
+            if text.startswith("---"):
+                text = re.sub(r"\A---\r?\n.*?\r?\n---\r?\n", "", text, count=1, flags=re.DOTALL)
+            surfaces[str(path.relative_to(ROOT))] = text
+        for path, _meta, body in load_stages(ROOT):
+            surfaces[str(path.relative_to(ROOT))] = selected_sections(body)
+        for path in sorted((ROOT / "workflow" / "utilities").glob("*.md")):
+            _meta, body = parse_frontmatter(path)
+            surfaces[str(path.relative_to(ROOT))] = selected_sections(body)
+
+        prohibited = {
+            "fan-out": r"\bfan[- ]outs?\b",
+            "typed gap": r"\btyped gaps?\b",
+            "unit-space manifest": r"\bunit[- ]space manifests?\b",
+            "front matter": r"\bfront[- ]matter\b",
+            "pinned": r"\bpinned\b",
+            "quarantine": r"\bquarantin(?:e|ed|es|ing)\b",
+            "serial writer": r"\bserial writers?\b",
+            "goal_condition": r"\bgoal_condition\b",
+            "interaction_profile": r"\binteraction_profile\b",
+            "active_artifacts": r"\bactive_artifacts\b",
+        }
+        for label, text in surfaces.items():
+            prose = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+            prose = re.sub(r"`[^`\r\n]+`", "", prose)
+            for term, pattern in prohibited.items():
+                self.assertIsNone(
+                    re.search(pattern, prose, flags=re.IGNORECASE),
+                    f"{label} exposes prohibited researcher-facing shorthand: {term}",
+                )
+            if re.search(r"\bagent harness\b", prose, flags=re.IGNORECASE):
+                self.assertIn(definition, " ".join(prose.split()), label)
+
+    def test_generated_wrappers_inherit_plain_language_rule(self) -> None:
+        prohibited = re.compile(
+            r"\b(?:fan[- ]outs?|typed gaps?|unit[- ]space manifests?|front[- ]matter|"
+            r"serial writers?|goal_condition|interaction_profile|active_artifacts)\b",
+            flags=re.IGNORECASE,
+        )
+        wrappers = sorted((ROOT / ".agents" / "skills").glob("elr-*/SKILL.md"))
+        wrappers += sorted((ROOT / ".claude" / "skills").glob("elr-*/SKILL.md"))
+        self.assertTrue(wrappers)
+        for path in wrappers:
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("AGENTS.md", text, path)
+            match = re.match(r"---\r?\n(.*?)\r?\n---", text, flags=re.DOTALL)
+            self.assertIsNotNone(match, path)
+            self.assertIsNone(prohibited.search(match.group(1)), path)
+        for path in sorted((ROOT / ".agents" / "skills").glob("elr-*/agents/openai.yaml")):
+            self.assertIsNone(prohibited.search(path.read_text(encoding="utf-8")), path)
+
     def test_stage_inventory_and_hard_gates(self) -> None:
         loaded = load_stages(ROOT)
         self.assertEqual([meta["stage_id"] for _, meta, _ in loaded], EXPECTED_STAGE_IDS)
@@ -86,10 +182,10 @@ class WorkflowContractTests(unittest.TestCase):
 
         flat = " ".join(body.split())
         for requirement in (
-            "sub-agent harness as the default route",
+            "software for coordinating parallel sub-agents as the default route",
             "low, central, and high scenarios",
             "Do not assign a dollar value to subscription-backed sub-agent use",
-            "counterfactual API-price comparison in every audit",
+            "comparison of what the same work would cost through the optional API route in every audit",
             "current provider prices",
             "available batch discounts",
             "Mark the sub-agent dollar cost as not estimated, not zero",
@@ -343,7 +439,7 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn(output, meta["declared_outputs"], output)
         # Adoption cannot silently launder these facts.
         self.assertIn("not preregistered", lowered)
-        self.assertIn("not held out", lowered)
+        self.assertIn("not kept separate", lowered)
         # The usage-mode question and the installer's report.
         self.assertIn("## usage mode", lowered)
         self.assertIn("whole pipeline", lowered)
@@ -481,11 +577,11 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn("manuscript-edit-permission", body, stage_id)
             self.assertNotIn("continue into execution in the same session", body, stage_id)
 
-    def test_stage_00_records_usage_in_front_matter_and_has_a_two_question_tools_setup(self) -> None:
+    def test_stage_00_records_usage_in_state_settings_and_has_a_two_question_tools_setup(self) -> None:
         body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "00-initialize")
         lowered = body.lower()
         for needle in (
-            "`usage` key",
+            "`usage` setting",
             "usage: pipeline",
             "usage: tools",
             "two questions",
@@ -495,7 +591,7 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn(needle, lowered, needle)
         self.assertNotIn("body of project_state.md", lowered)
         pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
-        self.assertIn("`usage` key", pipeline)
+        self.assertIn("`usage` setting", pipeline)
         self.assertNotIn("## Usage mode", pipeline)
 
     def test_fan_outs_are_run_by_the_host_orchestrator_on_both_hosts(self) -> None:

@@ -23,7 +23,7 @@ Give the researcher an organizationally complete draft after the results and rep
 ## Prerequisite checks
 
 1. Read AGENTS.md, PROJECT_STATE.md, workflow/shared/guardrails.md, workflow/shared/artifact-contract.md, and workflow/shared/execution-control.md completely. Create or reconcile the native Stage 17 plan. This is a bounded `normal` stage, so do not enter Plan Mode or create a goal.
-2. Confirm that Stage 16 completed and that the active replication package passed its clean rebuild and fresh-agent checks. Resolve every input from the exact versions pinned in state, not from a latest-file guess.
+2. Confirm that Stage 16 completed and that the current replication package passed its clean rebuild and fresh-agent checks. Resolve every input from the exact versions recorded in state, not from a latest-file guess.
 3. Load the accepted contribution and literature position, approved hypotheses and estimands, preregistration and record, validation report, analysis report and machine-readable results, robustness report and results, deviations, and replication manifest. Confirm that their artifact references and file hashes reconcile.
 4. If an input is missing, inconsistent, or no longer supported, make no skeleton. Route to the stage that owns the problem and preserve the completed replication package.
 5. Confirm that `scripts/build_skeleton_draft.py` and `workflow/templates/skeleton_draft_template.md` are present. Confirm that the local environment can compile LaTeX and render PDF pages. If the researcher expressly selected Word or Markdown, confirm that format's renderer or validator instead.
@@ -32,11 +32,11 @@ Give the researcher an organizationally complete draft after the results and rep
 
 Ask one consolidated question. Offer **create the skeleton draft** as the default and **skip** as the explicit alternative. If creating it, state that the default is a LaTeX-generated PDF and ask whether the researcher prefers Word, Markdown, or another format instead, together with the target venue or approximate article length if known, any fixed sections or organizational preferences, and anything the researcher wants emphasized. One answer such as “go with the defaults” selects LaTeX and PDF with no added constraints.
 
-If the researcher skips, append the decision with gate ID `skeleton-draft-approval`, record `skipped` and the researcher's actual words, set `current_stage` to `18-integrate-manuscript`, and set `status` to `ready`. Do not create a run or skeleton artifact. Otherwise record the format and organizational instructions before opening a run.
+If the researcher skips, append the decision with gate ID `skeleton-draft-approval`, record `skipped` and the researcher's actual words, set `current_stage` to `18-integrate-manuscript`, and set `status` to `ready`. Do not create a run or skeleton file. Otherwise record the format and organizational instructions before opening a run.
 
 ## Mode handoff
 
-Remain in the ordinary execution session. Create a run ID under the artifact contract only after the researcher chooses to create the skeleton. Do not begin Stage 18 and do not treat a request to iterate on the skeleton as approval to advance.
+Remain in the ordinary execution session. Create a run ID under the versioning rules in `workflow/shared/artifact-contract.md` only after the researcher chooses to create the skeleton. Do not begin Stage 18 and do not treat a request to iterate on the skeleton as approval to advance.
 
 ## Work
 
@@ -59,9 +59,9 @@ Remain in the ordinary execution session. Create a run ID under the artifact con
 
 ## Artifacts
 
-The immutable Markdown source contains the canonical article structure, minimal methods and results content, complete result references, display specifications, captions, and provenance references. The default researcher-facing rendering is `skeleton_draft_vNNN.pdf`, compiled from `skeleton_draft_vNNN.tex`. DOCX, Markdown, or another supported format is used only when the researcher expressly selects it. The render directory contains page images, compiled PDFs where applicable, and inspection evidence. The run manifest records source and output hashes, exact format, verified source versions, display references, commands, tool versions, and review disposition.
+The Markdown source is preserved unchanged after the run and contains the canonical article structure, minimal methods and results content, complete result references, display specifications, captions, and references to the source of each item. The default researcher-facing rendering is `skeleton_draft_vNNN.pdf`, compiled from `skeleton_draft_vNNN.tex`. DOCX, Markdown, or another supported format is used only when the researcher expressly selects it. The render directory contains page images, compiled PDFs where applicable, and inspection evidence. The record of the run states the source and output values used to detect changes, exact format, verified source versions, display references, commands, tool versions, and review disposition.
 
-Only the selected researcher-facing format is produced for a run. A later format change is a new version from a new immutable source, not an in-place conversion.
+Only the selected researcher-facing format is produced for a run. A later format change is a new version from a new source preserved unchanged, not an in-place conversion.
 
 ## Verification
 

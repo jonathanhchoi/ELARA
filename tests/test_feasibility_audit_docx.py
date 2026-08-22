@@ -69,8 +69,8 @@ SAMPLE_SOURCE = (
     + "".join(
         _gate_section(index, gate.question) for index, gate in enumerate(GATES, start=1)
     )
-    + "\n## Binding constraint\n\n"
-    "The binding constraint is the number of readable opinions in the central funnel.\n\n"
+    + "\n## Controlling limitation\n\n"
+    "The controlling limitation is the number of readable opinions in the central estimate after screening.\n\n"
     "## Recommendation and what would change it\n\n"
     "Proceed with modifications. A failed corpus probe or an infeasible minimum "
     "detectable effect would change the recommendation.\n\n"
@@ -120,9 +120,9 @@ class FeasibilityAuditBuilderTests(unittest.TestCase):
         validate_sections(parse_blocks(body))
 
         table_source = SAMPLE_SOURCE.replace(
-            "The binding constraint is",
+            "The controlling limitation is",
             "| Item | Finding |\n| --- | --- |\n| Constraint | Readable opinions |\n\n"
-            "The binding constraint is",
+            "The controlling limitation is",
             1,
         )
         _metadata, table_body = parse_source(table_source)

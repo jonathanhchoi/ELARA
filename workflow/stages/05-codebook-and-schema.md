@@ -16,7 +16,7 @@ failure_routes: ["03-feasibility-audit", "04-methods-design", "05-codebook-and-s
 
 ## Objective
 
-Translate the approved design into an unambiguous codebook a new research assistant could apply unaided, a strict machine-validatable output schema, a closed and hashable unit space with a fixed denominator, and the exact coding prompt. Preserve uncertainty, provenance, evidence support, typed gaps, and audit rows by construction.
+Translate the approved design into an unambiguous codebook a new research assistant could apply unaided, strict machine-readable rules for the output, a complete list and fixed count of units eligible for coding, and the exact coding prompt. Preserve uncertainty, source and processing history, evidence support, a reason for every missing or unusable item, and audit rows by construction.
 
 ## Prerequisite checks
 
@@ -35,7 +35,7 @@ The researcher must approve:
 - positive and negative clarifications, edge cases, examples, and uncertain or not-applicable treatment;
 - whose statements count as the document's own and how majorities, concurrences, dissents, parties, quotations, and incorporated material are treated;
 - inclusion, exclusion, deduplication, gap, conflict, and supersession rules;
-- the closed unit-space denominator and stable ID logic; and
+- the complete list and fixed count of units eligible for coding and the stable ID logic; and
 - the exact information exposed to a hosted model.
 
 The agent may expose ambiguity and propose alternatives, but must not settle doctrinal or theoretical boundaries on the researcher's behalf.
@@ -47,11 +47,11 @@ before work. Plan first, read-only. Inspect the active design and metadata,
 enumerate every definition and schema decision, identify unresolved edge cases
 (record a provisional `assistant-default` for each one that has a reasonable
 resolution), and describe the validation fixtures and unit-space construction;
-do not write any project file, artifact, state, fixture, ledger, or run directory
+do not write any project output, state file, example record, ledger, or run directory
 until the plan is complete. Then continue into execution in the same session,
 without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11
 holds; only then enter Plan Mode, stop, and give the exact execution handoff.
-Write and validate the declared artifacts and stop at
+Write and validate the declared output files and stop at
 `codebook-schema-approval`, presenting the provisional choices there. This stage
 is bounded: maintain the native plan but do not start a goal. The resulting
 version may be revised after the pilot, but each pilot run must use one frozen
@@ -74,7 +74,7 @@ version.
 
 ## Artifacts
 
-The codebook, schema, unit space, prompt, and examples form one version-linked package and must name one another's exact versions and hashes. The schema validation report records validator and schema versions, commands, fixture counts, expected and actual outcomes, and unresolved failures. The run manifest records lineage. Never overwrite an approved package or revise definitions midway through a run.
+The codebook, machine-readable output rules, complete list of coding units, prompt, and examples form one version-linked package and must name one another's exact versions and the values used to verify that the files have not changed. The validation report records the validator and output-format versions, commands, example counts, expected and actual outcomes, and unresolved failures. The record for the run shows which inputs and transformations produced each output. Never overwrite an approved package or revise definitions midway through a run.
 
 ## Verification
 
@@ -93,4 +93,4 @@ After verification, activate the linked artifact versions, set status to awaitin
 
 ## Next-stage handoff
 
-After approval, report the active package versions, unit count and hash, fixture results, and any restrictions. Provide the exact next task: run 06-data-authorization in normal interactive mode, verify and record the lawful and institutional route for the exact corpus-model use, and do not expose corpus text until that hard gate is approved.
+After approval, report the active package versions, the number of coding units, the value used to verify that the list has not changed, the example-validation results, and any restrictions. Provide the exact next task: run 06-data-authorization in normal interactive mode, verify and record the lawful and institutional route for the exact corpus-model use, and do not expose corpus text until that hard gate is approved.
