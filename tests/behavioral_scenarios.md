@@ -40,6 +40,13 @@ forward-test target.
    launch a general-purpose agent, hand-launch workers one at a time, or process units in its own
    context; a stopped run relaunched with the same command resumes from the return files, and the
    controllers' `status` reconciles the counts.
+13. **Stage 04 elicits methods preferences in Plan Mode.** Invoke Stage 04 with approved
+    prerequisites and at least two material open methods choices. The assistant enters Plan Mode,
+    inspects the active evidence before asking, and uses Codex `request_user_input` or Claude Code
+    `AskUserQuestion` in short adaptive rounds with a recommendation, alternatives, consequences,
+    and a free-form route. It writes no project file during the interview. After the researcher
+    accepts the proposed plan, it drafts and verifies new design-file versions, then stops at the
+    separate `methods-plan-approval` gate; plan acceptance alone does not advance the stage.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.

@@ -54,14 +54,54 @@ infer completion from a tracker left by an earlier session.
   because the work has several steps.
 - `plan_then_execute`: create the full native plan with the read-only plan phase
   first. Complete that phase before any project write. Continue into execution
-  in the same session when no stop condition applies. Enter Plan Mode and pause
-  only when `workflow/shared/guardrails.md` section 11 requires a researcher
-  handoff; Stages 18 and 20 always do because their plan is the manuscript-edit
-  gate.
+  in the same session when no stop condition applies. Stage 04 is the deliberate
+  exception to the usual low-touch rule: it always uses Plan Mode for the
+  interactive methods interview described below. For other stages, enter Plan
+  Mode and pause only when `workflow/shared/guardrails.md` section 11 requires a
+  researcher handoff; Stages 18 and 20 always do because their plan is the
+  manuscript-edit gate.
 
 This distinction preserves low-touch work between gates. The native tracker is
 used throughout; read-only Plan Mode is used where its approval boundary is
 actually required. A permission-mode change never grants a workflow approval.
+
+### Stage 04 interactive methods interview
+
+Stage 04 always enters the host's read-only Plan Mode before asking the
+researcher to settle methods or hypotheses. Inspect the active preemption and
+feasibility files, recorded conditions and decisions, probe-exposure record,
+and actual metadata or authorized samples first. Separate what those materials
+already fix from the material choices that remain open. Do not ask the
+researcher to repeat an answer already in the record.
+
+Use the host's structured user-question control in short, coherent rounds:
+Codex uses `request_user_input`, and Claude Code uses `AskUserQuestion`. Ask one
+to three questions per round so later questions can respond to earlier answers.
+Each question addresses one decision in plain language, leads with a
+recommended option grounded in the inspected evidence, offers two or three
+realistic alternatives with their consequences, and permits a free-form answer.
+The researcher may say "go with the recommendations" or "don't know." Do not
+convert silence or "don't know" into an `assistant-default`. If an unknown
+choice must be resolved before the design can be coherent, explain why and ask
+whether to use the recommendation or pause; if it can be deferred, name the
+later boundary and preserve it as unresolved.
+
+Cover only material open choices, including the claim boundary and meaning of
+plausible results; population, frame, scope, units, inclusions, and exclusions;
+constructs, outcomes, comparisons, estimands, and hypotheses; confirmatory and
+exploratory status; clustering, missingness, power or precision, significance,
+and multiple testing; validation, adjudication, and error correction; and
+resource, privacy, model, and stopping constraints. Adapt the later rounds to
+the researcher's earlier preferences instead of reading a fixed questionnaire.
+
+Still in Plan Mode, synthesize the answers into a decision-complete proposed
+design that maps each hypothesis to its estimand, data, validation, and analysis
+and lists every explicit deferral. Ask the researcher to review or revise that
+plan. Plan acceptance authorizes ELARA to leave Plan Mode and draft the
+versioned Stage 04 files in the same session; it is not the final
+`methods-plan-approval`, which remains a separate gate after the files are
+verified. If the host cannot enter Plan Mode or expose its question control,
+make no project write and give the exact mode-switch or resume handoff.
 
 ## Long-running stages use one goal
 
@@ -103,8 +143,9 @@ fallback, not a reason to weaken the completion condition.
 - Use `update_plan` to create and maintain the stage plan. Keep at most one
   `in_progress` item and update it at the checkpoints above.
 - Use Codex Plan Mode for the `plan` profile and for the section 11 handoffs
-  described above. The plan tracker by itself does not make a session
-  read-only.
+  described above, and always for the Stage 04 interactive methods interview.
+  In that interview, use `request_user_input` as specified above. The plan
+  tracker by itself does not make a session read-only.
 - For a researcher-activated goal, inspect it with `get_goal`; create it with
   the exact front-matter condition only when the researcher explicitly invokes
   `/goal`; and use `update_goal` only when the canonical completion or blocked
@@ -119,8 +160,10 @@ fallback, not a reason to weaken the completion condition.
   dependencies, and `TaskList` on resume and at checkpoints. Claude Code's task
   list, not a prose checklist hidden in chat, is the native plan tracker.
 - Use Plan Mode (`EnterPlanMode`/`ExitPlanMode`, or `/plan`) only for the
-  profiles and approval boundaries described above. Leaving Plan Mode is not a
-  research approval.
+  profiles and approval boundaries described above, including every Stage 04
+  methods interview. Use `AskUserQuestion` for the Stage 04 rounds. Leaving
+  Plan Mode is not a research approval, and accepting the Stage 04 plan is not
+  the later methods gate.
 - A researcher activates the exact front-matter condition with `/goal`. Check it
   with `/goal`, never replace an unrelated active goal, and remember that its
   evaluator can see only evidence surfaced in the conversation. Therefore every

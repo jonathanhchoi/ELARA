@@ -40,24 +40,64 @@ The researcher must decide or approve:
 
 Present meaningful alternatives and consequences. Never make the choice merely because one option is easier to code.
 
+Elicit these choices through the interactive Plan-Mode interview below. Do not
+create an `assistant-default` for a material open Stage 04 choice before asking
+the researcher. An express answer to use the recommendation is a researcher
+decision; silence is not.
+
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. Plan first, read-only. Inspect inputs, weigh architecture and
-alternatives, settle the design choices (recommend one option with evidence and
-record it as a provisional `assistant-default` where the researcher has not
-decided), and produce a decision-complete proposed design in chat; do not write
-any project file, allocate a run, update state, or append ledgers until the plan
-is complete. Then continue into execution in the same session, without waiting,
-unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then
-enter Plan Mode, stop, and give the exact execution handoff. Execute Stage 04,
-verify the four declared design files, and stop at `methods-plan-approval`,
-presenting the provisional choices for the researcher to keep or change. This
-stage is bounded: maintain the native plan but do not start a goal.
+before work. Always enter the host's read-only Plan Mode for this stage before
+asking methods questions or writing a project file. Inspect the active
+preemption and feasibility evidence, prior decisions and conditions, the
+probe-exposure record, and the actual metadata or authorized representative
+files. Tell the researcher what is already fixed and what remains open.
+
+Use the native Plan-Mode question control: `request_user_input` on Codex and
+`AskUserQuestion` on Claude Code. Ask one to three plain-language questions per
+round, grouped coherently so that later rounds adapt to earlier answers. For
+each question, state the controlling evidence, recommend one option, and give
+two or three realistic alternatives and their consequences. Permit a free-form
+answer and accept "go with the recommendations" or "don't know." Do not ask
+what the existing record already answers. Do not silently fill an unanswered
+researcher-owned choice. If "don't know" affects the architecture, explain the
+tradeoff and ask whether to use the recommendation or pause; otherwise identify
+the exact later boundary at which the choice must be resolved.
+
+At minimum, cover every material open choice about:
+
+1. the theory, honest contribution, descriptive/associational/causal boundary,
+   and what plausible results would mean;
+2. the target population, sampling frame, scope, units, inclusions, exclusions,
+   duplicates, missing documents, and ambiguous cases;
+3. constructs, operationalizations, outcomes, comparisons, estimands,
+   hypotheses, and confirmatory versus exploratory status;
+4. clustering, missingness, power or precision, significance, effect-size
+   benchmarks, multiple testing, and subgroup analyses;
+5. validation precision, double coding, adjudication, error tolerances, and
+   measurement-error correction; and
+6. resource, privacy, model, and stopping constraints.
+
+Still in Plan Mode, synthesize the answers into a decision-complete proposed
+design that links each hypothesis to its estimand, evidence, validation, and
+analysis and lists every explicit deferral. Ask the researcher to review or
+revise the plan. Do not write any project file, allocate a run, update state, or
+append a ledger while in Plan Mode. If the host cannot enter Plan Mode or expose
+its question control, make no project write and give the exact mode-switch or
+resume handoff.
+
+After the researcher accepts the plan and leaves Plan Mode, continue into execution in the same session.
+Plan acceptance authorizes drafting the four
+versioned design files; it does not approve the final `methods-plan-approval`
+gate. Execute Stage 04, verify those files, and stop at that gate with the
+researcher's choices, explicit deferrals, and any nonmaterial provisional
+defaults visible for review. This stage is bounded: maintain the native plan
+but do not start a goal.
 
 ## Work
 
-1. Allocate a unique run ID only after execution begins. Capture all active input versions, hashes, accepted feasibility conditions, and researcher decisions.
+1. Allocate a unique run ID only after execution begins. Capture all active input versions, hashes, accepted feasibility conditions, and each Plan-Mode question, recommendation, alternative, and researcher answer or explicit deferral. Record the decisions faithfully in the run manifest and append-only decision log; do not recast a preference as an assistant choice.
 2. State the research question, theory, intended contribution, scope of inference, and what each plausible result would mean. Separate normative motivation from empirically testable claims.
 3. Define the target population, sampling frame, document unit, coding unit, unit of analysis, clustering level, and denominator for every reported quantity. Explain how multiple documents, opinions, passages, or observations within a matter relate.
 4. Specify inclusion, exclusion, deduplication, time, jurisdiction, language, version, and missing-document rules. Make the unit space enumerable before coding.
@@ -83,6 +123,7 @@ methods_plan_vNNN.md is the integrated design and must link stable hypothesis an
 - Confirm that feasibility-probe, prompt-development, pilot, held-out validation, and study sets cannot leak into one another contrary to the plan, and that the held-out seed or derivation rule is fixed.
 - Confirm that validation thresholds, precision targets, minimum detectable effects, multiplicity procedures, per-estimand inference procedures, and correction methods are prespecified and feasible under the Stage 03 budget.
 - Confirm that every unresolved substantive choice is visible and no study outcome informed the design without disclosure.
+- Confirm that every material open methods choice was put to the researcher in Plan Mode, every answer or explicit deferral is traceable to the resulting files, and accepting the host plan was not recorded as approval of the final methods gate.
 - Compare the artifacts with accepted preemption and feasibility conditions and route any material divergence upstream.
 
 ## State transition

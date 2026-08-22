@@ -39,8 +39,11 @@ very fast research assistant whose work is verified, never trusted.
    an automatic permission switch: `normal` is interactive; `plan` produces no
    file changes; `execute` runs the tracked execution; `plan_then_execute`
    completes its tracked read-only plan phase before any write and continues in
-   the same session unless a §11 stop applies (Stages 18 and 20 always stop,
-   because their plan is the manuscript-edit gate). A stage marked
+   the same session unless a §11 stop applies. Stage 04 always conducts its
+   methods interview in Plan Mode with the host's native structured-question
+   control, then executes only after the researcher accepts the proposed plan.
+   Stages 18 and 20 always stop because their plan is the manuscript-edit gate.
+   A stage marked
    `long_running: true` executes only under its exact front-matter
    `goal_condition`: inspect the current goal, resume it if it matches, or give
    the complete `/goal <goal_condition>` handoff and stop; never replace a
@@ -112,11 +115,13 @@ shared, and which are the researcher's, so a folder both use (for example
   when the researcher needs to locate or use them, in code formatting, and do
   not turn them into prose vocabulary.
 - Say what will happen before it happens. Ask as little as possible: infer what
-  the folder and the record already answer, and when you must ask, put everything
-  you still need in one message, each question concrete, with an example answer
-  and the default you will use if they say "you decide". Accept "go with the
-  defaults", and accept "don't know" as an answer to record, not a gap to fill
-  silently.
+  the folder and the record already answer. Outside Stage 04's deliberate
+  Plan-Mode methods interview, when you must ask, put everything you still need
+  in one message. In the Stage 04 interview, use short, coherent rounds so later
+  questions can respond to earlier answers. Make each question concrete, state
+  the evidence and recommended answer, and explain the realistic alternatives
+  and consequences. Accept "go with the recommendations", and accept "don't
+  know" as an answer to record, not a gap to fill silently.
 - The assistant runs the commands (`scripts/doctor.py`, validators, and the
   software that manages parallel sub-agents). Never ask the researcher to edit
   state, YAML, or a ledger by hand, and never make them retype an instruction the
@@ -147,6 +152,9 @@ shared, and which are the researcher's, so a folder both use (for example
   otherwise stall, keep working, and put it to the researcher at the next gate.
   Project selection, data authorization, preregistration content, adjudication,
   manuscript edits, and changes to frozen artifacts are never provisional.
+- In Stage 04, put every material open methods choice through the interactive
+  Plan-Mode interview before creating an `assistant-default`. The researcher's
+  express choice to use a recommendation is a decision; silence is not.
 - A gate approval is valid only for the exact artifact versions recorded in
   state. A changed approved artifact invalidates its dependent approvals.
 

@@ -327,6 +327,45 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("native plan", (ROOT / "README.md").read_text(encoding="utf-8"))
         self.assertIn("`TaskCreate`", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
 
+    def test_stage_04_uses_plan_mode_to_elicit_methods_preferences(self) -> None:
+        meta, stage = next(
+            (meta, body)
+            for _, meta, body in load_stages(ROOT)
+            if meta["stage_id"] == "04-methods-design"
+        )
+        control = (ROOT / "workflow" / "shared" / "execution-control.md").read_text(
+            encoding="utf-8"
+        )
+        guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(
+            encoding="utf-8"
+        )
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+        pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
+        flat_stage = " ".join(stage.split())
+        flat_guardrails = " ".join(guardrails.split())
+
+        self.assertEqual(meta["interaction_profile"], "plan_then_execute")
+        for needle in (
+            "Always enter the host's read-only Plan Mode",
+            "`request_user_input` on Codex",
+            "`AskUserQuestion` on Claude Code",
+            "one to three plain-language questions per round",
+            '"go with the recommendations"',
+            '"don\'t know"',
+            "it does not approve the final `methods-plan-approval` gate",
+        ):
+            self.assertIn(needle, flat_stage, needle)
+        self.assertIn("Stage 04 interactive methods interview", control)
+        self.assertIn("`request_user_input`", control)
+        self.assertIn("`AskUserQuestion`", control)
+        self.assertIn("Stage 04's deliberate methods interview", flat_guardrails)
+        self.assertIn("Stage 04's deliberate", agents)
+        self.assertIn("Stage 04, enter Plan Mode", claude)
+        self.assertIn("Stage 04 always uses Plan Mode", pipeline)
+        self.assertIn("Do not write any project file", flat_stage)
+        self.assertNotIn("Plan acceptance is the final methods approval", flat_stage)
+
     def test_wrappers_are_thin_and_canonical(self) -> None:
         expected = expected_files(ROOT)
         for path, content in expected.items():
