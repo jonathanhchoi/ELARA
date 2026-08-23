@@ -42,9 +42,9 @@ REQUIRED_METADATA = (
     "subtitle",
     "output_format",
     "target_venue",
-    "target_length",
     "source_versions",
 )
+LEGACY_IGNORED_METADATA = {"target_length"}
 SUPPORTED_FORMATS = {"docx", "tex", "md"}
 REQUIRED_FIELDS = (
     "Section role",
@@ -54,8 +54,8 @@ REQUIRED_FIELDS = (
     "Displays",
     "Author work",
     "Open questions",
-    "Approximate length",
 )
+LEGACY_IGNORED_FIELDS = {"Approximate length"}
 TRACE_FIELDS = {"Bare-bones content", "Source support", "Results presented", "Displays"}
 ALWAYS_TRACED_FIELDS = {"Source support", "Results presented", "Displays"}
 ALLOWED_ROLES = {
@@ -93,7 +93,6 @@ PROJECT_REF_RE = re.compile(
 )
 BARE_PROJECT_REF_RE = re.compile(r"(?<![A-Za-z0-9_])project/[A-Za-z0-9_./-]+(?!#)")
 NUMBER_RE = re.compile(r"(?<![A-Za-z])\b\d+(?:\.\d+)?%?\b")
-LENGTH_RE = re.compile(r"\b\d[\d,]*(?:\s*[–-]\s*\d[\d,]*)?\s+(?:words?|pages?)\b", re.I)
 DISPLAY_KINDS = {"table", "figure", "equation"}
 DISPLAY_SUFFIXES = {
     "table": {".csv", ".tsv"},
@@ -216,6 +215,8 @@ def parse_source(text: str) -> tuple[dict[str, str], list[Section]]:
     _source_version_paths(metadata["source_versions"])
     if PLACEHOLDER_RE.search(normalized):
         raise ValueError("source contains an unresolved placeholder")
+    for key in LEGACY_IGNORED_METADATA:
+        metadata.pop(key, None)
 
     sections: list[Section] = []
     current_title = ""
@@ -231,13 +232,20 @@ def parse_source(text: str) -> tuple[dict[str, str], list[Section]]:
             raise ValueError(
                 f"section {current_title} is missing required fields: {', '.join(missing_fields)}"
             )
-        unknown_fields = sorted(set(current_fields) - set(REQUIRED_FIELDS))
+        unknown_fields = sorted(
+            set(current_fields) - set(REQUIRED_FIELDS) - LEGACY_IGNORED_FIELDS
+        )
         if unknown_fields:
             raise ValueError(
                 f"section {current_title} contains unknown fields: {', '.join(unknown_fields)}"
             )
         sections.append(
-            Section(current_title, current_level, len(sections) + 1, dict(current_fields))
+            Section(
+                current_title,
+                current_level,
+                len(sections) + 1,
+                {key: current_fields[key] for key in REQUIRED_FIELDS},
+            )
         )
         current_title = ""
         current_level = 0
@@ -326,10 +334,6 @@ def validate_sections(sections: list[Section]) -> None:
                     f"section {section.title} must present results through at least one table, figure, or equation"
                 )
 
-        if not LENGTH_RE.search(section.fields["Approximate length"]):
-            raise ValueError(
-                f"section {section.title} Approximate length must state words or pages"
-            )
         section_refs = [
             match
             for field_name in TRACE_FIELDS
@@ -648,7 +652,6 @@ def build_docx(
 
     for label, value in (
         ("Target venue", metadata["target_venue"]),
-        ("Target length", metadata["target_length"]),
         ("Verified source set", metadata["source_versions"]),
     ):
         paragraph = doc.add_paragraph(style="List Bullet")
@@ -656,9 +659,9 @@ def build_docx(
         paragraph.add_run(value)
 
     doc.add_paragraph("Article structure", style="Heading 1")
-    overview = doc.add_table(rows=1 + len(sections), cols=3)
+    overview = doc.add_table(rows=1 + len(sections), cols=2)
     _repeat_header(overview.rows[0])
-    for cell, value in zip(overview.rows[0].cells, ("Section", "Role", "Approx. length")):
+    for cell, value in zip(overview.rows[0].cells, ("Section", "Role")):
         _set_cell_shading(cell, LIGHT_BLUE)
         paragraph = cell.paragraphs[0]
         paragraph.add_run(value).bold = True
@@ -667,12 +670,11 @@ def build_docx(
         values = (
             f"{'  ' * section.depth}{section.title}",
             section.fields["Section role"],
-            section.fields["Approximate length"],
         )
         for cell, value in zip(cells, values):
             cell.text = value
             _set_cell_shading(cell, WHITE)
-    _set_table_geometry(overview, [5250, 2010, 2100])
+    _set_table_geometry(overview, [7000, 2360])
 
     doc.add_page_break()
     doc.add_paragraph("Skeleton draft", style="Heading 1")
@@ -690,7 +692,6 @@ def build_docx(
             "Results presented",
             "Author work",
             "Open questions",
-            "Approximate length",
         ):
             paragraph = doc.add_paragraph()
             paragraph.paragraph_format.left_indent = Inches(0.15)
@@ -793,7 +794,6 @@ def build_tex(
         r"\begin{center}\fcolorbox{ELARABlue}{gray!8}{\parbox{0.88\linewidth}{\textbf{Authoring boundary.} This draft supplies the complete article structure and only minimal methods and results language. The researcher writes the substantive prose.}}\end{center}",
         r"\begin{itemize}",
         rf"\item \textbf{{Target venue:}} {_latex_escape(metadata['target_venue'])}",
-        rf"\item \textbf{{Target length:}} {_latex_escape(metadata['target_length'])}",
         r"\item \textbf{Verified source set:}",
         r"\begin{itemize}",
         *(
@@ -803,14 +803,13 @@ def build_tex(
         r"\end{itemize}",
         r"\end{itemize}",
         r"\section*{Article structure}",
-        r"\begin{tabularx}{\linewidth}{@{}X p{0.19\linewidth}p{0.19\linewidth}@{}}",
-        r"\textbf{Section} & \textbf{Role} & \textbf{Approx. length} \\\hline",
+        r"\begin{tabularx}{\linewidth}{@{}X p{0.22\linewidth}@{}}",
+        r"\textbf{Section} & \textbf{Role} \\\hline",
     ]
     for section in sections:
         lines.append(
             f"{_latex_escape('  ' * section.depth + section.title)} & "
-            f"{_latex_escape(section.fields['Section role'])} & "
-            f"{_latex_escape(section.fields['Approximate length'])} \\\\"
+            f"{_latex_escape(section.fields['Section role'])} \\\\"
         )
     lines.extend([r"\end{tabularx}", r"\clearpage", r"\section*{Skeleton draft}"])
     for section in sections:
@@ -827,7 +826,6 @@ def build_tex(
             "Results presented",
             "Author work",
             "Open questions",
-            "Approximate length",
         ):
             lines.append(
                 rf"\item[{_latex_escape(field_name)}] {_latex_text_with_refs(section.fields[field_name])}"
@@ -875,18 +873,17 @@ def build_markdown(
         "> **Authoring boundary.** This draft supplies the complete article structure and only minimal methods and results language. The researcher writes the substantive prose.",
         "",
         f"- **Target venue:** {metadata['target_venue']}",
-        f"- **Target length:** {metadata['target_length']}",
         f"- **Verified source set:** {metadata['source_versions']}",
         "",
         "## Article structure",
         "",
-        "| Section | Role | Approximate length |",
-        "|---|---|---|",
+        "| Section | Role |",
+        "|---|---|",
     ]
     for section in sections:
         lines.append(
-            f"| {'&nbsp;' * (section.depth * 4)}{section.title} | {section.fields['Section role']} | "
-            f"{section.fields['Approximate length']} |"
+            f"| {'&nbsp;' * (section.depth * 4)}{section.title} | "
+            f"{section.fields['Section role']} |"
         )
     lines.extend(["", "## Skeleton draft", ""])
     for section in sections:
@@ -904,7 +901,6 @@ def build_markdown(
             "Results presented",
             "Author work",
             "Open questions",
-            "Approximate length",
         ):
             lines.append(f"**{field_name}:** {section.fields[field_name]}")
             lines.append("")

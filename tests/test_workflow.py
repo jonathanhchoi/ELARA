@@ -234,6 +234,16 @@ class WorkflowContractTests(unittest.TestCase):
             "waiting_for_user",
         ):
             self.assertIn(phrase.lower(), flat_body.lower())
+        execution_control = (
+            ROOT / "workflow" / "shared" / "execution-control.md"
+        ).read_text(encoding="utf-8")
+        skeleton_template = (
+            ROOT / "workflow" / "templates" / "skeleton_draft_template.md"
+        ).read_text(encoding="utf-8")
+        for researcher_facing_surface in (body, execution_control, skeleton_template):
+            self.assertNotIn("approximate length", researcher_facing_surface.lower())
+            self.assertNotIn("target_length", researcher_facing_surface.lower())
+        self.assertIn("target venue", flat_body.lower())
         self.assertEqual(stages["16-replication-package"][0]["next_stage"], "17-skeleton-draft")
         self.assertEqual(stages["18-integrate-manuscript"][0]["prerequisites"], ["17-skeleton-draft"])
         stage_eighteen = stages["18-integrate-manuscript"][1]

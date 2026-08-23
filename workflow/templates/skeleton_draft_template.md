@@ -3,7 +3,6 @@ title: "TODO-SKELETON: Article title"
 subtitle: "Skeleton draft"
 output_format: "tex"
 target_venue: "TODO-SKELETON: Venue or unknown"
-target_length: "TODO-SKELETON: Approximate words or pages"
 source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifacts/other_vNNN.ext"
 ---
 
@@ -15,7 +14,6 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Displays:** none
 **Author work:** State the research question, contribution, and thesis in the author's own prose.
 **Open questions:** TODO-SKELETON
-**Approximate length:** TODO-SKELETON: 1,000 words
 
 ## Background and contribution
 **Section role:** background
@@ -25,7 +23,6 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Displays:** none
 **Author work:** Explain the literature and develop the contribution in the author's own prose.
 **Open questions:** TODO-SKELETON
-**Approximate length:** TODO-SKELETON: 1,500 words
 
 ## Data and methods
 **Section role:** methods
@@ -35,7 +32,6 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Displays:** TODO-SKELETON: figure|project/artifacts/data_flow_vNNN.png#DATA-FLOW-FIGURE|Caption that makes the design legible, or none
 **Author work:** Develop the rationale and explanation in the author's own prose.
 **Open questions:** TODO-SKELETON
-**Approximate length:** TODO-SKELETON: 2,000 words
 
 ### Validation
 **Section role:** methods
@@ -45,7 +41,6 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Displays:** TODO-SKELETON: table|project/artifacts/validation_table_vNNN.csv#VALIDATION-TABLE|Caption and notes sufficient to understand the validation result
 **Author work:** Explain why the validation evidence is sufficient and identify any remaining concern.
 **Open questions:** TODO-SKELETON
-**Approximate length:** TODO-SKELETON: 500 words
 
 ## Results
 **Section role:** results
@@ -55,7 +50,6 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Displays:** TODO-SKELETON: table|project/artifacts/results_table_vNNN.csv#RESULT-TABLE|Caption and notes sufficient to interpret the complete table || figure|project/artifacts/results_figure_vNNN.png#RESULT-FIGURE|Caption and notes sufficient to interpret the figure || equation|project/artifacts/estimating_equation_vNNN.tex#RESULT-EQUATION|Caption defining every term
 **Author work:** Interpret the findings and relate them to the article's argument in the author's own prose.
 **Open questions:** TODO-SKELETON
-**Approximate length:** TODO-SKELETON: 2,000 words
 
 ### Robustness and deviations
 **Section role:** robustness
@@ -65,7 +59,6 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Displays:** TODO-SKELETON: table|project/artifacts/robustness_table_vNNN.csv#ROBUSTNESS-TABLE|Caption and notes sufficient to interpret all robustness results
 **Author work:** Explain what these checks and deviations change about the conclusions.
 **Open questions:** TODO-SKELETON
-**Approximate length:** TODO-SKELETON: 750 words
 
 ## Limitations
 **Section role:** limitations
@@ -75,7 +68,6 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Displays:** none
 **Author work:** Develop the limits on inference and generalization in the author's own prose.
 **Open questions:** TODO-SKELETON
-**Approximate length:** TODO-SKELETON: 750 words
 
 ## Conclusion
 **Section role:** conclusion
@@ -85,4 +77,3 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Displays:** none
 **Author work:** State the implications and conclusion in the author's own prose.
 **Open questions:** TODO-SKELETON
-**Approximate length:** TODO-SKELETON: 500 words

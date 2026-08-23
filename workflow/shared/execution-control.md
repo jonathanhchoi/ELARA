@@ -196,7 +196,7 @@ Enter Plan Mode before recording a skip or creating a skeleton. Inspect the
 verified replication package, active publication profile, available tables,
 figures, and equations, and any researcher-supplied draft or organization notes.
 Ask whether to create or skip; if creating, ask only the still-open choices about
-output format, venue or approximate length, fixed sections and order, displays,
+output format, venue, fixed sections and order, displays,
 counterarguments, limitations, and what deserves emphasis. Offer LaTeX source
 compiled to PDF as the default and accept "go with the defaults."
 
