@@ -24,7 +24,7 @@
     {"stage_id":"14-analysis-and-correction","interaction_profile":"plan_then_execute","human_gate":null,"next_stage":"15-robustness","recorded_failure_route":"13-human-validation"},
     {"stage_id":"15-robustness","interaction_profile":"execute","human_gate":null,"next_stage":"16-replication-package","recorded_failure_route":"14-analysis-and-correction"},
     {"stage_id":"16-replication-package","interaction_profile":"execute","human_gate":null,"next_stage":"17-skeleton-draft","recorded_failure_route":"15-robustness"},
-    {"stage_id":"17-skeleton-draft","interaction_profile":"normal","human_gate":"skeleton-draft-approval","next_stage":"18-integrate-manuscript","recorded_failure_route":"16-replication-package"},
+    {"stage_id":"17-skeleton-draft","interaction_profile":"plan_then_execute","human_gate":"skeleton-draft-approval","next_stage":"18-integrate-manuscript","recorded_failure_route":"16-replication-package"},
     {"stage_id":"18-integrate-manuscript","interaction_profile":"plan_then_execute","human_gate":"manuscript-edit-permission","next_stage":"19-cite-check","recorded_failure_route":"17-skeleton-draft"},
     {"stage_id":"19-cite-check","interaction_profile":"execute","human_gate":null,"next_stage":"20-revise-and-respond","recorded_failure_route":"18-integrate-manuscript"},
     {"stage_id":"20-revise-and-respond","interaction_profile":"plan_then_execute","human_gate":"manuscript-edit-permission","next_stage":null,"recorded_failure_route":"19-cite-check"}

@@ -194,7 +194,7 @@ version.
 | `normal` | Track the short stage in the native plan and gather a researcher decision; no Plan Mode or goal. |
 | `plan` | Track the work, inspect in Plan Mode, make no file changes, and return the exact execution handoff. |
 | `execute` | Track and run approved execution. If `long_running: true`, use the stage's exact completion condition as the durable goal. The host coordinates any parallel sub-agents under `workflow/shared/observation-fanout.md`. |
-| `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Stage 04 always uses Plan Mode and the host's question interface for its interactive methods interview. Other stages enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 18 and 20 always stop because their plan is the manuscript-edit gate). A long execution phase uses the exact stage goal. |
+| `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Stages 01, 04, 05, 07, 08, 09, and 17 use Plan Mode and the host's question interface at their declared decision boundaries; the Stage 01 and 09 interviews are partial, and the Stage 07 interview follows the independent critiques. Other stages enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 18 and 20 always stop because their plan is the manuscript-edit gate). A long execution phase uses the exact stage goal. |
 
 Plan phases do not alter state, ledgers, or research files. A mode or permission
 setting never waives a human gate, data restriction, or version rule.
@@ -214,15 +214,15 @@ long-running. See `workflow/shared/execution-control.md`.
 | Stage | Paper step | Core | Profile | Primary result | Researcher gate or stop |
 |---|---:|:---:|---|---|---|
 | `00-initialize` | setup | yes | `normal` | State, charter, access/model snapshot, and input inventory | `project-charter-approval` |
-| `01-conceive` | 1 (optional) | yes | `plan_then_execute` | Researcher profile and ranked, source-checked shortlist | `project-selection` |
+| `01-conceive` | 1 (optional) | yes | `plan_then_execute` | Plan-Mode profile confirmation, ranked source-checked shortlist, and Plan-Mode candidate comparison | `project-selection` |
 | `02-preemption-review` | 1 | yes | `execute` | LaTeX-generated PDF literature review with a closest-match preemption summary, search log, source list, and novelty assessment | `preemption-disposition` |
 | `03-feasibility-audit` | 1 | yes | `execute` | Live feasibility audit, one consolidated chat consultation on material researcher choices, and a question-led full-analysis PDF containing the evidence, calculations, alternatives, expected observation counts, sub-agent timing, optional API cost comparison, risks, decisions, and verdict | `feasibility-go-no-go` |
 | `04-methods-design` | 2 | yes | `plan_then_execute` | Interactive Plan-Mode methods interview, then hypotheses, quantities to estimate, sampling, measurement, validation, and analysis plan | `methods-plan-approval` |
-| `05-codebook-and-schema` | 2 | yes | `plan_then_execute` | Codebook, required output format, edge cases, `uncertain` route, and complete list of units eligible for coding | `codebook-schema-approval` |
+| `05-codebook-and-schema` | 2 | yes | `plan_then_execute` | Interactive Plan-Mode coding decisions, then codebook, required output format, edge cases, `uncertain` route, and complete list of units eligible for coding | `codebook-schema-approval` |
 | `06-data-authorization` | 2 | yes | `normal` | Confirmed legal, ethical, confidentiality, and model-processing route | `data-authorization` |
-| `07-adversarial-review` | 2 | yes | `plan_then_execute` | Independent critiques, issue disposition, and revised frozen design | `design-freeze` |
-| `08-pilot` | 2 | yes | `plan_then_execute` | Pilot outputs, disagreement review, checks, and revision queue | `pilot-acceptance` |
-| `09-freeze-and-preregister` | 2 | yes | `plan_then_execute` | Exact recorded versions, preregistration, and external record | `preregistration-confirmation` |
+| `07-adversarial-review` | 2 | yes | `plan_then_execute` | Independent critiques, Plan-Mode issue disposition, and revised frozen design | `design-freeze` |
+| `08-pilot` | 2 | yes | `plan_then_execute` | Plan-Mode pilot configuration, then pilot outputs, disagreement review, checks, and revision queue | `pilot-acceptance` |
+| `09-freeze-and-preregister` | 2 | yes | `plan_then_execute` | Plan-Mode registry and disclosure setup, exact recorded versions, preregistration, and external record | `preregistration-confirmation` |
 | `10-corpus-acquisition` | 3 | yes | `execute` | Corpus and source-history lists, integrity checks, and a reason recorded for every missing item | Stop for a material corpus deviation |
 | `11-scale-up` | 3 | yes | `execute` | Resumable one-coding-unit runs, raw outputs, validated ledger, and merged data | Stop on unresolved failures or frozen-rule violations |
 | `12-interpretive-verification` | 4 | yes | `execute` | Independent evidence-support audit and recoding queue | Researcher disposition of unsupported or ambiguous coding |
@@ -230,7 +230,7 @@ long-running. See `workflow/shared/execution-control.md`.
 | `14-analysis-and-correction` | 5 | yes | `plan_then_execute` | Analysis that returns the same results from the same inputs and rules, diagnostics, and measurement-error correction | Stop if verified inputs do not support the analysis |
 | `15-robustness` | 5 | yes | `execute` | Prompt and model comparisons, stability results, and deviations | Researcher disposition of material instability |
 | `16-replication-package` | 5 | yes | `execute` | Exact software versions, included files, one rebuild command, and fresh-agent report | Core completes only after a clean rebuild |
-| `17-skeleton-draft` | 6 | no | `normal` | Organizationally complete draft with full results in displays and minimal prose | `skeleton-draft-approval`, with a recorded skip available |
+| `17-skeleton-draft` | 6 | no | `plan_then_execute` | Plan-Mode organization choices, then an organizationally complete draft with full results in displays and minimal prose | `skeleton-draft-approval`, with a recorded skip available |
 | `18-integrate-manuscript` | 6 | no | `plan_then_execute` | Approved integration into the researcher's substantive first draft | `manuscript-edit-permission` |
 | `19-cite-check` | 6 | no | `execute` | Audit-only citation/source-support report | Findings are reported, never silently repaired |
 | `20-revise-and-respond` | 6 | no | `plan_then_execute` | Versioned revisions, response matrix, and change disclosure | `manuscript-edit-permission` |
@@ -359,6 +359,14 @@ Version 2.2.0 makes the Stage 04 read-only design phase an interactive Plan-Mode
 methods interview. Existing approved methods remain valid. An unfinished Stage
 04 run repeats the interview against the active evidence before writing a new
 design version; accepting the host plan is not the final methods approval.
+
+Version 2.3.0 extends evidence-first Plan-Mode decision interviews to the
+declared boundaries in Stages 01, 05, 07, 08, 09, and 17. Stage 01 is limited
+to its profile and shortlist decisions, Stage 07 interviews after preserving
+independent critiques, and Stage 09 is limited to registry and disclosure
+choices. Existing completed approvals remain valid. An unfinished affected
+stage runs the interview at its next declared boundary before making the
+affected write.
 
 ## Persistent state
 

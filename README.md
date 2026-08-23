@@ -318,6 +318,15 @@ Completed methods approvals remain valid. An unfinished Stage 04 run should
 repeat the read-only interview against its current active inputs before writing
 a new design version.
 
+Workflow version 2.3.0 extends that evidence-first Plan-Mode interview pattern
+to the decision boundaries in Stages 01, 05, 07, 08, 09, and 17. Stage 01 uses
+it only for the inferred researcher profile and the verified shortlist; Stage
+07 uses it after independent critiques exist; and Stage 09 uses it only for
+registry and disclosure choices, without reopening the approved scientific
+design. Completed approvals remain valid. An unfinished affected stage should
+run the interview at its next declared boundary before making the affected
+write.
+
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
 ## How does ELARA handle manuscript work?
@@ -378,14 +387,17 @@ available in the host, ELARA records the fallback and uses the same plan and
 completion condition with durable file checkpoints.
 
 Plan Mode is narrower. ELARA uses it when the result should be a read-only plan
-or when your approval is the boundary between planning and writing. Stage 04
-always uses it for a short, adaptive methods interview: the assistant recommends
-options, explains tradeoffs, and asks for your preferences through Codex's or
-Claude Code's question interface before drafting the design files. Accepting
-that proposed plan permits the draft; it does not approve the final methods
-gate. Otherwise a `plan_then_execute` stage completes the no-write plan item in
-the native tracker and continues in the same session. This keeps routine work
-moving between the research gates you control.
+or when your decision is the boundary between planning and writing. Stages 01,
+04, 05, 07, 08, 09, and 17 use short, adaptive interviews at their declared
+decision boundaries. The assistant first inspects the evidence, recommends an
+option, explains realistic alternatives and consequences, and asks for your
+preferences through Codex's or Claude Code's question interface. The Stage 01
+and 09 interviews are intentionally partial, and the Stage 07 interview begins
+only after the independent critiques are preserved. Accepting a proposed plan
+permits only the named execution; it does not approve the later artifact gate
+or authorize an external submission. Other `plan_then_execute` work completes
+the no-write plan item in the native tracker and continues in the same session.
+This keeps routine work moving between the research gates you control.
 
 The complete contract is in `workflow/shared/execution-control.md`.
 

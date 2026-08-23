@@ -302,9 +302,9 @@ issue. This section is the complete list of reasons to stop; nothing else is.
      front-matter `goal_condition` is not the active host goal — give the
      researcher the complete `/goal <goal_condition>` command once and wait.
      If a different goal is active, do not replace or clear it.
-- **Otherwise proceed.** Except for material open Stage 04 methods choices,
-  which must go through the interactive Plan-Mode interview in
-  `workflow/stages/04-methods-design.md`, take the sensible default —
+- **Otherwise proceed.** Except for material choices within the interactive
+  Plan-Mode interview boundaries declared for Stages 01, 04, 05, 07, 08, 09,
+  and 17 in `workflow/shared/execution-control.md`, take the sensible default —
   the kit's dated default, the researcher's stated preference, or the option
   best supported by evidence retrieved in this project — record it as a
   provisional decision (`decision: assistant-default` in `DECISIONS.md`, with
@@ -318,24 +318,26 @@ issue. This section is the complete list of reasons to stop; nothing else is.
   data authorization or the model route for restricted material, the content
   frozen at preregistration, blind adjudication, a manuscript edit, or any
   change to a frozen or approved artifact. Those are the gates.
-- **When you must ask, ask once.** Outside Stage 04's deliberate methods
-  interview, put everything you still need in one message: each question
-  concrete, with an example answer and the default you will use if the
-  researcher says "you decide"; accept "go with the defaults" as an answer to
-  all of them, and accept "don't know" as a fact to record as an outstanding
-  input, never a gap to fill silently. Stage 04 instead uses the host's Plan-Mode
-  question control in short adaptive rounds so later questions can respond to
-  earlier preferences. Prefer an interaction the researcher can answer with a
-  few selections or short free-form responses.
+- **When you must ask, ask once.** Outside the deliberate Plan-Mode decision
+  interviews in Stages 01, 04, 05, 07, 08, 09, and 17, put everything you still
+  need in one message: each question concrete, with an example answer and the
+  default you will use if the researcher says "you decide"; accept "go with the
+  defaults" as an answer to all of them, and accept "don't know" as a fact to
+  record as an outstanding input, never a gap to fill silently. The declared
+  interviews instead use the host's structured question control in short
+  adaptive rounds so later questions can respond to earlier preferences.
+  Prefer an interaction the researcher can answer with a few selections or
+  short free-form responses.
 - **Plan-then-execute stages** plan first, read-only, then execute in the same
   session; the stage's own gate is where the researcher decides. Maintain the
-  native plan tracker throughout. Stage 04 always enters Plan Mode for its
-  interactive methods interview, then exits only after the researcher accepts
-  the proposed plan; that acceptance is not the final methods gate. Other
-  stages enter Plan Mode, stop, and hand off only when a stop condition above
-  holds. Stages 18 and 20 are the exception by design: their plan is the
-  `manuscript-edit-permission` gate. A long-running execution phase also
-  performs the one-time goal handoff in item 7.
+  native plan tracker throughout. Stages 01, 04, 05, 07, 08, 09, and 17 enter
+  Plan Mode at their declared decision boundaries and exit only after the
+  researcher accepts or revises the proposal. That acceptance has only the
+  stage-specific effect stated in `execution-control.md`; it does not silently
+  cross a later artifact gate. Other stages enter Plan Mode, stop, and hand off
+  only when a stop condition above holds. Stages 18 and 20 are the exception by
+  design: their plan is the `manuscript-edit-permission` gate. A long-running
+  execution phase also performs the one-time goal handoff in item 7.
 - **Between stages** in `pipeline` mode, when a stage ends with no gate or
   input pending, summarize in a few lines what was produced and where, then
   continue into the next stage in the same session — unless a stop condition

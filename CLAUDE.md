@@ -38,15 +38,16 @@ the canonical `interaction_profile` as follows:
   with the Agent tool while workflows are available, and do not process the
   units serially in your own context.
 - `plan_then_execute`: put the read-only plan phase first in the task list. For
-  Stage 04, enter Plan Mode, use `AskUserQuestion` in short adaptive rounds to
-  elicit the researcher's methods preferences, and leave Plan Mode only after
-  the researcher accepts the proposed plan. For other stages, plan in normal
-  mode without writing any project file, then continue into execution in the
-  same session. Enter Plan Mode and stop only when a stop condition in
+  Stages 01, 04, 05, 07, 08, 09, and 17, enter Plan Mode at every decision
+  boundary declared in `workflow/shared/execution-control.md` and use
+  `AskUserQuestion` in short adaptive rounds. Leave Plan Mode only after the
+  researcher accepts or revises the stage-specific proposal; that acceptance
+  has only the execution effect stated in the canonical stage and never
+  silently approves a later gate. For other stages, plan in normal mode without
+  writing any project file, then continue into execution in the same session.
+  Enter Plan Mode and stop when a condition in
   `workflow/shared/guardrails.md` §11 holds, and always for Stages 18 and 20,
-  whose plan is the manuscript-edit gate. Accepting a Stage 04 plan authorizes
-  drafting the design files; it does not approve the `methods-plan-approval`
-  gate.
+  whose plan is the manuscript-edit gate.
 
 For every stage marked `long_running: true`, inspect `/goal` status before its
 first execution write. Resume only if the exact front-matter `goal_condition`

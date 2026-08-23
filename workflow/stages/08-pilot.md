@@ -37,25 +37,39 @@ The researcher must:
 - approve any upstream revisions and the rerun scope; and
 - accept or reject the pilot against the predeclared criteria.
 
-The agent may diagnose and propose; it cannot self-certify accuracy or waive failed thresholds.
+Every material pilot-configuration choice must be elicited through the
+Plan-Mode interview below before execution. The agent may diagnose and
+recommend; it cannot treat silence as agreement, self-certify accuracy, waive
+failed thresholds, or accept the pilot.
 
 ## Mode handoff
 
-Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. Plan first, read-only. Talk through architecture before code:
-inputs, one-unit execution, prompt assembly, raw-output capture, validation,
-quote matching, retries, ledgering, human review, code review, and stopping
-rules. Finalize the sample and thresholds (where the approved design or the
-kit's defaults name them and the researcher has not, they are provisional
-`assistant-default` choices); do not write any project file, allocate a run,
-build code, call a coding model, update state, or append ledgers until the plan
-is complete. Then continue into execution in the same session, without waiting,
-unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then enter Plan Mode, stop, and
-give the exact execution handoff. State the projected model-call cost in the
-plan and stop if it exceeds the recorded budget. Because this stage is
-long-running, the `goal_condition` recorded in the settings at the top of this
-file must be the active goal before
-execution begins. If it is not active, provide `/goal <goal_condition>` and stop.
+Follow `workflow/shared/execution-control.md` and always enter the host's native
+read-only Plan Mode before any Stage 08 project write, run allocation, code
+build, coding-model call, state update, or ledger append. First inspect the
+exact frozen design, codebook, schema, prompt, unit space, authorization record,
+adversarial conditions, and recorded budget. Then use Codex
+`request_user_input` or Claude Code `AskUserQuestion` for one to three adaptive
+rounds that elicit the researcher's preferences about the pilot sample,
+independent pre-coding, one-unit execution architecture, validation and
+quotation checks, retries and stopping rules, success thresholds, researcher
+review and disagreement handling, model route, and time and cost limits. For
+each consequential choice, show the controlling evidence, put a reasoned
+recommendation first, offer realistic alternatives and consequences, and
+allow free-form answers, "go with your recommendations," and "I don't know."
+
+Synthesize the answers into a reviewable pilot plan that fixes the sample,
+thresholds, commands, validation checks, review workflow, retry and stopping
+rules, and projected cost. Do not use a material provisional
+`assistant-default` in place of asking, and do not write or execute while the
+interview remains in Plan Mode. After the researcher accepts the plan, leave
+Plan Mode and continue into execution in the same session unless a stop
+condition in `workflow/shared/guardrails.md` §11 holds. Plan acceptance
+authorizes only the described pilot execution; it does not accept the pilot or
+waive any later gate. Stop if projected model-call cost exceeds the recorded
+budget. Because this stage is long-running, the `goal_condition` recorded in
+the settings at the top of this file must be the active goal before execution
+begins. If it is not active, provide `/goal <goal_condition>` and stop.
 Once assignments are fixed, the host coordinates the parallel sub-agent assignments under
 `workflow/shared/observation-fanout.md`: Claude Code launches the saved
 `elr-observation-fanout` workflow and Codex spawns the kit's `elr_worker`
@@ -93,6 +107,8 @@ All code and run-level data are preserved unchanged under the unique run directo
 - Confirm the independent code audit ran and all fatal or major issues are fixed through a new run or block acceptance.
 - Compare results with the predeclared thresholds without moving the thresholds after seeing performance.
 - Confirm the pilot report contains no substantive estimand, outcome distribution, or outcome-exposure association computed on pilot data.
+- Confirm the native Plan-Mode interview preceded every Stage 08 project write or model call, captured the researcher's material configuration choices, and fixed the sample and thresholds before any pilot outcome was observed.
+- Confirm accepting the execution plan was not recorded as approval of the separate `pilot-acceptance` gate.
 
 ## State transition
 

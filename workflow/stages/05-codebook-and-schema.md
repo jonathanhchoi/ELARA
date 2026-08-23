@@ -38,24 +38,32 @@ The researcher must approve:
 - the complete list and fixed count of units eligible for coding and the stable ID logic; and
 - the exact information exposed to a hosted model.
 
-The agent may expose ambiguity and propose alternatives, but must not settle doctrinal or theoretical boundaries on the researcher's behalf.
+The agent may expose ambiguity and propose alternatives, but must not settle doctrinal or theoretical boundaries on the researcher's behalf. Put every material open choice above through the Plan-Mode interview before creating a provisional default. An express choice to use the recommendation is a researcher decision; silence is not.
 
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. Plan first, read-only. Inspect the active design and metadata,
-enumerate every definition and schema decision, identify unresolved edge cases
-(record a provisional `assistant-default` for each one that has a reasonable
-resolution), and describe the validation fixtures and unit-space construction;
-do not write any project output, state file, example record, ledger, or run directory
-until the plan is complete. Then continue into execution in the same session,
-without waiting, unless a stop condition in `workflow/shared/guardrails.md` §11
-holds; only then enter Plan Mode, stop, and give the exact execution handoff.
-Write and validate the declared output files and stop at
-`codebook-schema-approval`, presenting the provisional choices there. This stage
-is bounded: maintain the native plan but do not start a goal. The resulting
-version may be revised after the pilot, but each pilot run must use one frozen
-version.
+before work. Always enter the host's read-only Plan Mode before creating a
+codebook, schema, prompt, example, or list of units eligible for coding. Inspect
+the active design, actual metadata, authorized representative documents, and
+prior decisions. Use `request_user_input` on Codex or `AskUserQuestion` on
+Claude Code in rounds of one to three plain-language questions, following the
+shared interview contract. Cover only material open decisions about substantive
+definitions and categories, coding units, attribution, edge cases, uncertainty,
+inclusion and exclusion, duplicates and conflicts, stable IDs, unit counting,
+evidence requirements, and hosted-model exposure.
+
+Still in Plan Mode, synthesize a decision-complete proposal that maps every
+construct and hypothesis to definitions, examples, schema fields, evidence
+paths, unit-space rules, and validation fixtures. Ask the researcher to review
+or revise it. Do not write any project output, state file, example record,
+ledger, or run directory while in Plan Mode. After acceptance, leave Plan Mode
+and continue into execution in the same session: write and validate the
+declared files and stop at `codebook-schema-approval`. Plan
+acceptance authorizes drafting and testing; it does not approve that final gate.
+This stage is bounded: maintain the native plan but do not start a goal. The
+resulting version may be revised after the pilot, but each pilot run must use
+one frozen version.
 
 ## Work
 
@@ -84,6 +92,7 @@ The codebook, machine-readable output rules, complete list of coding units, prom
 - Confirm that substantive observations cannot validate without one approved evidence path, justification, label, provenance, and status fields.
 - Confirm uncertainty and each failure type are distinguishable and no pathway silently drops a unit.
 - Confirm the fresh-review ambiguities are resolved in a new version or listed as outstanding researcher inputs.
+- Confirm that every material open definition, boundary, attribution rule, and denominator choice was put to the researcher through the host's Plan-Mode question control, and that every answer or explicit deferral is traceable to the linked package.
 
 ## State transition
 
