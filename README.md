@@ -327,6 +327,12 @@ design. Completed approvals remain valid. An unfinished affected stage should
 run the interview at its next declared boundary before making the affected
 write.
 
+Workflow version 2.3.1 removes article-level and section-level length guidance
+from Stage 17 skeletons while retaining the target venue. Existing approved
+outputs remain valid. Earlier skeleton source files continue to build, but
+their legacy length fields are ignored and do not appear in newly rendered
+outputs.
+
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
 ## How does ELARA handle manuscript work?

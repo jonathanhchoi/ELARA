@@ -58,7 +58,6 @@ title: "Court access and claim outcomes"
 subtitle: "Skeleton draft"
 output_format: "{output_format}"
 target_venue: "Journal of Law and Empirical Analysis"
-target_length: "10,000 words"
 source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts/methods_plan_v001.md; project/artifacts/results_v001.csv; project/artifacts/results_figure_v001.png; project/artifacts/estimating_equation_v001.tex; project/artifacts/robustness_v001.csv; project/DEVIATIONS.md"
 ---
 
@@ -70,7 +69,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Displays:** none
 **Author work:** State the research question, contribution, and thesis in the author's own prose.
 **Open questions:** Whether to lead with court access or claim outcomes.
-**Approximate length:** 900 words
 
 ## Background and contribution
 **Section role:** background
@@ -80,7 +78,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Displays:** none
 **Author work:** Develop the literature position and legal context in the author's own prose.
 **Open questions:** Whether the doctrinal discussion belongs here or after the results.
-**Approximate length:** 1,200 words
 
 ## Data and methods
 **Section role:** methods
@@ -90,7 +87,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Displays:** equation|project/artifacts/estimating_equation_v001.tex#EQ-01|Estimating equation with outcome, treatment, covariates, and court fixed effects defined in the text below
 **Author work:** Explain the design choices and identifying assumptions in the author's own prose.
 **Open questions:** Whether to move implementation details to an appendix.
-**Approximate length:** 2,000 words
 
 ### Validation
 **Section role:** methods
@@ -100,7 +96,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Displays:** none
 **Author work:** Explain the remaining measurement concern.
 **Open questions:** Whether validation details belong in the main text.
-**Approximate length:** 500 words
 
 ## Results
 **Section role:** results
@@ -110,7 +105,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Displays:** table|project/artifacts/results_v001.csv#TABLE-PRIMARY|Complete estimates for the primary, secondary, and subgroup analyses with standard errors and sample sizes || figure|project/artifacts/results_figure_v001.png#FIGURE-PRIMARY|Point estimates and 95 percent confidence intervals for every preregistered analysis
 **Author work:** Interpret the complete findings and connect them to the argument in the author's own prose.
 **Open questions:** Which result should receive the most attention in the introduction.
-**Approximate length:** 2,500 words
 
 ### Robustness and deviations
 **Section role:** robustness
@@ -120,7 +114,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Displays:** table|project/artifacts/robustness_v001.csv#TABLE-ROBUSTNESS|All robustness specifications, including null and fragile findings, with standard errors and sample sizes
 **Author work:** Explain how the checks and deviation affect the conclusions.
 **Open questions:** Whether the full table belongs in the main text or appendix.
-**Approximate length:** 900 words
 
 ## Limitations
 **Section role:** limitations
@@ -130,7 +123,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Displays:** none
 **Author work:** Develop the limits on inference and generalization in the author's own prose.
 **Open questions:** How much space to give measurement and coverage limits.
-**Approximate length:** 800 words
 
 ## Conclusion
 **Section role:** conclusion
@@ -140,8 +132,32 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Displays:** none
 **Author work:** State the implications and conclusion in the author's own prose.
 **Open questions:** Which implication should close the article.
-**Approximate length:** 500 words
 '''
+
+
+def legacy_sample_source(output_format: str = "docx") -> str:
+    lines: list[str] = []
+    for line in sample_source(output_format).splitlines():
+        lines.append(line)
+        if line.startswith("target_venue:"):
+            lines.append('target_length: "10,000 words"')
+        elif line.startswith("**Open questions:**"):
+            lines.append("**Approximate length:** 500 words")
+    return "\n".join(lines) + "\n"
+
+
+def rendered_text(path: Path, output_format: str) -> str:
+    if output_format != "docx":
+        return path.read_text(encoding="utf-8")
+    document = Document(path)
+    parts = [paragraph.text for paragraph in document.paragraphs]
+    parts.extend(
+        cell.text
+        for table in document.tables
+        for row in table.rows
+        for cell in row.cells
+    )
+    return "\n".join(parts)
 
 
 class SkeletonDraftBuilderTests(unittest.TestCase):
@@ -190,6 +206,31 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
                 self.assertEqual(payload["sections"][3]["level"], 3)
                 self.assertEqual(len(payload["displays"]), 4)
                 self.assertNotIn("crosswalk", payload)
+                text = rendered_text(output, output_format)
+                self.assertNotIn("Target length", text)
+                self.assertNotIn("Approximate length", text)
+
+    def test_legacy_length_fields_are_accepted_but_not_rendered(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for output_format in ("docx", "tex", "md"):
+                format_root = root / output_format
+                self._project(format_root)
+                source = format_root / "legacy_source.md"
+                output = format_root / f"skeleton_draft_v001.{output_format}"
+                manifest = format_root / "manifest.json"
+                source.write_text(legacy_sample_source(output_format), encoding="utf-8")
+                metadata, sections = parse_source(source.read_text(encoding="utf-8"))
+                self.assertNotIn("target_length", metadata)
+                self.assertTrue(
+                    all("Approximate length" not in section.fields for section in sections)
+                )
+                build(source, output, manifest, format_root)
+                text = rendered_text(output, output_format)
+                self.assertNotIn("Target length", text)
+                self.assertNotIn("Approximate length", text)
+                self.assertNotIn("10,000 words", text)
+                self.assertNotIn("500 words", text)
 
     def test_word_uses_descriptive_headings_and_renders_all_display_types(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

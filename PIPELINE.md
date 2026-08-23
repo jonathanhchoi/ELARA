@@ -368,6 +368,11 @@ choices. Existing completed approvals remain valid. An unfinished affected
 stage runs the interview at its next declared boundary before making the
 affected write.
 
+Version 2.3.1 removes article-level and section-level length guidance from
+Stage 17 skeletons while retaining the target venue. Existing approved outputs
+remain valid. Earlier skeleton source files continue to build, but their legacy
+length fields are ignored and do not appear in newly rendered outputs.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:

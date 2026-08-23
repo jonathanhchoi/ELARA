@@ -31,8 +31,8 @@ Give the researcher an organizationally complete draft after the results and rep
 ## Researcher decisions
 
 Use the Plan-Mode interview below to elicit whether to create or skip the
-skeleton and, if creating it, the output format, target venue or approximate
-length, sections and ordering, display strategy, organizational preferences,
+skeleton and, if creating it, the output format, target venue, sections and
+ordering, display strategy, organizational preferences,
 counterarguments and limitations to foreground, and anything the researcher
 wants emphasized. Offer **create the skeleton draft** as the recommendation and
 **skip** as the explicit alternative. State that the recommended output is a
@@ -54,7 +54,7 @@ publication profile, result and robustness inventories, available tables,
 figures and equations, deviations, and any researcher drafting notes before
 asking. Use Codex `request_user_input` or Claude Code `AskUserQuestion` for one
 to three adaptive rounds covering the create-or-skip choice and, when creating,
-format, venue or length, sections and order, displays, emphases,
+format, venue, sections and order, displays, emphases,
 counterarguments, and limitations. For each consequential choice, show the
 controlling evidence, put a reasoned recommendation first, offer realistic
 alternatives and consequences, and allow free-form answers, "go with your
@@ -74,7 +74,7 @@ Stage 18, or turn later revision instructions into approval to advance.
 
 1. Copy `workflow/templates/skeleton_draft_template.md` to the immutable run-scoped `skeleton_draft_source.md`. Replace every placeholder from the verified active artifacts and the researcher's organizational instructions. The source is the canonical representation for all output formats.
 2. Propose descriptive sections and subsections in reading order. Make the structure complete enough to show the whole article, including the introduction, background or literature where appropriate, data and methods, results, robustness or validation where appropriate, limitations, discussion where appropriate, and conclusion.
-3. For every section and subsection, state its role, bare-bones content, source support, results presented, displays, work left for the author, open questions, and approximate length. Cite supporting material as `project/path#artifact-id`. Use `none` only when the field truly has no item.
+3. For every section and subsection, state its role, bare-bones content, source support, results presented, displays, work left for the author, and open questions. Cite supporting material as `project/path#artifact-id`. Use `none` only when the field truly has no item.
 4. Present every result from the active analysis and robustness inventories, including null and fragile findings. Use the verified tables and figures whenever available and include the estimating or identifying equations needed to understand the methods. Supply concise captions and notes that define variables, samples, uncertainty, scales, panels, and specifications well enough to understand each display without additional prose.
 5. Include every hypothesis, estimand, validation result, and preregistration deviation in the relevant section or flag it for the researcher's attention. Do not omit a statistically inconvenient result or move it into a generic limitations note.
 6. Write only enough methods and results text to orient the reader to the design, estimands, full findings, and supporting displays. Keep it factual and compact. Use only verified project artifacts and do not invent an explanation, authority, table, figure, equation, limitation, or contribution.
