@@ -39,21 +39,40 @@ The researcher must approve:
 
 External submission, creation of a public record, or acceptance of registry terms is never inferred from a request to draft.
 
+The Plan-Mode interview below is deliberately partial. It elicits registry,
+disclosure, and submission-workflow preferences; it does not reopen the
+scientific choices already approved in Stages 04–08. If the freeze audit finds
+a scientific inconsistency, route it to the owning upstream stage instead of
+asking the researcher to redesign it here.
+
 ## Mode handoff
 
-Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. Plan first, read-only. Audit the proposed frozen package, crosswalk
-the preregistration sections to the exact project files currently in use, identify unresolved choices,
-choose the PDF and registry workflow, and define amendment rules; do not write
-any project file, hash into a manifest, render a PDF, update state, or contact a
-registry until the plan is complete. Then continue into execution in the same session, without waiting, unless a stop condition in
-`workflow/shared/guardrails.md` §11 holds; only then enter Plan Mode, stop, and
-give the exact execution handoff. Create and verify the frozen manifest,
-preregistration source and PDF, and amendment policy, then stop at the
-preregistration gate before external submission. An unresolved choice in what
-is to be frozen is never decided provisionally, and a later explicit instruction
-is required for any external submission. This stage is bounded: maintain the
-native plan but do not start a goal.
+Follow `workflow/shared/execution-control.md` and always enter the host's native
+read-only Plan Mode before any Stage 09 project write, manifest write, PDF
+render, state update, or registry contact. First audit and crosswalk the exact
+approved package without reopening its scientific design. Then use Codex
+`request_user_input` or Claude Code `AskUserQuestion` for one to three adaptive
+rounds about only the registry and disclosure workflow: registry, title,
+authors, license, public or embargo status, sensitive attachments, pilot-use
+disclosure, amendment disclosure, PDF versus web-form fallback, and who would
+perform any later submission. For each consequential choice, show the relevant
+registry or project constraint, put a reasoned recommendation first, offer
+realistic alternatives and consequences, and allow free-form answers, "go with
+your recommendations," and "I don't know."
+
+Synthesize the answers into a reviewable setup plan naming the exact registry
+route, metadata, visibility, attachments, disclosures, render or fallback
+workflow, and submission boundary. Do not write or execute while the interview
+remains in Plan Mode. After the researcher accepts the setup plan, leave Plan
+Mode and continue into execution in the same session: create and verify the
+frozen manifest, preregistration source and PDF, and amendment policy. Plan
+acceptance authorizes drafting and verification
+only: it is not approval of the exact PDF, acceptance of registry terms, or
+authority to submit, publish, or create an external record. Stop at the
+`preregistration-confirmation` gate, and require a later explicit instruction
+for any external submission. An unresolved scientific choice is never decided
+provisionally here. This stage is bounded: maintain the native plan but do not
+start a goal.
 
 ## Work
 
@@ -82,6 +101,8 @@ The list of frozen files, source, PDF, amendment policy, frozen analysis code, a
 - Inspect every rendered PDF page and confirm the reproducible render command and tool versions are in the run manifest.
 - Before transition, verify the registry record live or from an authentic researcher-supplied receipt and match the registered file hash to the approved PDF.
 - Confirm no corpus acquisition, scale-up, or outcome analysis occurred between freeze review and registration.
+- Confirm the native Plan-Mode interview preceded every Stage 09 project write and covered only registry, disclosure, rendering, and later-submission preferences rather than reopening the approved scientific design.
+- Confirm accepting the setup plan was not recorded as approval of the exact preregistration PDF, acceptance of registry terms, or authorization for external submission.
 
 ## State transition
 

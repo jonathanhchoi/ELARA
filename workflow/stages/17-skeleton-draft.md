@@ -3,7 +3,7 @@ stage_id: "17-skeleton-draft"
 title: "Create and approve the article skeleton"
 paper_steps: ["6"]
 core: false
-interaction_profile: "normal"
+interaction_profile: "plan_then_execute"
 long_running: false
 goal_condition: null
 prerequisites: ["16-replication-package"]
@@ -22,7 +22,7 @@ Give the researcher an organizationally complete draft after the results and rep
 
 ## Prerequisite checks
 
-1. Read AGENTS.md, PROJECT_STATE.md, workflow/shared/guardrails.md, workflow/shared/artifact-contract.md, and workflow/shared/execution-control.md completely. Create or reconcile the native Stage 17 plan. This is a bounded `normal` stage, so do not enter Plan Mode or create a goal.
+1. Read AGENTS.md, PROJECT_STATE.md, workflow/shared/guardrails.md, workflow/shared/artifact-contract.md, and workflow/shared/execution-control.md completely. Enter the native read-only Plan Mode for the Stage 17 decision interview below. This stage is bounded, so do not create a goal.
 2. Confirm that Stage 16 completed and that the current replication package passed its clean rebuild and fresh-agent checks. Resolve every input from the exact versions recorded in state, not from a latest-file guess.
 3. Load the accepted contribution and literature position, approved hypotheses and estimands, preregistration and record, validation report, analysis report and machine-readable results, robustness report and results, deviations, and replication manifest. Confirm that their artifact references and file hashes reconcile.
 4. If an input is missing, inconsistent, or no longer supported, make no skeleton. Route to the stage that owns the problem and preserve the completed replication package.
@@ -30,13 +30,45 @@ Give the researcher an organizationally complete draft after the results and rep
 
 ## Researcher decisions
 
-Ask one consolidated question. Offer **create the skeleton draft** as the default and **skip** as the explicit alternative. If creating it, state that the default is a LaTeX-generated PDF and ask whether the researcher prefers Word, Markdown, or another format instead, together with the target venue or approximate article length if known, any fixed sections or organizational preferences, and anything the researcher wants emphasized. One answer such as “go with the defaults” selects LaTeX and PDF with no added constraints.
+Use the Plan-Mode interview below to elicit whether to create or skip the
+skeleton and, if creating it, the output format, target venue or approximate
+length, sections and ordering, display strategy, organizational preferences,
+counterarguments and limitations to foreground, and anything the researcher
+wants emphasized. Offer **create the skeleton draft** as the recommendation and
+**skip** as the explicit alternative. State that the recommended output is a
+LaTeX-generated PDF unless the verified environment or researcher preference
+supports Word, Markdown, or another format. A response such as "go with your
+recommendations" may accept the stated recommendations, but silence may not.
 
-If the researcher skips, append the decision with gate ID `skeleton-draft-approval`, record `skipped` and the researcher's actual words, set `current_stage` to `18-integrate-manuscript`, and set `status` to `ready`. Do not create a run or skeleton file. Otherwise record the format and organizational instructions before opening a run.
+If the researcher skips, leave Plan Mode first, then append the decision with
+gate ID `skeleton-draft-approval`, record `skipped` and the researcher's actual
+words, set `current_stage` to `18-integrate-manuscript`, and set `status` to
+`ready`. Do not create a run or skeleton file. Otherwise record the accepted
+format and organizational instructions before opening a run.
 
 ## Mode handoff
 
-Remain in the ordinary execution session. Create a run ID under the versioning rules in `workflow/shared/artifact-contract.md` only after the researcher chooses to create the skeleton. Do not begin Stage 18 and do not treat a request to iterate on the skeleton as approval to advance.
+Follow `workflow/shared/execution-control.md` and always begin Stage 17 in the
+host's native read-only Plan Mode. Inspect the verified replication package,
+publication profile, result and robustness inventories, available tables,
+figures and equations, deviations, and any researcher drafting notes before
+asking. Use Codex `request_user_input` or Claude Code `AskUserQuestion` for one
+to three adaptive rounds covering the create-or-skip choice and, when creating,
+format, venue or length, sections and order, displays, emphases,
+counterarguments, and limitations. For each consequential choice, show the
+controlling evidence, put a reasoned recommendation first, offer realistic
+alternatives and consequences, and allow free-form answers, "go with your
+recommendations," and "I don't know."
+
+Synthesize the answers into a reviewable, evidence-linked skeleton plan that
+names the proposed organization, output format, display placements, emphases,
+and author-reserved prose. Do not write any project file or create a run while
+the interview remains in Plan Mode. After the researcher accepts the plan,
+leave Plan Mode and continue into execution in the same session by creating a
+run ID under the versioning rules in
+`workflow/shared/artifact-contract.md`. Plan acceptance authorizes drafting the
+described skeleton only; it does not approve the completed skeleton, begin
+Stage 18, or turn later revision instructions into approval to advance.
 
 ## Work
 
@@ -73,10 +105,18 @@ Only the selected researcher-facing format is produced for a run. A later format
 - Search the source and output for unresolved placeholders. Confirm that methods and results contain only the factual minimum needed to orient the reader and that the remaining substantive prose is assigned to the author.
 - For Word and LaTeX, compile or render successfully, inspect every page at 100 percent zoom, and correct clipping, blank pages, broken tables, bad hierarchy, orphan headings, unreadable text, and footer or numbering defects in a new version. For Markdown, inspect every section and structural link.
 - Reopen the output mechanically. Confirm that its hash matches the run manifest and that no prior artifact changed.
+- Confirm the native Plan-Mode interview preceded the skip record or every Stage 17 project write and captured the researcher's create-or-skip, format, organization, display, and emphasis preferences.
+- Confirm accepting the skeleton plan was not recorded as approval of the separate `skeleton-draft-approval` gate.
 
 ## State transition
 
-While building or revising, keep `current_stage` at `17-skeleton-draft` and use `running` only for an open run. After verification, pin the new skeleton, set `status` to `awaiting_approval`, identify its exact paths and hashes, ask for approval or another iteration, and close the run. Revision instructions reopen Stage 17 with new versions.
+Do not alter state or write a skip record while in Plan Mode. After leaving Plan
+Mode, a recorded skip follows the Researcher decisions transition above. While
+building or revising, keep `current_stage` at `17-skeleton-draft` and use
+`running` only for an open run. After verification, pin the new skeleton, set
+`status` to `awaiting_approval`, identify its exact paths and hashes, ask for
+approval or another iteration, and close the run. Revision instructions reopen
+Stage 17 with new versions.
 
 Only the researcher's explicit approval satisfies `skeleton-draft-approval`. Append the decision and pin it to the approved skeleton source, output, and hashes. Then set `current_stage` to `18-integrate-manuscript` and `status` to `ready`. A recorded skip makes the same transition without a skeleton artifact. An unsupported result or source routes to its owning earlier stage and invalidates dependent skeleton approval.
 

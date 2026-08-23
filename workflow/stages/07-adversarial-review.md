@@ -36,23 +36,34 @@ The researcher must decide:
 - whether a change is material enough to rerun preemption, feasibility, authorization, or codebook design; and
 - when the revised package is strong enough to freeze for the pilot.
 
-No critic, synthesizer, or majority vote substitutes for this judgment.
+No critic, synthesizer, or majority vote substitutes for this judgment. After the independent reports and evidence-based recommendations are preserved, put every substantive disposition to the researcher through the Plan-Mode interview before revising the shared design or codebook.
 
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. Plan first, read-only. Design independent review assignments,
-attack surfaces, evidence requirements, non-overlapping file ownership,
-synthesis rules, and upstream invalidation tests; do not write any project file,
-create critiques, update project files, spawn editing work, allocate a run, or touch
-state until the plan is complete. Then continue into execution in the same session, without waiting,
-unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then enter Plan
-Mode, stop, and give the exact execution handoff. Because this stage is
+before work. Plan the independent review assignments, attack surfaces, evidence
+requirements, non-overlapping file ownership, synthesis rules, and upstream
+invalidation tests read-only; do not write a project file, create critiques,
+allocate a run, or touch state until that plan is complete. Because this stage is
 long-running, the `goal_condition` recorded in the settings at the top of this
-file must be the active goal before
-execution begins. If it is not active, provide `/goal <goal_condition>` and stop.
-The goal stays with the parent while independent critics run in parallel under the
-contract. Stop at `design-freeze`; the goal does not approve that gate.
+file must be the active goal before execution begins. If it is not active,
+provide `/goal <goal_condition>` and stop. The goal stays with the parent while
+independent critics run in parallel under the contract.
+
+Do not use the researcher interview to influence the independent critiques.
+After every report is preserved, the issue matrix is complete, and the
+synthesis states the strongest objections and recommended dispositions, enter
+the host's read-only Plan Mode before revising any shared design or codebook
+file. Use `request_user_input` on Codex or `AskUserQuestion` on Claude Code in
+rounds of one to three plain-language questions. Group duplicates but preserve
+critic disagreement. For each material issue, lead with the evidence-supported
+recommendation to accept, reject with reasons, defer to a named pilot test, or
+route upstream; give realistic alternatives, consequences, and invalidated
+approvals. Write no project file while the interview is active. After
+acceptance, leave Plan Mode and continue into execution in the same session.
+Acceptance authorizes only the approved issue-level revisions; it is not the
+final `design-freeze` approval. Stop at that gate after revision and
+verification; the goal does not approve it.
 
 ## Work
 
@@ -67,9 +78,9 @@ contract. Stop at `design-freeze`; the goal does not approve that gate.
    - methods currency: whether any named method, statistic, correction, tool, or numeric default the design adopted from the kit's dated defaults has since been superseded, argued from literature retrieved during this project rather than kit or model memory (guardrails section 10).
 3. Tell each critic to be adversarial, cite exact artifact locations and evidence, distinguish fatal, major, and minor issues, propose tests or alternatives, and report rather than edit. Preserve each report unchanged.
 4. Have at least one fresh critic attempt to falsify the design end to end: construct a plausible data-generating or operational scenario in which every mechanical check passes but the paper's conclusion is still wrong.
-5. Build adversarial_change_matrix_vNNN.csv with issue ID, critic, severity, affected artifact and locator, claim, evidence, proposed resolution, disposition, researcher's decision if required, implementation version, verification, and upstream route.
+5. Build adversarial_change_matrix_vNNN.csv with issue ID, critic, severity, affected artifact and locator, claim, evidence, proposed resolution, recommended disposition, final disposition, researcher's decision if required, implementation version, verification, and upstream route. Before the interview, leave the final disposition and researcher-decision fields empty.
 6. Draft the synthesis without smoothing disagreement. Group duplicate issues, identify conflicts among critics, state the strongest version of each material objection, and recommend accept, reject with reason, defer to pilot, or upstream redesign.
-7. Pause for researcher decisions on every substantive item. If the question, contribution, corpus, data route, construct, unit, or core estimand changes materially, do not patch through it here; set the corresponding upstream route and invalidate affected approvals.
+7. Enter the Plan-Mode critique-disposition interview and obtain researcher decisions on every substantive item. If the question, contribution, corpus, data route, construct, unit, or core estimand changes materially, do not patch through it here; after leaving Plan Mode, set the corresponding upstream route and invalidate affected approvals.
 8. For approved in-scope resolutions, create clean new versions of the complete methods and codebook package. Present the design afresh without recounting the dialectic in those clean files. Preserve the dialectic in critiques, synthesis, and change matrix.
 9. Keep stable IDs when meanings do not change; create new IDs or an explicit mapping when they do. Synchronize cross-references, schema version constants, examples, unit-space hashes, prompt versions, validation partitions, hypotheses, estimands, and authorization constraints.
 10. Rerun schema fixtures, traceability checks, unit-space reconciliation, authorization comparison, and a new-RA reading. A reviewer who proposed the edit must not be the sole verifier.
@@ -87,6 +98,7 @@ Critique reports are preserved unchanged as audit records. The synthesis and cha
 - Revalidate schema examples and unit-space counts and trace hypothesis to estimand to codebook to schema to analysis.
 - Compare the revised package to the authorization scope. Any corpus, provider, purpose, exposed field, or handling change returns to Stage 06.
 - Confirm the clean artifacts contain no unmarked reviewer debate and the audit artifacts contain no hidden resolution.
+- Confirm that no shared design or codebook revision preceded the Plan-Mode interview, every substantive issue received an express disposition or named deferral, and accepting the host plan was not recorded as `design-freeze` approval.
 
 ## State transition
 

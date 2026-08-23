@@ -40,31 +40,41 @@ Pause after presenting the profile if any material inference is disputed. At the
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. Plan first, read-only. Read the active inputs, identify missing
-information, outline the profiling, landmark, brainstorming, screening, and
-verification passes, and make the plan decision-complete; do not write any
-project file, create a run, update state, or browse-download files until the plan
-is complete. Then continue into execution in the same session, without waiting,
-unless a stop condition in `workflow/shared/guardrails.md` §11 holds; only then
-enter Plan Mode, stop, and give the exact execution handoff. Because this stage
-is long-running, the `goal_condition` recorded in the settings at the top of this file must be
-the active goal before execution begins.
-If it is not active, provide `/goal <goal_condition>` and stop. Neither the plan,
-the goal, nor a mode change approves the final project; the researcher decides at
-`project-selection`.
+before work. Use the two targeted Plan-Mode interviews in
+`workflow/shared/execution-control.md`, not one continuous planning session.
+First enter the host's read-only Plan Mode, inspect the supplied work, infer the
+interest profile with exact source locations, and use `request_user_input` on
+Codex or `AskUserQuestion` on Claude Code in rounds of one to three questions
+to resolve disputed or unsupported inferences, substantive constraints, and
+claimed future-work items. Synthesize the confirmed profile and the research
+plan for review. Do not write any project file, create a run, update state, or
+browse-download files while this interview is active.
+
+After the researcher accepts that proposal, leave Plan Mode and continue into
+execution in the same session. The
+`goal_condition` recorded in the settings at the top of this file must be the
+active goal before execution begins. If it is not active, provide
+`/goal <goal_condition>` and stop. Run the landmark, brainstorming, screening,
+and verification work under that goal. After the verified shortlist exists,
+re-enter Plan Mode and use the same question control to compare, redirect, or
+combine candidates. An express selection tied to the exact report is the
+`project-selection` decision; accepting a generic host plan, the goal, or a mode
+change is not. If a redirection needs new research, leave Plan Mode, create and
+verify a new report version under the same goal, and return to the shortlist
+interview.
 
 ## Work
 
-1. Allocate a unique run ID and archive the exact inputs and active artifact hashes in the run manifest.
-2. Read every supplied prior paper in full. Draft a concise profile covering recurring substantive themes, actual methodological approach, familiar collections of documents or data, theoretical commitments, and reusable sequences of research steps. Separately list every future-research passage, limitation, footnote, or announced project as a topic ELARA should not duplicate. Cite the input file and page or section for every inference.
-3. Present the profile for correction. Record the researcher's response in DECISIONS.md. If material corrections arrive, version the profile before continuing.
-4. Using live web research, identify the important and widely cited empirical works in the confirmed fields. Support their recognized importance with retrieved evidence such as reviews, handbooks, syllabi, or citation data. For each landmark, state its question, importance, principal data limitation, and the extension or adjacent test made newly feasible by LLM-scale text measurement.
-5. Brainstorm broadly from the confirmed profile and landmark limitations, not by executing the researcher's prior-paper to-do list. Generate at least ten distinct candidates before filtering. Exclude near-duplicates of prior work and claimed-agenda items unless the researcher expressly reopens them.
-6. Apply all selection tests to each candidate: the question is important and intelligible in one sentence; either plausible result is interesting; LLM-scale measurement makes the project newly feasible; the task determines values from researcher-supplied text rather than predicting an outcome beyond that text; variables can be checked and preferably supported by exact quotations; the collection of documents or data has a plausible lawful route; and execution is feasible in weeks rather than years. Break overall judgments into observable components. Reject candidates that fail and preserve the reason in the report.
-7. For each surviving candidate, run a proportionate live review of whether it appears new, rather than the exhaustive Stage 02 review. Search multiple phrasings across at least three relevant routes, inspect the most similar results, search the nearest author's related work, and check that the proposed collection appears to exist. Log queries verbatim. Retrieve and preserve the closest openly downloadable sources; list inaccessible sources and exact database searches requiring researcher access. Label sources read in full as verified and snippets or second-hand mentions as unverified.
-8. Give each survivor a provisional assessment of open, crowded but distinguishable, or apparently already done. This is a preliminary review, not a final preemption verdict. Reject or reshape apparently completed ideas; do not inflate novelty to preserve a favorite.
-9. Rank approximately five candidates. For each, report the one-sentence question, the important prior work and limitation it overcomes, why either result direction would matter, fit with the profile, closest literature and provisional review of novelty, unit of observation, variables, ability to support coding with exact quotations, collection and access route, permission risks, pilot results that would show the project cannot work, and decisions reserved for the researcher.
-10. Before delivery, have a fresh reviewer (per `workflow/shared/fresh-review.md`) check a sample from every candidate's screen by reopening sources and comparing the report's claims. Correct unsupported factual statements or mark them unverified; never invent a citation.
+1. After the first Plan-Mode proposal is accepted and the exact goal is active, allocate a unique run ID and archive the exact inputs and active artifact hashes in the run manifest.
+2. Write the confirmed profile from the Plan-Mode synthesis, covering recurring substantive themes, actual methodological approach, familiar collections of documents or data, theoretical commitments, reusable sequences of research steps, and every future-research passage, limitation, footnote, or announced project that ELARA should not duplicate. Cite the input file and page or section for every inference and record the researcher's corrections or express adoption of the recommendation in DECISIONS.md.
+3. Using live web research, identify the important and widely cited empirical works in the confirmed fields. Support their recognized importance with retrieved evidence such as reviews, handbooks, syllabi, or citation data. For each landmark, state its question, importance, principal data limitation, and the extension or adjacent test made newly feasible by LLM-scale text measurement.
+4. Brainstorm broadly from the confirmed profile and landmark limitations, not by executing the researcher's prior-paper to-do list. Generate at least ten distinct candidates before filtering. Exclude near-duplicates of prior work and claimed-agenda items unless the researcher expressly reopens them.
+5. Apply all selection tests to each candidate: the question is important and intelligible in one sentence; either plausible result is interesting; LLM-scale measurement makes the project newly feasible; the task determines values from researcher-supplied text rather than predicting an outcome beyond that text; variables can be checked and preferably supported by exact quotations; the collection of documents or data has a plausible lawful route; and execution is feasible in weeks rather than years. Break overall judgments into observable components. Reject candidates that fail and preserve the reason in the report.
+6. For each surviving candidate, run a proportionate live review of whether it appears new, rather than the exhaustive Stage 02 review. Search multiple phrasings across at least three relevant routes, inspect the most similar results, search the nearest author's related work, and check that the proposed collection appears to exist. Log queries verbatim. Retrieve and preserve the closest openly downloadable sources; list inaccessible sources and exact database searches requiring researcher access. Label sources read in full as verified and snippets or second-hand mentions as unverified.
+7. Give each survivor a provisional assessment of open, crowded but distinguishable, or apparently already done. This is a preliminary review, not a final preemption verdict. Reject or reshape apparently completed ideas; do not inflate novelty to preserve a favorite.
+8. Rank approximately five candidates. For each, report the one-sentence question, the important prior work and limitation it overcomes, why either result direction would matter, fit with the profile, closest literature and provisional review of novelty, unit of observation, variables, ability to support coding with exact quotations, collection and access route, permission risks, pilot results that would show the project cannot work, and decisions reserved for the researcher.
+9. Before delivery, have a fresh reviewer (per `workflow/shared/fresh-review.md`) check a sample from every candidate's screen by reopening sources and comparing the report's claims. Correct unsupported factual statements or mark them unverified; never invent a citation.
+10. After the report and source records verify, enter the second Plan-Mode interview. Present the evidence-supported recommendation first, realistic alternatives and combinations with their consequences, and a free-form route. Write nothing while the interview is active. If the researcher redirects or combines candidates, complete the necessary new research and verification before asking for selection against a new report version.
 
 ## Artifacts
 
@@ -77,13 +87,14 @@ The active outputs are researcher_profile_vNNN.md, landmark_survey_vNNN.md, and 
 - Confirm that every cited work is in the manifest, verified and unverified labels are honest, and every reported URL was opened during the run.
 - Confirm that the shortlist includes result-direction payoffs, an obtainable candidate corpus, observable variables, and explicit researcher-only decisions.
 - Confirm that the report calls its novelty findings provisional and reserves the exhaustive selected-project review for Stage 02.
+- Confirm that both targeted Plan-Mode interviews used the host's structured question control, wrote nothing while active, and preserved every answer, recommendation, redirection, and explicit deferral in the resulting record.
 - Reconcile report counts with the source and search logs and disclose all files changed.
 
 ## State transition
 
 At execution start, set current_stage to 01-conceive and status to running; append the run start. If required prior work or retrieval access is missing, append an exact waiting row, set status to waiting_for_user, and preserve the prior active versions.
 
-After verified artifacts exist, make them active, set status to awaiting_approval, mark project-selection pending, and identify the selection or requested redirection in outstanding_user_inputs. Do not advance on a rank alone. When the researcher explicitly selects a candidate, append the candidate ID, exact question, intended corpus, claimed contribution, and any conditions to DECISIONS.md; mark the gate approved and set current_stage to 02-preemption-review and status to ready. If the shortlist is rejected, version the next run and remain at this stage.
+After verified artifacts exist, make them active, set status to awaiting_approval, mark project-selection pending, and identify the selection or requested redirection in outstanding_user_inputs before entering the second Plan-Mode interview. Do not advance on a rank or on acceptance of a generic host plan. When the researcher explicitly selects a candidate against the exact report, leave Plan Mode, append the candidate ID, exact question, intended corpus, claimed contribution, and any conditions to DECISIONS.md; mark the gate approved and set current_stage to 02-preemption-review and status to ready. If the shortlist is rejected or redirected, version the next run and remain at this stage.
 
 ## Next-stage handoff
 

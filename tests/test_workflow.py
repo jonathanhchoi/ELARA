@@ -216,21 +216,24 @@ class WorkflowContractTests(unittest.TestCase):
         metadata, body = stages["17-skeleton-draft"]
         self.assertEqual(metadata["paper_steps"], ["6"])
         self.assertFalse(metadata["core"])
-        self.assertEqual(metadata["interaction_profile"], "normal")
+        self.assertEqual(metadata["interaction_profile"], "plan_then_execute")
         self.assertFalse(metadata["long_running"])
         self.assertEqual(metadata["prerequisites"], ["16-replication-package"])
         self.assertEqual(metadata["human_gate"], "skeleton-draft-approval")
         self.assertEqual(metadata["next_stage"], "18-integrate-manuscript")
+        flat_body = " ".join(body.split())
         for phrase in (
             "create the skeleton draft",
             "skip",
-            "default is a LaTeX-generated PDF",
+            "recommended output is a LaTeX-generated PDF",
+            "request_user_input",
+            "AskUserQuestion",
             "LaTeX",
             "Markdown",
             "article prose",
             "waiting_for_user",
         ):
-            self.assertIn(phrase.lower(), body.lower())
+            self.assertIn(phrase.lower(), flat_body.lower())
         self.assertEqual(stages["16-replication-package"][0]["next_stage"], "17-skeleton-draft")
         self.assertEqual(stages["18-integrate-manuscript"][0]["prerequisites"], ["17-skeleton-draft"])
         stage_eighteen = stages["18-integrate-manuscript"][1]
@@ -329,12 +332,17 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("native plan", (ROOT / "README.md").read_text(encoding="utf-8"))
         self.assertIn("`TaskCreate`", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
 
-    def test_stage_04_uses_plan_mode_to_elicit_methods_preferences(self) -> None:
-        meta, stage = next(
-            (meta, body)
-            for _, meta, body in load_stages(ROOT)
-            if meta["stage_id"] == "04-methods-design"
-        )
+    def test_decision_stages_use_plan_mode_to_elicit_researcher_preferences(self) -> None:
+        stages = {meta["stage_id"]: (meta, body) for _, meta, body in load_stages(ROOT)}
+        interview_stages = {
+            "01-conceive",
+            "04-methods-design",
+            "05-codebook-and-schema",
+            "07-adversarial-review",
+            "08-pilot",
+            "09-freeze-and-preregister",
+            "17-skeleton-draft",
+        }
         control = (ROOT / "workflow" / "shared" / "execution-control.md").read_text(
             encoding="utf-8"
         )
@@ -344,29 +352,39 @@ class WorkflowContractTests(unittest.TestCase):
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
         pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
-        flat_stage = " ".join(stage.split())
         flat_guardrails = " ".join(guardrails.split())
 
-        self.assertEqual(meta["interaction_profile"], "plan_then_execute")
+        for stage_id in interview_stages:
+            meta, stage = stages[stage_id]
+            flat_stage = " ".join(stage.split())
+            self.assertEqual(meta["interaction_profile"], "plan_then_execute", stage_id)
+            for needle in ("Plan Mode", "request_user_input", "AskUserQuestion", "approval"):
+                self.assertIn(needle.lower(), flat_stage.lower(), (stage_id, needle))
+
+        stage_four = " ".join(stages["04-methods-design"][1].split())
         for needle in (
             "Always enter the host's read-only Plan Mode",
-            "`request_user_input` on Codex",
-            "`AskUserQuestion` on Claude Code",
             "one to three plain-language questions per round",
             '"go with the recommendations"',
             '"don\'t know"',
             "it does not approve the final `methods-plan-approval` gate",
         ):
-            self.assertIn(needle, flat_stage, needle)
-        self.assertIn("Stage 04 interactive methods interview", control)
+            self.assertIn(needle, stage_four, needle)
+
+        self.assertIn("### Interactive Plan-Mode decision interviews", control)
+        for stage_id in ("01", "04", "05", "07", "08", "09", "17"):
+            self.assertIn(f"#### Stage {stage_id}", control)
         self.assertIn("`request_user_input`", control)
         self.assertIn("`AskUserQuestion`", control)
-        self.assertIn("Stage 04's deliberate methods interview", flat_guardrails)
-        self.assertIn("Stage 04's deliberate", agents)
-        self.assertIn("Stage 04, enter Plan Mode", claude)
-        self.assertIn("Stage 04 always uses Plan Mode", pipeline)
-        self.assertIn("Do not write any project file", flat_stage)
-        self.assertNotIn("Plan acceptance is the final methods approval", flat_stage)
+        self.assertIn("Stages 01, 04, 05, 07, 08, 09, and 17", flat_guardrails)
+        self.assertIn("Stages 01, 04, 05, 07, 08, 09, and 17", agents)
+        self.assertIn("Stages 01, 04, 05, 07, 08, 09, and 17", claude)
+        self.assertIn("Stages 01, 04, 05, 07, 08, 09, and 17", pipeline)
+        self.assertIn("Use Plan Mode twice", control)
+        self.assertIn("Run the independent critiques first", control)
+        self.assertIn("rather than reopening it", control)
+        self.assertIn("external submission", control)
+        self.assertNotIn("Plan acceptance is the final methods approval", stage_four)
 
     def test_wrappers_are_thin_and_canonical(self) -> None:
         expected = expected_files(ROOT)
@@ -615,12 +633,13 @@ class WorkflowContractTests(unittest.TestCase):
         for platform in (".agents", ".claude"):
             router = (ROOT / platform / "skills" / "elr" / "SKILL.md").read_text(encoding="utf-8")
             self.assertIn("section 11", router)
-        # The eight plan-then-execute stages that end at their own gate continue into
+        # The nine plan-then-execute stages that end at their own gate continue into
         # execution; the two manuscript stages keep their stop, which is the gate.
         for stage_id in ("01-conceive", "04-methods-design", "05-codebook-and-schema", "07-adversarial-review",
-                         "08-pilot", "09-freeze-and-preregister", "13-human-validation", "14-analysis-and-correction"):
+                         "08-pilot", "09-freeze-and-preregister", "13-human-validation", "14-analysis-and-correction",
+                         "17-skeleton-draft"):
             body = (ROOT / "workflow" / "stages" / f"{stage_id}.md").read_text(encoding="utf-8")
-            self.assertIn("continue into execution in the same session", body, stage_id)
+            self.assertIn("continue into execution in the same session", " ".join(body.split()), stage_id)
         for stage_id in ("18-integrate-manuscript", "20-revise-and-respond"):
             body = (ROOT / "workflow" / "stages" / f"{stage_id}.md").read_text(encoding="utf-8")
             self.assertIn("manuscript-edit-permission", body, stage_id)

@@ -39,10 +39,13 @@ very fast research assistant whose work is verified, never trusted.
    an automatic permission switch: `normal` is interactive; `plan` produces no
    file changes; `execute` runs the tracked execution; `plan_then_execute`
    completes its tracked read-only plan phase before any write and continues in
-   the same session unless a §11 stop applies. Stage 04 always conducts its
-   methods interview in Plan Mode with the host's native structured-question
-   control, then executes only after the researcher accepts the proposed plan.
-   Stages 18 and 20 always stop because their plan is the manuscript-edit gate.
+   the same session unless a §11 stop applies. At the boundaries declared in
+   `workflow/shared/execution-control.md`, Stages 01, 04, 05, 07, 08, 09, and
+   17 enter Plan Mode and use the host's native structured-question control for
+   researcher decisions. Stages 18 and 20 always enter Plan Mode because their
+   plan is the manuscript-edit gate. Each interview has a separately stated
+   execution effect; accepting a host plan never silently approves a later
+   research gate or external action.
    A stage marked
    `long_running: true` executes only under its exact front-matter
    `goal_condition`: inspect the current goal, resume it if it matches, or give
@@ -116,13 +119,14 @@ shared, and which are the researcher's, so a folder both use (for example
   when the researcher needs to locate or use them, in code formatting, and do
   not turn them into prose vocabulary.
 - Say what will happen before it happens. Ask as little as possible: infer what
-  the folder and the record already answer. Outside Stage 04's deliberate
-  Plan-Mode methods interview, when you must ask, put everything you still need
-  in one message. In the Stage 04 interview, use short, coherent rounds so later
-  questions can respond to earlier answers. Make each question concrete, state
-  the evidence and recommended answer, and explain the realistic alternatives
-  and consequences. Accept "go with the recommendations", and accept "don't
-  know" as an answer to record, not a gap to fill silently.
+  the folder and the record already answer. Outside the deliberate Plan-Mode
+  decision interviews in Stages 01, 04, 05, 07, 08, 09, and 17, when you must
+  ask, put everything you still need in one message. In those interviews, use
+  short, coherent rounds so later questions can respond to earlier answers.
+  Make each question concrete, state the evidence and recommended answer, and
+  explain the realistic alternatives and consequences. Accept "go with the
+  recommendations", and accept "don't know" as an answer to record, not a gap
+  to fill silently.
 - The assistant runs the commands (`scripts/doctor.py`, validators, and the
   software that manages parallel sub-agents). Never ask the researcher to edit
   state, YAML, or a ledger by hand, and never make them retype an instruction the
@@ -153,9 +157,13 @@ shared, and which are the researcher's, so a folder both use (for example
   otherwise stall, keep working, and put it to the researcher at the next gate.
   Project selection, data authorization, preregistration content, adjudication,
   manuscript edits, and changes to frozen artifacts are never provisional.
-- In Stage 04, put every material open methods choice through the interactive
-  Plan-Mode interview before creating an `assistant-default`. The researcher's
-  express choice to use a recommendation is a decision; silence is not.
+- At each declared Plan-Mode interview boundary, put every in-scope material
+  open choice to the researcher before creating an `assistant-default`. The
+  researcher's express choice to use a recommendation is a decision; silence is
+  not. Do not expand a partial interview beyond its declared scope: Stage 01
+  covers the profile and shortlist, Stage 09 covers registration and disclosure
+  rather than reopening the frozen methods, and Stage 07 begins only after the
+  independent critiques are preserved.
 - A gate approval is valid only for the exact artifact versions recorded in
   state. A changed approved artifact invalidates its dependent approvals.
 
