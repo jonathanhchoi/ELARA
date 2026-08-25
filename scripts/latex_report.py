@@ -28,6 +28,14 @@ def escape_latex(text: str) -> str:
     return "".join(LATEX_ESCAPES.get(char, char) for char in text)
 
 
+def inline_code_latex(text: str) -> str:
+    """Render escaped inline code with break opportunities at common separators."""
+    escaped = escape_latex(text)
+    for separator in ("/", r"\_", "-", "."):
+        escaped = escaped.replace(separator, separator + r"\allowbreak{}")
+    return r"\texttt{" + escaped + "}"
+
+
 def inline_latex(text: str) -> str:
     parts: list[str] = []
     cursor = 0
@@ -41,7 +49,7 @@ def inline_latex(text: str) -> str:
         elif token.startswith("**"):
             parts.append(r"\textbf{" + inline_latex(token[2:-2]) + "}")
         elif token.startswith("`"):
-            parts.append(r"\texttt{" + escape_latex(token[1:-1]) + "}")
+            parts.append(inline_code_latex(token[1:-1]))
         elif token.startswith("*"):
             parts.append(r"\emph{" + inline_latex(token[1:-1]) + "}")
         cursor = match.end()
@@ -136,9 +144,17 @@ def render_latex_report(
     lines = [
         r"\documentclass[11pt]{article}",
         r"\usepackage[letterpaper,margin=1in]{geometry}",
-        r"\usepackage[T1]{fontenc}",
-        r"\usepackage[utf8]{inputenc}",
-        r"\usepackage{lmodern}",
+        r"\usepackage{iftex}",
+        r"\ifPDFTeX",
+        r"  \usepackage[T1]{fontenc}",
+        r"  \usepackage[utf8]{inputenc}",
+        r"  \usepackage{lmodern}",
+        r"\else",
+        r"  \usepackage{fontspec}",
+        r"  \setmainfont{Latin Modern Roman}",
+        r"  \setsansfont{Latin Modern Sans}",
+        r"  \setmonofont{Latin Modern Mono}",
+        r"\fi",
         r"\usepackage{microtype}",
         r"\usepackage{xcolor}",
         r"\usepackage{hyperref}",

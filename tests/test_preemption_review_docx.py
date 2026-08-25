@@ -113,6 +113,9 @@ The risk is moderate because two active researchers have adjacent projects.
 2. Searched the closest authors and their coauthors.
 3. Ran three additional checks that produced no previously unseen close work.
 
+Exact audit records are in `project/sources/preemption/a-long-run-id/source_manifest.csv`.
+The review preserves “smart quotation marks,” apostrophes’ shapes, and date ranges 2024–2026.
+
 | Route | Queries | Close works |
 | --- | --- | --- |
 | OpenAlex | 6 | 2 |
@@ -211,6 +214,13 @@ class PreemptionReviewBuilderTests(unittest.TestCase):
             self.assertIn(r"\section{Detailed review of closest work}", latex)
             self.assertIn(r"\begin{tabularx}", latex)
             self.assertIn(r"\href{https://example.org/rivera}{archived source}", latex)
+            self.assertIn(r"\usepackage{iftex}", latex)
+            self.assertIn(r"\ifPDFTeX", latex)
+            self.assertIn(r"\usepackage{fontspec}", latex)
+            self.assertIn(r"\texttt{project/\allowbreak{}sources", latex)
+            self.assertIn(r"source\_\allowbreak{}manifest.\allowbreak{}csv}", latex)
+            self.assertIn("“smart quotation marks,”", latex)
+            self.assertIn("2024–2026", latex)
             self.assertIn(r"\end{document}", latex)
 
     def test_unresolved_template_marker_is_rejected(self) -> None:
