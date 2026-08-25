@@ -139,7 +139,11 @@ class FeasibilityAuditBuilderTests(unittest.TestCase):
             self.assertIn(r"\end{document}", latex)
             self.assertNotIn(r"\begin{tabular", latex)
             self.assertIn("Researcher consultation", latex)
-            self.assertIn(r"feasibility\_consultation.md", latex)
+            self.assertIn(r"feasibility\_\allowbreak{}consultation.\allowbreak{}md", latex)
+            self.assertIn(
+                r"\texttt{project/\allowbreak{}runs/\allowbreak{}",
+                latex,
+            )
             for gate in GATES:
                 self.assertIn(gate.question, latex)
                 self.assertNotIn(gate.internal_id, latex)

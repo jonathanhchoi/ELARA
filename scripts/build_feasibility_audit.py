@@ -476,7 +476,10 @@ def build(source: Path, output: Path) -> None:
                     ("Recommendation", metadata["recommendation"].title()),
                     ("Audit date", metadata["audit_date"]),
                     ("Researcher consultation", metadata["consultation_date"]),
-                    ("Consultation record", metadata["consultation_record"]),
+                    (
+                        "Consultation record",
+                        f'`{metadata["consultation_record"]}`',
+                    ),
                     ("Report version", metadata["report_version"]),
                 ),
                 blocks=blocks,
