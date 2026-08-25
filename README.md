@@ -6,6 +6,11 @@ a research assistant for empirical legal work. The assistant can help you move
 from a research question to a verified replication package. Optional tools can
 also integrate results into a draft, check citations, and assist with revisions.
 
+If you use ELARA in your research, **please cite the companion paper**:
+Jonathan H. Choi, *ELARA: A Framework for Empirical Legal Research with AI
+Agents* (2026), https://ssrn.com/abstract=XXXXXXX. A copyable reference is in
+[How should I cite ELARA?](#how-should-i-cite-elara) below.
+
 You remain responsible for the research decisions. ELARA stops for your
 approval at each important choice, including the question, design, data use,
 codebook, pilot, preregistration, and manuscript edits.
@@ -257,6 +262,26 @@ Use a scratch copy of ELARA rather than the copy for a real project.
 
 Delete the scratch copy when you are finished. Its outputs do not belong in a
 real project.
+
+## How should I cite ELARA?
+
+If ELARA contributed to your research, please cite the companion paper, which
+introduces the framework and reports its validation study:
+
+> Jonathan H. Choi, *ELARA: A Framework for Empirical Legal Research with AI
+> Agents* (2026), available at SSRN: https://ssrn.com/abstract=XXXXXXX.
+
+In BibTeX:
+
+```bibtex
+@misc{choi2026elara,
+  author       = {Choi, Jonathan H.},
+  title        = {{ELARA}: A Framework for Empirical Legal Research with {AI} Agents},
+  year         = {2026},
+  howpublished = {Working paper},
+  url          = {https://ssrn.com/abstract=XXXXXXX}
+}
+```
 
 ## How does the kit correspond to the paper?
 
