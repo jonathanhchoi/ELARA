@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "profiles": {
+    "law_review_v1": {
+      "template_path": "workflow/templates/word/law_review_v1.docx",
+      "sha256": "727a3747ef582cb172159c4aa42da5c6cca2d2383ae980f8059fa645f0cad8e8",
+      "venue_kind": "law_review",
+      "requirements_authority": "User-approved law-review submission prototype",
+      "requirements_checked": "2026-08-24",
+      "requirements_url": null,
+      "figure_alt_text_required": false
+    },
+    "journal_of_legal_analysis_v1": {
+      "template_path": "workflow/templates/word/journal_of_legal_analysis_v1.docx",
+      "sha256": "8a5385ccfcc70d6bdbff67421828342dcfab3c674633ea35938580c5220f91e3",
+      "venue_kind": "peer_reviewed",
+      "requirements_authority": "Journal of Legal Analysis Instructions to Authors",
+      "requirements_checked": "2026-08-24",
+      "requirements_url": "https://academic.oup.com/jla/pages/General_Instructions",
+      "supplemental_style_url": "https://academic.oup.com/DocumentLibrary/JLA/style_guide2.pdf",
+      "figure_alt_text_required": true
+    }
+  }
+}

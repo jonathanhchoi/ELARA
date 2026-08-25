@@ -282,7 +282,14 @@ The publication steps are optional. Stage 17 offers a default, skippable article
 skeleton after the replication package is verified. It supplies a complete
 article structure and presents the full results through verified tables,
 figures, and equations with sufficient captions and notes. LaTeX-generated PDF
-is the default, with Word and Markdown available on request. It leaves the
+is the default, with Word and Markdown available on request. For Word, Stage 17
+can use the bundled law-review or Journal of Legal Analysis template. The
+visible manuscript contains article text, displays, and concise author
+placeholders; planning sources and open questions remain in Word comments and
+the run manifest. Figures carry accessible descriptions, and JLA descriptions
+also appear below the legend. Another peer-reviewed outlet requires a current
+check of its official instructions and either its own template or an expressly
+approved fallback; the JLA template is never applied silently. Stage 17 leaves the
 remaining prose to the author. Stage 18 only integrates results into an
 existing substantive draft. ELARA won't write the first draft or turn notes
 into a paper. The researcher retains control over the thesis, framing,
@@ -497,7 +504,7 @@ requirements.txt                Bounded Python dependencies
 workflow/stages/NN-*.md         Authoritative sequential stage instructions
 workflow/utilities/             Optional manuscript utilities
 workflow/shared/                Guardrails and contracts for files, parallel work, and manuscripts
-workflow/templates/             Preemption-review, feasibility consultation and analysis, preregistration, skeleton-draft, and publication-profile templates
+workflow/templates/             Report, skeleton-draft, publication-profile, and venue-aware Word templates and registry
 scripts/latex_report.py         Render shared formatted-report LaTeX
 scripts/build_preemption_review.py  Build the formatted Stage 02 report
 scripts/build_feasibility_audit.py   Build the question-led Stage 03 report

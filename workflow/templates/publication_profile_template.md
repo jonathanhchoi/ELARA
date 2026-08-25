@@ -31,6 +31,15 @@ Delete the guidance in brackets when you fill in a section. Leave a section as
 - Primary audience: [for example "law students," "law professors interested in
   empirical legal research," "general scientific readers"]
 - Venue format and length constraints to check: [none, or a URL and the limits]
+- Word template: [law_review_v1 / journal_of_legal_analysis_v1 / supplied outlet template / none]
+- Official formatting authority: [current official URL, or none]
+- Official requirements checked: [YYYY-MM-DD, or none]
+- Approved template fallback: [none, or the exact fallback and the researcher's approval]
+
+For a peer-reviewed outlet other than the Journal of Legal Analysis, check the
+outlet's current official requirements and use its supplied template when one
+exists. Never silently substitute the JLA template. Record any fallback here
+only after the researcher expressly approves it.
 
 ## Register and tone
 

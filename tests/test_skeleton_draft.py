@@ -7,6 +7,7 @@ import tempfile
 import unittest
 import zipfile
 import zlib
+import hashlib
 from pathlib import Path
 
 from docx import Document
@@ -146,6 +147,31 @@ def legacy_sample_source(output_format: str = "docx") -> str:
     return "\n".join(lines) + "\n"
 
 
+def venue_source(profile: str, *, include_authors: bool = True) -> str:
+    text = sample_source("docx")
+    additions = [f'word_template: "{profile}"']
+    if include_authors:
+        additions.extend(
+            [
+                'authors: "Alice Example; Bob Example"',
+                'running_title: "Court Access"',
+                'corresponding_author: "Alice Example, alice@example.edu"',
+            ]
+        )
+    text = text.replace("source_versions:", "\n".join(additions) + "\nsource_versions:", 1)
+    if profile == "journal_of_legal_analysis_v1":
+        text = text.replace(
+            'target_venue: "Journal of Law and Empirical Analysis"',
+            'target_venue: "Journal of Legal Analysis"',
+        )
+        text = text.replace(
+            "Point estimates and 95 percent confidence intervals for every preregistered analysis",
+            "Point estimates and 95 percent confidence intervals for every preregistered analysis|Dot-and-whisker plot of four estimates with horizontal 95 percent confidence intervals",
+            1,
+        )
+    return text
+
+
 def rendered_text(path: Path, output_format: str) -> str:
     if output_format != "docx":
         return path.read_text(encoding="utf-8")
@@ -200,7 +226,7 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
                 self.assertTrue(source.is_file())
                 self.assertTrue(output.is_file())
                 payload = json.loads(manifest.read_text(encoding="utf-8"))
-                self.assertEqual(payload["schema_version"], "1.1")
+                self.assertEqual(payload["schema_version"], "2.0")
                 self.assertEqual(payload["output"]["format"], output_format)
                 self.assertEqual(payload["sections"][0]["title"], "Introduction")
                 self.assertEqual(payload["sections"][3]["level"], 3)
@@ -209,6 +235,169 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
                 text = rendered_text(output, output_format)
                 self.assertNotIn("Target length", text)
                 self.assertNotIn("Approximate length", text)
+
+    def _build_venue(self, root: Path, profile: str, *, include_authors: bool = True):
+        self._project(root)
+        source = root / "source.md"
+        output = root / "skeleton.docx"
+        manifest = root / "manifest.json"
+        source.write_text(
+            venue_source(profile, include_authors=include_authors), encoding="utf-8"
+        )
+        build(source, output, manifest, root)
+        return output, json.loads(manifest.read_text(encoding="utf-8"))
+
+    def test_bundled_templates_match_approved_hashes(self) -> None:
+        expected = {
+            "law_review_v1.docx": "727a3747ef582cb172159c4aa42da5c6cca2d2383ae980f8059fa645f0cad8e8",
+            "journal_of_legal_analysis_v1.docx": "8a5385ccfcc70d6bdbff67421828342dcfab3c674633ea35938580c5220f91e3",
+        }
+        template_root = ROOT / "workflow/templates/word"
+        for name, digest in expected.items():
+            self.assertEqual(hashlib.sha256((template_root / name).read_bytes()).hexdigest(), digest)
+
+        with zipfile.ZipFile(template_root / "journal_of_legal_analysis_v1.docx") as archive:
+            document_xml = archive.read("word/document.xml").decode("utf-8")
+            footnotes_xml = archive.read("word/footnotes.xml").decode("utf-8")
+        self.assertIn("footnoteReference", document_xml)
+        self.assertIn("Substantive Footnote Contents", footnotes_xml)
+
+    def test_law_review_template_output_has_article_geometry_toc_comments_and_footnote(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output, payload = self._build_venue(Path(directory), "law_review_v1")
+            document = Document(output)
+            section = document.sections[0]
+            self.assertAlmostEqual(section.left_margin.inches, 1.5, places=2)
+            self.assertAlmostEqual(section.right_margin.inches, 1.5, places=2)
+            self.assertAlmostEqual(section.top_margin.inches, 1.0, places=2)
+            self.assertAlmostEqual(section.bottom_margin.inches, 1.0, places=2)
+            self.assertEqual(document.styles["Normal"].font.name, "Century Schoolbook")
+            self.assertEqual(document.paragraphs[0].text, "COURT ACCESS AND CLAIM OUTCOMES")
+            self.assertIn("Alice Example; Bob Example", document.paragraphs[1].text)
+            visible = rendered_text(output, "docx")
+            self.assertNotIn("ELARA", visible)
+            self.assertNotIn("project/", visible)
+            self.assertNotIn("Article structure", visible)
+            self.assertIn("[Author:", visible)
+            headings = [
+                paragraph.text
+                for paragraph in document.paragraphs
+                if paragraph.style and paragraph.style.name.startswith("Heading")
+            ]
+            self.assertIn("I. INTRODUCTION", headings)
+            self.assertIn("A. Validation", headings)
+            self.assertGreaterEqual(len(document.comments), len(payload["sections"]))
+            self.assertEqual(payload["word_template"]["template_id"], "law_review_v1")
+            self.assertEqual(
+                payload["word_template"]["template_sha256"],
+                "727a3747ef582cb172159c4aa42da5c6cca2d2383ae980f8059fa645f0cad8e8",
+            )
+            self.assertEqual(len(payload["comments_to_sections"]), len(document.comments))
+            with zipfile.ZipFile(output) as archive:
+                document_xml = archive.read("word/document.xml").decode("utf-8")
+                footnotes_xml = archive.read("word/footnotes.xml").decode("utf-8")
+                styles_xml = archive.read("word/styles.xml").decode("utf-8")
+            self.assertIn('<w:sz w:val="22"', styles_xml)
+            self.assertIn('TOC \\o "1-3"', document_xml)
+            self.assertIn("footnoteReference", document_xml)
+            self.assertIn("Information; Acknowledgments", footnotes_xml)
+            self.assertIn('w:tblHeader w:val="true"', document_xml)
+            self.assertIn(
+                'descr="Point estimates and 95 percent confidence intervals for every preregistered analysis"',
+                document_xml,
+            )
+
+    def test_jla_template_output_has_required_layout_alt_text_and_references(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output, payload = self._build_venue(
+                Path(directory), "journal_of_legal_analysis_v1"
+            )
+            document = Document(output)
+            section = document.sections[0]
+            for margin in (
+                section.left_margin,
+                section.right_margin,
+                section.top_margin,
+                section.bottom_margin,
+            ):
+                self.assertAlmostEqual(margin.inches, 1.25, places=2)
+            self.assertEqual(document.styles["Normal"].font.name, "Times New Roman")
+            self.assertAlmostEqual(document.styles["Normal"].font.size.pt, 12.0, places=1)
+            self.assertAlmostEqual(document.styles["Normal"].paragraph_format.line_spacing, 2.0)
+            visible = rendered_text(output, "docx")
+            self.assertIn("Corresponding author: Alice Example, alice@example.edu", visible)
+            self.assertIn("Alt text: Dot-and-whisker plot", visible)
+            self.assertIn("References", visible)
+            self.assertNotIn("ELARA", visible)
+            self.assertNotIn("project/", visible)
+            headings = [
+                paragraph.text
+                for paragraph in document.paragraphs
+                if paragraph.style and paragraph.style.name.startswith("Heading")
+            ]
+            self.assertIn("1. Introduction", headings)
+            self.assertIn("3.1 Validation", headings)
+            self.assertEqual(
+                payload["word_template"]["template_id"],
+                "journal_of_legal_analysis_v1",
+            )
+            figure = next(display for display in payload["displays"] if display["kind"] == "figure")
+            self.assertTrue(figure["alt_text"].startswith("Dot-and-whisker"))
+            self.assertIn("Source support", payload["sections"][0]["planning_fields"])
+            with zipfile.ZipFile(output) as archive:
+                document_xml = archive.read("word/document.xml").decode("utf-8")
+            self.assertIn("Dot-and-whisker plot", document_xml)
+            self.assertNotIn(" TOC ", document_xml)
+
+    def test_author_owned_defaults_are_explicit_placeholders(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output, _ = self._build_venue(
+                Path(directory), "law_review_v1", include_authors=False
+            )
+            document = Document(output)
+            self.assertIn("[Author Name]", document.paragraphs[1].text)
+            self.assertIn("[Abstract Contents]", rendered_text(output, "docx"))
+
+    def test_rejects_invalid_template_missing_jla_alt_text_and_silent_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._project(root)
+            source = root / "source.md"
+            output = root / "out.docx"
+            manifest = root / "manifest.json"
+            source.write_text(
+                venue_source("law_review_v1").replace("law_review_v1", "missing_v1", 1),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "unsupported word_template"):
+                build(source, output, manifest, root)
+            source.write_text(
+                venue_source("journal_of_legal_analysis_v1").replace(
+                    "|Dot-and-whisker plot of four estimates with horizontal 95 percent confidence intervals",
+                    "",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "require alt text"):
+                build(source, output, manifest, root)
+            custom = venue_source("journal_of_legal_analysis_v1").replace(
+                'target_venue: "Journal of Legal Analysis"',
+                'target_venue: "Custom Peer Review Journal"',
+            )
+            source.write_text(custom, encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "expressly approved Word template fallback"):
+                build(source, output, manifest, root)
+            source.write_text(
+                custom.replace(
+                    "word_template:",
+                    'word_template_fallback_approved: "yes"\nword_template:',
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "venue_requirements_url"):
+                build(source, output, manifest, root)
 
     def test_legacy_length_fields_are_accepted_but_not_rendered(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
