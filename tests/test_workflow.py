@@ -232,6 +232,11 @@ class WorkflowContractTests(unittest.TestCase):
             "Markdown",
             "article prose",
             "waiting_for_user",
+            "law_review_v1",
+            "journal_of_legal_analysis_v1",
+            "Never silently apply the JLA template",
+            "Word comments",
+            "Alt text:",
         ):
             self.assertIn(phrase.lower(), flat_body.lower())
         execution_control = (
@@ -244,6 +249,20 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertNotIn("approximate length", researcher_facing_surface.lower())
             self.assertNotIn("target_length", researcher_facing_surface.lower())
         self.assertIn("target venue", flat_body.lower())
+        registry = json.loads(
+            (ROOT / "workflow" / "templates" / "word" / "profiles.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(
+            set(registry["profiles"]),
+            {"law_review_v1", "journal_of_legal_analysis_v1"},
+        )
+        profile_template = (
+            ROOT / "workflow" / "templates" / "publication_profile_template.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Official requirements checked", profile_template)
+        self.assertIn("Approved template fallback", profile_template)
         self.assertEqual(stages["16-replication-package"][0]["next_stage"], "17-skeleton-draft")
         self.assertEqual(stages["18-integrate-manuscript"][0]["prerequisites"], ["17-skeleton-draft"])
         stage_eighteen = stages["18-integrate-manuscript"][1]

@@ -26,7 +26,7 @@ Give the researcher an organizationally complete draft after the results and rep
 2. Confirm that Stage 16 completed and that the current replication package passed its clean rebuild and fresh-agent checks. Resolve every input from the exact versions recorded in state, not from a latest-file guess.
 3. Load the accepted contribution and literature position, approved hypotheses and estimands, preregistration and record, validation report, analysis report and machine-readable results, robustness report and results, deviations, and replication manifest. Confirm that their artifact references and file hashes reconcile.
 4. If an input is missing, inconsistent, or no longer supported, make no skeleton. Route to the stage that owns the problem and preserve the completed replication package.
-5. Confirm that `scripts/build_skeleton_draft.py` and `workflow/templates/skeleton_draft_template.md` are present. Confirm that the local environment can compile LaTeX and render PDF pages. If the researcher expressly selected Word or Markdown, confirm that format's renderer or validator instead.
+5. Confirm that `scripts/build_skeleton_draft.py` and `workflow/templates/skeleton_draft_template.md` are present. For venue-aware Word output, also verify `workflow/templates/word/profiles.json`, the selected binary template, and its recorded SHA-256. Confirm that the local environment can compile LaTeX and render PDF pages. If the researcher expressly selected Word or Markdown, confirm that format's renderer or validator instead.
 
 ## Researcher decisions
 
@@ -34,7 +34,13 @@ Use the Plan-Mode interview below to elicit whether to create or skip the
 skeleton and, if creating it, the output format, target venue, sections and
 ordering, display strategy, organizational preferences,
 counterarguments and limitations to foreground, and anything the researcher
-wants emphasized. Offer **create the skeleton draft** as the recommendation and
+wants emphasized. For Word, ask whether the submission is for a student-edited
+law review, the Journal of Legal Analysis (JLA), or another outlet. Recommend
+`law_review_v1` for a law-review submission and
+`journal_of_legal_analysis_v1` only for JLA. For another peer-reviewed outlet,
+retrieve and check that outlet's current official instructions; use a supplied
+outlet template or obtain the researcher's express approval of a named fallback.
+Never silently apply the JLA template to another outlet. Offer **create the skeleton draft** as the recommendation and
 **skip** as the explicit alternative. State that the recommended output is a
 LaTeX-generated PDF unless the verified environment or researcher preference
 supports Word, Markdown, or another format. A response such as "go with your
@@ -54,7 +60,8 @@ publication profile, result and robustness inventories, available tables,
 figures and equations, deviations, and any researcher drafting notes before
 asking. Use Codex `request_user_input` or Claude Code `AskUserQuestion` for one
 to three adaptive rounds covering the create-or-skip choice and, when creating,
-format, venue, sections and order, displays, emphases,
+format, venue, Word template and current official requirements where applicable,
+sections and order, displays, emphases,
 counterarguments, and limitations. For each consequential choice, show the
 controlling evidence, put a reasoned recommendation first, offer realistic
 alternatives and consequences, and allow free-form answers, "go with your
@@ -72,26 +79,26 @@ Stage 18, or turn later revision instructions into approval to advance.
 
 ## Work
 
-1. Copy `workflow/templates/skeleton_draft_template.md` to the immutable run-scoped `skeleton_draft_source.md`. Replace every placeholder from the verified active artifacts and the researcher's organizational instructions. The source is the canonical representation for all output formats.
+1. Copy `workflow/templates/skeleton_draft_template.md` to the immutable run-scoped `skeleton_draft_source.md`. Replace every placeholder from the verified active artifacts and the researcher's organizational instructions. The source is the canonical representation for all output formats. For venue-aware Word output, set `word_template` to `law_review_v1` or `journal_of_legal_analysis_v1`; add `authors`, `running_title`, and `corresponding_author` when known. Missing author-owned facts remain explicit bracketed manuscript placeholders. Sources without `word_template` deliberately retain the legacy ELARA report design.
 2. Propose descriptive sections and subsections in reading order. Make the structure complete enough to show the whole article, including the introduction, background or literature where appropriate, data and methods, results, robustness or validation where appropriate, limitations, discussion where appropriate, and conclusion.
 3. For every section and subsection, state its role, bare-bones content, source support, results presented, displays, work left for the author, and open questions. Cite supporting material as `project/path#artifact-id`. Use `none` only when the field truly has no item.
 4. Present every result from the active analysis and robustness inventories, including null and fragile findings. Use the verified tables and figures whenever available and include the estimating or identifying equations needed to understand the methods. Supply concise captions and notes that define variables, samples, uncertainty, scales, panels, and specifications well enough to understand each display without additional prose.
 5. Include every hypothesis, estimand, validation result, and preregistration deviation in the relevant section or flag it for the researcher's attention. Do not omit a statistically inconvenient result or move it into a generic limitations note.
 6. Write only enough methods and results text to orient the reader to the design, estimands, full findings, and supporting displays. Keep it factual and compact. Use only verified project artifacts and do not invent an explanation, authority, table, figure, equation, limitation, or contribution.
 7. Outside methods, results, validation, and robustness, use `Author to write.` whenever possible. Do not compose an abstract, introduction, literature review, discussion, or conclusion. Researcher-approved thesis or contribution language may be reproduced exactly when useful and cited to its source.
-8. Encode each display as `kind|project/path#artifact-id|caption`, using `table`, `figure`, or `equation` as the kind and ` || ` between displays. Tables must be verified CSV or TSV files, figures must be verified PNG or JPEG files, and equations must be verified TeX or text files. The builder places the actual display and its caption in each output format.
+8. Encode each display as `kind|project/path#artifact-id|caption`, using `table`, `figure`, or `equation` as the kind and ` || ` between displays. A figure may add a fourth field: `figure|project/path#artifact-id|caption|alt text`. Alt text is mandatory for JLA, is embedded accessibly in every venue-aware Word figure, and appears under the JLA figure legend as `Alt text:`. Tables must be verified CSV or TSV files, figures must be verified PNG or JPEG files, and equations must be verified TeX or text files. The builder places the actual display and its caption in each output format.
 9. Run the deterministic builder from the repository root, selecting the next unused artifact versions and matching the selected extension:
 
    ```text
    python scripts/build_skeleton_draft.py project/runs/<run_id>/skeleton_draft_source.md project/artifacts/skeleton_draft_vNNN.<docx|tex|md> --manifest project/runs/<run_id>/run_manifest.json --project-root .
    ```
 
-10. By default, compile the generated LaTeX source with the available toolchain, save the PDF and logs under the run directory, render the complete PDF, and inspect every page at 100 percent zoom. For expressly requested Word output, use the builder's real headings, fixed-width table geometry, header, and page number, then render and inspect the complete DOCX. For expressly requested Markdown, validate structure and links and inspect the whole file as text.
+10. By default, compile the generated LaTeX source with the available toolchain, save the PDF and logs under the run directory, render the complete PDF, and inspect every page at 100 percent zoom. For expressly requested venue-aware Word output, the builder loads the approved binary template, fills its title matter, uses the venue's heading and caption system, and puts source support, results inventory, open questions, and display provenance in Word comments and the run manifest rather than the visible manuscript. The visible file contains article headings, empirical text, displays, and concise bracketed author placeholders; it contains no ELARA branding, structure table, source bullets, or project paths. Update Word fields, including the law-review contents page, render the complete DOCX, and inspect every page at 100 percent zoom. For expressly requested Markdown, validate structure and links and inspect the whole file as text.
 11. Give the researcher the versioned skeleton and keep Stage 17 active. Each requested change receives a new run-scoped source, output version, render directory, and run manifest. Never overwrite an earlier iteration.
 
 ## Artifacts
 
-The Markdown source is preserved unchanged after the run and contains the canonical article structure, minimal methods and results content, complete result references, display specifications, captions, and references to the source of each item. The default researcher-facing rendering is `skeleton_draft_vNNN.pdf`, compiled from `skeleton_draft_vNNN.tex`. DOCX, Markdown, or another supported format is used only when the researcher expressly selects it. The render directory contains page images, compiled PDFs where applicable, and inspection evidence. The record of the run states the source and output values used to detect changes, exact format, verified source versions, display references, commands, tool versions, and review disposition.
+The Markdown source is preserved unchanged after the run and contains the canonical article structure, minimal methods and results content, complete result references, display specifications, captions, and references to the source of each item. The default researcher-facing rendering is `skeleton_draft_vNNN.pdf`, compiled from `skeleton_draft_vNNN.tex`. DOCX, Markdown, or another supported format is used only when the researcher expressly selects it. The render directory contains page images, compiled PDFs where applicable, and inspection evidence. The record of a venue-aware Word run also states the template ID, repository path, SHA-256, requirements authority and check date, comments-to-sections mapping, every planning field, and figure alt text, in addition to the source and output values, exact format, verified source versions, display references, commands, tool versions, and review disposition.
 
 Only the selected researcher-facing format is produced for a run. A later format change is a new version from a new source preserved unchanged, not an in-place conversion.
 
@@ -103,7 +110,7 @@ Only the selected researcher-facing format is produced for a run. A later format
 - Check the complete inventories of hypotheses, estimands, findings, validation, robustness, and deviations. Confirm that every result is presented, including null and fragile findings, and that every other material item is included in the relevant section or expressly flagged for the researcher.
 - Confirm that each result and robustness section includes at least one verified table, figure, or equation. Check that the actual displays render and that every caption and note is sufficient to interpret its variables, sample, uncertainty, scale, panels, and specifications.
 - Search the source and output for unresolved placeholders. Confirm that methods and results contain only the factual minimum needed to orient the reader and that the remaining substantive prose is assigned to the author.
-- For Word and LaTeX, compile or render successfully, inspect every page at 100 percent zoom, and correct clipping, blank pages, broken tables, bad hierarchy, orphan headings, unreadable text, and footer or numbering defects in a new version. For Markdown, inspect every section and structural link.
+- For Word and LaTeX, compile or render successfully, inspect every page at 100 percent zoom, and correct clipping, blank pages, broken tables, bad hierarchy, orphan headings, unreadable text, and footer or numbering defects in a new version. For venue-aware Word, refresh and verify the real contents field where applicable; structurally verify true footnotes, heading and caption numbering, repeated table headers and fixed widths, accessible figure descriptions, and every comment anchor; confirm the visible file has no ELARA branding or project path. For Markdown, inspect every section and structural link.
 - Reopen the output mechanically. Confirm that its hash matches the run manifest and that no prior artifact changed.
 - Confirm the native Plan-Mode interview preceded the skip record or every Stage 17 project write and captured the researcher's create-or-skip, format, organization, display, and emphasis preferences.
 - Confirm accepting the skeleton plan was not recorded as approval of the separate `skeleton-draft-approval` gate.

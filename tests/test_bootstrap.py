@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 import subprocess
 import sys
@@ -74,6 +75,9 @@ class FreshInstallTests(unittest.TestCase):
                 "scripts/bootstrap.py",
                 "scripts/doctor.py",
                 "workflow/stages/00-initialize.md",
+                "workflow/templates/word/law_review_v1.docx",
+                "workflow/templates/word/journal_of_legal_analysis_v1.docx",
+                "workflow/templates/word/profiles.json",
                 ".agents/skills/elr/SKILL.md",
                 ".claude/skills/elr/SKILL.md",
                 "project/PROJECT_STATE.md",
@@ -82,6 +86,17 @@ class FreshInstallTests(unittest.TestCase):
                 "tests/fixtures/one_unit_fanout/spec.json",
             ):
                 self.assertTrue((target / relative).is_file(), relative)
+            for relative in (
+                "workflow/templates/word/law_review_v1.docx",
+                "workflow/templates/word/journal_of_legal_analysis_v1.docx",
+            ):
+                source_bytes = (ROOT / relative).read_bytes()
+                installed_bytes = (target / relative).read_bytes()
+                self.assertEqual(installed_bytes, source_bytes)
+                self.assertEqual(
+                    hashlib.sha256(installed_bytes).hexdigest(),
+                    hashlib.sha256(source_bytes).hexdigest(),
+                )
             # README.md and LICENSE in a project folder are the researcher's to use.
             self.assertFalse((target / "README.md").exists())
             self.assertFalse((target / "LICENSE").exists())

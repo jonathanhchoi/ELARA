@@ -21,7 +21,8 @@ from pathlib import Path
 
 from docx import Document
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
+from docx.image.image import Image
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
@@ -46,6 +47,9 @@ REQUIRED_METADATA = (
 )
 LEGACY_IGNORED_METADATA = {"target_length"}
 SUPPORTED_FORMATS = {"docx", "tex", "md"}
+WORD_TEMPLATE_REGISTRY = (
+    Path(__file__).resolve().parents[1] / "workflow" / "templates" / "word" / "profiles.json"
+)
 REQUIRED_FIELDS = (
     "Section role",
     "Bare-bones content",
@@ -124,6 +128,7 @@ class Display:
     path: str
     artifact_id: str
     caption: str
+    alt_text: str | None = None
 
 
 def parse_displays(value: str) -> list[Display]:
@@ -131,12 +136,14 @@ def parse_displays(value: str) -> list[Display]:
         return []
     displays: list[Display] = []
     for raw_spec in value.split(" || "):
-        parts = [part.strip() for part in raw_spec.split("|", 2)]
-        if len(parts) != 3 or not all(parts):
+        parts = [part.strip() for part in raw_spec.split("|", 3)]
+        if len(parts) not in {3, 4} or not all(parts[:3]):
             raise ValueError(
-                "Displays entries must use kind|project/path#artifact-id|caption, separated by ' || '"
+                "Displays entries must use kind|project/path#artifact-id|caption or "
+                "figure|project/path#artifact-id|caption|alt text, separated by ' || '"
             )
-        kind, reference, caption = parts
+        kind, reference, caption = parts[:3]
+        alt_text = parts[3] if len(parts) == 4 else None
         kind = kind.lower()
         if kind not in DISPLAY_KINDS:
             raise ValueError(f"unsupported display kind: {kind}")
@@ -148,7 +155,13 @@ def parse_displays(value: str) -> list[Display]:
             raise ValueError(f"{kind} display has unsupported file extension: {suffix or '(none)'}")
         if PLACEHOLDER_RE.search(caption):
             raise ValueError("display caption contains an unresolved placeholder")
-        displays.append(Display(kind, reference, match.group("path"), match.group("id"), caption))
+        if alt_text and PLACEHOLDER_RE.search(alt_text):
+            raise ValueError("figure alt text contains an unresolved placeholder")
+        if alt_text and kind != "figure":
+            raise ValueError("alt text is supported only for figure displays")
+        displays.append(
+            Display(kind, reference, match.group("path"), match.group("id"), caption, alt_text)
+        )
     return displays
 
 
@@ -567,7 +580,7 @@ def _add_page_number(paragraph) -> None:
     run._r.extend([begin, instruction, end])
 
 
-def _add_docx_displays(doc: Document, section: Section, repository_root: Path) -> None:
+def _add_legacy_docx_displays(doc: Document, section: Section, repository_root: Path) -> None:
     for display in parse_displays(section.fields["Displays"]):
         path = _resolve_project_path(repository_root, display.path)
         label = display.kind.capitalize()
@@ -609,7 +622,7 @@ def _add_docx_displays(doc: Document, section: Section, repository_root: Path) -
             run.font.size = Pt(11)
 
 
-def build_docx(
+def build_legacy_docx(
     metadata: dict[str, str], sections: list[Section], output: Path, repository_root: Path
 ) -> None:
     doc = Document()
@@ -698,8 +711,522 @@ def build_docx(
             paragraph.paragraph_format.first_line_indent = Inches(-0.15)
             paragraph.add_run(f"{field_name}: ").bold = True
             paragraph.add_run(section.fields[field_name])
-        _add_docx_displays(doc, section, repository_root)
+        _add_legacy_docx_displays(doc, section, repository_root)
     doc.save(output)
+
+
+def _load_word_profiles() -> dict[str, dict[str, object]]:
+    try:
+        payload = json.loads(WORD_TEMPLATE_REGISTRY.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot load Word template registry: {WORD_TEMPLATE_REGISTRY}") from exc
+    profiles = payload.get("profiles")
+    if not isinstance(profiles, dict) or not profiles:
+        raise ValueError("Word template registry has no profiles")
+    return profiles
+
+
+def _is_yes(value: str) -> bool:
+    return value.strip().casefold() in {"yes", "true", "1"}
+
+
+def _is_jla_target(value: str) -> bool:
+    normalized = re.sub(r"[^a-z]", "", value.casefold())
+    return normalized in {"jla", "journaloflegalanalysis"}
+
+
+def _word_template_info(
+    metadata: dict[str, str], sections: list[Section]
+) -> dict[str, object] | None:
+    template_id = metadata.get("word_template", "").strip()
+    if not template_id:
+        return None
+    if metadata["output_format"] != "docx":
+        raise ValueError("word_template may be used only when output_format is docx")
+    profiles = _load_word_profiles()
+    if template_id not in profiles:
+        raise ValueError(f"unsupported word_template: {template_id}")
+    profile = dict(profiles[template_id])
+    profile["template_id"] = template_id
+    template_path = Path(__file__).resolve().parents[1] / str(profile["template_path"])
+    if not template_path.is_file():
+        raise ValueError(f"Word template does not exist: {profile['template_path']}")
+    actual_hash = _sha256(template_path)
+    expected_hash = str(profile.get("sha256", "")).casefold()
+    if actual_hash != expected_hash:
+        raise ValueError(
+            f"Word template hash mismatch for {template_id}: expected {expected_hash}, got {actual_hash}"
+        )
+    profile["resolved_path"] = template_path
+
+    fallback_approved = _is_yes(metadata.get("word_template_fallback_approved", ""))
+    peer_reviewed = _is_yes(metadata.get("peer_reviewed", ""))
+    is_jla_profile = template_id == "journal_of_legal_analysis_v1"
+    custom_peer_venue = peer_reviewed and not _is_jla_target(metadata["target_venue"])
+    if (is_jla_profile and not _is_jla_target(metadata["target_venue"])) or (
+        custom_peer_venue and template_id == "law_review_v1"
+    ):
+        if not fallback_approved:
+            raise ValueError(
+                "a peer-reviewed outlet other than JLA requires an expressly approved Word "
+                "template fallback; Stage 17 must first check the outlet's current official requirements"
+            )
+        if not metadata.get("venue_requirements_url") or not metadata.get(
+            "venue_requirements_checked"
+        ):
+            raise ValueError(
+                "an approved custom-outlet fallback requires venue_requirements_url and "
+                "venue_requirements_checked"
+            )
+
+    if profile.get("figure_alt_text_required"):
+        abstracts = [
+            section.fields["Bare-bones content"]
+            for section in sections
+            if section.fields["Section role"].strip().casefold() == "abstract"
+            and section.fields["Bare-bones content"].casefold() != AUTHOR_TO_WRITE.casefold()
+        ]
+        if abstracts and len(re.findall(r"\b[\w'-]+\b", abstracts[0])) > 100:
+            raise ValueError("JLA abstract must not exceed 100 words")
+        missing = [
+            f"{section.title}: {display.caption}"
+            for section in sections
+            for display in parse_displays(section.fields["Displays"])
+            if display.kind == "figure" and not display.alt_text
+        ]
+        if missing:
+            raise ValueError("JLA figures require alt text: " + "; ".join(missing))
+    return profile
+
+
+def _load_template_without_prototype_comments(template_path: Path) -> Document:
+    """Load a template and remove its demonstration comments without changing its package graph."""
+
+    doc = Document(template_path)
+    for comment in list(doc.part._comments_part.element):
+        doc.part._comments_part.element.remove(comment)
+    for expression in (
+        ".//w:commentRangeStart",
+        ".//w:commentRangeEnd",
+        ".//w:commentReference",
+    ):
+        for node in list(doc._element.xpath(expression)):
+            node.getparent().remove(node)
+    return doc
+
+
+def _replace_visible_text(paragraph, value: str) -> None:
+    """Replace visible paragraph text while retaining fields and footnote references."""
+
+    text_nodes = list(paragraph._p.iter(qn("w:t")))
+    if text_nodes:
+        text_nodes[0].text = value
+        for node in text_nodes[1:]:
+            node.text = ""
+    else:
+        paragraph.add_run(value)
+
+
+def _clear_body_after(doc: Document, retained_elements: int) -> None:
+    body = doc._body._element
+    retained = 0
+    for child in list(body):
+        if child.tag == qn("w:sectPr"):
+            continue
+        if retained < retained_elements:
+            retained += 1
+            continue
+        body.remove(child)
+
+
+def _request_field_updates(doc: Document) -> None:
+    settings = doc.settings.element
+    update = settings.find(qn("w:updateFields"))
+    if update is None:
+        update = OxmlElement("w:updateFields")
+        settings.append(update)
+    update.set(qn("w:val"), "true")
+
+
+def _replace_header_placeholder(doc: Document, running_title: str) -> None:
+    for section in doc.sections:
+        for header in (section.header, section.first_page_header, section.even_page_header):
+            for paragraph in header.paragraphs:
+                for node in paragraph._p.iter(qn("w:t")):
+                    if node.text and "[RUNNING SHORT TITLE]" in node.text:
+                        node.text = node.text.replace("[RUNNING SHORT TITLE]", running_title)
+
+
+def _add_toc_field(doc: Document) -> None:
+    heading = doc.add_paragraph("CONTENTS")
+    heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    heading.paragraph_format.space_after = Pt(12)
+    if heading.runs:
+        heading.runs[0].bold = False
+    paragraph = doc.add_paragraph()
+    run = paragraph.add_run()
+    begin = OxmlElement("w:fldChar")
+    begin.set(qn("w:fldCharType"), "begin")
+    begin.set(qn("w:dirty"), "true")
+    instruction = OxmlElement("w:instrText")
+    instruction.set(qn("xml:space"), "preserve")
+    instruction.text = ' TOC \\o "1-3" \\h \\z \\u '
+    separate = OxmlElement("w:fldChar")
+    separate.set(qn("w:fldCharType"), "separate")
+    end = OxmlElement("w:fldChar")
+    end.set(qn("w:fldCharType"), "end")
+    run._r.extend([begin, instruction, separate, end])
+
+
+def _visible_text(value: str) -> str:
+    cleaned = PROJECT_REF_RE.sub("the verified project materials", value)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
+
+def _author_placeholder(value: str) -> str:
+    text = _visible_text(value).strip()
+    text = re.sub(r"\s+in the author(?:'s|’s) own prose\.?$", ".", text, flags=re.I)
+    if len(text) > 180:
+        text = text[:177].rstrip() + "..."
+    return f"[Author: {text}]"
+
+
+def _heading_labels(sections: list[Section], profile_id: str) -> dict[int, str]:
+    labels: dict[int, str] = {}
+    top_number = 0
+    appendix_number = 0
+    counters: list[int] = []
+    in_appendix = False
+    appendix_letter = ""
+    for section in sections:
+        depth = section.depth
+        if depth == 0:
+            counters = [0, 0, 0, 0]
+            if section.fields["Section role"].strip().casefold() == "appendix":
+                appendix_number += 1
+                appendix_letter = chr(64 + appendix_number)
+                in_appendix = True
+                prefix = "APPENDIX" if profile_id == "law_review_v1" else "Appendix"
+                labels[section.order] = f"{prefix} {appendix_letter}. {section.title}"
+            else:
+                top_number += 1
+                in_appendix = False
+                if profile_id == "law_review_v1":
+                    roman = _roman(top_number)
+                    labels[section.order] = f"{roman}. {section.title.upper()}"
+                else:
+                    labels[section.order] = f"{top_number}. {section.title}"
+            continue
+        while len(counters) <= depth:
+            counters.append(0)
+        counters[depth] += 1
+        for index in range(depth + 1, len(counters)):
+            counters[index] = 0
+        if in_appendix:
+            trail = ".".join(str(counters[index]) for index in range(1, depth + 1))
+            punct = "." if profile_id == "law_review_v1" else ""
+            labels[section.order] = f"{appendix_letter}.{trail}{punct} {section.title}"
+        elif profile_id == "law_review_v1":
+            if depth == 1:
+                labels[section.order] = f"{chr(64 + counters[1])}. {section.title}"
+            elif depth == 2:
+                labels[section.order] = f"{counters[2]}. {section.title}"
+            else:
+                labels[section.order] = f"{counters[depth]}. {section.title}"
+        else:
+            number = [str(top_number)] + [str(counters[index]) for index in range(1, depth + 1)]
+            labels[section.order] = f"{'.'.join(number)} {section.title}"
+    return labels
+
+
+def _roman(value: int) -> str:
+    numerals = ((1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"),
+                (90, "XC"), (50, "L"), (40, "XL"), (10, "X"), (9, "IX"),
+                (5, "V"), (4, "IV"), (1, "I"))
+    result: list[str] = []
+    for number, glyph in numerals:
+        while value >= number:
+            result.append(glyph)
+            value -= number
+    return "".join(result)
+
+
+def _add_comment(doc: Document, paragraph, text: str) -> str:
+    if not paragraph.runs:
+        paragraph.add_run(" ")
+    comment = doc.add_comment(
+        runs=paragraph.runs,
+        text=text,
+        author="Research notes",
+        initials="RN",
+    )
+    return str(comment.comment_id)
+
+
+def _section_comment(section: Section) -> str:
+    return "\n".join(
+        (
+            f"Source support: {section.fields['Source support']}",
+            f"Results presented: {section.fields['Results presented']}",
+            f"Open questions: {section.fields['Open questions']}",
+        )
+    )
+
+
+def _content_width_dxa(doc: Document) -> int:
+    section = doc.sections[0]
+    width_inches = (
+        section.page_width.inches - section.left_margin.inches - section.right_margin.inches
+    )
+    return max(1440, int(width_inches * 1440))
+
+
+def _content_sensitive_widths(rows: list[list[str]], total_width: int) -> list[int]:
+    weights = [
+        max(6, min(48, max(len(row[index]) for row in rows) + 2))
+        for index in range(len(rows[0]))
+    ]
+    minimum = min(900, total_width // len(weights))
+    remaining = total_width - minimum * len(weights)
+    weight_sum = sum(weights)
+    widths = [minimum + int(remaining * weight / weight_sum) for weight in weights]
+    widths[-1] += total_width - sum(widths)
+    return widths
+
+
+def _set_article_table_geometry(table, widths: list[int]) -> None:
+    _set_table_geometry(table, widths)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_pr = table._tbl.tblPr
+    borders = tbl_pr.find(qn("w:tblBorders"))
+    if borders is not None:
+        for border in borders:
+            border.set(qn("w:color"), "000000")
+
+
+def _embed_alt_text(shape, alt_text: str) -> None:
+    shape._inline.docPr.set("descr", alt_text)
+    for node in shape._inline.xpath(".//pic:cNvPr"):
+        node.set("descr", alt_text)
+
+
+def _add_venue_displays(
+    doc: Document,
+    section: Section,
+    repository_root: Path,
+    profile_id: str,
+    counters: dict[str, int],
+    comment_map: list[dict[str, object]],
+) -> None:
+    total_width = _content_width_dxa(doc)
+    for display in parse_displays(section.fields["Displays"]):
+        path = _resolve_project_path(repository_root, display.path)
+        counters[display.kind] += 1
+        number = counters[display.kind]
+        label = display.kind.capitalize()
+        if display.kind == "table":
+            caption = doc.add_paragraph(f"Table {number}. {display.caption}", style="Caption")
+            rows = _read_table(path)
+            table = doc.add_table(rows=len(rows), cols=len(rows[0]))
+            table.style = "Table Grid"
+            _repeat_header(table.rows[0])
+            _set_article_table_geometry(table, _content_sensitive_widths(rows, total_width))
+            for row_index, (word_row, values) in enumerate(zip(table.rows, rows)):
+                for cell, value in zip(word_row.cells, values):
+                    cell.text = value
+                    _set_cell_shading(cell, "D9D9D9" if row_index == 0 else WHITE)
+                    if row_index == 0:
+                        for run in cell.paragraphs[0].runs:
+                            run.bold = True
+        elif display.kind == "figure":
+            paragraph = doc.add_paragraph()
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            natural = Image.from_file(str(path)).width.inches
+            maximum = total_width / 1440
+            shape = paragraph.add_run().add_picture(str(path), width=Inches(min(natural, maximum)))
+            alt_text = display.alt_text or display.caption
+            _embed_alt_text(shape, alt_text)
+            caption = doc.add_paragraph(f"Figure {number}. {display.caption}", style="Caption")
+            if profile_id == "journal_of_legal_analysis_v1":
+                doc.add_paragraph(f"Alt text: {alt_text}")
+        else:
+            caption = doc.add_paragraph()
+            caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            caption.add_run(_read_equation(path)).font.name = "Cambria Math"
+            caption.add_run(f"\t({number})")
+        comment_id = _add_comment(doc, caption, f"Display provenance: {display.reference}")
+        comment_map.append(
+            {
+                "section": section.title,
+                "anchor": f"{label} {number}",
+                "comment_id": comment_id,
+                "reference": display.reference,
+            }
+        )
+
+
+def build_venue_docx(
+    metadata: dict[str, str],
+    sections: list[Section],
+    output: Path,
+    repository_root: Path,
+    profile: dict[str, object],
+) -> dict[str, object]:
+    profile_id = str(profile["template_id"])
+    doc = _load_template_without_prototype_comments(Path(profile["resolved_path"]))
+    authors = metadata.get("authors", "").strip() or "[Author Name]"
+    running_title = metadata.get("running_title", "").strip() or "[Running Short Title]"
+    corresponding = (
+        metadata.get("corresponding_author", "").strip()
+        or "[Corresponding Author Contact Information]"
+    )
+    abstract_sections = [
+        section
+        for section in sections
+        if section.fields["Section role"].strip().casefold() == "abstract"
+    ]
+    abstract_text = "[Abstract Contents]"
+    if abstract_sections:
+        candidate = abstract_sections[0].fields["Bare-bones content"]
+        if candidate.casefold() != AUTHOR_TO_WRITE.casefold():
+            abstract_text = _visible_text(candidate)
+    body_sections = [section for section in sections if section not in abstract_sections]
+    reference_sections = [
+        section for section in body_sections if section.title.strip().casefold() == "references"
+    ]
+    body_sections = [section for section in body_sections if section not in reference_sections]
+    comment_map: list[dict[str, object]] = []
+
+    if profile_id == "law_review_v1":
+        _replace_visible_text(doc.paragraphs[0], metadata["title"].upper())
+        _replace_visible_text(doc.paragraphs[1], authors)
+        _replace_visible_text(doc.paragraphs[2], abstract_text)
+        _clear_body_after(doc, 3)
+        if abstract_sections:
+            comment_id = _add_comment(doc, doc.paragraphs[2], _section_comment(abstract_sections[0]))
+            comment_map.append(
+                {
+                    "section": abstract_sections[0].title,
+                    "anchor": "abstract",
+                    "comment_id": comment_id,
+                    "planning_fields": ["Source support", "Results presented", "Open questions"],
+                }
+            )
+        _replace_header_placeholder(doc, running_title)
+        doc.add_page_break()
+        _add_toc_field(doc)
+        doc.add_page_break()
+    else:
+        _replace_visible_text(doc.paragraphs[0], metadata["title"])
+        _replace_visible_text(doc.paragraphs[1], authors)
+        _replace_visible_text(
+            doc.paragraphs[2], metadata.get("author_affiliations", "").strip() or "[Institutional Affiliation]"
+        )
+        _replace_visible_text(doc.paragraphs[3], f"Corresponding author: {corresponding}")
+        _replace_visible_text(
+            doc.paragraphs[4], "[Author: Add affiliations, funding, and acknowledgments.]"
+        )
+        _clear_body_after(doc, 5)
+        doc.add_page_break()
+        abstract_heading = doc.add_paragraph("Abstract", style="Heading 1")
+        doc.add_paragraph(abstract_text)
+        doc.add_paragraph("Keywords: [Keywords]")
+        if abstract_sections:
+            comment_id = _add_comment(doc, abstract_heading, _section_comment(abstract_sections[0]))
+            comment_map.append(
+                {
+                    "section": abstract_sections[0].title,
+                    "anchor": "abstract heading",
+                    "comment_id": comment_id,
+                    "planning_fields": ["Source support", "Results presented", "Open questions"],
+                }
+            )
+        doc.add_page_break()
+
+    _request_field_updates(doc)
+    doc.core_properties.title = metadata["title"]
+    doc.core_properties.subject = f"Manuscript skeleton for {metadata['target_venue']}"
+    doc.core_properties.author = authors if not authors.startswith("[") else ""
+    fixed_time = datetime(2000, 1, 1, tzinfo=timezone.utc)
+    doc.core_properties.created = fixed_time
+    doc.core_properties.modified = fixed_time
+
+    labels = _heading_labels(body_sections, profile_id)
+    counters = {"table": 0, "figure": 0, "equation": 0}
+    for section in body_sections:
+        heading = doc.add_paragraph(
+            labels[section.order], style=f"Heading {min(section.depth + 1, 4)}"
+        )
+        comment_id = _add_comment(doc, heading, _section_comment(section))
+        comment_map.append(
+            {
+                "section": section.title,
+                "anchor": "heading",
+                "comment_id": comment_id,
+                "planning_fields": ["Source support", "Results presented", "Open questions"],
+            }
+        )
+        content = section.fields["Bare-bones content"].strip()
+        if content.casefold() == AUTHOR_TO_WRITE.casefold():
+            doc.add_paragraph(_author_placeholder(section.fields["Author work"]), style="Author Placeholder")
+        else:
+            doc.add_paragraph(_visible_text(content))
+            doc.add_paragraph(_author_placeholder(section.fields["Author work"]), style="Author Placeholder")
+        _add_venue_displays(doc, section, repository_root, profile_id, counters, comment_map)
+
+    if profile_id == "journal_of_legal_analysis_v1" or reference_sections:
+        references = doc.add_paragraph("References", style="Heading 1")
+        if reference_sections:
+            for section in reference_sections:
+                content = section.fields["Bare-bones content"]
+                doc.add_paragraph(
+                    _author_placeholder(section.fields["Author work"])
+                    if content.casefold() == AUTHOR_TO_WRITE.casefold()
+                    else _visible_text(content)
+                )
+                comment_id = _add_comment(doc, references, _section_comment(section))
+                comment_map.append(
+                    {
+                        "section": section.title,
+                        "anchor": "references heading",
+                        "comment_id": comment_id,
+                        "planning_fields": [
+                            "Source support",
+                            "Results presented",
+                            "Open questions",
+                        ],
+                    }
+                )
+        elif profile_id == "journal_of_legal_analysis_v1":
+            doc.add_paragraph("[Author: Add author-date references.]", style="Author Placeholder")
+
+    doc.save(output)
+    return {
+        "template_id": profile_id,
+        "template_path": str(profile["template_path"]),
+        "template_sha256": str(profile["sha256"]),
+        "requirements_authority": metadata.get("venue_requirements_authority")
+        or profile.get("requirements_authority"),
+        "requirements_checked": metadata.get("venue_requirements_checked")
+        or profile.get("requirements_checked"),
+        "requirements_url": metadata.get("venue_requirements_url")
+        or profile.get("requirements_url"),
+        "word_template_fallback_approved": _is_yes(
+            metadata.get("word_template_fallback_approved", "")
+        ),
+        "comments_to_sections": comment_map,
+    }
+
+
+def build_docx(
+    metadata: dict[str, str], sections: list[Section], output: Path, repository_root: Path
+) -> dict[str, object] | None:
+    profile = _word_template_info(metadata, sections)
+    if profile is None:
+        build_legacy_docx(metadata, sections, output, repository_root)
+        return None
+    return build_venue_docx(metadata, sections, output, repository_root, profile)
 
 
 def _latex_escape(value: str) -> str:
@@ -908,7 +1435,12 @@ def build_markdown(
     output.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8", newline="\n")
 
 
-def _validate_output(path: Path, output_format: str, sections: list[Section]) -> None:
+def _validate_output(
+    path: Path,
+    output_format: str,
+    sections: list[Section],
+    metadata: dict[str, str],
+) -> None:
     if output_format == "docx":
         reopened = Document(path)
         headings = {
@@ -916,11 +1448,40 @@ def _validate_output(path: Path, output_format: str, sections: list[Section]) ->
             for paragraph in reopened.paragraphs
             if paragraph.style is not None and paragraph.style.name.startswith("Heading")
         }
-        missing = [section.title for section in sections if section.title not in headings]
+        if metadata.get("word_template"):
+            missing = [
+                section.title
+                for section in sections
+                if section.fields["Section role"].strip().casefold() != "abstract"
+                if not any(section.title.casefold() in heading.casefold() for heading in headings)
+            ]
+        else:
+            missing = [section.title for section in sections if section.title not in headings]
         if missing:
             raise ValueError("generated Word artifact is missing sections: " + ", ".join(missing))
-        if not reopened.tables:
-            raise ValueError("generated Word artifact is missing table geometry")
+        has_table_display = any(
+            display.kind == "table"
+            for section in sections
+            for display in parse_displays(section.fields["Displays"])
+        )
+        if has_table_display and not reopened.tables:
+            raise ValueError("generated Word artifact is missing a table display")
+        if metadata.get("word_template"):
+            visible = "\n".join(
+                [paragraph.text for paragraph in reopened.paragraphs]
+                + [
+                    cell.text
+                    for table in reopened.tables
+                    for row in table.rows
+                    for cell in row.cells
+                ]
+            )
+            if "ELARA" in visible:
+                raise ValueError("venue-aware Word artifact contains visible ELARA branding")
+            if "project/" in visible:
+                raise ValueError("venue-aware Word artifact exposes a visible project path")
+            if len(reopened.comments) < len(sections):
+                raise ValueError("venue-aware Word artifact is missing planning comments")
     else:
         text = path.read_text(encoding="utf-8")
         missing = [section.title for section in sections if section.title not in text]
@@ -959,17 +1520,18 @@ def build(
         path.parent.mkdir(parents=True, exist_ok=True)
     created: list[Path] = []
     try:
+        word_build: dict[str, object] | None = None
         if output_format == "docx":
-            build_docx(metadata, sections, output, repository_root)
+            word_build = build_docx(metadata, sections, output, repository_root)
         elif output_format == "tex":
             build_tex(metadata, sections, output, repository_root)
         else:
             build_markdown(metadata, sections, output, repository_root)
         created.append(output)
-        _validate_output(output, output_format, sections)
+        _validate_output(output, output_format, sections, metadata)
 
         manifest_payload = {
-            "schema_version": "1.1",
+            "schema_version": "2.0",
             "stage_id": "17-skeleton-draft",
             "source": {"path": source.as_posix(), "sha256": _sha256(source)},
             "output": {
@@ -983,6 +1545,7 @@ def build(
                     "level": section.level,
                     "order": section.order,
                     "role": section.fields["Section role"],
+                    "planning_fields": dict(section.fields),
                 }
                 for section in sections
             ],
@@ -992,11 +1555,31 @@ def build(
                     "kind": display.kind,
                     "reference": display.reference,
                     "caption": display.caption,
+                    "alt_text": display.alt_text,
                 }
                 for section in sections
                 for display in parse_displays(section.fields["Displays"])
             ],
             "verified_source_versions": _source_version_paths(metadata["source_versions"]),
+            "word_template": (
+                {
+                    key: word_build.get(key)
+                    for key in (
+                        "template_id",
+                        "template_path",
+                        "template_sha256",
+                        "requirements_authority",
+                        "requirements_checked",
+                        "requirements_url",
+                        "word_template_fallback_approved",
+                    )
+                }
+                if word_build
+                else None
+            ),
+            "comments_to_sections": (
+                word_build.get("comments_to_sections", []) if word_build else []
+            ),
         }
         manifest.write_text(
             json.dumps(manifest_payload, indent=2, sort_keys=True) + "\n",

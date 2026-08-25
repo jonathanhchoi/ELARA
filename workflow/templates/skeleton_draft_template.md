@@ -3,6 +3,10 @@ title: "TODO-SKELETON: Article title"
 subtitle: "Skeleton draft"
 output_format: "tex"
 target_venue: "TODO-SKELETON: Venue or unknown"
+# For venue-aware Word output, add word_template: law_review_v1 or
+# journal_of_legal_analysis_v1. Authors, running_title, corresponding_author,
+# author_affiliations, peer_reviewed, venue_requirements_url,
+# venue_requirements_checked, and word_template_fallback_approved are optional.
 source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifacts/other_vNNN.ext"
 ---
 
@@ -29,7 +33,7 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Bare-bones content:** TODO-SKELETON: State only the design, data, hypotheses, and estimands needed to make the analysis intelligible, with project/artifacts/file_vNNN.ext#METHOD-ID support.
 **Source support:** TODO-SKELETON: project/artifacts/file_vNNN.ext#METHOD-ID; project/artifacts/file_vNNN.ext#ESTIMAND-ID
 **Results presented:** none
-**Displays:** TODO-SKELETON: figure|project/artifacts/data_flow_vNNN.png#DATA-FLOW-FIGURE|Caption that makes the design legible, or none
+**Displays:** TODO-SKELETON: figure|project/artifacts/data_flow_vNNN.png#DATA-FLOW-FIGURE|Caption that makes the design legible|Concise alt text describing the figure, or none
 **Author work:** Develop the rationale and explanation in the author's own prose.
 **Open questions:** TODO-SKELETON
 
@@ -47,7 +51,7 @@ source_versions: "TODO-SKELETON: project/artifacts/file_vNNN.ext; project/artifa
 **Bare-bones content:** TODO-SKELETON: Use only the short factual statements needed to orient the reader to the complete results shown below.
 **Source support:** TODO-SKELETON: project/artifacts/file_vNNN.ext#RESULT-ID
 **Results presented:** TODO-SKELETON: List every result presented in this section as project/artifacts/file_vNNN.ext#RESULT-ID
-**Displays:** TODO-SKELETON: table|project/artifacts/results_table_vNNN.csv#RESULT-TABLE|Caption and notes sufficient to interpret the complete table || figure|project/artifacts/results_figure_vNNN.png#RESULT-FIGURE|Caption and notes sufficient to interpret the figure || equation|project/artifacts/estimating_equation_vNNN.tex#RESULT-EQUATION|Caption defining every term
+**Displays:** TODO-SKELETON: table|project/artifacts/results_table_vNNN.csv#RESULT-TABLE|Caption and notes sufficient to interpret the complete table || figure|project/artifacts/results_figure_vNNN.png#RESULT-FIGURE|Caption and notes sufficient to interpret the figure|Concise alt text describing the visual pattern and data || equation|project/artifacts/estimating_equation_vNNN.tex#RESULT-EQUATION|Caption defining every term
 **Author work:** Interpret the findings and relate them to the article's argument in the author's own prose.
 **Open questions:** TODO-SKELETON
 
