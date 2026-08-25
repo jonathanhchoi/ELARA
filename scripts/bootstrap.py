@@ -1552,7 +1552,11 @@ def bootstrap(args):
             "target_is_git_repository": (target / ".git").exists(),
             "temporary_source": temporary_source,
             "source": source_info,
-            "kit_version": kit_version(target) or kit_version(source),
+            # This field describes the kit whose files this run installs.  An
+            # existing project's protected state may intentionally retain the
+            # workflow version under which its active run began, so it cannot
+            # take precedence over the source kit on an update.
+            "kit_version": kit_version(source) or kit_version(target),
             "update": bool(args.update),
             "dry_run": dry_run,
             "already_installed": already_installed,
