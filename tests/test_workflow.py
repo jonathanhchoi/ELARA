@@ -801,6 +801,84 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertEqual(state["status"], "ready")
         self.assertEqual(state["approvals"], {})
 
+    def test_stage_zero_running_state_is_valid_before_slug_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            text = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+            text = text.replace('status: "ready"', 'status: "running"')
+            text = text.replace(
+                "last_run_id: null",
+                'last_run_id: "20260825T140537Z_00-initialize_r001"',
+            ).replace("updated_at: null", 'updated_at: "2026-08-25T14:05:37Z"')
+            (project / "PROJECT_STATE.md").write_text(text, encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+
+    def test_stage_zero_charter_gate_is_valid_before_slug_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            text = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+            text = text.replace('status: "ready"', 'status: "awaiting_approval"')
+            text = text.replace(
+                "active_artifacts: {}",
+                'active_artifacts: {"project_charter": "project/PROJECT_CHARTER_v001.md"}',
+            ).replace(
+                "outstanding_user_inputs: []",
+                'outstanding_user_inputs: ["Approve the project charter"]',
+            )
+            text = text.replace(
+                "last_run_id: null",
+                'last_run_id: "20260825T140537Z_00-initialize_r001"',
+            ).replace("updated_at: null", 'updated_at: "2026-08-25T14:09:02Z"')
+            (project / "PROJECT_STATE.md").write_text(text, encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+
+    def test_stage_zero_waiting_for_user_is_valid_before_run_creation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            text = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+            text = text.replace('status: "ready"', 'status: "waiting_for_user"')
+            text = text.replace(
+                "outstanding_user_inputs: []",
+                'outstanding_user_inputs: ["Resolve the project-folder conflict"]',
+            ).replace("updated_at: null", 'updated_at: "2026-08-25T14:01:00Z"')
+            (project / "PROJECT_STATE.md").write_text(text, encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+
+    def test_null_slug_cannot_route_outside_stage_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            text = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+            text = text.replace(
+                'current_stage: "00-initialize"', 'current_stage: "01-question-scope"'
+            )
+            (project / "PROJECT_STATE.md").write_text(text, encoding="utf-8")
+            errors = validate_state(root)
+            self.assertTrue(any("null project_slug" in error for error in errors), errors)
+
+    def test_stage_zero_charter_gate_requires_outputs_and_request(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            text = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+            text = text.replace('status: "ready"', 'status: "awaiting_approval"')
+            text = text.replace(
+                "last_run_id: null",
+                'last_run_id: "20260825T140537Z_00-initialize_r001"',
+            ).replace("updated_at: null", 'updated_at: "2026-08-25T14:09:02Z"')
+            (project / "PROJECT_STATE.md").write_text(text, encoding="utf-8")
+            errors = validate_state(root)
+            self.assertTrue(any("active artifact" in error for error in errors), errors)
+            self.assertTrue(any("outstanding request" in error for error in errors), errors)
+
     def test_initialized_running_state_is_valid(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

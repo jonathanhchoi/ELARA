@@ -316,24 +316,72 @@ def validate_state(root: Path) -> list[str]:
         if meta.get(key) is not None and not isinstance(meta[key], str):
             errors.append(f"{path}: {key} must be a quoted string or null")
 
-    # A null project slug identifies the untouched distribution template. Once
-    # Stage 00 initializes a project, valid active states may route anywhere.
+    # Stage 00 assigns the project slug only after charter approval. A null slug
+    # therefore covers both the untouched template and legitimate pre-approval
+    # Stage 00 states; the surrounding state distinguishes those cases.
     if meta.get("project_slug") is None:
-        fresh_expectations = {
-            "current_stage": "00-initialize",
-            "status": "ready",
-            "active_artifacts": {},
-            "approvals": {},
-            "outstanding_user_inputs": [],
-            "last_run_id": None,
-            "updated_at": None,
-        }
-        for key, expected in fresh_expectations.items():
-            if meta.get(key) != expected:
+        status = meta.get("status")
+        if current_stage != "00-initialize":
+            errors.append(
+                f"{path}: state with null project_slug must remain at "
+                "current_stage='00-initialize'"
+            )
+        if status == "ready":
+            fresh_expectations = {
+                "active_artifacts": {},
+                "approvals": {},
+                "outstanding_user_inputs": [],
+                "last_run_id": None,
+                "updated_at": None,
+            }
+            for key, expected in fresh_expectations.items():
+                if meta.get(key) != expected:
+                    errors.append(
+                        f"{path}: untouched Stage 00 state requires {key}={expected!r}"
+                    )
+        elif status in {"running", "awaiting_approval", "failed"}:
+            for key in ("last_run_id", "updated_at"):
+                if not meta.get(key):
+                    errors.append(
+                        f"{path}: Stage 00 {status} state requires {key}"
+                    )
+            if meta.get("approvals") != {}:
                 errors.append(
-                    f"{path}: uninitialized state requires {key}={expected!r}"
+                    f"{path}: Stage 00 pre-approval state requires approvals={{}}"
                 )
-    elif meta.get("status") == "running" and not meta.get("last_run_id"):
+            if status == "awaiting_approval":
+                if not isinstance(meta.get("active_artifacts"), dict) or not meta.get(
+                    "active_artifacts"
+                ):
+                    errors.append(
+                        f"{path}: Stage 00 awaiting_approval state requires an active artifact"
+                    )
+                if not isinstance(meta.get("outstanding_user_inputs"), list) or not meta.get(
+                    "outstanding_user_inputs"
+                ):
+                    errors.append(
+                        f"{path}: Stage 00 awaiting_approval state requires an outstanding request"
+                    )
+        elif status == "waiting_for_user":
+            if not meta.get("updated_at"):
+                errors.append(
+                    f"{path}: Stage 00 waiting_for_user state requires updated_at"
+                )
+            if not isinstance(meta.get("outstanding_user_inputs"), list) or not meta.get(
+                "outstanding_user_inputs"
+            ):
+                errors.append(
+                    f"{path}: Stage 00 waiting_for_user state requires an outstanding request"
+                )
+            if meta.get("approvals") != {}:
+                errors.append(
+                    f"{path}: Stage 00 pre-approval state requires approvals={{}}"
+                )
+        elif status in STATE_STATUSES:
+            errors.append(
+                f"{path}: null project_slug is incompatible with status={status!r}"
+            )
+    if meta.get("status") == "running" and not meta.get("last_run_id"):
         errors.append(f"{path}: running state requires last_run_id")
     return errors
 

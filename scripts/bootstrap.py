@@ -253,8 +253,17 @@ def kit_version(root):
 
 def source_is_clean_template(root):
     """A kit copy is a valid source only while its project state is the blank template."""
-    slug = state_field(root, "project_slug")
-    return slug is None or slug == "null"
+    expected = {
+        "project_slug": "null",
+        "current_stage": "00-initialize",
+        "status": "ready",
+        "active_artifacts": "{}",
+        "approvals": "{}",
+        "outstanding_user_inputs": "[]",
+        "last_run_id": "null",
+        "updated_at": "null",
+    }
+    return all(state_field(root, field) == value for field, value in expected.items())
 
 
 def git_commit(root):
