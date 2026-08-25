@@ -954,6 +954,7 @@ def run_doctor(target, python, platform="none"):
         "returncode": result["returncode"],
         "ok": False,
         "failures": [],
+        "warnings": [],
         "report": None,
     }
     try:
@@ -964,6 +965,7 @@ def run_doctor(target, python, platform="none"):
         record["report"] = report
         record["ok"] = bool(report.get("ok"))
         record["failures"] = list(report.get("failures") or [])
+        record["warnings"] = list(report.get("warnings") or [])
     else:
         record["failures"] = ["doctor produced no readable report: " + (result["stderr"] or result["stdout"])[-1500:]]
     return record
@@ -1059,7 +1061,7 @@ def next_steps(summary):
         "pipeline or use specific tools now (show the menu from PIPELINE.md), then continue with "
         "Stage 00: work out what the folder already answers and ask the rest in one message, each "
         "question with a suggested default. Speak to a legal scholar who may never have used a "
-        "terminal; run every command yourself; and be low-touch from then on — "
+        "terminal; run every command yourself; and be low-touch from then on: "
         "workflow/shared/guardrails.md section 11 lists the only reasons to stop and ask."
     )
     if not summary.get("already_installed"):
@@ -1304,6 +1306,9 @@ def render_report(summary):
         lines.append("- Result: " + ("PASS" if doctor["ok"] else "FAIL"))
         if doctor["failures"]:
             lines.append(format_list(doctor["failures"]))
+        if doctor.get("warnings"):
+            lines.append("- Notes that do not block research:")
+            lines.append(format_list(doctor["warnings"]))
     lines.append("")
     lines.append("### Next steps for the assistant")
     lines.append("")
@@ -1361,6 +1366,7 @@ def machine_summary(summary):
             "ok": bool(doctor.get("ok")),
             "platform": doctor.get("platform"),
             "failures": doctor.get("failures") or [],
+            "warnings": doctor.get("warnings") or [],
         },
         "report_path": None if summary.get("dry_run") else REPORT_RELATIVE,
         "temporary_source": summary.get("temporary_source"),
@@ -1447,6 +1453,8 @@ def print_human(summary):
         print("  Doctor:      " + ("PASS" if doctor["ok"] else "FAIL") + checked)
         for failure in doctor["failures"]:
             print("               - " + str(failure))
+        for warning in doctor.get("warnings") or []:
+            print("               - (not blocking) " + str(warning))
     if dry_run:
         temporary = summary.get("temporary_source")
         if temporary and is_temporary_kit_name(temporary):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 import shutil
 import subprocess
 import sys
@@ -21,7 +22,12 @@ sys.path.insert(0, str(SCRIPTS))
 from validate_workflow import validate_repository  # noqa: E402
 
 
-def run_bootstrap(*arguments: str, cwd: Path, script: Path | None = None) -> subprocess.CompletedProcess[str]:
+def run_bootstrap(
+    *arguments: str,
+    cwd: Path,
+    script: Path | None = None,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(script or (SCRIPTS / "bootstrap.py")), *arguments],
         cwd=cwd,
@@ -29,10 +35,17 @@ def run_bootstrap(*arguments: str, cwd: Path, script: Path | None = None) -> sub
         capture_output=True,
         timeout=600,
         check=False,
+        env=env,
     )
 
 
-def install(target: Path, *extra: str, script: Path | None = None, cwd: Path | None = None) -> dict:
+def install(
+    target: Path,
+    *extra: str,
+    script: Path | None = None,
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
+) -> dict:
     if cwd is None:
         cwd = target if target.is_dir() else target.parent
         cwd.mkdir(parents=True, exist_ok=True)
@@ -40,6 +53,7 @@ def install(target: Path, *extra: str, script: Path | None = None, cwd: Path | N
         "--into", str(target), "--source", str(ROOT), "--no-install", "--json", *extra,
         cwd=cwd,
         script=script,
+        env=env,
     )
     try:
         summary = json.loads(completed.stdout)
@@ -163,6 +177,80 @@ class FreshInstallTests(unittest.TestCase):
             self.assertEqual(summary["files"]["installed"], 0)
             self.assertGreater(summary["files"]["unchanged"], 100)
             self.assertTrue((kit / "project" / "BOOTSTRAP.md").is_file())
+
+
+class CodexDesktopSessionTests(unittest.TestCase):
+    """Installing from inside Codex Desktop on Windows, where the packaged
+    codex.exe is on PATH but other programs are not allowed to start it
+    (WinError 5). The active CODEX_* session must satisfy the host check
+    instead of failing the installation (issue observed 2026-08-24)."""
+
+    @staticmethod
+    def _fake_unlaunchable_codex(bin_dir: Path) -> None:
+        # A codex command that exists but cannot be started: garbage bytes fail
+        # with WinError 193 on Windows and ENOEXEC on POSIX, the same OSError
+        # family as Codex Desktop's WinError 5.
+        command = bin_dir / ("codex.exe" if os.name == "nt" else "codex")
+        command.write_bytes(b"\x00\x01not a program\x00")
+        command.chmod(0o755)
+
+    @staticmethod
+    def _codex_session_env(bin_dir: Path) -> dict[str, str]:
+        environment = {
+            key: value
+            for key, value in os.environ.items()
+            if not key.startswith("CODEX_")
+            and key not in ("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT")
+        }
+        environment["CODEX_SANDBOX"] = "test-session"
+        environment["PATH"] = str(bin_dir) + os.pathsep + environment.get("PATH", "")
+        return environment
+
+    def test_bootstrap_passes_when_the_codex_cli_cannot_be_launched(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            # The fake command lives in a sibling folder, never in the target:
+            # Windows resolves commands from the working directory too.
+            bin_dir = Path(tmp) / "bin"
+            bin_dir.mkdir()
+            self._fake_unlaunchable_codex(bin_dir)
+            target = Path(tmp) / "paper"
+            target.mkdir()
+            summary = install(target, env=self._codex_session_env(bin_dir))
+            self.assertEqual(summary["_returncode"], 0, summary["_stderr"])
+            self.assertTrue(summary["ok"], summary)
+            self.assertIn("Codex", summary["hosts"]["running_inside"])
+            self.assertEqual(summary["doctor"]["platform"], "codex")
+            self.assertTrue(summary["doctor"]["ok"], summary["doctor"])
+            self.assertEqual(summary["doctor"]["failures"], [])
+            self.assertTrue(
+                any("not blocking" in warning for warning in summary["doctor"]["warnings"]),
+                summary["doctor"],
+            )
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertIn("Agent host checked: codex", report)
+            self.assertIn("- Result: PASS", report)
+            self.assertIn("Notes that do not block research", report)
+            self.assertNotIn("broken setup", report)
+
+    def test_console_report_renders_in_any_windows_console(self) -> None:
+        # The report the researcher sees must not depend on the console's
+        # encoding: every kit-authored console string stays ASCII (a Codex
+        # Desktop console rendered an em dash as the replacement character).
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "paper"
+            target.mkdir()
+            completed = run_bootstrap(
+                "--into", str(target), "--source", str(ROOT), "--no-install",
+                "--platform", "none", cwd=target,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertIn(
+                "low-touch from then on: workflow/shared/guardrails.md", completed.stdout
+            )
+            self.assertNotIn("—", completed.stdout)  # em dash
+            self.assertNotIn("�", completed.stdout)  # replacement character
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertNotIn("—", report)
 
 
 class ExistingFolderTests(unittest.TestCase):

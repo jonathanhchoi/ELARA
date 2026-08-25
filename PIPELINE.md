@@ -381,6 +381,14 @@ Stage 17 skeletons while retaining the target venue. Existing approved outputs
 remain valid. Earlier skeleton source files continue to build, but their legacy
 length fields are ignored and do not appear in newly rendered outputs.
 
+Version 2.3.2 fixes the installation check inside Codex Desktop on Windows: a
+running Codex session now satisfies the doctor's Codex requirement even when
+the `codex` command cannot be started or found, with the skipped command check
+recorded as a nonblocking note, and the installer's console report renders
+correctly in every Windows console. It changes no state field, stage order,
+approval gate, file format, or research safeguard, so existing projects need
+no migration.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:

@@ -10,6 +10,13 @@ require both, or ``none`` for repository-maintenance checks that do not launch
 an agent host. ``--json`` emits a machine-readable capability record suitable
 for the Stage 00 access snapshot.
 
+When this check itself runs inside an active Codex session, that session is
+accepted as proof the Codex host works even if the ``codex`` command cannot be
+launched or found (Codex Desktop on Windows installs a packaged codex.exe that
+other programs are not allowed to start); the skipped command probe is
+reported as a nonblocking note. Claude Code is always verified through its
+command, because ELARA's dynamic workflows need version 2.1.154 or newer.
+
 This file deliberately avoids newer Python syntax (no f-strings, no modern
 type annotations, no ``from __future__ import annotations``) so that an old
 interpreter can still parse it far enough to print the version advice below
@@ -31,6 +38,7 @@ if sys.version_info < (3, 10):
 
 import argparse  # noqa: E402
 import json  # noqa: E402
+import os  # noqa: E402
 import re  # noqa: E402
 import shutil  # noqa: E402
 import subprocess  # noqa: E402
@@ -172,7 +180,61 @@ def _document_dependency_report():
     return report, []
 
 
-def _host_report(name, executable, minimum):
+def _active_sessions():
+    """Which agent hosts this very process is running inside, judged from the
+    environment those hosts set for every child process. Mirrors
+    detect_hosts() in scripts/bootstrap.py: Codex sets CODEX_* variables and
+    Claude Code sets CLAUDECODE or CLAUDE_CODE_ENTRYPOINT."""
+    return {
+        "codex": any(key.startswith("CODEX_") for key in os.environ),
+        "claude": bool(
+            os.environ.get("CLAUDECODE") or os.environ.get("CLAUDE_CODE_ENTRYPOINT")
+        ),
+    }
+
+
+def _apply_session_verification(report, minimum):
+    """Mark a host ready on the strength of the live session running this check.
+
+    Only for hosts without a minimum version (Codex): an active session proves
+    the host works, but not which version it is, so Claude Code -- whose
+    dynamic workflows need 2.1.154 or newer -- is always verified through its
+    command instead. The probe's failure stays in version_output as a
+    diagnostic; Codex Desktop on Windows, for example, installs a packaged
+    codex.exe that other programs are not allowed to start (WinError 5)."""
+    if report["active_session"] and minimum is None and not report["ready"]:
+        report["ready"] = True
+        report["verified_by"] = "active_session"
+    return report
+
+
+def _probe_detail(report):
+    """The probe's own words, so a message about it is actionable."""
+    detail = (report["version_output"] or "").strip()
+    if detail.startswith("version check failed: "):
+        detail = detail[len("version check failed: "):]
+    if len(detail) > 300:
+        detail = detail[:300] + "..."
+    return detail
+
+
+def _session_verification_note(report):
+    """The nonblocking explanation for a host verified by its active session."""
+    if report["installed"]:
+        reason = (
+            "its " + report["command"] + " command could not be verified with --version ("
+            + (_probe_detail(report) or "no version output") + ")"
+        )
+    else:
+        reason = "its " + report["command"] + " command is not on PATH"
+    return (
+        report["name"] + " is treated as working because this check is running inside "
+        "an active " + report["name"] + " session, even though " + reason + ". This is "
+        "expected for " + report["name"] + " Desktop on Windows and is not blocking."
+    )
+
+
+def _host_report(name, executable, minimum, session_active=False):
     path = shutil.which(executable)
     report = {
         "name": name,
@@ -184,10 +246,12 @@ def _host_report(name, executable, minimum):
         "minimum_for_elara": (
             ".".join(str(part) for part in minimum) if minimum else None
         ),
+        "active_session": bool(session_active),
+        "verified_by": None,
         "ready": False,
     }
     if not path:
-        return report
+        return _apply_session_verification(report, minimum)
     try:
         completed = subprocess.run(
             [path, "--version"],
@@ -198,7 +262,7 @@ def _host_report(name, executable, minimum):
         )
     except (OSError, subprocess.SubprocessError) as exc:
         report["version_output"] = "version check failed: " + str(exc)
-        return report
+        return _apply_session_verification(report, minimum)
     output = (completed.stdout or completed.stderr or "").strip()
     report["version_output"] = output
     parsed = _version_tuple(output)
@@ -207,17 +271,23 @@ def _host_report(name, executable, minimum):
     report["ready"] = bool(
         completed.returncode == 0 and parsed and (minimum is None or parsed >= minimum)
     )
-    return report
+    if report["ready"]:
+        report["verified_by"] = "cli_version"
+        return report
+    return _apply_session_verification(report, minimum)
 
 
 def _host_reports(platform):
+    sessions = _active_sessions()
     reports = {
-        "codex": _host_report("Codex", "codex", None),
+        "codex": _host_report("Codex", "codex", None, session_active=sessions["codex"]),
         "claude": _host_report(
-            "Claude Code", "claude", MIN_CLAUDE_WORKFLOW_VERSION
+            "Claude Code", "claude", MIN_CLAUDE_WORKFLOW_VERSION,
+            session_active=sessions["claude"],
         ),
     }
     failures = []
+    warnings = []
     if platform == "none":
         required = []
     elif platform == "all":
@@ -225,7 +295,12 @@ def _host_reports(platform):
     elif platform in ("codex", "claude"):
         required = [platform]
     else:
-        required = [name for name, report in reports.items() if report["installed"]]
+        # auto: every host that is plausibly present -- its command is on
+        # PATH, or the session running this check already proves it works.
+        required = [
+            name for name, report in reports.items()
+            if report["installed"] or report["verified_by"] == "active_session"
+        ]
         if not required:
             failures.append(
                 "no supported agent host was detected; install Codex or Claude Code, or use "
@@ -236,7 +311,9 @@ def _host_reports(platform):
         report["required"] = name in required
         if name not in required:
             continue
-        if not report["installed"]:
+        if report["verified_by"] == "active_session":
+            warnings.append(_session_verification_note(report))
+        elif not report["installed"]:
             failures.append("required agent host is not installed or not on PATH: " + name)
         elif not report["ready"]:
             if name == "claude" and report["version"]:
@@ -246,10 +323,12 @@ def _host_reports(platform):
                     + " is older than ELARA's dynamic-workflow minimum 2.1.154"
                 )
             else:
+                detail = _probe_detail(report)
                 failures.append(
                     "could not verify a usable " + report["name"] + " version with --version"
+                    + (": " + detail if detail else "")
                 )
-    return reports, failures
+    return reports, failures, warnings
 
 
 def _offline_fanout_smoke(root):
@@ -437,7 +516,7 @@ def build_report(root, platform="auto", smoke=True):
     failures.extend(dependency_failures)
     document_dependency, document_dependency_failures = _document_dependency_report()
     failures.extend(document_dependency_failures)
-    hosts, host_failures = _host_reports(platform)
+    hosts, host_failures, host_warnings = _host_reports(platform)
     failures.extend(host_failures)
 
     smoke_report = {"ready": False, "skipped": not smoke}
@@ -492,6 +571,7 @@ def build_report(root, platform="auto", smoke=True):
             "offline_fanout_smoke": smoke_report,
             "offline_research_fanout_smoke": research_smoke_report,
         },
+        "warnings": host_warnings,
         "failures": failures,
     }
 
@@ -515,7 +595,12 @@ def _print_human_report(report):
         print("CHECK: python-docx not installed")
     for name in ("codex", "claude"):
         host = report["hosts"][name]
-        if host["installed"]:
+        if host.get("verified_by") == "active_session":
+            print(
+                "CHECK: " + host["name"] + " - verified by its active session (command probe: "
+                + (host["version_output"] or "not on PATH") + "; not blocking)"
+            )
+        elif host["installed"]:
             suffix = host["version_output"] or "version unknown"
             print("CHECK: " + host["name"] + " - " + suffix)
         elif host["required"]:
@@ -542,6 +627,8 @@ def _print_human_report(report):
     else:
         print("CHECK: restricted worker definitions or saved workflows missing or unrestricted")
 
+    for warning in report.get("warnings") or []:
+        print("NOTE: " + str(warning))
     if report["failures"]:
         print("FAIL: this installation has " + str(len(report["failures"])) + " problem(s):")
         for failure in report["failures"]:
@@ -549,7 +636,7 @@ def _print_human_report(report):
         return
 
     available = [
-        name for name, host in report["hosts"].items() if host["installed"] and host["ready"]
+        name for name, host in report["hosts"].items() if host["ready"]
     ]
     if report["platform_selection"] == "none":
         print("PASS: Python, dependencies, kit contract, and offline fan-out are ready.")

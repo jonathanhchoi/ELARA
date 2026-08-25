@@ -3,12 +3,14 @@ from __future__ import annotations
 import codecs
 import csv
 import hashlib
+import os
 import re
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from kit_context import resolve_test_root
 
@@ -255,6 +257,184 @@ class DoctorTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("missing .codex/agents/elr-research-worker.toml", result.stdout + result.stderr)
+
+
+class HostProbeTests(unittest.TestCase):
+    """The doctor's agent-host checks, with the CLI probe and the session
+    environment controlled. Codex Desktop on Windows installs a packaged
+    codex.exe that other programs are not allowed to start (WinError 5), while
+    the CODEX_* variables of the session running the check prove the host
+    works; the doctor accepts that evidence without weakening any check
+    outside an active session (issue observed 2026-08-24)."""
+
+    WINDOWSAPPS_CODEX = (
+        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.818.5229.0_x64__8wekyb3d8bbwe"
+        "\\app\\resources\\codex.EXE"
+    )
+
+    @staticmethod
+    def _environ_without_sessions(**extra: str) -> dict[str, str]:
+        environment = {
+            key: value
+            for key, value in os.environ.items()
+            if not key.startswith("CODEX_")
+            and key not in ("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT")
+        }
+        environment.update(extra)
+        return environment
+
+    def _host_reports(self, platform, environment, which, run):
+        import doctor  # noqa: PLC0415
+
+        with mock.patch.dict(os.environ, environment, clear=True), \
+                mock.patch.object(doctor.shutil, "which", side_effect=which), \
+                mock.patch.object(doctor.subprocess, "run", side_effect=run):
+            return doctor._host_reports(platform)
+
+    def _which_codex_only(self, name):
+        return self.WINDOWSAPPS_CODEX if name == "codex" else None
+
+    def test_an_active_codex_session_accepts_an_unlaunchable_codex_cli(self) -> None:
+        denied = PermissionError(13, "Access is denied")
+        for platform in ("codex", "auto"):
+            with self.subTest(platform=platform):
+                reports, failures, warnings = self._host_reports(
+                    platform,
+                    self._environ_without_sessions(CODEX_HOME="1"),
+                    self._which_codex_only,
+                    denied,
+                )
+                self.assertEqual(failures, [])
+                codex = reports["codex"]
+                self.assertTrue(codex["required"])
+                self.assertTrue(codex["ready"])
+                self.assertEqual(codex["verified_by"], "active_session")
+                self.assertIsNone(codex["version"])
+                self.assertIn("Access is denied", codex["version_output"])
+                self.assertTrue(
+                    any(
+                        "not blocking" in warning and "Access is denied" in warning
+                        for warning in warnings
+                    ),
+                    warnings,
+                )
+
+    def test_an_active_codex_session_accepts_a_codex_cli_missing_from_path(self) -> None:
+        def nothing_on_path(name):
+            return None
+
+        def no_probe(*arguments, **keywords):
+            raise AssertionError("no command should be launched when nothing is on PATH")
+
+        for platform in ("codex", "auto"):
+            with self.subTest(platform=platform):
+                reports, failures, warnings = self._host_reports(
+                    platform,
+                    self._environ_without_sessions(CODEX_HOME="1"),
+                    nothing_on_path,
+                    no_probe,
+                )
+                self.assertEqual(failures, [])
+                codex = reports["codex"]
+                self.assertTrue(codex["required"])
+                self.assertFalse(codex["installed"])
+                self.assertTrue(codex["ready"])
+                self.assertEqual(codex["verified_by"], "active_session")
+                self.assertTrue(
+                    any("not on PATH" in warning for warning in warnings), warnings
+                )
+
+    def test_an_unlaunchable_codex_cli_still_fails_outside_a_session(self) -> None:
+        reports, failures, warnings = self._host_reports(
+            "codex",
+            self._environ_without_sessions(),
+            self._which_codex_only,
+            PermissionError(13, "Access is denied"),
+        )
+        self.assertFalse(reports["codex"]["ready"])
+        self.assertIsNone(reports["codex"]["verified_by"])
+        self.assertEqual(warnings, [])
+        self.assertTrue(
+            any(
+                "could not verify a usable Codex version with --version" in failure
+                and "Access is denied" in failure
+                for failure in failures
+            ),
+            failures,
+        )
+
+    def test_a_launchable_codex_cli_is_still_verified_by_its_version(self) -> None:
+        def version_probe(*arguments, **keywords):
+            return subprocess.CompletedProcess(arguments, 0, stdout="codex-cli 1.2.3\n", stderr="")
+
+        reports, failures, warnings = self._host_reports(
+            "codex",
+            self._environ_without_sessions(CODEX_HOME="1"),
+            self._which_codex_only,
+            version_probe,
+        )
+        self.assertEqual(failures, [])
+        self.assertEqual(warnings, [])
+        codex = reports["codex"]
+        self.assertTrue(codex["ready"])
+        self.assertEqual(codex["version"], "1.2.3")
+        self.assertEqual(codex["verified_by"], "cli_version")
+
+    def test_the_claude_minimum_version_is_never_waived_by_a_session(self) -> None:
+        def which_claude_only(name):
+            return "/usr/local/bin/claude" if name == "claude" else None
+
+        def old_version_probe(*arguments, **keywords):
+            return subprocess.CompletedProcess(arguments, 0, stdout="2.0.0 (Claude Code)\n", stderr="")
+
+        reports, failures, warnings = self._host_reports(
+            "claude",
+            self._environ_without_sessions(CLAUDECODE="1"),
+            which_claude_only,
+            old_version_probe,
+        )
+        self.assertFalse(reports["claude"]["ready"])
+        self.assertEqual(warnings, [])
+        self.assertTrue(
+            any(
+                "older than ELARA's dynamic-workflow minimum 2.1.154" in failure
+                for failure in failures
+            ),
+            failures,
+        )
+
+    def test_a_current_claude_cli_still_passes(self) -> None:
+        def which_claude_only(name):
+            return "/usr/local/bin/claude" if name == "claude" else None
+
+        def current_version_probe(*arguments, **keywords):
+            return subprocess.CompletedProcess(arguments, 0, stdout="2.1.154 (Claude Code)\n", stderr="")
+
+        reports, failures, warnings = self._host_reports(
+            "claude",
+            self._environ_without_sessions(CLAUDECODE="1"),
+            which_claude_only,
+            current_version_probe,
+        )
+        self.assertEqual(failures, [])
+        self.assertTrue(reports["claude"]["ready"])
+        self.assertEqual(reports["claude"]["verified_by"], "cli_version")
+
+    def test_the_full_report_passes_and_keeps_the_probe_diagnostic(self) -> None:
+        import doctor  # noqa: PLC0415
+
+        with mock.patch.dict(
+            os.environ, self._environ_without_sessions(CODEX_HOME="1"), clear=True
+        ), mock.patch.object(
+            doctor.shutil, "which", side_effect=self._which_codex_only
+        ), mock.patch.object(
+            doctor.subprocess, "run", side_effect=PermissionError(13, "Access is denied")
+        ):
+            report = doctor.build_report(ROOT, platform="codex", smoke=False)
+        self.assertTrue(report["ok"], report["failures"])
+        self.assertTrue(report["warnings"], report)
+        self.assertEqual(report["hosts"]["codex"]["verified_by"], "active_session")
+        self.assertIn("Access is denied", report["hosts"]["codex"]["version_output"])
 
 
 class PreregistrationTemplateTests(unittest.TestCase):

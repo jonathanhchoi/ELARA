@@ -340,6 +340,15 @@ outputs remain valid. Earlier skeleton source files continue to build, but
 their legacy length fields are ignored and do not appear in newly rendered
 outputs.
 
+Workflow version 2.3.2 fixes the installation check inside Codex Desktop on
+Windows: a running Codex session now satisfies the doctor's Codex requirement
+even when the `codex` command cannot be started or found (the packaged app
+forbids other programs from launching it), and the skipped command check is
+recorded as a note that does not block research. Outside a running session the
+check still fails, now naming the underlying error. The installer's console
+report also renders correctly in every Windows console. No stage behavior
+changes; existing projects and approvals need no migration.
+
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
 ## How does ELARA handle manuscript work?
@@ -565,6 +574,13 @@ python scripts/doctor.py --platform none
 The `--platform none` option is for maintainers. It doesn't establish that an
 agent host is ready. Stage 00 can also save a machine-readable capability record
 that contains no secrets.
+
+When the check itself runs inside a live Codex session (Codex Desktop or the
+Codex command line), that session counts as proof the Codex host works, even
+if the `codex` command cannot be started or found; the skipped command check
+becomes a note that does not block research. Claude Code is always verified
+through its command, because ELARA's parallel workflows need version 2.1.154
+or newer.
 
 ```text
 python scripts/doctor.py --json
