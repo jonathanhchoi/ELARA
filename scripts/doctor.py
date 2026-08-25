@@ -471,7 +471,7 @@ def _offline_research_fanout_smoke(root):
             raise ValueError("research fan-out status did not report one pending launch")
         return_path = Path(before["pending_assignments"][0]["return_path"])
         return_path.write_text(
-            json.dumps({"assignment_id": "unit-1", "complete": True, "result": {}}),
+            json.dumps({"assignment_id": "unit-1", "attempt": 1, "complete": True, "result": {}}),
             encoding="utf-8",
         )
         after = status(fanout_dir, include_pending=True)

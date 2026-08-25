@@ -382,6 +382,15 @@ signature instead of the slug alone. Existing projects and approvals need no
 migration; a project stopped by the earlier false validation error can resume
 Stage 00 with its records intact.
 
+Workflow version 2.3.4 gives every allowed research-worker attempt its own
+sealed return path. If a completed return fails the stage's detailed schema,
+the parent records that attempt as unusable without editing it and launches the
+next attempt at a new path. This preserves raw searches, retrievals, critiques,
+and reviews while keeping retry counts exact. Existing completed waves remain
+valid. An unfinished wave prepared by an older version may finish its current
+return; if it needs a retry, create a new versioned wave so the prior file is
+not overwritten.
+
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
 ## How does ELARA handle manuscript work?

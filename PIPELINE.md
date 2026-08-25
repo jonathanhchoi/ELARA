@@ -397,6 +397,14 @@ copy as an installation source, so it still rejects in-progress projects.
 Existing projects and approvals need no migration; a project stopped by the
 earlier false validation error can resume Stage 00 with its records intact.
 
+Version 2.3.4 makes research-worker retries auditable. Each sealed attempt has
+its own return path and attempt number; a parent can record a failed or
+stage-schema-unusable attempt without changing its raw file, and the controller
+then offers the next distinct path. Exhausted paths are never reopened. Existing
+completed waves remain valid. If an unfinished wave prepared under an older
+version needs a retry, start a new versioned wave rather than overwrite its sole
+return file.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:
