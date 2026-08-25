@@ -1,6 +1,6 @@
 ---
 schema_version: "1.2"
-workflow_version: "2.3.2"
+workflow_version: "2.3.3"
 project_slug: null
 usage: "pipeline"
 checkpoints: "none"
@@ -17,9 +17,10 @@ updated_at: null
 
 This file records where one research project stands and what the software should
 do next. The settings at the top of the file—not chat history—control resume
-behavior. Stage 00 replaces the initial
-`null` values with the approved project identity and timestamp and records the
-first exact versions of the project files then in use. `usage` records the usage mode the researcher
+behavior. Stage 00 leaves `project_slug` as `null` while it runs, waits for
+needed input, and presents the charter for approval. Charter approval assigns
+the stable project identity. Stage 00 also records the first exact versions of
+the project files then in use. `usage` records the usage mode the researcher
 chose at Stage 00: `pipeline` (the whole workflow, stage by stage; the router
 continues into the next stage when one ends unless a stop condition holds) or
 `tools` (specific tools from the menu in

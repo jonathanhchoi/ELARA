@@ -613,6 +613,28 @@ class ExistingFolderTests(unittest.TestCase):
             self.assertIn("initialized project", json.loads(completed.stdout)["error"])
             self.assertFalse((target / "AGENTS.md").exists())
 
+    def test_refuses_an_initializing_null_slug_copy_as_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "initializing"
+            install(source)
+            state = source / "project" / "PROJECT_STATE.md"
+            text = state.read_text(encoding="utf-8")
+            text = text.replace('status: "ready"', 'status: "running"')
+            text = text.replace(
+                "last_run_id: null",
+                'last_run_id: "20260825T140537Z_00-initialize_r001"',
+            ).replace("updated_at: null", 'updated_at: "2026-08-25T14:05:37Z"')
+            state.write_text(text, encoding="utf-8")
+
+            target = Path(tmp) / "fresh"
+            completed = run_bootstrap(
+                "--into", str(target), "--source", str(source), "--no-install", "--json", cwd=Path(tmp)
+            )
+
+            self.assertEqual(completed.returncode, 2, completed.stdout)
+            self.assertIn("initialized project", json.loads(completed.stdout)["error"])
+            self.assertFalse((target / "AGENTS.md").exists())
+
     def test_clean_test_context_excludes_initialized_project_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

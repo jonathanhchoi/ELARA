@@ -389,6 +389,14 @@ correctly in every Windows console. It changes no state field, stage order,
 approval gate, file format, or research safeguard, so existing projects need
 no migration.
 
+Version 2.3.3 aligns state validation with Stage 00's declared lifecycle. A
+project may retain a null slug while Stage 00 is running, waiting for input, or
+waiting for charter approval; the slug is assigned only after approval.
+Bootstrap now checks the complete blank-state signature before treating a kit
+copy as an installation source, so it still rejects in-progress projects.
+Existing projects and approvals need no migration; a project stopped by the
+earlier false validation error can resume Stage 00 with its records intact.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:

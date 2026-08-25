@@ -116,7 +116,10 @@ types:
   `usage` key, `1.2` the optional `checkpoints` key; `1.0` and `1.1` files
   remain valid).
 - `workflow_version`: quoted pipeline release version.
-- `project_slug`: quoted stable slug or `null` before initialization.
+- `project_slug`: quoted stable slug after Stage 00 charter approval, or `null`
+  throughout the untouched, running, waiting, and pre-approval Stage 00 states.
+  Use the surrounding state fields—not a null slug alone—to distinguish a blank
+  distribution template from an in-progress project.
 - `usage` (optional): the usage mode Stage 00 records after its orientation —
   `pipeline` when the researcher follows the whole workflow stage by stage (the
   router continues into the next stage when one ends, unless a stop condition in

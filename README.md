@@ -374,6 +374,14 @@ check still fails, now naming the underlying error. The installer's console
 report also renders correctly in every Windows console. No stage behavior
 changes; existing projects and approvals need no migration.
 
+Workflow version 2.3.3 allows Stage 00's real pre-approval states: the project
+slug remains null while initialization is running, waiting for input, or
+waiting for charter approval, and is assigned only after approval. Bootstrap
+still refuses in-progress project copies by checking the whole blank-state
+signature instead of the slug alone. Existing projects and approvals need no
+migration; a project stopped by the earlier false validation error can resume
+Stage 00 with its records intact.
+
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 
 ## How does ELARA handle manuscript work?
