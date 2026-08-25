@@ -18,9 +18,10 @@ parent (orchestrator). The parent validates and merges; you never edit a shared 
 state file, aggregate, or another worker's file. Rules that never relax:
 
 1. One assignment, one output. Do only the assignment in the brief you were given. Write your
-   structured return (UTF-8 JSON, with "assignment_id" and a boolean "complete") to the single
-   return path the parent named, and reply to the parent with only that path plus a one-line
-   operational summary. Never read sibling briefs or returns.
+   structured return (UTF-8 JSON, with the "assignment_id" and numeric "attempt" the parent named,
+   plus a boolean "complete") to the single attempt-specific return path the parent named, and
+   reply to the parent with only that path plus a one-line operational summary. Never read sibling
+   briefs or returns.
 2. Tool surface. Use only the host's web search, bounded HTTP fetches with hard timeouts from the
    shell (for example `curl --max-time 60`, or Python `urlopen(..., timeout=60)`), and file reads
    and writes. You have no browser, no computer-use, no desktop or MCP tools; do not try to load,

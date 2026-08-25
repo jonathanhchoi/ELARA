@@ -703,6 +703,8 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("agentType: 'elr-research-worker'", research)
         self.assertIn("agentType: 'elr-worker'", research)  # controller status steps
         self.assertIn("scripts/research_fanout.py status", research)
+        self.assertIn("This is attempt ${item.attempt}", research)
+        self.assertIn("attempt: item.attempt", research)
         for text in (observation, research):
             self.assertNotIn("general-purpose", text)
             self.assertIn("export const meta", text)
@@ -734,6 +736,8 @@ class WorkflowContractTests(unittest.TestCase):
         for needle in ("elr-observation-fanout", "elr-research-fanout", "elr_worker", "elr_research_worker",
                        "scripts/research_fanout.py", "never by the assistant launching workers one at a time"):
             self.assertIn(needle, flat_contract, needle)
+        self.assertIn("record-disposition", flat_contract)
+        self.assertIn("never reopens or reuses a return path", flat_contract)
         guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(encoding="utf-8")
         self.assertIn(".codex/agents/", guardrails)
         self.assertIn("host's own orchestrator runs every fan-out", guardrails)

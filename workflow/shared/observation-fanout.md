@@ -137,9 +137,10 @@ mid-write; relaunched identically, it did the same thing again.
    or session crash resumes in any later session by launching the same workflow or wave again.
    Attempts are bounded: the coding controller allows the linked retry its policy names
    (`unit_fanout.py retry`); the research controller records each launch and stops offering an
-   assignment after `max_attempts` (default 3), reporting it as `exhausted` until the parent
-   deliberately asks for it back (`--include-exhausted`), and every exhausted assignment is
-   surfaced in the stage's limitations, never silently dropped.
+   assignment after `max_attempts` (default 3), reporting it as `exhausted`; `--include-exhausted`
+   adds diagnostics but never reuses an immutable return path. Additional authorized work starts a
+   new explicitly versioned fan-out wave, and every exhausted assignment is surfaced in the stage's
+   limitations, never silently dropped.
 5. **Bounded concurrency and checkpoints.** The host runtime bounds concurrency (Claude Code's
    workflow runtime: at most 16 agents at once and 1,000 per run; Codex: the session's
    `[agents]` thread cap); the kit's research workflow additionally runs its workers in waves of six
@@ -168,11 +169,14 @@ and sealed by `scripts/research_fanout.py`:
 spec.json          contract_version, fanout_id, kind, time_box_minutes, max_attempts,
                    assignments: [{assignment_id, brief}]           (written by the parent)
 briefs/<id>.md     one brief per assignment                          (written by the parent)
-manifest.json      sealed by `prepare`: brief hashes, unique return paths; immutable
-manifest.csv       the same rows as CSV (for humans and CSV batch tools)
+manifest.json      sealed by `prepare`: one row per allowed attempt, with brief hash,
+                   attempt number, and unique return path; immutable
+manifest.csv       the same attempt rows as CSV (for audit and parent tooling, not wholesale dispatch)
 seal.json          hash of manifest.json; `status` fails closed on drift
-returns/<id>.json  the worker's return: {"assignment_id", "complete": true|false, ...}
+returns/<id>__attempt-NNN.json
+                   the worker's return: {"assignment_id", "attempt", "complete": true|false, ...}
 attempts.jsonl     append-only launch rows written by `status --record-launch`
+dispositions.jsonl append-only parent records for failed or stage-schema-unusable attempts
 ```
 
 The parent writes the briefs and `spec.json`, runs `python scripts/research_fanout.py prepare
@@ -181,13 +185,27 @@ worker needs and nothing it must not see: the frozen instructions for that one u
 query and routes; the author or work; the claim-citation pair; the artifact and sources under
 review), the return schema for the `result` field, the time box, and the tool and access-gap rules
 above — never other workers' findings, running tallies, or the verdict the stage is heading toward.
-The worker's return is a JSON object with `assignment_id`, `complete`, and the stage's `result`
-fields, plus `access_gaps` and timestamps; only `assignment_id` and `complete` are validated by the
-controller, the stage validates the rest when it merges. `status --include-pending --record-launch`
-lists what to launch and records the launch; `status` alone reports `expected`, `complete`,
-`incomplete`, `missing`, `invalid`, `exhausted`, and `pending`. The parent, never a worker, reads
-the returns, validates them against the brief's schema, merges deterministically in manifest order,
-and appends the ledger checkpoint.
+The worker's return is a JSON object with `assignment_id`, `attempt`, `complete`, and the stage's
+`result` fields, plus `access_gaps` and timestamps. The controller validates assignment identity,
+attempt identity, and operational completion; the stage validates the rest when it merges.
+`status --include-pending --record-launch` lists what to launch, including its attempt-specific path,
+and records the launch. `status` alone reports assignment states (`expected`, `complete`,
+`incomplete`, `missing`, `invalid`, `exhausted`, and `pending`) plus an attempt-level reconciliation
+of `attempted`, `succeeded`, `failed`, `unusable`, and `outstanding`. Keep those denominators
+distinct in the run ledger.
+
+When a return says `complete: true` but fails the brief's stage-specific schema, the parent does not
+edit, move, or overwrite it. It records the terminal attempt with `python
+scripts/research_fanout.py record-disposition --fanout-dir <dir> --assignment-id <id> --attempt
+<number> --terminal unusable --reason <exact validation failure>`, then runs `status
+--include-pending --record-launch` to obtain the next sealed attempt path. Use terminal `failed` for
+a launched worker or route that failed without a usable result. Once all sealed attempts are used,
+the assignment stays exhausted; start a new explicitly versioned fan-out wave if the research design
+authorizes more work. `--include-exhausted` reports diagnostic details but never reopens or reuses a
+return path. The controller does not offer the next path while the latest launch is missing,
+incomplete, or invalid but undisposed, because that worker may still be writing; the parent must
+record the exact terminal reason first. The parent, never a worker, validates and merges successful
+returns deterministically in assignment and attempt order and appends the ledger checkpoint.
 
 ## Parent-only browser fallback for Stage 02
 
@@ -238,16 +256,19 @@ own context and never launches a general-purpose or `default` sub-agent for kit 
    research fan-out) to obtain the pending list; spawn one `elr_worker` (coding/audit) or
    `elr_research_worker` (research) per pending assignment, up to six at once and never more than
    the session's thread cap, each with a message naming exactly its one assignment or brief and its
-   return path (plus the frozen model and effort where the host lets a spawn set them); wait for
+   attempt number and unique return path (plus the frozen model and effort where the host lets a spawn set them); wait for
    the whole wave; close the workers; run `status` again; append the ledger checkpoint; update
    the parent native plan with the exact counts; repeat
    until nothing is pending. Never reuse a worker context for another unit. Each coding worker
    uses the controller's `submit` rather than writing the return path directly.
 3. A CSV batch fan-out tool (the host reads a CSV, spawns one worker per row, and collects results
-   — `spawn_agents_on_csv` in Codex as of 2026-08) may run a wave from `manifest.csv` only when its
-   workers can be given the kit's restricted agent, or when the parent has confirmed for that turn
-   that the sandbox denies network for coding workers and no MCP or browser tools are configured,
-   and records that in the run manifest; otherwise spawn the named agents directly.
+   — `spawn_agents_on_csv` in Codex as of 2026-08) may run a coding wave from the coding controller's
+   active assignment rows only when its workers can be given the kit's restricted agent, or when the
+   parent has confirmed for that turn that the sandbox denies network and no MCP or browser tools are
+   configured, and records that in the run manifest. Never dispatch a research `manifest.csv`
+   wholesale: it includes sealed but unused retry slots. Research workers receive only the current
+   `pending_assignments` returned by `research_fanout.py status`; otherwise spawn the named agents
+   directly.
 4. Discover the session's actual sub-agent capacity and whether the kit's custom agents are loaded;
    do not assume a portable default. The manifest and ledger, not conversation memory, determine
    what remains; every worker return path stays under the run directory.

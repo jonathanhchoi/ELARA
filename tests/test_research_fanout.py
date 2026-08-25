@@ -2,12 +2,13 @@
 
 The controller is provider-neutral: it never spawns an agent. These tests check the contract the
 kit's saved Claude workflow and Codex sub-agent adapter rely on — a sealed manifest with one unique
-return path per brief, a pending list derived from the files on disk, launches recorded so that
-attempts are bounded, and fail-closed drift detection.
+return path per allowed attempt, a pending list derived from the files on disk, launches recorded so
+that attempts are bounded, and fail-closed drift detection.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -20,7 +21,7 @@ from kit_context import resolve_test_root
 ROOT = resolve_test_root(Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from research_fanout import FanoutError, prepare, status  # noqa: E402
+from research_fanout import FanoutError, prepare, record_disposition, status  # noqa: E402
 
 
 class ResearchFanoutTests(unittest.TestCase):
@@ -48,19 +49,27 @@ class ResearchFanoutTests(unittest.TestCase):
         return fanout
 
     @staticmethod
-    def write_return(path: Path, assignment_id: str, *, complete: bool) -> None:
+    def write_return(path: Path, assignment_id: str, attempt: int, *, complete: bool) -> None:
         path.write_text(
-            json.dumps({"assignment_id": assignment_id, "complete": complete, "result": {"hits": []}}),
+            json.dumps(
+                {"assignment_id": assignment_id, "attempt": attempt, "complete": complete, "result": {"hits": []}}
+            ),
             encoding="utf-8",
         )
 
-    def test_prepare_seals_one_unique_return_path_per_brief(self) -> None:
+    def test_prepare_seals_one_unique_return_path_per_attempt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             fanout = self.make_fanout(Path(tmp))
             manifest = prepare(fanout)
             self.assertEqual(manifest["expected_assignments"], 3)
+            self.assertEqual(manifest["expected_attempts"], 6)
             rows = manifest["assignments"]
-            self.assertEqual(len({row["return_path"] for row in rows}), 3)
+            self.assertEqual(len(rows), 6)
+            self.assertEqual(len({row["return_path"] for row in rows}), 6)
+            self.assertEqual(
+                {(row["assignment_id"], row["attempt"]) for row in rows},
+                {(f"q{index:02d}", attempt) for index in range(3) for attempt in (1, 2)},
+            )
             for row in rows:
                 self.assertTrue(Path(row["return_path"]).resolve().is_relative_to((fanout / "returns").resolve()))
                 self.assertEqual(len(row["brief_sha256"]), 64)
@@ -98,25 +107,54 @@ class ResearchFanoutTests(unittest.TestCase):
             self.assertEqual((first["expected"], first["missing"], first["pending"]), (3, 3, 3))
             self.assertEqual(first["launches_recorded"], 3)
             self.assertEqual([item["attempts_so_far"] for item in first["pending_assignments"]], [1, 1, 1])
+            self.assertEqual({item["attempt"] for item in first["pending_assignments"]}, {1})
             by_id = {item["assignment_id"]: Path(item["return_path"]) for item in first["pending_assignments"]}
-            self.write_return(by_id["q00"], "q00", complete=True)
-            self.write_return(by_id["q01"], "q01", complete=False)  # partial: still pending
-            by_id["q02"].write_text(json.dumps({"assignment_id": "wrong", "complete": True}), encoding="utf-8")
+            self.write_return(by_id["q00"], "q00", 1, complete=True)
+            self.write_return(by_id["q01"], "q01", 1, complete=False)  # partial: still pending
+            by_id["q02"].write_text(
+                json.dumps({"assignment_id": "wrong", "attempt": 1, "complete": True}), encoding="utf-8"
+            )
             second = status(fanout, include_pending=True, record_launch=True)
             self.assertEqual(second["complete"], 1)
             self.assertEqual(second["incomplete"], 1)
             self.assertEqual(second["invalid"], 1)
-            self.assertEqual(sorted(item["assignment_id"] for item in second["pending_assignments"]), ["q01", "q02"])
+            self.assertEqual(second["pending"], 0)
+            self.assertEqual(second["launches_recorded"], 0)
             self.assertEqual(second["invalid_returns"][0]["assignment_id"], "q02")
+            record_disposition(
+                fanout,
+                assignment_id="q01",
+                attempt=1,
+                terminal="failed",
+                reason="worker stopped with an incomplete return",
+            )
+            record_disposition(
+                fanout,
+                assignment_id="q02",
+                attempt=1,
+                terminal="unusable",
+                reason="assignment identity failed operational validation",
+            )
+            retry_status = status(fanout, include_pending=True, record_launch=True)
+            self.assertEqual(
+                sorted(item["assignment_id"] for item in retry_status["pending_assignments"]), ["q01", "q02"]
+            )
+            self.assertEqual({item["attempt"] for item in retry_status["pending_assignments"]}, {2})
+            self.assertTrue(
+                all(
+                    Path(item["return_path"]) != by_id[item["assignment_id"]]
+                    for item in retry_status["pending_assignments"]
+                )
+            )
             # Both remaining assignments have now been launched twice: exhausted, not pending.
             third = status(fanout, include_pending=True)
             self.assertEqual(third["pending"], 0)
             self.assertEqual(sorted(third["exhausted_assignments"]), ["q01", "q02"])
-            # The parent may deliberately ask for them back, and that is visible in the counts.
+            # Exhausted attempts remain immutable; asking for details does not reopen a path.
             fourth = status(fanout, include_pending=True, include_exhausted=True)
-            self.assertEqual(fourth["pending"], 2)
-            self.assertEqual(fourth["exhausted"], 0)
-            self.assertEqual({item["attempts_so_far"] for item in fourth["pending_assignments"]}, {2})
+            self.assertEqual(fourth["pending"], 0)
+            self.assertEqual(fourth["exhausted"], 2)
+            self.assertEqual(len(fourth["exhausted_attempts"]), 2)
             rows = [json.loads(line) for line in (fanout / "attempts.jsonl").read_text(encoding="utf-8").splitlines() if line]
             self.assertEqual(len(rows), 5)
             self.assertEqual({row["assignment_id"] for row in rows}, {"q00", "q01", "q02"})
@@ -133,9 +171,73 @@ class ResearchFanoutTests(unittest.TestCase):
             report = status(fanout)
             self.assertEqual(len(report["stray_files"]), 1)
             # A finding written by a worker never appears in status output.
-            self.write_return(fanout / "returns" / "q00.json", "q00", complete=True)
+            first_path = Path(limited["pending_assignments"][0]["return_path"])
+            self.write_return(first_path, "q00", 1, complete=True)
             text = json.dumps(status(fanout, include_pending=True))
             self.assertNotIn("hits", text)
+
+    def test_stage_schema_rejection_preserves_raw_attempt_and_routes_retry_to_new_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fanout = self.make_fanout(Path(tmp), count=1, max_attempts=2)
+            prepare(fanout)
+            first = status(fanout, include_pending=True, record_launch=True)["pending_assignments"][0]
+            first_path = Path(first["return_path"])
+            self.write_return(first_path, "q00", 1, complete=True)
+            first_bytes = first_path.read_bytes()
+            self.assertEqual(status(fanout)["complete"], 1)
+
+            disposition = record_disposition(
+                fanout,
+                assignment_id="q00",
+                attempt=1,
+                terminal="unusable",
+                reason="stage-specific result schema failed",
+            )
+            self.assertEqual(disposition["return_sha256"], hashlib.sha256(first_bytes).hexdigest())
+            retry_status = status(fanout, include_pending=True, record_launch=True)
+            retry = retry_status["pending_assignments"][0]
+            self.assertEqual(
+                retry_status["attempt_counts"],
+                {"attempted": 2, "succeeded": 0, "failed": 0, "unusable": 1, "outstanding": 1},
+            )
+            self.assertEqual(retry["attempt"], 2)
+            self.assertNotEqual(Path(retry["return_path"]), first_path)
+            self.assertEqual(first_path.read_bytes(), first_bytes)
+
+            second_path = Path(retry["return_path"])
+            self.write_return(second_path, "q00", 2, complete=True)
+            final = status(fanout)
+            self.assertEqual((final["complete"], final["exhausted"]), (1, 0))
+            self.assertEqual(
+                final["attempt_counts"],
+                {"attempted": 2, "succeeded": 1, "failed": 0, "unusable": 1, "outstanding": 0},
+            )
+            self.assertEqual(first_path.read_bytes(), first_bytes)
+            with self.assertRaisesRegex(FanoutError, "already has a disposition"):
+                record_disposition(
+                    fanout,
+                    assignment_id="q00",
+                    attempt=1,
+                    terminal="unusable",
+                    reason="duplicate",
+                )
+
+    def test_failed_missing_attempt_rejects_a_late_return(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fanout = self.make_fanout(Path(tmp), count=1, max_attempts=2)
+            prepare(fanout)
+            first = status(fanout, include_pending=True, record_launch=True)["pending_assignments"][0]
+            first_path = Path(first["return_path"])
+            record_disposition(
+                fanout,
+                assignment_id="q00",
+                attempt=1,
+                terminal="failed",
+                reason="worker exited before writing a return",
+            )
+            self.write_return(first_path, "q00", 1, complete=True)
+            with self.assertRaisesRegex(FanoutError, "appeared after its missing attempt was disposed"):
+                status(fanout)
 
     def test_status_fails_closed_on_manifest_brief_or_spec_drift(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

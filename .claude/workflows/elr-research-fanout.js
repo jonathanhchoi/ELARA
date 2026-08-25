@@ -57,7 +57,7 @@ phase('Discover')
 const discovered = await agent(
   `Read workflow/shared/observation-fanout.md (the section "Research fan-outs"). Run exactly:
 python scripts/research_fanout.py status --fanout-dir "${workflowArgs.fanout_dir}" --include-pending --record-launch${limitFlag}${exhaustedFlag}
-Return the pending_assignments array from its output (assignment_id, brief_path, return_path) and the
+Return the pending_assignments array from its output (assignment_id, attempt, brief_path, return_path) and the
 counts. Do not open briefs or returns and do not report findings.`,
   {
     label: 'discover-pending',
@@ -69,9 +69,10 @@ counts. Do not open briefs or returns and do not report findings.`,
           type: 'array',
           items: {
             type: 'object',
-            required: ['assignment_id', 'brief_path', 'return_path'],
+            required: ['assignment_id', 'attempt', 'brief_path', 'return_path'],
             properties: {
               assignment_id: { type: 'string' },
+              attempt: { type: 'integer' },
               brief_path: { type: 'string' },
               return_path: { type: 'string' },
             },
@@ -98,7 +99,8 @@ assignment and nothing else.
    It contains the frozen instructions for this unit, the return schema, and the rules. Follow it exactly.
 2. Write your structured return as UTF-8 JSON to this path and no other:
    ${item.return_path}
-   The return must be a JSON object with "assignment_id": "${item.assignment_id}" and a boolean "complete".
+   This is attempt ${item.attempt}. The return must be a JSON object with
+   "assignment_id": "${item.assignment_id}", "attempt": ${item.attempt}, and a boolean "complete".
    Write it early with "complete": false, rewrite it after each completed step or route, and rewrite it a
    last time with "complete": true when the assignment is finished. Never write any other file.
 3. Time box: ${discovered.time_box_minutes} minutes. Every network call carries a hard timeout; never
@@ -109,7 +111,7 @@ assignment and nothing else.
 5. Do not read sibling briefs or returns, ledgers, aggregates, or project state. Record only what you
    actually retrieved; never invent or complete a citation, quotation, count, or URL.
 
-Reply with your assignment_id, the output path, whether the return is complete, and one line of
+Reply with your assignment_id, attempt number, the output path, whether the return is complete, and one line of
 operational summary (counts, gaps, time) — no findings.`
 
 const runWorker = item =>
@@ -118,9 +120,10 @@ const runWorker = item =>
     phase: 'Workers',
     schema: {
       type: 'object',
-      required: ['assignment_id', 'output_path', 'complete', 'summary'],
+      required: ['assignment_id', 'attempt', 'output_path', 'complete', 'summary'],
       properties: {
         assignment_id: { type: 'string' },
+        attempt: { type: 'integer' },
         output_path: { type: 'string' },
         complete: { type: 'boolean' },
         summary: { type: 'string' },
@@ -144,13 +147,13 @@ const verification = await agent(
   `Run exactly:
 python scripts/research_fanout.py status --fanout-dir "${workflowArgs.fanout_dir}"
 Report the resulting operational counts only (expected, complete, incomplete, missing, invalid,
-exhausted, pending). Do not open returns and do not report findings. ${results.filter(Boolean).length} of
+exhausted, pending, and attempt_counts). Do not open returns and do not report findings. ${results.filter(Boolean).length} of
 ${pending.length} launched workers returned a receipt.`,
   {
     label: 'validate-operational-status',
     schema: {
       type: 'object',
-      required: ['expected', 'complete', 'incomplete', 'missing', 'invalid', 'exhausted', 'pending'],
+      required: ['expected', 'complete', 'incomplete', 'missing', 'invalid', 'exhausted', 'pending', 'attempt_counts'],
       properties: {
         expected: { type: 'integer' },
         complete: { type: 'integer' },
@@ -159,6 +162,18 @@ ${pending.length} launched workers returned a receipt.`,
         invalid: { type: 'integer' },
         exhausted: { type: 'integer' },
         pending: { type: 'integer' },
+        attempt_counts: {
+          type: 'object',
+          required: ['attempted', 'succeeded', 'failed', 'unusable', 'outstanding'],
+          properties: {
+            attempted: { type: 'integer' },
+            succeeded: { type: 'integer' },
+            failed: { type: 'integer' },
+            unusable: { type: 'integer' },
+            outstanding: { type: 'integer' },
+          },
+          additionalProperties: false,
+        },
       },
       additionalProperties: false,
     },
@@ -169,6 +184,6 @@ ${pending.length} launched workers returned a receipt.`,
 return {
   fanout_dir: workflowArgs.fanout_dir,
   launched: pending.map(item => item.assignment_id),
-  returned: results.filter(Boolean).map(item => ({ assignment_id: item.assignment_id, complete: item.complete })),
+  returned: results.filter(Boolean).map(item => ({ assignment_id: item.assignment_id, attempt: item.attempt, complete: item.complete })),
   status: verification,
 }
