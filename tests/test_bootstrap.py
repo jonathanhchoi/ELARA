@@ -356,6 +356,66 @@ class ExistingFolderTests(unittest.TestCase):
             self.assertEqual(claude.count("<!-- elara:begin"), 1)
             self.assertTrue(claude.rstrip().endswith("Always cite Bluebook."))
 
+    def test_update_reports_source_kit_version_without_rewriting_project_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            target = tmp_path / "paper"
+            target.mkdir()
+            initial = install(target, "--platform", "none")
+            self.assertTrue(initial["ok"], initial)
+
+            state = target / "project" / "PROJECT_STATE.md"
+            installed_version = initial["kit_version"]
+            state_text = state.read_text(encoding="utf-8").replace(
+                f'workflow_version: "{installed_version}"',
+                'workflow_version: "older-project-version"',
+            )
+            state.write_text(state_text, encoding="utf-8")
+
+            source = tmp_path / "newer-kit"
+            shutil.copytree(
+                ROOT,
+                source,
+                ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache"),
+            )
+            source_state = source / "project" / "PROJECT_STATE.md"
+            source_state.write_text(
+                source_state.read_text(encoding="utf-8").replace(
+                    f'workflow_version: "{installed_version}"',
+                    'workflow_version: "9.9.9-test"',
+                ),
+                encoding="utf-8",
+            )
+            (source / "PIPELINE.md").write_text(
+                (source / "PIPELINE.md").read_text(encoding="utf-8")
+                + "\nSource-version update fixture.\n",
+                encoding="utf-8",
+            )
+
+            completed = run_bootstrap(
+                "--into",
+                str(target),
+                "--source",
+                str(source),
+                "--update",
+                "--no-install",
+                "--platform",
+                "none",
+                "--json",
+                cwd=target,
+            )
+            summary = json.loads(completed.stdout)
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual(summary["kit_version"], "9.9.9-test")
+            self.assertEqual(state.read_text(encoding="utf-8"), state_text)
+            manifest = json.loads(
+                (target / "project" / "ELARA_MANIFEST.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["kit_version"], "9.9.9-test")
+            report = (target / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertIn("- Kit workflow version: 9.9.9-test", report)
+
     def test_loose_downloaded_script_removes_itself_and_temporary_kit_is_not_material(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "paper"
