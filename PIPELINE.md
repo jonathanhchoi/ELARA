@@ -119,7 +119,11 @@ rules in `workflow/shared/artifact-contract.md`.
 
 The router presents this list in plain language when asked for the `menu`, when
 the researcher chooses specific tools at Stage 00, and whenever it is unclear
-what to run next. Each tool is a numbered stage or utility; the last column is
+what to run next. In chat, the menu reads best grouped into a few plain-language
+clusters (finding and checking a question; designing and testing the coding
+instrument; getting and coding the data; analysis, robustness, and packaging;
+manuscript help) rather than as one long list; the table below remains the
+complete reference. Each tool is a numbered stage or utility; the last column is
 what the researcher needs to bring (or point to) so that the tool can start.
 
 | If you want to… | Tool | Bring |
