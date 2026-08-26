@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from sync_skill_wrappers import add_codex_policy, expected_files  # noqa: E402
 from validate_workflow import (  # noqa: E402
+    CONDITIONAL_GATES,
     EXPECTED_STAGE_IDS,
     HARD_GATES,
     validate_repository,
@@ -358,8 +359,11 @@ class WorkflowContractTests(unittest.TestCase):
         )
         self.assertIn("`/goal <goal_condition>`", guardrails)
         self.assertIn("do not replace or clear it", guardrails)
-        self.assertIn("native plan", (ROOT / "README.md").read_text(encoding="utf-8"))
-        self.assertIn("`TaskCreate`", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
+        # The README stays a quick-start document; PIPELINE.md is the public
+        # reference for how plans and goals run.
+        pipeline_text = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
+        self.assertIn("native plan", pipeline_text)
+        self.assertIn("`TaskCreate`", pipeline_text)
 
     def test_decision_stages_use_plan_mode_to_elicit_researcher_preferences(self) -> None:
         stages = {meta["stage_id"]: (meta, body) for _, meta, body in load_stages(ROOT)}
@@ -626,6 +630,58 @@ class WorkflowContractTests(unittest.TestCase):
             errors = validate_state(root)
             self.assertTrue(any("public state contract" in error for error in errors), errors)
 
+    def test_state_requires_prior_gate_entries(self) -> None:
+        template = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+        gates = {
+            "project-charter-approval": {"decision": "approved"},
+            "project-selection": {"decision": "approved", "basis": "researcher-asserted"},
+            "preemption-disposition": {"decision": "approved"},
+            "feasibility-go-no-go": {"decision": "approved"},
+        }
+
+        def state_text(stage: str, approvals: dict, usage: str = "pipeline") -> str:
+            return (
+                template.replace("project_slug: null", 'project_slug: "fixture"')
+                .replace("updated_at: null", 'updated_at: "2026-08-26T00:00:00Z"')
+                .replace('current_stage: "00-initialize"', f'current_stage: "{stage}"')
+                .replace("approvals: {}", "approvals: " + json.dumps(approvals))
+                .replace('usage: "pipeline"', f'usage: "{usage}"')
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "project").mkdir()
+            state = root / "project" / "PROJECT_STATE.md"
+            state.write_text(state_text("04-methods-design", gates), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            # A state that advanced without keeping a passed gate's entry fails,
+            # and the message says how to repair it without re-running the stage.
+            short = {k: v for k, v in gates.items() if k != "feasibility-go-no-go"}
+            state.write_text(state_text("04-methods-design", short), encoding="utf-8")
+            errors = validate_state(root)
+            self.assertTrue(any("feasibility-go-no-go" in e for e in errors), errors)
+            self.assertTrue(any("do not re-run the stage" in e for e in errors), errors)
+            # `tools` usage runs stages on request; the linear check does not apply.
+            state.write_text(
+                state_text("04-methods-design", short, usage="tools"), encoding="utf-8"
+            )
+            self.assertEqual(validate_state(root), [])
+            # Conditional gates (Stage 10's material-corpus-deviation) are
+            # recorded only when triggered, so their absence is not an error.
+            deep = dict(gates)
+            deep.update(
+                {
+                    "methods-plan-approval": {"decision": "approved"},
+                    "codebook-schema-approval": {"decision": "approved"},
+                    "data-authorization": {"decision": "approved"},
+                    "design-freeze": {"decision": "approved"},
+                    "pilot-acceptance": {"decision": "approved"},
+                    "preregistration-confirmation": {"decision": "approved"},
+                }
+            )
+            state.write_text(state_text("11-scale-up", deep), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+
     def test_state_checkpoints_key_is_optional_and_validated(self) -> None:
         template = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
         self.assertIn('checkpoints: "none"', template)
@@ -788,10 +844,11 @@ class WorkflowContractTests(unittest.TestCase):
             worker = (ROOT / relative).read_text(encoding="utf-8")
             self.assertIn("no browser", worker.lower(), relative)
             self.assertIn("never escalate", worker.lower(), relative)
-        for relative in ("README.md", "PIPELINE.md"):
-            text = (ROOT / relative).read_text(encoding="utf-8")
-            self.assertIn("parent", text.lower(), relative)
-            self.assertIn("browser-control", text.lower(), relative)
+        # PIPELINE.md carries the public browser-fallback explanation; the
+        # README stays a quick-start document.
+        text = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
+        self.assertIn("parent", text.lower())
+        self.assertIn("browser-control", text.lower())
 
     def test_scale_up_forbids_multiple_units_not_multiple_documents(self) -> None:
         body = next(body for _, meta, body in load_stages(ROOT) if meta["stage_id"] == "11-scale-up")
@@ -897,6 +954,13 @@ class WorkflowContractTests(unittest.TestCase):
                 "last_run_id: null",
                 'last_run_id: "20260710T120000Z_11-scale-up_r001"',
             ).replace("updated_at: null", 'updated_at: "2026-07-10T12:05:00Z"')
+            # A project this deep carries every always-firing gate it passed.
+            passed_gates = {
+                gate: {"decision": "approved"}
+                for stage, gate in HARD_GATES.items()
+                if stage < "11" and gate not in CONDITIONAL_GATES
+            }
+            text = text.replace("approvals: {}", "approvals: " + json.dumps(passed_gates))
             (project / "PROJECT_STATE.md").write_text(text, encoding="utf-8")
             self.assertEqual(validate_state(root), [])
 

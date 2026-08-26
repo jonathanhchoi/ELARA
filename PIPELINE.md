@@ -419,6 +419,22 @@ installer selects the active host for its setup check. It changes no state
 field, stage order, approval gate, file format, or research safeguard, so
 existing projects need no migration.
 
+Version 2.3.6 hardens two verifications after a field test's adversarial
+review caught defects both had allowed through. Stage 05's unit-space step now
+requires closure against the source, not only internal reconciliation: no two
+rows may be the same underlying unit (duplicates, superseded versions, or
+separately indexed components), classification fields must come from the
+source's authoritative registry rather than identifier patterns, and the
+enumerated counts must reconcile against the source's own reported totals
+across every alternate identifier the source assigns to the same anchor. The
+workflow validator now also checks that every always-firing researcher gate
+passed before the current stage keeps its entry in the state approvals object,
+with an error that says how to reconstruct a missing entry from DECISIONS.md
+instead of re-running the stage. A previously valid state missing such an
+entry fails validation after updating; the fix is the reconstruction the
+error describes, and no stage, gate, file format, or research safeguard
+changes otherwise.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:
