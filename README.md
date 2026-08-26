@@ -382,18 +382,6 @@ signature instead of the slug alone. Existing projects and approvals need no
 migration; a project stopped by the earlier false validation error can resume
 Stage 00 with its records intact.
 
-Workflow version 2.3.5 extends the 2.3.2 installation-check fix to Claude Code
-Desktop: when the `claude` command is not on PATH, a running Claude Code
-session now verifies itself — the doctor probes the executable the session
-exports for its own child processes, or reads the version the session stamps
-into its environment, so the required 2.1.154 minimum is still checked rather
-than waived. Only when a live session offers no version evidence at all does
-the session alone count, recorded as a nonblocking note that tells the
-assistant to confirm saved workflows are available before the first parallel
-stage. The installer also selects the active host for its setup check instead
-of skipping the host check when the command is missing. No stage behavior
-changes; existing projects and approvals need no migration.
-
 Workflow version 2.3.4 gives every allowed research-worker attempt its own
 sealed return path. If a completed return fails the stage's detailed schema,
 the parent records that attempt as unusable without editing it and launches the
@@ -402,6 +390,19 @@ and reviews while keeping retry counts exact. Existing completed waves remain
 valid. An unfinished wave prepared by an older version may finish its current
 return; if it needs a retry, create a new versioned wave so the prior file is
 not overwritten.
+
+Workflow version 2.3.5 extends the 2.3.2 installation-check fix to Claude Code
+Desktop: when the `claude` command is not on PATH, a running Claude Code
+session now verifies itself — the doctor probes the executable the session
+exports for its own child processes, or reads the version the session stamps
+into its environment, so the required 2.1.154 minimum is still checked rather
+than waived. Only when a live session offers no version evidence at all does
+the session alone count, recorded as a nonblocking note: the assistant then
+confirms whether saved workflows are available in the session and, if they are
+not, records that and runs parallel work through the kit's restricted
+sub-agents directly. The installer also selects the active host for its setup
+check instead of skipping the host check when the command is missing. No stage
+behavior changes; existing projects and approvals need no migration.
 
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
 

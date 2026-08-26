@@ -78,7 +78,8 @@ very fast research assistant whose work is verified, never trusted.
    researcher to keep or change.
 
 During a research run, edit only paths under `project/` that the current stage
-declares. Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,
+declares (plus the repository-local Git change-tracking the researcher
+approved at Stage 00, which lives in `.git/`). Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,
 `PIPELINE.md`, the kit README (`ELARA_README.md` in a project folder;
 `README.md` in a plain clone of the kit), `workflow/`, `.agents/`, `.claude/`,
 `.codex/`, `scripts/`, and `tests/` — unless the researcher explicitly asks to

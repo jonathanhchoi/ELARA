@@ -14,8 +14,13 @@ When this check itself runs inside an active Codex session, that session is
 accepted as proof the Codex host works even if the ``codex`` command cannot be
 launched or found (Codex Desktop on Windows installs a packaged codex.exe that
 other programs are not allowed to start); the skipped command probe is
-reported as a nonblocking note. Claude Code is always verified through its
-command, because ELARA's dynamic workflows need version 2.1.154 or newer.
+reported as a nonblocking note. Claude Code still has its version checked,
+because ELARA's dynamic workflows need version 2.1.154 or newer -- but when
+the ``claude`` command is not on PATH, a running Claude Code session can
+prove that version itself: the doctor probes the executable the session
+exports for its own child processes, or reads the version stamped into the
+session environment. Only a live session with no version evidence at all
+passes on the session alone, with a nonblocking note.
 
 This file deliberately avoids newer Python syntax (no f-strings, no modern
 type annotations, no ``from __future__ import annotations``) so that an old
