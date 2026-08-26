@@ -88,7 +88,7 @@ an explanation of what to do next. If the command is not recognized after
 installation, restart the app once in that folder. Repository-local commands
 load when the app starts.
 
-### Two cautions before you begin
+### Two warnings
 
 Keep the project in a local folder if you can. Google Drive, OneDrive, Dropbox,
 and similar services can interfere with append-only logs, restore superseded
@@ -269,7 +269,7 @@ If ELARA contributed to your research, please cite the companion paper, which
 introduces the framework and reports its validation study:
 
 > Jonathan H. Choi, *ELARA: A Framework for Empirical Legal Research with AI
-> Agents* (2026), available at SSRN: https://ssrn.com/abstract=XXXXXXX.
+> Agents* (2026), available at SSRN: https://ssrn.com/abstract=7349078.
 
 In BibTeX:
 
@@ -279,7 +279,7 @@ In BibTeX:
   title        = {{ELARA}: A Framework for Empirical Legal Research with {AI} Agents},
   year         = {2026},
   howpublished = {Working paper},
-  url          = {https://ssrn.com/abstract=XXXXXXX}
+  url          = {https://ssrn.com/abstract=7349078}
 }
 ```
 
@@ -320,217 +320,7 @@ existing substantive draft. ELARA won't write the first draft or turn notes
 into a paper. The researcher retains control over the thesis, framing,
 organization, and voice.
 
-Workflow version 2.0.0 inserted Stage 17 and renumbered the former publication
-Stages 17–19 as 18–20. Existing projects whose state points to one of those old
-IDs are not migrated automatically. Repair the state against its ledgers and
-the exact active file versions, or use Stage 00's adoption path to record the
-correct 2.0 landing.
-
-Workflow version 2.0.1 refines Stage 17 into an organizationally complete draft
-that presents the full verified results through displays and leaves the
-remaining prose to the researcher. A project with an earlier Stage 17 output
-should create a new Stage 17 version or record a skip before entering Stage 18.
-
-Workflow version 2.0.2 makes ELARA's researcher-facing language more concrete.
-It does not change project state, stage order, approval gates, file formats, or
-research safeguards, and existing 2.0 projects need no migration.
-
-Workflow version 2.1.0 separates the Stage 03 evidence audit from its final
-report. After the live checks and preliminary analysis, ELARA puts every
-material researcher-owned choice to the researcher in one chat message, records
-the answers, and only then produces the full feasibility-analysis PDF. A project
-that has already passed the feasibility gate needs no migration. An unfinished
-Stage 03 run should complete the consultation and create a new report version.
-
-Workflow version 2.2.0 makes Stage 04 an interactive methods-design interview
-in Codex or Claude Code Plan Mode. ELARA inspects the existing evidence first,
-asks only the material open choices in short adaptive rounds, and drafts the
-versioned design files only after the researcher accepts the proposed plan.
-Completed methods approvals remain valid. An unfinished Stage 04 run should
-repeat the read-only interview against its current active inputs before writing
-a new design version.
-
-Workflow version 2.3.0 extends that evidence-first Plan-Mode interview pattern
-to the decision boundaries in Stages 01, 05, 07, 08, 09, and 17. Stage 01 uses
-it only for the inferred researcher profile and the verified shortlist; Stage
-07 uses it after independent critiques exist; and Stage 09 uses it only for
-registry and disclosure choices, without reopening the approved scientific
-design. Completed approvals remain valid. An unfinished affected stage should
-run the interview at its next declared boundary before making the affected
-write.
-
-Workflow version 2.3.1 removes article-level and section-level length guidance
-from Stage 17 skeletons while retaining the target venue. Existing approved
-outputs remain valid. Earlier skeleton source files continue to build, but
-their legacy length fields are ignored and do not appear in newly rendered
-outputs.
-
-Workflow version 2.3.2 fixes the installation check inside Codex Desktop on
-Windows: a running Codex session now satisfies the doctor's Codex requirement
-even when the `codex` command cannot be started or found (the packaged app
-forbids other programs from launching it), and the skipped command check is
-recorded as a note that does not block research. Outside a running session the
-check still fails, now naming the underlying error. The installer's console
-report also renders correctly in every Windows console. No stage behavior
-changes; existing projects and approvals need no migration.
-
-Workflow version 2.3.3 allows Stage 00's real pre-approval states: the project
-slug remains null while initialization is running, waiting for input, or
-waiting for charter approval, and is assigned only after approval. Bootstrap
-still refuses in-progress project copies by checking the whole blank-state
-signature instead of the slug alone. Existing projects and approvals need no
-migration; a project stopped by the earlier false validation error can resume
-Stage 00 with its records intact.
-
-Workflow version 2.3.4 gives every allowed research-worker attempt its own
-sealed return path. If a completed return fails the stage's detailed schema,
-the parent records that attempt as unusable without editing it and launches the
-next attempt at a new path. This preserves raw searches, retrievals, critiques,
-and reviews while keeping retry counts exact. Existing completed waves remain
-valid. An unfinished wave prepared by an older version may finish its current
-return; if it needs a retry, create a new versioned wave so the prior file is
-not overwritten.
-
-Workflow version 2.3.5 extends the 2.3.2 installation-check fix to Claude Code
-Desktop: when the `claude` command is not on PATH, a running Claude Code
-session now verifies itself — the doctor probes the executable the session
-exports for its own child processes, or reads the version the session stamps
-into its environment, so the required 2.1.154 minimum is still checked rather
-than waived. Only when a live session offers no version evidence at all does
-the session alone count, recorded as a nonblocking note: the assistant then
-confirms whether saved workflows are available in the session and, if they are
-not, records that and runs parallel work through the kit's restricted
-sub-agents directly. The installer also selects the active host for its setup
-check instead of skipping the host check when the command is missing. No stage
-behavior changes; existing projects and approvals need no migration.
-
-See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map and failure routes.
-
-## How does ELARA handle manuscript work?
-
-The Stage 17 skeleton is an organizational aid, not a substantive first draft. It stays active
-through as many versioned iterations as the researcher wants, then advances only
-after explicit approval or a recorded skip. Stage 18 may consult an approved
-skeleton, but the researcher's substantive draft and explicit instructions
-control.
-
-Voice, venue, and formatting belong to the researcher. Before Stage 18, copy
-`workflow/templates/publication_profile_template.md` to
-`project/PUBLICATION_PROFILE_v001.md`. Use the profile to record the venue,
-audience, tone, relevant examples, citation style, and whether ELARA should
-match your existing voice. You can also state constructions or punctuation to
-avoid and specify the quality checks and deliverables you want. These may
-include compilation, inspection of every page, a change log, a redline, and a
-set number of review passes.
-
-Record the profile in `project/PROJECT_STATE.md` as the active
-`publication_profile`. Save and record a new active version whenever you change
-it. The publication stages record the exact version and verify that it has not
-changed. The profile governs prose and deliverables, but it cannot relax an
-approval gate or shared guardrail. If no profile exists, ELARA asks for one
-before writing prose.
-
-Three optional utilities address manuscript tasks outside the sequential
-pipeline. `$elr-add-citations` retrieves and adds only the citations you marked,
-then sends the new version through the audit-only Stage 19. `$elr-proofread`
-reports issues involving grammar, clarity, tone, style, consistency, and venue
-rules. It fixes only clear errors that you permit. `$elr-apply-markup`
-transcribes a hand-marked PDF into an edit list, stops for your review, and then
-applies only the approved edits. Claude Code uses the same command names with a
-leading slash.
-
-The authoritative utility instructions are in `workflow/utilities/`. The shared
-rules for manuscript edits are in
-`workflow/shared/manuscript-editing-contract.md`.
-
-## How do plans and goals run?
-
-ELARA uses the planning surface in the tool you opened for every substantive
-stage. In Codex that is the native plan updated with `update_plan`. In Claude
-Code it is the task list maintained with `TaskCreate`, `TaskUpdate`, and
-`TaskList`. The plan follows the authoritative stage instructions: prerequisites, any read-only
-design phase, execution, verification, and the gate or handoff. ELARA updates it
-as each phase actually finishes. The plan display is useful for orientation,
-but the project state, the record of each run, the ledger, and the validated
-files remain authoritative.
-
-A long-running stage also states exactly what must be true before it is done.
-Before execution starts, ELARA checks whether the matching durable goal is
-active. If it is not, ELARA gives you one complete `/goal ...` line to paste.
-That goal covers one stage, including every group of parallel assignments and
-the final check that the records and counts agree. It never covers the whole
-pipeline, and workers do not create goals of their own. If goals are not
-available in the host, ELARA records the fallback and uses the same plan and
-completion condition with durable file checkpoints.
-
-Plan Mode is narrower. ELARA uses it when the result should be a read-only plan
-or when your decision is the boundary between planning and writing. Stages 01,
-04, 05, 07, 08, 09, and 17 use short, adaptive interviews at their declared
-decision boundaries. The assistant first inspects the evidence, recommends an
-option, explains realistic alternatives and consequences, and asks for your
-preferences through Codex's or Claude Code's question interface. The Stage 01
-and 09 interviews are intentionally partial, and the Stage 07 interview begins
-only after the independent critiques are preserved. Accepting a proposed plan
-permits only the named execution; it does not approve the later artifact gate
-or authorize an external submission. Other `plan_then_execute` work completes
-the no-write plan item in the native tracker and continues in the same session.
-This keeps routine work moving between the research gates you control.
-
-The complete contract is in `workflow/shared/execution-control.md`.
-
-## How does parallel work run?
-
-ELARA gives one observation or coding unit to each fresh sub-agent. The approved
-codebook and the complete list of units eligible for coding define a coding
-unit, which may contain one document or several related documents. File
-boundaries do not silently determine the unit of observation. Searches,
-retrieval, cite-checks, critiques, and reviews also run in parallel, with one
-bounded assignment per sub-agent.
-
-The tool you are using coordinates this parallel work: in Claude Code the
-assistant launches ELARA's saved workflows (`elr-observation-fanout` for
-coding, `elr-research-fanout` for research units), which you can watch in
-`/workflows`; in Codex it spawns ELARA's custom sub-agents (`elr_worker`,
-`elr_research_worker`) in bounded waves. Workers have a fixed, minimal set of
-tools — coding workers have no web access, research workers have web search and
-fetch, and none can reach a browser, desktop, or external tool or data connection
-provided through the Model Context Protocol (MCP) — and each writes one unique
-return.
-
-Stage 02 adds a parent-only browser-control fallback without broadening those
-worker permissions. After each literature-search wave, the parent session
-reviews download gaps for potentially material papers, tries lawful open routes,
-and then makes one ordinary browser-control attempt in your authorized session
-when a bot restriction still blocks full text. It never bypasses a CAPTCHA,
-paywall, login, license, or terms. Successful downloads are checked, archived,
-and recorded so a later change can be detected; failed attempts remain listed,
-with the reason for each failure, in the list of searches requiring researcher
-access.
-
-Each coding worker submits its response through software that applies the same
-mechanical rules every time. It checks the fixed assignment, required output
-format, identifiers, and unique output path before accepting the return. It
-refuses overwrites and merges validated returns one at a time. The research
-controller similarly records the fixed assignment list, pending work, and
-allowed attempts, so an interrupted run resumes from the files in a later
-session.
-
-## What are the interaction modes and approval rules?
-
-Each stage uses one of four interaction modes:
-
-- `normal` tracks and gathers a short interactive researcher decision.
-- `plan` uses Plan Mode and returns a plan without changing project files.
-- `execute` performs the tracked work. A long-running execution uses the
-  stage's exact goal condition.
-- `plan_then_execute` completes the read-only plan item first, then continues in
-  the same session unless a real approval or other stop condition requires Plan
-  Mode and a handoff. Its execution uses a goal when the stage is long-running.
-
-ELARA never silently crosses project selection, feasibility, data
-authorization, methods or codebook approval, pilot acceptance, preregistration,
-blind adjudication, or permission to edit a manuscript. Silence is not
-approval.
+See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map.
 
 ## What ground rules does ELARA follow?
 
@@ -613,99 +403,6 @@ that installed kit and substitute blank fixtures for the four live project
 records. They never treat the project's state or append-only ledgers as clean
 installation templates. They stop safely rather than guessing if that file is
 unavailable or malformed.
-
-## What else can the preflight check?
-
-You can require a particular host, check both hosts, or run package-maintenance
-checks without testing a host.
-
-```text
-python scripts/doctor.py --platform codex
-python scripts/doctor.py --platform claude
-python scripts/doctor.py --platform all
-python scripts/doctor.py --platform none
-```
-
-The `--platform none` option is for maintainers. It doesn't establish that an
-agent host is ready. Stage 00 can also save a machine-readable capability record
-that contains no secrets.
-
-When the check itself runs inside a live Codex session (Codex Desktop or the
-Codex command line), that session counts as proof the Codex host works, even
-if the `codex` command cannot be started or found; the skipped command check
-becomes a note that does not block research. Claude Code still has its version
-checked, because ELARA's parallel workflows need version 2.1.154 or newer —
-but a running Claude Code session can prove that version itself when the
-`claude` command is not on PATH (typical for the desktop app): the doctor
-probes the executable the session exports for its own child processes, or
-reads the version the session stamps into its environment. A live session
-with no version evidence at all passes with a nonblocking note that tells the
-assistant to confirm saved workflows are available before the first parallel
-stage.
-
-```text
-python scripts/doctor.py --json
-```
-
-Python, `jsonschema`, and `python-docx` are required for the software that
-coordinates parallel sub-agents, the validators, optional Word reports, and the
-Stage 17 skeleton builder. Formatted reports default to PDF and require a
-working LaTeX toolchain. These tools aren't required for the earliest design
-discussion.
-
-## What about plugins, MCP servers, and hooks?
-
-ELARA installs no third-party plugin, MCP server, credential, or repository
-hook. An MCP server connects an agent to outside tools or data through the Model
-Context Protocol; a hook automatically runs a command in response to a specified
-event. Projects use different databases, storage systems, browsers, reference
-managers, and provider APIs. These tools may also expose licensed or restricted
-material.
-
-Add an integration only after Stage 06 authorizes the exact source, action,
-account, model route, and data exposure. Record its name, version, permissions,
-and limitations in the active access snapshot and the record for that run.
-
-For a large run, ELARA's workers already have a fixed, limited set of tools:
-the restricted sub-agent definitions in `.claude/agents/` (Claude Code) and
-`.codex/agents/` (Codex) give coding workers no web access, research workers web
-search and fetch only, and no worker a browser, desktop, MCP, or user-prompt
-tool. Add host permission rules or trusted automated checks where supported
-to also prevent sibling-return reads and writes outside the assigned path. The
-strict `submit` command validates and creates return files in the required
-format, but it is not an operating-system or host-enforced restriction on tool
-and file access (a sandbox). An optional plugin may distribute later ELARA updates. A clean
-repository copy remains the authoritative workspace for one project.
-
-## What does ELARA cost, and what does it require?
-
-Stage 00 records a spending limit. In Stage 03, ELARA first completes the live
-checks and preliminary feasibility analysis. It then consults the researcher in
-chat on the material choices the evidence cannot settle, presenting all of the
-questions together with recommendations, alternatives, and consequences. The
-researcher's answers are recorded before ELARA drafts the report. The resulting
-LaTeX-generated PDF is the full analysis, not merely a verdict: it contains the
-evidence, calculations, alternatives, tradeoffs, risks, and researcher
-decisions, organized around eight plain-language questions with no gate table.
-Word or another format is available on request. The analysis treats the
-software infrastructure surrounding an LLM that enables it to operate as an
-agent (the agent harness) as the default route for later coding and estimates
-its completion time under low, central, and high scenarios. It does not invent
-a dollar value for subscription-backed sub-agent use. Every audit also gives a
-separately labeled estimate of what the same work would cost through the
-optional API route, using current provider prices, projected tokens, retries,
-model tiers, and available batch discounts. Human validation and other resource
-burdens are stated primarily as time or capacity requirements; known fixed
-charges are recorded and nontrivial spending is flagged for the researcher.
-Nothing beyond conception and feasibility proceeds until the researcher
-approves the feasibility decision.
-
-ELARA runs on macOS, Windows, and Linux. It requires Python 3.10 or newer with
-the packages in `requirements.txt`, plus Codex or Claude Code with
-repository-local skill support. Installation and research retrieval require
-internet access. A project also needs adequate local storage and lawful,
-ethical authorization for its data and model route. Each stage checks any
-additional tool before relying on it.
 
 ## License
 
