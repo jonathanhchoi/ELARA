@@ -53,8 +53,25 @@ const limitFlag = Number.isInteger(workflowArgs.limit) && workflowArgs.limit > 0
   : ''
 const exhaustedFlag = workflowArgs.include_exhausted === true ? ' --include-exhausted' : ''
 
+// The restricted worker definitions load from .claude/agents/ when Claude Code
+// starts in this folder. When this session started elsewhere (or before the kit
+// was installed), the platform reports the agent type as not found; translate
+// that into the researcher-facing instruction the kit already documents.
+const missingWorkerDefinitions = error =>
+  /agent type '[^']+' not found/i.test(String((error && error.message) || error))
+const restartAdvice = () =>
+  new Error(
+    "ELARA's restricted worker definitions (.claude/agents/) are not loaded in " +
+    'this session, so parallel work cannot start. Claude Code loads them when ' +
+    'the app starts in the project folder: restart the app there once, then run ' +
+    'the stage again. The sealed assignments on disk are unchanged and nothing ' +
+    'is lost.',
+  )
+
 phase('Discover')
-const discovered = await agent(
+let discovered
+try {
+  discovered = await agent(
   `Read workflow/shared/observation-fanout.md (the section "Research fan-outs"). Run exactly:
 python scripts/research_fanout.py status --fanout-dir "${workflowArgs.fanout_dir}" --include-pending --record-launch${limitFlag}${exhaustedFlag}
 Return the pending_assignments array from its output (assignment_id, attempt, brief_path, return_path) and the
@@ -89,6 +106,10 @@ counts. Do not open briefs or returns and do not report findings.`,
     ...controllerOptions,
   },
 )
+} catch (error) {
+  if (missingWorkerDefinitions(error)) throw restartAdvice()
+  throw error
+}
 const pending = discovered.pending_assignments
 log(`${pending.length} pending assignment(s); ${discovered.complete}/${discovered.expected} already complete; ${discovered.exhausted} exhausted`)
 
