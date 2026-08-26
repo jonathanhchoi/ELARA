@@ -125,6 +125,15 @@ def _write_run_source(root: Path, *, include_consultation: bool = True) -> Path:
 
 
 class FeasibilityAuditBuilderTests(unittest.TestCase):
+    def test_rejects_a_report_version_that_does_not_match_the_output_name(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source = _write_run_source(root)
+            output = root / "feasibility_audit_v002.tex"
+
+            with self.assertRaisesRegex(ValueError, "report_version"):
+                build(source, output)
+
     def test_builds_question_led_latex_report_without_tables(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
