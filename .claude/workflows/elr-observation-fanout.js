@@ -54,25 +54,46 @@ const fixtureRule = workflowArgs.fixture === true
   ? 'This is an explicit kit validation fixture. Leave project state unchanged and apply the frozen fixture protocol.'
   : 'Confirm that project state routes to the active canonical fan-out stage before continuing.'
 
+// The restricted worker definitions load from .claude/agents/ when Claude Code
+// starts in this folder. When this session started elsewhere (or before the kit
+// was installed), the platform reports the agent type as not found; translate
+// that into the researcher-facing instruction the kit already documents.
+const missingWorkerDefinitions = error =>
+  /agent type '[^']+' not found/i.test(String((error && error.message) || error))
+const restartAdvice = () =>
+  new Error(
+    "ELARA's restricted worker definitions (.claude/agents/) are not loaded in " +
+    'this session, so parallel work cannot start. Claude Code loads them when ' +
+    'the app starts in the project folder: restart the app there once, then run ' +
+    'the stage again. The sealed assignments on disk are unchanged and nothing ' +
+    'is lost.',
+  )
+
 phase('Discover')
-const discovered = await agent(
-  `Read AGENTS.md and workflow/shared/observation-fanout.md completely. Run:
+let discovered
+try {
+  discovered = await agent(
+    `Read AGENTS.md and workflow/shared/observation-fanout.md completely. Run:
 python scripts/unit_fanout.py status --run-dir "${workflowArgs.run_dir}" --include-pending
 ${fixtureRule} ${blockRule} Return the selected pending assignment paths only. Do not
 read worker-return contents or report substantive labels.`,
-  {
-    label: 'discover-pending',
-    schema: {
-      type: 'object',
-      required: ['assignments'],
-      properties: {
-        assignments: { type: 'array', items: { type: 'string' } },
+    {
+      label: 'discover-pending',
+      schema: {
+        type: 'object',
+        required: ['assignments'],
+        properties: {
+          assignments: { type: 'array', items: { type: 'string' } },
+        },
+        additionalProperties: false,
       },
-      additionalProperties: false,
+      ...agentOptions,
     },
-    ...agentOptions,
-  },
-)
+  )
+} catch (error) {
+  if (missingWorkerDefinitions(error)) throw restartAdvice()
+  throw error
+}
 log(`${discovered.assignments.length} pending assignment(s) to run`)
 
 const workerPrompt = assignmentPath => `Read workflow/shared/observation-fanout.md and then read exactly one assignment:
