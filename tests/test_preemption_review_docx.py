@@ -335,5 +335,55 @@ class PreemptionReviewStageContractTests(unittest.TestCase):
             )
 
 
+class BlockParsingTests(unittest.TestCase):
+    def test_a_wrapped_citation_year_does_not_interrupt_a_bullet(self) -> None:
+        body = (
+            "- search for the paper (Craig & Ruhl,\n"
+            "2026) and download it.\n"
+            "- second item.\n"
+        )
+        blocks = parse_blocks(body)
+        self.assertEqual([b.kind for b in blocks], ["bullet", "bullet"])
+        self.assertIn("2026) and download it.", blocks[0].text)
+
+    def test_a_wrapped_citation_year_does_not_interrupt_a_paragraph(self) -> None:
+        body = "See the working paper (Pillai,\n2024) before the freeze.\n"
+        blocks = parse_blocks(body)
+        self.assertEqual([b.kind for b in blocks], ["paragraph"])
+        self.assertIn("2024) before the freeze.", blocks[0].text)
+
+    def test_a_sequential_ordered_list_still_parses_item_by_item(self) -> None:
+        body = "1. first\n2. second\n3. third\n"
+        blocks = parse_blocks(body)
+        self.assertEqual([b.kind for b in blocks], ["ordered"] * 3)
+        self.assertEqual([b.text for b in blocks], ["first", "second", "third"])
+
+    def test_an_item_numbered_one_still_interrupts_a_paragraph(self) -> None:
+        body = "Steps to take:\n1. open the site\n2. download the file\n"
+        blocks = parse_blocks(body)
+        self.assertEqual([b.kind for b in blocks], ["paragraph", "ordered", "ordered"])
+
+    def test_a_list_beginning_after_a_blank_line_may_start_at_any_number(self) -> None:
+        body = "Intro paragraph.\n\n3. a deliberate third item\n"
+        blocks = parse_blocks(body)
+        self.assertEqual([b.kind for b in blocks], ["paragraph", "ordered"])
+
+
+class TypographicQuoteTests(unittest.TestCase):
+    def test_straight_double_quotes_become_latex_quotes(self) -> None:
+        from latex_report import inline_latex
+
+        rendered = inline_latex('He said "yes, entirely" and left.')
+        self.assertIn("``yes, entirely''", rendered)
+        self.assertNotIn('"', rendered)
+
+    def test_quotes_inside_code_spans_stay_straight(self) -> None:
+        from latex_report import inline_latex
+
+        rendered = inline_latex('run `q="x"` now')
+        self.assertIn(r'\texttt', rendered)
+        self.assertIn('"x"', rendered.replace(r"\allowbreak{}", ""))
+
+
 if __name__ == "__main__":
     unittest.main()

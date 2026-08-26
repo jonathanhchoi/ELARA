@@ -36,16 +36,41 @@ def inline_code_latex(text: str) -> str:
     return r"\texttt{" + escaped + "}"
 
 
+def _typographic_quotes(text: str) -> str:
+    """Turn straight double quotes in prose into LaTeX opening/closing quotes.
+
+    Report sources are written as plain Markdown, where quotations arrive as
+    straight double quotes; rendered as-is they come out as inch marks. A
+    quote is opening when it follows the start of the text, whitespace, or an
+    opening bracket or dash, and closing otherwise. Code spans never reach
+    this function, and single quotes are left alone so apostrophes survive."""
+    out: list[str] = []
+    for index, char in enumerate(text):
+        if char != '"':
+            out.append(char)
+            continue
+        previous = text[index - 1] if index else ""
+        if previous == "" or previous.isspace() or previous in "([{-–—":
+            out.append("``")
+        else:
+            out.append("''")
+    return "".join(out)
+
+
+def _prose_latex(text: str) -> str:
+    return escape_latex(_typographic_quotes(text))
+
+
 def inline_latex(text: str) -> str:
     parts: list[str] = []
     cursor = 0
     for match in INLINE_RE.finditer(text):
-        parts.append(escape_latex(text[cursor : match.start()]))
+        parts.append(_prose_latex(text[cursor : match.start()]))
         token = match.group(0)
         link = re.fullmatch(r"\[([^\]]+)\]\((https?://[^)]+)\)", token)
         if link:
             label, url = link.groups()
-            parts.append(r"\href{" + escape_latex(url) + "}{" + escape_latex(label) + "}")
+            parts.append(r"\href{" + escape_latex(url) + "}{" + _prose_latex(label) + "}")
         elif token.startswith("**"):
             parts.append(r"\textbf{" + inline_latex(token[2:-2]) + "}")
         elif token.startswith("`"):
@@ -53,7 +78,7 @@ def inline_latex(text: str) -> str:
         elif token.startswith("*"):
             parts.append(r"\emph{" + inline_latex(token[1:-1]) + "}")
         cursor = match.end()
-    parts.append(escape_latex(text[cursor:]))
+    parts.append(_prose_latex(text[cursor:]))
     return "".join(parts)
 
 

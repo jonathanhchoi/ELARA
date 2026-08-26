@@ -81,7 +81,7 @@ PLACEHOLDER_RE = re.compile(r"\b(?:TODO-PREEMPTION|TBD|PLACEHOLDER)\b", re.IGNOR
 INLINE_RE = re.compile(
     r"(\[[^\]]+\]\(https?://[^)]+\)|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)"
 )
-ORDERED_RE = re.compile(r"^\s*\d+[.)]\s+(.+)$")
+ORDERED_RE = re.compile(r"^\s*(\d+)[.)]\s+(.+)$")
 BULLET_RE = re.compile(r"^\s*[-+*]\s+(.+)$")
 
 
@@ -170,7 +170,20 @@ def _is_table_separator(line: str, columns: int) -> bool:
     return len(cells) == columns and all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells)
 
 
-def _starts_explicit_block(lines: list[str], index: int) -> bool:
+def _starts_explicit_block(
+    lines: list[str], index: int, allowed_ordered: tuple[str, ...] = ("1",)
+) -> bool:
+    """Whether this line begins a new block rather than continuing the open one.
+
+    A continuation line inside a paragraph, list item, or quotation often
+    begins with a number and a closing parenthesis that is not a list marker
+    at all -- most commonly a wrapped legal citation year, as in
+    "(Craig & Ruhl,\\n2026) and download." So, as in CommonMark, only an
+    ordered item numbered 1 may interrupt an open block; while an ordered
+    list itself is open, its own next sequential number may too
+    (``allowed_ordered`` carries both). Any other numbered line stays part of
+    the open block. A list that genuinely starts at another number still
+    parses when it begins after a blank line."""
     stripped = lines[index].strip()
     if not stripped:
         return True
@@ -180,7 +193,10 @@ def _starts_explicit_block(lines: list[str], index: int) -> bool:
         return True
     if re.fullmatch(r"(?:-{3,}|\*{3,}|_{3,})", stripped):
         return True
-    if ORDERED_RE.match(lines[index]) or BULLET_RE.match(lines[index]):
+    ordered = ORDERED_RE.match(lines[index])
+    if ordered and ordered.group(1) in allowed_ordered:
+        return True
+    if BULLET_RE.match(lines[index]):
         return True
     if "|" in stripped and index + 1 < len(lines):
         header = _split_table_row(stripped)
@@ -246,12 +262,16 @@ def parse_blocks(body: str) -> list[Block]:
             blocks.append(Block("callout", " ".join(quote)))
             continue
         ordered = ORDERED_RE.match(line)
-        if ordered:
+        # Mid-paragraph, only an item numbered 1 starts a list (CommonMark's
+        # interrupt rule); a wrapped citation year like "2026) and download."
+        # stays in its paragraph. After a blank line any number may start one.
+        if ordered and (not paragraph or ordered.group(1) == "1"):
             flush_paragraph()
             index += 1
-            item = [ordered.group(1).strip()]
+            item = [ordered.group(2).strip()]
+            successors = ("1", str(int(ordered.group(1)) + 1))
             while index < len(lines) and lines[index].strip():
-                if _starts_explicit_block(lines, index):
+                if _starts_explicit_block(lines, index, allowed_ordered=successors):
                     break
                 item.append(lines[index].strip())
                 index += 1
