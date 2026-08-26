@@ -463,6 +463,18 @@ def build(source: Path, output: Path) -> None:
         raise ValueError(f"refusing to overwrite existing artifact: {output}")
     metadata, body = parse_source(source.read_text(encoding="utf-8"))
     validate_consultation_record(source, metadata["consultation_record"])
+    # The version printed on the report's title block must be the version in
+    # the output filename, or the rendered report misidentifies itself after
+    # an iterate-until-clean rebuild (observed in testing: a v004 file whose
+    # first page still said v001).
+    version_in_name = re.search(r"_v(\d{3})$", output.stem)
+    if version_in_name and metadata["report_version"] != f"v{version_in_name.group(1)}":
+        raise ValueError(
+            "report_version in the source settings is "
+            f"{metadata['report_version']!r} but the output file is version "
+            f"v{version_in_name.group(1)}; update the source's report_version "
+            "so the rendered title block matches the artifact"
+        )
     blocks = parse_blocks(body)
     validate_sections(blocks)
     output.parent.mkdir(parents=True, exist_ok=True)
