@@ -86,7 +86,14 @@ searches, retrieval, citation chains, critiques, cite-checks, fresh reviews — 
 nothing interactive). The workflow scripts set those `agentType`s; direct Agent-tool launches set
 the matching `subagent_type`. Claude Code loads a project's first `.claude/agents/` directory only
 at session start, so after installing or updating the kit into a folder that had none, restart
-once before fanning out. The desktop app's in-app Browser, computer use, Chrome, and other MCP
+once before fanning out. A continued or resumed session can also lack them even in the right
+folder. **Preflight before any fan-out work is staged:** confirm the restricted worker types are
+actually loaded in this session (the host lists available agent types; a one-line no-op launch of
+`elr-worker` also answers it). If the type is missing, do not prepare or launch anything — give
+the researcher the restart instruction in plain language and stop; the workflow runtime can fail
+a launched run on the missing type before the script's own fallback message is reachable, which
+leaves the researcher a raw platform error instead of the instruction. The scripts' internal
+advice is a backstop, not the primary surface. The desktop app's in-app Browser, computer use, Chrome, and other MCP
 tools are interactive surfaces for the researcher's own session; a worker must never reach them
 (one that did, on a bot-challenge page, crashed the desktop app twice on 2026-08-17). Fan-out
 manifests, briefs, and worker returns live under the run directory, never in the session

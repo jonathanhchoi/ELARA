@@ -800,6 +800,11 @@ class WorkflowContractTests(unittest.TestCase):
         claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
         self.assertIn("elr-research-fanout", claude)
         self.assertIn("elr-observation-fanout", claude)
+        # A missing worker type must be caught by the parent BEFORE anything is
+        # staged: the workflow runtime can fail a launched run before the
+        # scripts' internal advice is reachable (field test, 2026-08-26).
+        self.assertIn("Preflight before any fan-out work is staged", claude)
+        self.assertIn("backstop, not the primary surface", claude)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn(".codex/agents/", agents)
         self.assertIn("## How parallel work runs", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
