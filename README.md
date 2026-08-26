@@ -8,7 +8,7 @@ also integrate results into a draft, check citations, and assist with revisions.
 
 If you use ELARA in your research, **please cite the companion paper**:
 Jonathan H. Choi, *ELARA: A Framework for Empirical Legal Research with AI
-Agents* (2026), https://ssrn.com/abstract=XXXXXXX. A copyable reference is in
+Agents* (2026), https://ssrn.com/abstract=7349078. A copyable reference is in
 [How should I cite ELARA?](#how-should-i-cite-elara) below.
 
 You remain responsible for the research decisions. ELARA stops for your
