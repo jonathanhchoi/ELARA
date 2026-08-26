@@ -405,6 +405,16 @@ completed waves remain valid. If an unfinished wave prepared under an older
 version needs a retry, start a new versioned wave rather than overwrite its sole
 return file.
 
+Version 2.3.5 extends the 2.3.2 installation-check fix to Claude Code Desktop:
+a running Claude Code session verifies itself when the `claude` command is not
+on PATH, by probing the executable the session exports for its children or
+reading the version stamped into the session environment, so the 2.1.154
+dynamic-workflow minimum is still enforced. A live session with no version
+evidence at all passes with a nonblocking note instead of failing, and the
+installer selects the active host for its setup check. It changes no state
+field, stage order, approval gate, file format, or research safeguard, so
+existing projects need no migration.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:

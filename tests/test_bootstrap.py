@@ -585,8 +585,11 @@ class ExistingFolderTests(unittest.TestCase):
         self.assertEqual(bootstrap.doctor_platform(claude), "claude")
         codex = {"running_inside": ["Codex"], "on_path": {"Claude Code": None, "Codex": "/usr/bin/codex"}}
         self.assertEqual(bootstrap.doctor_platform(codex), "codex")
-        # Inside a host whose command is not on PATH, or outside any host: a maintenance check.
-        self.assertEqual(bootstrap.doctor_platform({"running_inside": ["Claude Code"], "on_path": {}}), "none")
+        # Inside a host, its command need not be on PATH: the doctor verifies a
+        # host from inside its own live session (desktop apps often add none).
+        self.assertEqual(bootstrap.doctor_platform({"running_inside": ["Claude Code"], "on_path": {}}), "claude")
+        self.assertEqual(bootstrap.doctor_platform({"running_inside": ["Codex"], "on_path": {}}), "codex")
+        # Outside any host: a maintenance check, even when a command is on PATH.
         self.assertEqual(bootstrap.doctor_platform({"running_inside": [], "on_path": {"Codex": "/usr/bin/codex"}}), "none")
         self.assertEqual(bootstrap.doctor_platform(claude, requested="none"), "none")
         with tempfile.TemporaryDirectory() as tmp:
