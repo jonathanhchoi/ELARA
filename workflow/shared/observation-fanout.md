@@ -226,7 +226,13 @@ work that could materially affect the closest-work map, a citation chain, or the
 3. If the page requires a login, CAPTCHA, license acceptance, purchase, or other action only the
    researcher can take, leave the control with the researcher and batch the exact requests under
    `guardrails.md` section 11. Browser unavailability or a failed ordinary-UI attempt is evidence of
-   an access gap, not permission to switch to an unsupported automation route.
+   an access gap, not permission to switch to an unsupported automation route. Treat an anti-bot
+   challenge or interstitial verification page ("checking your browser", "just a moment") as the end
+   of that attempt the moment it appears: record the access gap and navigate away or close the tab
+   immediately, and never wait on, reload, retry, or interact with such a page — challenge pages
+   left open in the app's browser have crashed the desktop host (workers twice on 2026-08-17, and
+   once during a parent fallback attempt on 2026-08-26), and a crashed session resumes from the
+   files but loses the researcher's time.
 4. Record one `search_log.csv` row with route `parent_browser_fallback` for each attempted source:
    source ID, landing URL, original status or message and time, browser-attempt time, browser surface,
    final URL when visible, and result (`retrieved`, `still_blocked`, `researcher_action_required`, or
