@@ -941,15 +941,17 @@ def ensure_dependency(target, python, no_install):
 
 
 def doctor_platform(hosts, requested="auto"):
-    """The agent host the doctor should check: the one this script runs inside, if its
-    command is on PATH; otherwise none (a maintenance check that requires no host)."""
+    """The agent host the doctor should check: the one this script runs inside;
+    otherwise none (a maintenance check that requires no host). The doctor can
+    verify a host from inside its own live session even when its command is not
+    on PATH (the desktop apps often do not add one), so running inside a host
+    is enough to select it."""
     if requested != "auto":
         return requested
     running = hosts.get("running_inside") or []
-    on_path = hosts.get("on_path") or {}
-    if "Claude Code" in running and on_path.get("Claude Code"):
+    if "Claude Code" in running:
         return "claude"
-    if "Codex" in running and on_path.get("Codex"):
+    if "Codex" in running:
         return "codex"
     return "none"
 
@@ -1308,9 +1310,9 @@ def render_report(summary):
         if doctor.get("platform"):
             lines.append(
                 "- Agent host checked: " + doctor["platform"]
-                + (" (none: no host command was on PATH, so only Python, the dependency, the kit "
-                   "contract, and the offline fan-out were checked; Stage 00 runs the doctor "
-                   "again for the active platform)" if doctor["platform"] == "none" else "")
+                + (" (none: this script did not run inside an agent host, so only Python, the "
+                   "dependency, the kit contract, and the offline fan-out were checked; Stage 00 "
+                   "runs the doctor again for the active platform)" if doctor["platform"] == "none" else "")
             )
         lines.append("- Result: " + ("PASS" if doctor["ok"] else "FAIL"))
         if doctor["failures"]:

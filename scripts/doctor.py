@@ -193,18 +193,89 @@ def _active_sessions():
     }
 
 
+def _claude_session_version_evidence():
+    """Version evidence a live Claude Code session provides about itself even
+    when the `claude` command is not on PATH (typical for the desktop app).
+
+    Claude Code exports the path of its own executable to every child process
+    as CLAUDE_CODE_EXECPATH; probing that executable with --version is as
+    authoritative as probing a PATH command. When the executable cannot be
+    probed (a packaged app may forbid other programs from starting it), the
+    session environment still carries the version: AI_AGENT is stamped like
+    `claude-code_2-1-241_agent`, and the executable path itself usually
+    contains the version. Returns (verified_by, version_text, diagnostic);
+    verified_by is None when no evidence was found."""
+    diagnostic = None
+    executable = os.environ.get("CLAUDE_CODE_EXECPATH")
+    if executable and Path(executable).is_file():
+        try:
+            completed = subprocess.run(
+                [executable, "--version"],
+                text=True,
+                capture_output=True,
+                timeout=10,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            diagnostic = "version check failed: " + str(exc)
+        else:
+            output = (completed.stdout or completed.stderr or "").strip()
+            if completed.returncode == 0 and _version_tuple(output):
+                return "session_executable", output, None
+            diagnostic = output or (
+                "version check exited " + str(completed.returncode)
+            )
+    stamped = os.environ.get("AI_AGENT") or ""
+    match = re.search(r"claude[-_]code[-_]v?(\d+)[-._](\d+)[-._](\d+)", stamped)
+    if match:
+        return "session_environment", ".".join(match.groups()), diagnostic
+    if executable:
+        parsed = _version_tuple(executable)
+        if parsed:
+            version = ".".join(str(part) for part in parsed)
+            return "session_environment", version, diagnostic
+    return None, None, diagnostic
+
+
 def _apply_session_verification(report, minimum):
     """Mark a host ready on the strength of the live session running this check.
 
-    Only for hosts without a minimum version (Codex): an active session proves
-    the host works, but not which version it is, so Claude Code -- whose
-    dynamic workflows need 2.1.154 or newer -- is always verified through its
-    command instead. The probe's failure stays in version_output as a
-    diagnostic; Codex Desktop on Windows, for example, installs a packaged
-    codex.exe that other programs are not allowed to start (WinError 5)."""
-    if report["active_session"] and minimum is None and not report["ready"]:
+    An active session proves the host works. For a host without a minimum
+    version (Codex) that alone is enough; the probe's failure stays in
+    version_output as a diagnostic (Codex Desktop on Windows, for example,
+    installs a packaged codex.exe that other programs are not allowed to
+    start). For Claude Code -- whose dynamic workflows need 2.1.154 or newer
+    -- the live session's own evidence is checked first: the executable it
+    exported for its children is probed with --version, and failing that the
+    version stamped into the session environment is parsed. A version below
+    the minimum still fails. Only when an active session offers no version
+    evidence at all does the session alone count, with a warning, because the
+    kit records a fallback route (direct restricted sub-agents) for hosts
+    without saved workflows."""
+    if not report["active_session"] or report["ready"]:
+        return report
+    if minimum is None:
         report["ready"] = True
         report["verified_by"] = "active_session"
+        return report
+    if report["version"]:
+        # The command probe already determined a version below the minimum;
+        # session evidence does not override a real version check.
+        return report
+    verified_by, version_text, diagnostic = _claude_session_version_evidence()
+    if diagnostic and not report["version_output"]:
+        report["version_output"] = diagnostic
+    if verified_by:
+        parsed = _version_tuple(version_text)
+        report["version"] = ".".join(str(part) for part in parsed)
+        if verified_by == "session_executable":
+            report["version_output"] = version_text
+        if parsed >= minimum:
+            report["ready"] = True
+            report["verified_by"] = verified_by
+        return report
+    report["ready"] = True
+    report["verified_by"] = "active_session"
     return report
 
 
@@ -227,10 +298,31 @@ def _session_verification_note(report):
         )
     else:
         reason = "its " + report["command"] + " command is not on PATH"
-    return (
+    note = (
         report["name"] + " is treated as working because this check is running inside "
         "an active " + report["name"] + " session, even though " + reason + ". This is "
         "expected for " + report["name"] + " Desktop on Windows and is not blocking."
+    )
+    if report["minimum_for_elara"] and not report["version"]:
+        note += (
+            " Its version could not be determined; ELARA's saved parallel workflows"
+            " need " + report["minimum_for_elara"] + " or newer, so if the Workflow"
+            " tool is unavailable in this session the assistant records that and"
+            " runs parallel work through the kit's restricted sub-agents directly."
+        )
+    return note
+
+
+def _environment_verification_note(report):
+    """The nonblocking explanation for a version read from the session
+    environment rather than a command probe."""
+    return (
+        report["name"] + " " + (report["version"] or "unknown")
+        + " was verified from the running session's own environment because its "
+        + report["command"] + " command could not be probed"
+        + (" (" + _probe_detail(report) + ")" if _probe_detail(report) else "")
+        + ". This is expected for " + report["name"]
+        + " Desktop on Windows and is not blocking."
     )
 
 
@@ -296,10 +388,10 @@ def _host_reports(platform):
         required = [platform]
     else:
         # auto: every host that is plausibly present -- its command is on
-        # PATH, or the session running this check already proves it works.
+        # PATH, or this very check is running inside one of its sessions.
         required = [
             name for name, report in reports.items()
-            if report["installed"] or report["verified_by"] == "active_session"
+            if report["installed"] or report["active_session"]
         ]
         if not required:
             failures.append(
@@ -313,21 +405,25 @@ def _host_reports(platform):
             continue
         if report["verified_by"] == "active_session":
             warnings.append(_session_verification_note(report))
+        elif report["verified_by"] == "session_environment":
+            warnings.append(_environment_verification_note(report))
+        elif report["ready"]:
+            pass  # verified through a --version probe (PATH command or the
+            # session's own executable); nothing to report
+        elif name == "claude" and report["version"]:
+            failures.append(
+                "Claude Code "
+                + report["version"]
+                + " is older than ELARA's dynamic-workflow minimum 2.1.154"
+            )
         elif not report["installed"]:
             failures.append("required agent host is not installed or not on PATH: " + name)
-        elif not report["ready"]:
-            if name == "claude" and report["version"]:
-                failures.append(
-                    "Claude Code "
-                    + report["version"]
-                    + " is older than ELARA's dynamic-workflow minimum 2.1.154"
-                )
-            else:
-                detail = _probe_detail(report)
-                failures.append(
-                    "could not verify a usable " + report["name"] + " version with --version"
-                    + (": " + detail if detail else "")
-                )
+        else:
+            detail = _probe_detail(report)
+            failures.append(
+                "could not verify a usable " + report["name"] + " version with --version"
+                + (": " + detail if detail else "")
+            )
     return reports, failures, warnings
 
 
@@ -595,7 +691,17 @@ def _print_human_report(report):
         print("CHECK: python-docx not installed")
     for name in ("codex", "claude"):
         host = report["hosts"][name]
-        if host.get("verified_by") == "active_session":
+        if host.get("verified_by") == "session_executable":
+            print(
+                "CHECK: " + host["name"] + " " + (host["version"] or "")
+                + " - verified by probing the running session's own executable"
+            )
+        elif host.get("verified_by") == "session_environment":
+            print(
+                "CHECK: " + host["name"] + " " + (host["version"] or "")
+                + " - version read from the running session's environment (not blocking)"
+            )
+        elif host.get("verified_by") == "active_session":
             print(
                 "CHECK: " + host["name"] + " - verified by its active session (command probe: "
                 + (host["version_output"] or "not on PATH") + "; not blocking)"

@@ -278,7 +278,12 @@ class HostProbeTests(unittest.TestCase):
             key: value
             for key, value in os.environ.items()
             if not key.startswith("CODEX_")
-            and key not in ("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT")
+            and key not in (
+                "CLAUDECODE",
+                "CLAUDE_CODE_ENTRYPOINT",
+                "CLAUDE_CODE_EXECPATH",
+                "AI_AGENT",
+            )
         }
         environment.update(extra)
         return environment
@@ -401,6 +406,114 @@ class HostProbeTests(unittest.TestCase):
                 for failure in failures
             ),
             failures,
+        )
+
+    def test_an_active_claude_session_verifies_its_version_through_its_own_executable(self) -> None:
+        def nothing_on_path(name):
+            return None
+
+        def execpath_probe(arguments, **keywords):
+            assert arguments[0] == sys.executable, arguments
+            return subprocess.CompletedProcess(arguments, 0, stdout="2.1.241 (Claude Code)\n", stderr="")
+
+        for platform in ("claude", "auto"):
+            with self.subTest(platform=platform):
+                reports, failures, warnings = self._host_reports(
+                    platform,
+                    self._environ_without_sessions(
+                        CLAUDECODE="1", CLAUDE_CODE_EXECPATH=sys.executable
+                    ),
+                    nothing_on_path,
+                    execpath_probe,
+                )
+                self.assertEqual(failures, [])
+                self.assertEqual(warnings, [])
+                claude = reports["claude"]
+                self.assertTrue(claude["required"])
+                self.assertTrue(claude["ready"])
+                self.assertEqual(claude["verified_by"], "session_executable")
+                self.assertEqual(claude["version"], "2.1.241")
+
+    def test_an_active_claude_session_reads_the_version_from_its_environment(self) -> None:
+        def nothing_on_path(name):
+            return None
+
+        reports, failures, warnings = self._host_reports(
+            "claude",
+            self._environ_without_sessions(
+                CLAUDECODE="1",
+                CLAUDE_CODE_EXECPATH=sys.executable,
+                AI_AGENT="claude-code_2-1-241_agent",
+            ),
+            nothing_on_path,
+            PermissionError(13, "Access is denied"),
+        )
+        self.assertEqual(failures, [])
+        claude = reports["claude"]
+        self.assertTrue(claude["ready"])
+        self.assertEqual(claude["verified_by"], "session_environment")
+        self.assertEqual(claude["version"], "2.1.241")
+        self.assertIn("Access is denied", claude["version_output"])
+        self.assertTrue(
+            any(
+                "session's own environment" in warning and "not blocking" in warning
+                for warning in warnings
+            ),
+            warnings,
+        )
+
+    def test_an_active_claude_session_with_an_old_version_still_fails(self) -> None:
+        def nothing_on_path(name):
+            return None
+
+        def no_probe(*arguments, **keywords):
+            raise AssertionError("no executable should be probed without CLAUDE_CODE_EXECPATH")
+
+        reports, failures, warnings = self._host_reports(
+            "claude",
+            self._environ_without_sessions(
+                CLAUDECODE="1", AI_AGENT="claude-code_2-0-0_agent"
+            ),
+            nothing_on_path,
+            no_probe,
+        )
+        claude = reports["claude"]
+        self.assertFalse(claude["ready"])
+        self.assertEqual(claude["version"], "2.0.0")
+        self.assertEqual(warnings, [])
+        self.assertTrue(
+            any(
+                "older than ELARA's dynamic-workflow minimum 2.1.154" in failure
+                for failure in failures
+            ),
+            failures,
+        )
+
+    def test_an_active_claude_session_without_version_evidence_warns_and_passes(self) -> None:
+        def nothing_on_path(name):
+            return None
+
+        def no_probe(*arguments, **keywords):
+            raise AssertionError("no executable should be probed without CLAUDE_CODE_EXECPATH")
+
+        reports, failures, warnings = self._host_reports(
+            "claude",
+            self._environ_without_sessions(CLAUDECODE="1"),
+            nothing_on_path,
+            no_probe,
+        )
+        self.assertEqual(failures, [])
+        claude = reports["claude"]
+        self.assertTrue(claude["ready"])
+        self.assertEqual(claude["verified_by"], "active_session")
+        self.assertIsNone(claude["version"])
+        self.assertTrue(
+            any(
+                "version could not be determined" in warning
+                and "not blocking" in warning
+                for warning in warnings
+            ),
+            warnings,
         )
 
     def test_a_current_claude_cli_still_passes(self) -> None:
