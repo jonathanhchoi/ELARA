@@ -64,6 +64,10 @@ HARD_GATES = {
     "20-revise-and-respond": "manuscript-edit-permission",
 }
 
+# Gates that fire only when their triggering condition occurs, so a state may
+# legitimately pass the stage without recording them.
+CONDITIONAL_GATES = {"material-corpus-deviation"}
+
 UNVERSIONED_OUTPUTS = {
     "project/PROJECT_STATE.md",
     "project/DECISIONS.md",
@@ -383,6 +387,31 @@ def validate_state(root: Path) -> list[str]:
             )
     if meta.get("status") == "running" and not meta.get("last_run_id"):
         errors.append(f"{path}: running state requires last_run_id")
+
+    # Every gate passed on the way to the current stage must keep its entry in
+    # the approvals object: routing, adoption, and gate-invalidation all read
+    # state, and DECISIONS.md alone cannot drive resume behavior. The check
+    # covers the linear pipeline (in `tools` usage stages run on request), a
+    # project past Stage 00 (a null slug is still pre-charter), and only gates
+    # that always fire (conditional gates such as Stage 10's
+    # material-corpus-deviation are recorded only when triggered). A failure
+    # route that revisits an earlier stage keeps later entries; they are
+    # invalidated by annotation, never by deletion.
+    if (
+        meta.get("project_slug") is not None
+        and meta.get("usage", "pipeline") == "pipeline"
+        and current_stage in EXPECTED_STAGE_IDS
+        and isinstance(meta.get("approvals"), dict)
+    ):
+        for prior in EXPECTED_STAGE_IDS[: EXPECTED_STAGE_IDS.index(current_stage)]:
+            gate = HARD_GATES.get(prior)
+            if gate and gate not in CONDITIONAL_GATES and gate not in meta["approvals"]:
+                errors.append(
+                    f"{path}: approvals is missing {gate!r}, the gate recorded when "
+                    f"stage {prior} completed; every gate passed before the current "
+                    "stage must keep its entry in state. Reconstruct the entry from "
+                    "its DECISIONS.md record; do not re-run the stage."
+                )
     return errors
 
 
