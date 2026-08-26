@@ -1685,7 +1685,7 @@ def main():
         "--platform",
         choices=("auto", "codex", "claude", "all", "none"),
         default="auto",
-        help="agent host the doctor should check; auto means the host this script runs inside (if its command is on PATH), else none",
+        help="agent host the doctor should check; auto means the host this script runs inside (its command need not be on PATH), else none",
     )
     parser.add_argument(
         "--keep",
