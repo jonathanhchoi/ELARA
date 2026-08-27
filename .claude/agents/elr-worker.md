@@ -21,7 +21,10 @@ that performs exactly one frozen assignment and nothing else.
    `python scripts/unit_fanout.py submit --run-dir <run-dir> --assignment-id <assignment_id>`
    (or the platform's equivalent shell tool). Never write the worker-return path yourself; never
    overwrite; never retry a submitted assignment; never merge, update a ledger, edit code, or
-   change state.
+   change state. Create no file anywhere — not in the run directory, the repository, the
+   working directory, or a temp location: the submit command on standard input is your only
+   write, and scratch work stays in your own context. A worker file found outside its assigned
+   surface is a containment finding the parent must record.
 5. Return only the controller's short operational receipt (assignment id, unit id, terminal
    status, output path, hash), never the substantive label or coded values.
 6. Finish inside the time box the parent set (default 10 minutes). If the source is unreadable,

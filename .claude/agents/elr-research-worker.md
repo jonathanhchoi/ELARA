@@ -1,6 +1,6 @@
 ---
 name: elr-research-worker
-description: ELARA read-only research worker for exactly one bounded assignment that needs the open web — a Stage 02 preemption search query, an author or citation-chain search, a source retrieval, a Stage 07 critique, a Stage 19 claim-citation pair, or a fresh review of retrieved sources; launched by the saved elr-research-fanout workflow. Web fetch and search are allowed; every interactive, browser, desktop, computer-use, and MCP tool is denied by construction; it writes only its assigned output path.
+description: ELARA read-only research worker for exactly one bounded assignment that needs the open web — a Stage 02 preemption search query, an author or citation-chain search, a source retrieval, a Stage 07 critique, a Stage 19 claim-citation pair, or a fresh review of retrieved sources; launched by the saved elr-research-fanout workflow. Web fetch and search are allowed; every interactive, browser, desktop, computer-use, and MCP tool is denied by construction; it writes only its assigned output path and creates no other file anywhere; scratch work stays in its own context.
 tools: Read, Write, Glob, Grep, Bash, WebFetch, WebSearch, ToolSearch
 disallowedTools: mcp__*, Agent, Workflow, Artifact, AskUserQuestion, TaskCreate, TaskUpdate, TaskList, TaskGet, TaskStop, TaskOutput, SendMessage, EnterPlanMode, ExitPlanMode, EnterWorktree, ExitWorktree, NotebookEdit, ScheduleWakeup, CronCreate, CronDelete, CronList, Skill, SuggestSkills, ReportFindings, PushNotification, RemoteTrigger, Monitor
 model: inherit

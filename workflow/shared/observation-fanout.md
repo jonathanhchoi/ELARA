@@ -150,7 +150,13 @@ mid-write; relaunched identically, it did the same thing again.
    rate limit), waits for the whole wave, and only then spawns the next. After each run or wave
    the parent validates returns from files, merges serially, and appends a ledger checkpoint with
    exact counts. Writes to manifests, merged aggregates, ledgers, and state are atomic (temporary
-   file, then replace); the controllers already write that way. At launch and after each status
+   file, then replace); the controllers already write that way. After every wave, the parent
+scans for files created during the wave outside the run directory's expected paths (worker
+returns, attempts, seals) — the repository root and working directory included. Any stray
+worker write is a containment finding: record it in the run ledger with the file's path and
+disposition, remove or quarantine it, and treat repetition as a stop condition for the wave.
+Tool restrictions bound what a worker may invoke, not where a shell may write; only this scan
+closes that gap. At launch and after each status
    check or wave, the parent tells the researcher the exact terminal and outstanding counts,
    elapsed wall-clock time, retries or exhausted assignments, and a revised time-remaining range.
    Before measured throughput exists, base the provisional range on the number of waves and worker
