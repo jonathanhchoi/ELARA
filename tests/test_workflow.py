@@ -849,6 +849,26 @@ class WorkflowContractTests(unittest.TestCase):
             worker = (ROOT / relative).read_text(encoding="utf-8")
             self.assertIn("no browser", worker.lower(), relative)
             self.assertIn("never escalate", worker.lower(), relative)
+        # Write-scope containment: tool restrictions bound what a worker may
+        # invoke, not where a shell may write (field test, 2026-08-27: a
+        # worker left a stray file at the repository root). The definitions
+        # forbid file creation and the fan-out contract requires the parent's
+        # post-wave stray-write scan.
+        for relative in (
+            ".claude/agents/elr-worker.md",
+            ".codex/agents/elr-worker.toml",
+        ):
+            worker = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn("Create no file anywhere", worker, relative)
+        self.assertIn(
+            "creates no other file anywhere",
+            (ROOT / ".claude/agents/elr-research-worker.md").read_text(encoding="utf-8"),
+        )
+        fanout = (ROOT / "workflow" / "shared" / "observation-fanout.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("scans for files created during the wave", fanout)
+        self.assertIn("containment finding", fanout)
         # PIPELINE.md carries the public browser-fallback explanation; the
         # README stays a quick-start document.
         text = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
