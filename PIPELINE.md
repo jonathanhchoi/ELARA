@@ -234,7 +234,7 @@ long-running. See `workflow/shared/execution-control.md`.
 | `14-analysis-and-correction` | 5 | yes | `plan_then_execute` | Analysis that returns the same results from the same inputs and rules, diagnostics, and measurement-error correction | Stop if verified inputs do not support the analysis |
 | `15-robustness` | 5 | yes | `execute` | Prompt and model comparisons, stability results, and deviations | Researcher disposition of material instability |
 | `16-replication-package` | 5 | yes | `execute` | Exact software versions, included files, one rebuild command, and fresh-agent report | Core completes only after a clean rebuild |
-| `17-skeleton-draft` | 6 | no | `plan_then_execute` | Plan-Mode organization and venue choices, then an organizationally complete draft with full results in displays and minimal prose; venue-aware Word uses an approved template and comments for planning material | `skeleton-draft-approval`, with a recorded skip available |
+| `17-skeleton-draft` | 6 | no | `plan_then_execute` | Plan-Mode organization and venue choices, then an organizationally complete draft with full results in displays and minimal prose; venue-aware Word uses an approved template, with comments only for open questions | `skeleton-draft-approval`, with a recorded skip available |
 | `18-integrate-manuscript` | 6 | no | `plan_then_execute` | Approved integration into the researcher's substantive first draft | `manuscript-edit-permission` |
 | `19-cite-check` | 6 | no | `execute` | Audit-only citation/source-support report | Findings are reported, never silently repaired |
 | `20-revise-and-respond` | 6 | no | `plan_then_execute` | Versioned revisions, response matrix, and change disclosure | `manuscript-edit-permission` |
@@ -274,12 +274,14 @@ remaining restriction. The browser is never given to a worker.
 
 Stage 17 produces an organizationally complete skeleton from verified project
 files. It presents the full results through verified tables, figures, and
-equations with sufficient captions and notes. It uses only the prose needed to
+equations with sufficient captions and notes, and the text below each equation
+defines every variable in it. It uses only the prose needed to
 orient the reader and leaves the article's substantive writing to the researcher.
 When Word is selected, the researcher may choose the bundled law-review or JLA
 template. The visible manuscript follows that venue's title, heading, caption,
-table, figure, equation, and page conventions; source support, results inventory,
-open questions, and display provenance move to Word comments and the manifest.
+table, figure, equation, and page conventions; the planning fields and display
+provenance are recorded in the run manifest, and a Word comment marks only a
+section with open questions for the researcher.
 JLA figures require alt text under the legend, and all venue-aware Word figures
 embed that text accessibly. A different peer-reviewed outlet requires a current
 official-requirements check and a supplied template or an expressly approved
@@ -434,6 +436,22 @@ instead of re-running the stage. A previously valid state missing such an
 entry fails validation after updating; the fix is the reconstruction the
 error describes, and no stage, gate, file format, or research safeguard
 changes otherwise.
+
+Version 2.4.0 quiets the Stage 17 skeleton and makes its equations
+self-explanatory. Venue-aware Word output now creates a comment only where the
+researcher must notice or decide something: a section whose open questions are
+not `none` gets one comment, anchored to its heading, containing only those
+questions. The per-heading planning summaries and per-display provenance
+comments are gone; the run manifest still records every planning field and
+display reference. The per-section "Results presented" listing is retired from
+the template, the stage, the builder, and every output format, and a source
+that still contains the field builds without rendering it, like the retired
+length fields. Every equation is now followed by its caption in all output
+formats, and that caption must define each variable and term in the equation;
+venue-aware Word previously omitted equation captions. The python-docx minimum
+rises to 1.2 because the Word comment interface requires it. No state field,
+stage order, approval gate, or research safeguard changes, so existing projects
+need no migration; the next Stage 17 run simply produces the quieter form.
 
 ## Persistent state
 

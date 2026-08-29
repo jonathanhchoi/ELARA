@@ -1,6 +1,6 @@
 ---
 schema_version: "1.2"
-workflow_version: "2.3.6"
+workflow_version: "2.4.0"
 project_slug: null
 usage: "pipeline"
 checkpoints: "none"

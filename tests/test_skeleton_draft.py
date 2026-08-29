@@ -66,7 +66,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Section role:** introduction
 **Bare-bones content:** Author to write.
 **Source support:** project/artifacts/preemption_review_v001.md#CONTRIBUTION-01
-**Results presented:** none
 **Displays:** none
 **Author work:** State the research question, contribution, and thesis in the author's own prose.
 **Open questions:** Whether to lead with court access or claim outcomes.
@@ -75,7 +74,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Section role:** background
 **Bare-bones content:** Author to write.
 **Source support:** project/artifacts/preemption_review_v001.md#LITERATURE-01
-**Results presented:** none
 **Displays:** none
 **Author work:** Develop the literature position and legal context in the author's own prose.
 **Open questions:** Whether the doctrinal discussion belongs here or after the results.
@@ -84,8 +82,7 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Section role:** methods
 **Bare-bones content:** The study estimates filing outcomes in the approved court sample using the preregistered specification in project/artifacts/methods_plan_v001.md#METHOD-01.
 **Source support:** project/artifacts/methods_plan_v001.md#METHOD-01; project/artifacts/methods_plan_v001.md#ESTIMAND-01
-**Results presented:** none
-**Displays:** equation|project/artifacts/estimating_equation_v001.tex#EQ-01|Estimating equation with outcome, treatment, covariates, and court fixed effects defined in the text below
+**Displays:** equation|project/artifacts/estimating_equation_v001.tex#EQ-01|where Y_ic is the outcome for claim i in court c, T_ic is the treatment indicator, X_ic collects the covariates, delta_c is the court fixed effect, and epsilon_ic is the idiosyncratic error
 **Author work:** Explain the design choices and identifying assumptions in the author's own prose.
 **Open questions:** Whether to move implementation details to an appendix.
 
@@ -93,7 +90,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Section role:** methods
 **Bare-bones content:** The held-out comparison met the approved validation threshold in project/artifacts/methods_plan_v001.md#VALIDATION-01.
 **Source support:** project/artifacts/methods_plan_v001.md#VALIDATION-01
-**Results presented:** project/artifacts/methods_plan_v001.md#VALIDATION-01
 **Displays:** none
 **Author work:** Explain the remaining measurement concern.
 **Open questions:** Whether validation details belong in the main text.
@@ -102,7 +98,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Section role:** results
 **Bare-bones content:** The primary estimate is positive, the secondary estimate is null, and uncertainty is reported in project/artifacts/results_v001.csv#RESULTS-ALL.
 **Source support:** project/artifacts/results_v001.csv#RESULTS-ALL
-**Results presented:** project/artifacts/results_v001.csv#R-H01; project/artifacts/results_v001.csv#R-H02; project/artifacts/results_v001.csv#R-SUBGROUP-01
 **Displays:** table|project/artifacts/results_v001.csv#TABLE-PRIMARY|Complete estimates for the primary, secondary, and subgroup analyses with standard errors and sample sizes || figure|project/artifacts/results_figure_v001.png#FIGURE-PRIMARY|Point estimates and 95 percent confidence intervals for every preregistered analysis
 **Author work:** Interpret the complete findings and connect them to the argument in the author's own prose.
 **Open questions:** Which result should receive the most attention in the introduction.
@@ -111,7 +106,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Section role:** robustness
 **Bare-bones content:** The complete specification checks and the fragile subgroup result appear in project/artifacts/robustness_v001.csv#ROBUSTNESS-ALL.
 **Source support:** project/artifacts/robustness_v001.csv#ROBUSTNESS-ALL; project/DEVIATIONS.md#DEV-01
-**Results presented:** project/artifacts/robustness_v001.csv#ROB-01; project/artifacts/robustness_v001.csv#ROB-02; project/artifacts/robustness_v001.csv#ROB-FRAGILE-01
 **Displays:** table|project/artifacts/robustness_v001.csv#TABLE-ROBUSTNESS|All robustness specifications, including null and fragile findings, with standard errors and sample sizes
 **Author work:** Explain how the checks and deviation affect the conclusions.
 **Open questions:** Whether the full table belongs in the main text or appendix.
@@ -120,7 +114,6 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Section role:** limitations
 **Bare-bones content:** Author to write.
 **Source support:** project/DEVIATIONS.md#LIMITATION-01
-**Results presented:** none
 **Displays:** none
 **Author work:** Develop the limits on inference and generalization in the author's own prose.
 **Open questions:** How much space to give measurement and coverage limits.
@@ -129,10 +122,9 @@ source_versions: "project/artifacts/preemption_review_v001.md; project/artifacts
 **Section role:** conclusion
 **Bare-bones content:** Author to write.
 **Source support:** project/artifacts/preemption_review_v001.md#CONTRIBUTION-01
-**Results presented:** none
 **Displays:** none
 **Author work:** State the implications and conclusion in the author's own prose.
-**Open questions:** Which implication should close the article.
+**Open questions:** none
 '''
 
 
@@ -142,6 +134,10 @@ def legacy_sample_source(output_format: str = "docx") -> str:
         lines.append(line)
         if line.startswith("target_venue:"):
             lines.append('target_length: "10,000 words"')
+        elif line.startswith("**Source support:**"):
+            lines.append(
+                "**Results presented:** project/artifacts/results_v001.csv#R-H01"
+            )
         elif line.startswith("**Open questions:**"):
             lines.append("**Approximate length:** 500 words")
     return "\n".join(lines) + "\n"
@@ -232,9 +228,13 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
                 self.assertEqual(payload["sections"][3]["level"], 3)
                 self.assertEqual(len(payload["displays"]), 4)
                 self.assertNotIn("crosswalk", payload)
+                self.assertNotIn(
+                    "Results presented", payload["sections"][0]["planning_fields"]
+                )
                 text = rendered_text(output, output_format)
                 self.assertNotIn("Target length", text)
                 self.assertNotIn("Approximate length", text)
+                self.assertNotIn("Results presented", text)
 
     def _build_venue(self, root: Path, profile: str, *, include_authors: bool = True):
         self._project(root)
@@ -286,7 +286,28 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
             ]
             self.assertIn("I. INTRODUCTION", headings)
             self.assertIn("A. Validation", headings)
-            self.assertGreaterEqual(len(document.comments), len(payload["sections"]))
+            sections_with_questions = [
+                section
+                for section in payload["sections"]
+                if section["planning_fields"]["Open questions"].strip().lower() != "none"
+            ]
+            self.assertEqual(len(document.comments), len(sections_with_questions))
+            self.assertLess(len(document.comments), len(payload["sections"]))
+            self.assertTrue(
+                all(
+                    entry["planning_fields"] == ["Open questions"]
+                    for entry in payload["comments_to_sections"]
+                )
+            )
+            self.assertNotIn(
+                "Conclusion",
+                {entry["section"] for entry in payload["comments_to_sections"]},
+            )
+            paragraphs = [paragraph.text for paragraph in document.paragraphs]
+            equation_index = next(
+                index for index, text in enumerate(paragraphs) if "Y_{ic}" in text
+            )
+            self.assertIn("court fixed effect", paragraphs[equation_index + 1])
             self.assertEqual(payload["word_template"]["template_id"], "law_review_v1")
             self.assertEqual(
                 payload["word_template"]["template_sha256"],
@@ -297,6 +318,11 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
                 document_xml = archive.read("word/document.xml").decode("utf-8")
                 footnotes_xml = archive.read("word/footnotes.xml").decode("utf-8")
                 styles_xml = archive.read("word/styles.xml").decode("utf-8")
+                comments_xml = archive.read("word/comments.xml").decode("utf-8")
+            self.assertIn("Open questions:", comments_xml)
+            self.assertNotIn("Source support", comments_xml)
+            self.assertNotIn("Results presented", comments_xml)
+            self.assertNotIn("Display provenance", comments_xml)
             self.assertIn('<w:sz w:val="22"', styles_xml)
             self.assertIn('TOC \\o "1-3"', document_xml)
             self.assertIn("footnoteReference", document_xml)
@@ -399,7 +425,7 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "venue_requirements_url"):
                 build(source, output, manifest, root)
 
-    def test_legacy_length_fields_are_accepted_but_not_rendered(self) -> None:
+    def test_legacy_fields_are_accepted_but_not_rendered(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for output_format in ("docx", "tex", "md"):
@@ -414,10 +440,14 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
                 self.assertTrue(
                     all("Approximate length" not in section.fields for section in sections)
                 )
+                self.assertTrue(
+                    all("Results presented" not in section.fields for section in sections)
+                )
                 build(source, output, manifest, format_root)
                 text = rendered_text(output, output_format)
                 self.assertNotIn("Target length", text)
                 self.assertNotIn("Approximate length", text)
+                self.assertNotIn("Results presented", text)
                 self.assertNotIn("10,000 words", text)
                 self.assertNotIn("500 words", text)
 
@@ -434,7 +464,11 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
             self.assertIn("Validation", headings)
             self.assertFalse(any("[S0" in heading for heading in headings))
             self.assertGreaterEqual(len(document.tables), 3)
-            self.assertTrue(any("Y_{ic}" in paragraph.text for paragraph in document.paragraphs))
+            paragraphs = [paragraph.text for paragraph in document.paragraphs]
+            equation_index = next(
+                index for index, text in enumerate(paragraphs) if "Y_{ic}" in text
+            )
+            self.assertTrue(paragraphs[equation_index + 1].startswith("Equation. "))
             with zipfile.ZipFile(output) as archive:
                 document_xml = archive.read("word/document.xml").decode("utf-8")
                 footer_xml = "".join(
@@ -457,11 +491,13 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
             self.assertIn(r"\includegraphics", tex)
             self.assertIn(r"Y_{ic}", tex)
             self.assertIn("Complete estimates for the primary", tex)
+            self.assertLess(tex.index("Y_{ic}"), tex.index("court fixed effect"))
             _, md_output, _ = self._build(root / "md", "md")
             md = md_output.read_text(encoding="utf-8")
             self.assertIn("| analysis | estimate | se | n |", md)
             self.assertIn("![Point estimates", md)
             self.assertIn("$$", md)
+            self.assertLess(md.index("$$"), md.index("**Equation.**"))
 
     def test_rejects_unsupported_format_and_extension_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -502,13 +538,7 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "too much non-empirical prose"):
             parse_source(excess)
 
-    def test_requires_traced_results_and_displayed_result_sections(self) -> None:
-        untraced = sample_source().replace(
-            "**Results presented:** project/artifacts/results_v001.csv#R-H01; project/artifacts/results_v001.csv#R-H02; project/artifacts/results_v001.csv#R-SUBGROUP-01",
-            "**Results presented:** primary, secondary, and subgroup results",
-        )
-        with self.assertRaisesRegex(ValueError, "must be 'none' or cite"):
-            parse_source(untraced)
+    def test_requires_displayed_result_sections_and_traced_references(self) -> None:
         no_display = sample_source().replace(
             "**Displays:** table|project/artifacts/results_v001.csv#TABLE-PRIMARY|Complete estimates for the primary, secondary, and subgroup analyses with standard errors and sample sizes || figure|project/artifacts/results_figure_v001.png#FIGURE-PRIMARY|Point estimates and 95 percent confidence intervals for every preregistered analysis",
             "**Displays:** none",

@@ -306,12 +306,13 @@ and the supporting search record follow.
 The publication steps are optional. Stage 17 offers a default, skippable article
 skeleton after the replication package is verified. It supplies a complete
 article structure and presents the full results through verified tables,
-figures, and equations with sufficient captions and notes. LaTeX-generated PDF
+figures, and equations with sufficient captions and notes, and text below each
+equation defines its variables. LaTeX-generated PDF
 is the default, with Word and Markdown available on request. For Word, Stage 17
 can use the bundled law-review or Journal of Legal Analysis template. The
 visible manuscript contains article text, displays, and concise author
-placeholders; planning sources and open questions remain in Word comments and
-the run manifest. Figures carry accessible descriptions, and JLA descriptions
+placeholders; the run manifest records the planning material, and Word comments
+flag only open questions that need the author's attention. Figures carry accessible descriptions, and JLA descriptions
 also appear below the legend. Another peer-reviewed outlet requires a current
 check of its official instructions and either its own template or an expressly
 approved fallback; the JLA template is never applied silently. Stage 17 leaves the

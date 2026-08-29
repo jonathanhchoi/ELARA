@@ -54,14 +54,13 @@ REQUIRED_FIELDS = (
     "Section role",
     "Bare-bones content",
     "Source support",
-    "Results presented",
     "Displays",
     "Author work",
     "Open questions",
 )
-LEGACY_IGNORED_FIELDS = {"Approximate length"}
-TRACE_FIELDS = {"Bare-bones content", "Source support", "Results presented", "Displays"}
-ALWAYS_TRACED_FIELDS = {"Source support", "Results presented", "Displays"}
+LEGACY_IGNORED_FIELDS = {"Approximate length", "Results presented"}
+TRACE_FIELDS = {"Bare-bones content", "Source support", "Displays"}
+ALWAYS_TRACED_FIELDS = {"Source support", "Displays"}
 ALLOWED_ROLES = {
     "abstract",
     "introduction",
@@ -336,16 +335,10 @@ def validate_sections(sections: list[Section]) -> None:
             empirical_content_roles.add(role)
 
         displays = parse_displays(section.fields["Displays"])
-        results_value = section.fields["Results presented"].strip()
-        if role in {"results", "robustness"}:
-            if results_value.lower() == "none":
-                raise ValueError(
-                    f"section {section.title} must identify the results it presents"
-                )
-            if not displays:
-                raise ValueError(
-                    f"section {section.title} must present results through at least one table, figure, or equation"
-                )
+        if role in {"results", "robustness"} and not displays:
+            raise ValueError(
+                f"section {section.title} must present results through at least one table, figure, or equation"
+            )
 
         section_refs = [
             match
@@ -584,12 +577,19 @@ def _add_legacy_docx_displays(doc: Document, section: Section, repository_root: 
     for display in parse_displays(section.fields["Displays"]):
         path = _resolve_project_path(repository_root, display.path)
         label = display.kind.capitalize()
+        if display.kind == "equation":
+            paragraph = doc.add_paragraph()
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            paragraph.paragraph_format.keep_with_next = True
+            run = paragraph.add_run(_read_equation(path))
+            run.font.name = "Cambria Math"
+            run.font.size = Pt(11)
         caption = doc.add_paragraph()
-        caption.paragraph_format.keep_with_next = True
+        caption.paragraph_format.keep_with_next = display.kind != "equation"
         caption.add_run(f"{label}. ").bold = True
         caption.add_run(display.caption)
         source = doc.add_paragraph()
-        source.paragraph_format.keep_with_next = True
+        source.paragraph_format.keep_with_next = display.kind != "equation"
         source_run = source.add_run(display.reference)
         source_run.italic = True
         source_run.font.size = Pt(8.5)
@@ -614,12 +614,6 @@ def _add_legacy_docx_displays(doc: Document, section: Section, repository_root: 
             paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
             run = paragraph.add_run()
             run.add_picture(str(path), width=Inches(6.2))
-        else:
-            paragraph = doc.add_paragraph()
-            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            run = paragraph.add_run(_read_equation(path))
-            run.font.name = "Cambria Math"
-            run.font.size = Pt(11)
 
 
 def build_legacy_docx(
@@ -702,7 +696,6 @@ def build_legacy_docx(
             content_run.font.color.rgb = RGBColor.from_string(MUTED)
         for field_name in (
             "Source support",
-            "Results presented",
             "Author work",
             "Open questions",
         ):
@@ -964,13 +957,31 @@ def _add_comment(doc: Document, paragraph, text: str) -> str:
     return str(comment.comment_id)
 
 
-def _section_comment(section: Section) -> str:
-    return "\n".join(
-        (
-            f"Source support: {section.fields['Source support']}",
-            f"Results presented: {section.fields['Results presented']}",
-            f"Open questions: {section.fields['Open questions']}",
-        )
+def _has_open_questions(section: Section) -> bool:
+    return section.fields["Open questions"].strip().casefold() != "none"
+
+
+def _add_open_questions_comment(
+    doc: Document,
+    paragraph,
+    section: Section,
+    anchor: str,
+    comment_map: list[dict[str, object]],
+) -> None:
+    """Comment only where the researcher must decide or notice something."""
+
+    if not _has_open_questions(section):
+        return
+    comment_id = _add_comment(
+        doc, paragraph, f"Open questions: {section.fields['Open questions']}"
+    )
+    comment_map.append(
+        {
+            "section": section.title,
+            "anchor": anchor,
+            "comment_id": comment_id,
+            "planning_fields": ["Open questions"],
+        }
     )
 
 
@@ -1017,16 +1028,14 @@ def _add_venue_displays(
     repository_root: Path,
     profile_id: str,
     counters: dict[str, int],
-    comment_map: list[dict[str, object]],
 ) -> None:
     total_width = _content_width_dxa(doc)
     for display in parse_displays(section.fields["Displays"]):
         path = _resolve_project_path(repository_root, display.path)
         counters[display.kind] += 1
         number = counters[display.kind]
-        label = display.kind.capitalize()
         if display.kind == "table":
-            caption = doc.add_paragraph(f"Table {number}. {display.caption}", style="Caption")
+            doc.add_paragraph(f"Table {number}. {display.caption}", style="Caption")
             rows = _read_table(path)
             table = doc.add_table(rows=len(rows), cols=len(rows[0]))
             table.style = "Table Grid"
@@ -1047,23 +1056,16 @@ def _add_venue_displays(
             shape = paragraph.add_run().add_picture(str(path), width=Inches(min(natural, maximum)))
             alt_text = display.alt_text or display.caption
             _embed_alt_text(shape, alt_text)
-            caption = doc.add_paragraph(f"Figure {number}. {display.caption}", style="Caption")
+            doc.add_paragraph(f"Figure {number}. {display.caption}", style="Caption")
             if profile_id == "journal_of_legal_analysis_v1":
                 doc.add_paragraph(f"Alt text: {alt_text}")
         else:
-            caption = doc.add_paragraph()
-            caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            caption.add_run(_read_equation(path)).font.name = "Cambria Math"
-            caption.add_run(f"\t({number})")
-        comment_id = _add_comment(doc, caption, f"Display provenance: {display.reference}")
-        comment_map.append(
-            {
-                "section": section.title,
-                "anchor": f"{label} {number}",
-                "comment_id": comment_id,
-                "reference": display.reference,
-            }
-        )
+            equation = doc.add_paragraph()
+            equation.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            equation.paragraph_format.keep_with_next = True
+            equation.add_run(_read_equation(path)).font.name = "Cambria Math"
+            equation.add_run(f"\t({number})")
+            doc.add_paragraph(display.caption)
 
 
 def build_venue_docx(
@@ -1104,14 +1106,8 @@ def build_venue_docx(
         _replace_visible_text(doc.paragraphs[2], abstract_text)
         _clear_body_after(doc, 3)
         if abstract_sections:
-            comment_id = _add_comment(doc, doc.paragraphs[2], _section_comment(abstract_sections[0]))
-            comment_map.append(
-                {
-                    "section": abstract_sections[0].title,
-                    "anchor": "abstract",
-                    "comment_id": comment_id,
-                    "planning_fields": ["Source support", "Results presented", "Open questions"],
-                }
+            _add_open_questions_comment(
+                doc, doc.paragraphs[2], abstract_sections[0], "abstract", comment_map
             )
         _replace_header_placeholder(doc, running_title)
         doc.add_page_break()
@@ -1133,14 +1129,8 @@ def build_venue_docx(
         doc.add_paragraph(abstract_text)
         doc.add_paragraph("Keywords: [Keywords]")
         if abstract_sections:
-            comment_id = _add_comment(doc, abstract_heading, _section_comment(abstract_sections[0]))
-            comment_map.append(
-                {
-                    "section": abstract_sections[0].title,
-                    "anchor": "abstract heading",
-                    "comment_id": comment_id,
-                    "planning_fields": ["Source support", "Results presented", "Open questions"],
-                }
+            _add_open_questions_comment(
+                doc, abstract_heading, abstract_sections[0], "abstract heading", comment_map
             )
         doc.add_page_break()
 
@@ -1158,22 +1148,14 @@ def build_venue_docx(
         heading = doc.add_paragraph(
             labels[section.order], style=f"Heading {min(section.depth + 1, 4)}"
         )
-        comment_id = _add_comment(doc, heading, _section_comment(section))
-        comment_map.append(
-            {
-                "section": section.title,
-                "anchor": "heading",
-                "comment_id": comment_id,
-                "planning_fields": ["Source support", "Results presented", "Open questions"],
-            }
-        )
+        _add_open_questions_comment(doc, heading, section, "heading", comment_map)
         content = section.fields["Bare-bones content"].strip()
         if content.casefold() == AUTHOR_TO_WRITE.casefold():
             doc.add_paragraph(_author_placeholder(section.fields["Author work"]), style="Author Placeholder")
         else:
             doc.add_paragraph(_visible_text(content))
             doc.add_paragraph(_author_placeholder(section.fields["Author work"]), style="Author Placeholder")
-        _add_venue_displays(doc, section, repository_root, profile_id, counters, comment_map)
+        _add_venue_displays(doc, section, repository_root, profile_id, counters)
 
     if profile_id == "journal_of_legal_analysis_v1" or reference_sections:
         references = doc.add_paragraph("References", style="Heading 1")
@@ -1185,18 +1167,8 @@ def build_venue_docx(
                     if content.casefold() == AUTHOR_TO_WRITE.casefold()
                     else _visible_text(content)
                 )
-                comment_id = _add_comment(doc, references, _section_comment(section))
-                comment_map.append(
-                    {
-                        "section": section.title,
-                        "anchor": "references heading",
-                        "comment_id": comment_id,
-                        "planning_fields": [
-                            "Source support",
-                            "Results presented",
-                            "Open questions",
-                        ],
-                    }
+                _add_open_questions_comment(
+                    doc, references, section, "references heading", comment_map
                 )
         elif profile_id == "journal_of_legal_analysis_v1":
             doc.add_paragraph("[Author: Add author-date references.]", style="Author Placeholder")
@@ -1260,10 +1232,15 @@ def _latex_displays(display_value: str, repository_root: Path, output: Path) -> 
     lines: list[str] = []
     for display in parse_displays(display_value):
         path = _resolve_project_path(repository_root, display.path)
-        lines.append(
+        caption_line = (
             rf"\textbf{{{display.kind.capitalize()}.}} {_latex_escape(display.caption)}"
         )
-        lines.append(rf"\textit{{Source:}} \path{{{display.reference}}}")
+        source_line = rf"\textit{{Source:}} \path{{{display.reference}}}"
+        if display.kind == "equation":
+            lines.extend([r"\[", _read_equation(path), r"\]", caption_line, source_line])
+            continue
+        lines.append(caption_line)
+        lines.append(source_line)
         if display.kind == "table":
             rows = _read_table(path)
             columns = "l" * len(rows[0])
@@ -1274,7 +1251,7 @@ def _latex_displays(display_value: str, repository_root: Path, output: Path) -> 
                     content = r"\textbf{" + (r"} & \textbf{".join(_latex_escape(cell) for cell in row)) + r"} \\ \hline"
                 lines.append(content)
             lines.extend([r"\hline", r"\end{tabular}%", r"}", r"\end{center}"])
-        elif display.kind == "figure":
+        else:
             relative = Path(os.path.relpath(path, output.parent)).as_posix()
             lines.extend(
                 [
@@ -1283,8 +1260,6 @@ def _latex_displays(display_value: str, repository_root: Path, output: Path) -> 
                     r"\end{center}",
                 ]
             )
-        else:
-            lines.extend([r"\[", _read_equation(path), r"\]"])
     return lines
 
 
@@ -1350,7 +1325,6 @@ def build_tex(
         lines.append(r"\begin{description}")
         for field_name in (
             "Source support",
-            "Results presented",
             "Author work",
             "Open questions",
         ):
@@ -1367,24 +1341,25 @@ def _markdown_displays(display_value: str, repository_root: Path, output: Path) 
     lines: list[str] = []
     for display in parse_displays(display_value):
         path = _resolve_project_path(repository_root, display.path)
-        lines.extend(
-            [
-                f"**{display.kind.capitalize()}.** {display.caption}",
-                "",
-                f"*Source: `{display.reference}`*",
-                "",
-            ]
-        )
+        caption_lines = [
+            f"**{display.kind.capitalize()}.** {display.caption}",
+            "",
+            f"*Source: `{display.reference}`*",
+            "",
+        ]
+        if display.kind == "equation":
+            lines.extend(["$$", _read_equation(path), "$$", ""])
+            lines.extend(caption_lines)
+            continue
+        lines.extend(caption_lines)
         if display.kind == "table":
             rows = _read_table(path)
             lines.append("| " + " | ".join(rows[0]) + " |")
             lines.append("|" + "|".join("---" for _ in rows[0]) + "|")
             lines.extend("| " + " | ".join(row) + " |" for row in rows[1:])
-        elif display.kind == "figure":
+        else:
             relative = Path(os.path.relpath(path, output.parent)).as_posix()
             lines.append(f"![{display.caption}]({relative})")
-        else:
-            lines.extend(["$$", _read_equation(path), "$$"])
         lines.append("")
     return lines
 
@@ -1425,7 +1400,6 @@ def build_markdown(
         lines.append("")
         for field_name in (
             "Source support",
-            "Results presented",
             "Author work",
             "Open questions",
         ):
@@ -1480,8 +1454,15 @@ def _validate_output(
                 raise ValueError("venue-aware Word artifact contains visible ELARA branding")
             if "project/" in visible:
                 raise ValueError("venue-aware Word artifact exposes a visible project path")
-            if len(reopened.comments) < len(sections):
-                raise ValueError("venue-aware Word artifact is missing planning comments")
+            expected_comments = sum(
+                1 for section in sections if _has_open_questions(section)
+            )
+            if len(reopened.comments) != expected_comments:
+                raise ValueError(
+                    "venue-aware Word artifact must carry exactly one comment per "
+                    f"section with open questions: expected {expected_comments}, "
+                    f"found {len(reopened.comments)}"
+                )
     else:
         text = path.read_text(encoding="utf-8")
         missing = [section.title for section in sections if section.title not in text]
