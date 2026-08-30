@@ -62,6 +62,8 @@ DISCOVERY_SURFACES = (
     "PIPELINE.md",
     "requirements.txt",
     "scripts/bootstrap.py",
+    "scripts/model_readiness.py",
+    "workflow/shared/model-readiness.md",
     "workflow/shared/guardrails.md",
     "workflow/shared/artifact-contract.md",
     "workflow/shared/execution-control.md",
@@ -581,7 +583,7 @@ def _offline_research_fanout_smoke(root):
     return {"ready": True, "model_calls": 0, "network_calls": 0, "assignments": 1}
 
 
-def build_report(root, platform="auto", smoke=True):
+def build_report(root, platform="auto", smoke=True, model_evidence=None):
     """Return a complete machine-readable preflight report."""
     root = root.resolve()
     failures = []
@@ -619,6 +621,22 @@ def build_report(root, platform="auto", smoke=True):
     failures.extend(document_dependency_failures)
     hosts, host_failures, host_warnings = _host_reports(platform)
     failures.extend(host_failures)
+
+    try:
+        from model_readiness import build_advisory
+    except ImportError:
+        model_readiness = {
+            "platforms": {}, "warnings": ["Model access was not checked: the model-readiness helper is missing."],
+            "recommendations": [], "status": "not_checked", "advisory_only": True,
+        }
+    else:
+        model_platforms = [name for name, host in hosts.items() if host["required"]]
+        if platform == "auto":
+            active = [name for name in model_platforms if hosts[name].get("active_session")]
+            # Installing another CLI does not make that provider a research route.
+            # With no active session and two candidates, defer selection to setup.
+            model_platforms = active or (model_platforms if len(model_platforms) == 1 else [])
+        model_readiness = build_advisory(model_platforms, model_evidence)
 
     smoke_report = {"ready": False, "skipped": not smoke}
     if smoke:
@@ -662,6 +680,7 @@ def build_report(root, platform="auto", smoke=True):
         "document_dependency": document_dependency,
         "platform_selection": platform,
         "hosts": hosts,
+        "model_readiness": model_readiness,
         "checks": {
             "discovery_surfaces": "passed" if not any(
                 failure.startswith("missing ") for failure in failures
@@ -672,7 +691,7 @@ def build_report(root, platform="auto", smoke=True):
             "offline_fanout_smoke": smoke_report,
             "offline_research_fanout_smoke": research_smoke_report,
         },
-        "warnings": host_warnings,
+        "warnings": host_warnings + model_readiness["warnings"],
         "failures": failures,
     }
 
@@ -738,8 +757,16 @@ def _print_human_report(report):
     else:
         print("CHECK: restricted worker definitions or saved workflows missing or unrestricted")
 
+    advisory = report.get("model_readiness") or {}
     for warning in report.get("warnings") or []:
-        print("NOTE: " + str(warning))
+        prefix = "WARNING: " if warning in advisory.get("warnings", []) else "NOTE: "
+        print(prefix + str(warning))
+    for name, result in advisory.get("platforms", {}).items():
+        print("MODEL CHECK: " + name + " - " + result["status"])
+    if not advisory.get("platforms") and report["platform_selection"] != "none":
+        print("MODEL CHECK: not checked; complete the active-platform check at first use.")
+    for recommendation in advisory.get("recommendations", []):
+        print("RECOMMENDATION: " + recommendation)
     if report["failures"]:
         print("FAIL: this installation has " + str(len(report["failures"])) + " problem(s):")
         for failure in report["failures"]:
@@ -749,6 +776,8 @@ def _print_human_report(report):
     available = [
         name for name, host in report["hosts"].items() if host["ready"]
     ]
+    if advisory.get("platforms"):
+        print("Model advice is nonblocking; software PASS below does not certify model access.")
     if report["platform_selection"] == "none":
         print("PASS: Python, dependencies, kit contract, and offline fan-out are ready.")
     elif available == ["codex"]:
@@ -771,6 +800,11 @@ def main():
         help="agent host to require; auto accepts every detected supported host",
     )
     parser.add_argument(
+        "--model-evidence",
+        type=Path,
+        help="fresh secret-free evidence from the active host; model advice never blocks installation",
+    )
+    parser.add_argument(
         "--skip-smoke",
         action="store_true",
         help="skip the temporary one-unit offline prepare/submit/status/merge test",
@@ -782,7 +816,8 @@ def main():
     )
     args = parser.parse_args()
     report = build_report(
-        args.root.resolve(), platform=args.platform, smoke=not args.skip_smoke
+        args.root.resolve(), platform=args.platform, smoke=not args.skip_smoke,
+        model_evidence=args.model_evidence,
     )
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))

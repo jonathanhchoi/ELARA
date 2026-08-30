@@ -36,6 +36,7 @@ the setup and runs the commands. You answer its questions and make the calls.
       `python3` or `py` if that fails, and if Python 3.10 or newer is missing,
       help me install it first). The script installs ELARA here without
       overwriting my files, checks the setup, and removes itself.
+      Complete the model-access check it requests and tell me any warning.
    2. Follow the NEXT STEPS it prints: read `AGENTS.md`, then begin with the
       Orientation in `workflow/stages/00-initialize.md`. Explain things in plain
       language, work out what you can from my files, and ask me only what you
@@ -53,6 +54,24 @@ the setup and runs the commands. You answer its questions and make the calls.
 The assistant installs the kit without moving your files. It checks Python and
 the one required package, then gives you a short explanation of what ELARA can
 and can't do.
+
+During setup, the assistant checks current official guidance for the strongest
+model on your platform, your actual access, and the selected model and reasoning
+setting. No particular model version is built into ELARA. If access is missing,
+ELARA strongly recommends upgrading or obtaining the necessary access before
+substantial research. If access cannot be verified, it says so. If the model is
+available but not selected, it recommends switching rather than buying an upgrade.
+These are warnings, not installation requirements; ELARA never changes your
+settings, subscriptions, or approved research model automatically.
+
+For large-scale research, ELARA strongly recommends **ChatGPT Pro 20x** for Codex
+or **Claude Max 20x** for Claude Code, or the current highest-volume equivalent.
+You do not need both. The assistant checks current plan terms: higher capacity
+does not mean unlimited use or guarantee that every frontier model is included;
+additional credits may be required. API billing is separate. See the current
+[OpenAI plans](https://learn.chatgpt.com/docs/pricing) and
+[Claude Max plans](https://support.claude.com/en/articles/11049741-what-is-the-max-plan).
+The dated findings and any limitations are saved in your access/model snapshot.
 
 Next, it asks whether you want the whole pipeline or a specific tool. The whole
 pipeline proceeds in order from project selection through replication, with
@@ -153,6 +172,16 @@ On Windows, `py` may replace `python`. The doctor detects installed agent hosts,
 checks their versions, validates the kit and its dependencies, and performs a
 temporary one-unit `prepare`/`submit`/`status`/`merge` exercise. This exercise
 uses no model and no network. Resolve every reported failure before continuing.
+
+The doctor also reports model advice separately from software readiness. It
+does not itself determine the strongest model or inspect account entitlements.
+The assistant completes the live, evidence-backed check in
+[`workflow/shared/model-readiness.md`](workflow/shared/model-readiness.md) during
+first use and after updates. A manual installation without an active agent
+leaves that check explicitly pending. Model warnings do not change the doctor's
+exit status. Maintainers can pass `--model-evidence <file>` to the doctor or
+installer for a fresh, secret-free evidence record; `--platform none` keeps
+ordinary repository checks offline and skips model assessment.
 
 You can instead run `python scripts/bootstrap.py`. It installs the dependencies,
 uses a `.venv` if the system Python is locked down, runs the doctor, and writes
