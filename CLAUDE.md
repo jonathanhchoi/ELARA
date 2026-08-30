@@ -95,7 +95,10 @@ a launched run on the missing type before the script's own fallback message is r
 leaves the researcher a raw platform error instead of the instruction. The scripts' internal
 advice is a backstop, not the primary surface. The desktop app's in-app Browser, computer use, Chrome, and other MCP
 tools are interactive surfaces for the researcher's own session; a worker must never reach them
-(one that did, on a bot-challenge page, crashed the desktop app twice on 2026-08-17). Fan-out
+(one that did, on a bot-challenge page, crashed the desktop app twice on 2026-08-17; challenge
+pages crashed it again during parent fallback attempts on 2026-08-26 and 2026-08-30, about one
+second after rendering, so a host that bot-walled automated fetching is never opened in the
+in-app pane either — see the fallback protocol in `workflow/shared/observation-fanout.md`). Fan-out
 manifests, briefs, and worker returns live under the run directory, never in the session
 scratchpad; see `workflow/shared/observation-fanout.md`, "The host orchestrates; the kit
 validates" and "Worker tool surface, time boxes, and crash-resume".
