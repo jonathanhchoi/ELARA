@@ -223,27 +223,43 @@ work that could materially affect the closest-work map, a citation chain, or the
 1. Recheck the exact title and locator through lawful open routes first: the publisher or repository
    landing page, an author or institutional copy, and any available purpose-built scholarly
    connector, API, or index. Do not use a browser merely to repeat a route that already succeeded.
-2. If full text is still blocked by an automated-download or bot restriction and the host exposes
-   browser control, the parent uses that surface in the researcher's main session, opens the exact
-   landing URL, and makes one bounded ordinary-UI attempt to open or download the work. An existing
+2. If full text is still blocked by an automated-download or bot restriction, classify the host
+   before touching any browser. A host is **challenge-evidenced** when any automated fetch in the
+   same project met a 403, a CAPTCHA, a bot challenge, or a "verifying you are human" page there,
+   or when it is a known challenge-fronted or walled host (`papers.ssrn.com`, HeinOnline, Westlaw,
+   Lexis, JSTOR, Google Scholar, `academic.oup.com`, and other Cloudflare-fronted publisher
+   sites). Never open a challenge-evidenced host in the host application's own in-app browser
+   pane: a challenge page rendering there has crashed the desktop host about one second after
+   loading — the interstitial's GPU probe (a WebGPU `requestAdapter()` call) killed the app's GPU
+   process faster than any tool round trip could close the tab (workers twice on 2026-08-17;
+   parent fallback attempts on 2026-08-26 and 2026-08-30) — so no react-and-navigate-away rule
+   can execute in time, and avoidance is the only defense. Route a challenge-evidenced source to
+   the researcher's own real, separate-process browser session where the platform exposes one
+   (for example the Claude Code Chrome extension connection, used with the researcher's
+   awareness), or straight to the manual search packet. For a host with no challenge evidence,
+   the parent uses browser control in the researcher's main session, opens the exact landing URL,
+   and makes one bounded ordinary-UI attempt to open or download the work — on Claude Code as one
+   batched action sequence (navigate, one bounded text read, then immediately a blank page), so
+   that no unknown page rests in the in-app pane across a tool round trip. An existing
    signed-in session may be used only when the project's recorded authorization permits that source.
    Never inspect credentials or session stores, spoof a client, disable protections, solve or bypass
    a CAPTCHA, evade a paywall or terms, or manufacture a direct-download URL.
 3. If the page requires a login, CAPTCHA, license acceptance, purchase, or other action only the
    researcher can take, leave the control with the researcher and batch the exact requests under
    `guardrails.md` section 11. Browser unavailability or a failed ordinary-UI attempt is evidence of
-   an access gap, not permission to switch to an unsupported automation route. Treat an anti-bot
-   challenge or interstitial verification page ("checking your browser", "just a moment") as the end
-   of that attempt the moment it appears: record the access gap and navigate away or close the tab
-   immediately, and never wait on, reload, retry, or interact with such a page — challenge pages
-   left open in the app's browser have crashed the desktop host (workers twice on 2026-08-17, and
-   once during a parent fallback attempt on 2026-08-26), and a crashed session resumes from the
-   files but loses the researcher's time.
+   an access gap, not permission to switch to an unsupported automation route. If a challenge or
+   interstitial verification page ("checking your browser", "just a moment") appears despite the
+   host classification above, that attempt is over and the host is challenge-evidenced for the
+   rest of the project: record the access gap, leave the page at once if the pane still responds,
+   and never wait on, reload, retry, or interact with such a page — and expect no second chance,
+   because the recorded crashes followed the page's render faster than an agent can react. A
+   crashed session resumes from the files but loses the researcher's time.
 4. Record one `search_log.csv` row with route `parent_browser_fallback` for each attempted source:
    source ID, landing URL, original status or message and time, browser-attempt time, browser surface,
    final URL when visible, and result (`retrieved`, `still_blocked`, `researcher_action_required`, or
    `browser_unavailable`). If a potentially material gap is not attempted because use is not
-   authorized or the locator is not a lawful retrieval route, record that typed reason instead.
+   authorized, the host is challenge-evidenced, or the locator is not a lawful retrieval route,
+   record that typed reason instead.
 5. A successful browser download is not self-validating. Save or copy the lawful full text into the
    Stage 02 `retrieved/` directory, verify that it is the identified work rather than an HTML
    challenge or error page, hash it, and update the source manifest with retrieval surface, access

@@ -453,6 +453,29 @@ rises to 1.2 because the Word comment interface requires it. No state field,
 stage order, approval gate, or research safeguard changes, so existing projects
 need no migration; the next Stage 17 run simply produces the quieter form.
 
+Version 2.4.1 adds a nonblocking model-readiness check to installation and
+first-run setup. The installing agent retrieves current official model guidance
+and inspects the active host and account; a deterministic offline helper
+(`scripts/model_readiness.py`) validates dated, secret-free evidence and
+distinguishes unavailable access, unverified access, and an available model
+that is not selected; setup recommends the strongest applicable configuration
+and surfaces capacity warnings. Model identifiers and rankings are not
+hard-coded. No state field, stage order, approval gate, file format, or
+research safeguard changes, so existing projects need no migration.
+
+Version 2.4.2 hardens the Stage 02 parent-only browser fallback after a third
+field crash (2026-08-30): a Cloudflare-style challenge page rendered in the
+desktop app's in-app browser pane killed the app's GPU process about one second
+after loading — faster than any agent reaction — so the former
+navigate-away-immediately rule could never execute in time. The protocol now
+classifies hosts before any browser use: a host that bot-walled automated
+fetching in the same project, or a known challenge-fronted host, is never
+opened in the in-app pane; such sources go to the researcher's own
+separate-process browser session or the manual search packet, and remaining
+in-pane attempts run as one batched sequence so no unknown page rests in the
+pane between tool calls. No state field, stage order, approval gate, file
+format, or research safeguard changes, so existing projects need no migration.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:
