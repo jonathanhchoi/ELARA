@@ -76,6 +76,13 @@ very fast research assistant whose work is verified, never trusted.
    Every other choice takes the sensible default, is recorded as a provisional
    `assistant-default` decision, and is presented at the next gate for the
    researcher to keep or change.
+10. At installation/first use, after a kit update, or when the host/account/model
+    route changes, follow `workflow/shared/model-readiness.md`. Verify the
+    current strongest applicable model and actual access from live evidence,
+    prominently communicate unknown/unavailable access and capacity advice,
+    and record the versioned setup snapshot. This is advisory, not a new gate;
+    never silently change models, reasoning settings, subscriptions, or a
+    frozen research instrument. Read-only requests remain read-only.
 
 During a research run, edit only paths under `project/` that the current stage
 declares (plus the repository-local Git change-tracking the researcher

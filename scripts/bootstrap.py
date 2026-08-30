@@ -956,8 +956,10 @@ def doctor_platform(hosts, requested="auto"):
     return "none"
 
 
-def run_doctor(target, python, platform="none"):
+def run_doctor(target, python, platform="none", model_evidence=None):
     command = [python, str(Path(target) / "scripts" / "doctor.py"), "--json", "--platform", platform, "--root", str(target)]
+    if model_evidence:
+        command.extend(["--model-evidence", str(Path(model_evidence).resolve())])
     result = run_command(command, timeout=600)
     record = {
         "command": " ".join(command),
@@ -1065,6 +1067,15 @@ def next_steps(summary):
     steps.append(
         "Read AGENTS.md (the standing rules) and PIPELINE.md (the map and the menu of tools), "
         "then " + REPORT_RELATIVE + " (this report)."
+    )
+    steps.append(
+        "Complete workflow/shared/model-readiness.md for the active host before substantive "
+        "research: retrieve current official model guidance, inspect actual model access and "
+        "selected reasoning settings, and tell the researcher the result and high-volume plan "
+        "recommendation. Unknown or unavailable access is a prominent warning, not a new gate. "
+        "Record fresh evidence and a versioned access snapshot; after an update do not "
+        "reinitialize the project or change its approved model. Never purchase anything or "
+        "make a billable test call for this check."
     )
     steps.append(
         'Follow workflow/stages/00-initialize.md from its "Orientation (first session)" section: '
@@ -1321,6 +1332,14 @@ def render_report(summary):
             lines.append("- Notes that do not block research:")
             lines.append(format_list(doctor["warnings"]))
     lines.append("")
+    lines.append("### Model access and capacity (advisory only)")
+    lines.append("")
+    advisory = summary.get("model_readiness") or {}
+    for name, result in advisory.get("platforms", {}).items():
+        lines.append("- " + name + ": " + result["status"])
+    lines.append(format_list(advisory.get("warnings") or [], "no model warning"))
+    lines.append(format_list(advisory.get("recommendations") or [], "check at first use"))
+    lines.append("")
     lines.append("### Next steps for the assistant")
     lines.append("")
     for index, step in enumerate(next_steps(summary), 1):
@@ -1372,6 +1391,7 @@ def machine_summary(summary):
         "hosts": summary["hosts"],
         "cloud_sync_service": summary.get("cloud_sync_service"),
         "warnings": summary.get("warnings") or [],
+        "model_readiness": summary.get("model_readiness"),
         "doctor": {
             "skipped": bool(doctor.get("skipped")),
             "ok": bool(doctor.get("ok")),
@@ -1466,6 +1486,8 @@ def print_human(summary):
             print("               - " + str(failure))
         for warning in doctor.get("warnings") or []:
             print("               - (not blocking) " + str(warning))
+    for recommendation in (summary.get("model_readiness") or {}).get("recommendations", []):
+        print("  RECOMMENDATION: " + recommendation)
     if dry_run:
         temporary = summary.get("temporary_source")
         if temporary and is_temporary_kit_name(temporary):
@@ -1596,21 +1618,51 @@ def bootstrap(args):
         }
     elif args.skip_doctor:
         summary["doctor"] = {"skipped": True, "ok": False, "failures": [], "command": None}
-    elif "scripts/doctor.py" in conflicts:
-        # Never run a file of the researcher's as if it were the kit's doctor.
+    elif any(path in conflicts for path in ("scripts/doctor.py", "scripts/model_readiness.py")):
+        # Never run/import a researcher's file as the doctor or its new helper.
+        conflicting_check = next(
+            path for path in ("scripts/doctor.py", "scripts/model_readiness.py")
+            if path in conflicts
+        )
         summary["doctor"] = {
             "skipped": False,
             "ok": False,
             "failures": [
-                "scripts/doctor.py here is your own file, not ELARA's, so ELARA's preflight "
+                conflicting_check + " here is your own file, not ELARA's, so ELARA's preflight "
                 "check could not run in this folder"
             ],
             "command": None,
             "report": None,
         }
     else:
-        summary["doctor"] = run_doctor(target, summary["python_for_kit"], summary["doctor_platform"])
+        summary["doctor"] = run_doctor(
+            target, summary["python_for_kit"], summary["doctor_platform"],
+            getattr(args, "model_evidence", None),
+        )
         summary["doctor"]["skipped"] = False
+    advisory = (summary["doctor"].get("report") or {}).get("model_readiness")
+    if not advisory or not advisory.get("platforms"):
+        # The loose installer is stdlib-only and may have no trusted helper yet
+        # (--dry-run, --skip-doctor, or conflicting researcher-owned files).
+        # Do not import or execute a file at a conflicting path to get advice.
+        advisory = {
+            "schema_version": "1.0", "advisory_only": True, "status": "not_checked",
+            "platforms": {},
+            "warnings": [
+                "Model access has not been verified. At first use, the assistant must check "
+                "access to the current strongest applicable model under "
+                "workflow/shared/model-readiness.md. ELARA strongly recommends verifying "
+                "access and upgrading if needed before substantial research; installation may continue."
+            ],
+            "recommendations": [
+                "For large-scale research, ELARA strongly recommends ChatGPT Pro 20x for Codex "
+                "or Claude Max 20x for Claude Code (or the current highest-volume equivalent). "
+                "You do not need both. Check current terms: capacity is not unlimited, "
+                "some models may require additional credits, and API billing is separate."
+            ],
+        }
+        summary["warnings"].extend(advisory["warnings"])
+    summary["model_readiness"] = advisory
     if dry_run:
         # The plan itself is the result; nothing was written, so nothing can be broken yet.
         summary["ok"] = True
@@ -1686,6 +1738,10 @@ def main():
         choices=("auto", "codex", "claude", "all", "none"),
         default="auto",
         help="agent host the doctor should check; auto means the host this script runs inside (its command need not be on PATH), else none",
+    )
+    parser.add_argument(
+        "--model-evidence",
+        help="fresh secret-free model evidence for the active host (advisory only)",
     )
     parser.add_argument(
         "--keep",
