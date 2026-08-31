@@ -149,12 +149,20 @@ mid-write; relaunched identically, it did the same thing again.
    model route. On Codex the parent spawns at most six workers per wave (fewer under a shared
    rate limit), waits for the whole wave, and only then spawns the next. After each run or wave
    the parent validates returns from files, merges serially, and appends a ledger checkpoint with
-   exact counts. Writes to manifests, merged aggregates, ledgers, and state are atomic (temporary
+   exact counts. During the Stage 11 coding run, the disposition of each failed, invalid, or
+   exhausted unit found at these checkpoints follows the researcher's recorded `failure_handling`
+   preference as `workflow/stages/11-scale-up.md` and `workflow/shared/guardrails.md` §11 direct:
+   decide under the frozen rules, append the judgment to the run's `failure_decisions.jsonl`, and
+   continue when the preference is absent or `autonomous`; pause at the checkpoint and present
+   the pending failures when it is `interactive`. Only the parent appends that log, serially.
+   Writes to manifests, merged aggregates, ledgers, and state are atomic (temporary
    file, then replace); the controllers already write that way. After every wave, the parent
 scans for files created during the wave outside the run directory's expected paths (worker
-returns, attempts, seals) — the repository root and working directory included. Any stray
+returns, attempts, seals, and the parent's own `failure_decisions.jsonl`) — the repository root
+and working directory included. Any stray
 worker write is a containment finding: record it in the run ledger with the file's path and
-disposition, remove or quarantine it, and treat repetition as a stop condition for the wave.
+disposition, remove or quarantine it, and treat repetition as a stop condition for the wave
+in either failure-handling mode.
 Tool restrictions bound what a worker may invoke, not where a shell may write; only this scan
 closes that gap. At launch and after each status
    check or wave, the parent tells the researcher the exact terminal and outstanding counts,

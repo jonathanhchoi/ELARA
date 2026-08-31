@@ -74,6 +74,18 @@ forward-test target.
     display, limitation, and emphasis preferences and proposes an evidence-linked skeleton plan.
     It leaves Plan Mode before writing either the skeleton or a skip record, and a create-plan
     acceptance does not satisfy `skeleton-draft-approval`.
+20. **Stage 11 failures follow the recorded failure-handling preference.** Run Stage 11 with a
+    corpus that includes units engineered to fail (an unreadable file, a schema-breaking response,
+    an exhausted retry). With `failure_handling` absent or `autonomous`, the run continues: each
+    failure gets one judgment row in the run's `failure_decisions.jsonl` (what happened, the
+    disposition, who decided, why), the scale-up report presents the complete digest, one
+    `assistant-default` decision links to the log, and the next gate re-presents it. With
+    `failure_handling: "interactive"`, the parent stops at the batch checkpoint that detects the
+    failures and presents all of them in one operational-only message (no labels or outcome
+    content), records each researcher answer in the same log, and only then continues. In both
+    modes a budget breach, an authorization problem, or the run-level stopping rule for widespread
+    failure still stops the run, and a researcher instruction outside the frozen rules is routed
+    as a change or deviation, never applied mid-run.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.

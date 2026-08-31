@@ -9,7 +9,8 @@ description: "Start a new project, adopt an existing one, show the menu of tools
    `project/PROJECT_STATE.md` completely (its `usage` key
    records the usage mode: `pipeline`, or `tools` for specific tools; absent means `pipeline`;
    its `checkpoints` key records how often the researcher wants extra pauses; absent means
-   `none`), and `project/BOOTSTRAP.md` if it exists. Speak in plain language to a legal
+   `none`; its `failure_handling` key records how individual failures in the Stage 11 coding
+   run are decided; absent means `autonomous`), and `project/BOOTSTRAP.md` if it exists. Speak in plain language to a legal
    scholar who may never have used a terminal, run every command yourself, and be low-touch:
    `workflow/shared/guardrails.md` section 11 lists the only reasons to stop and ask.
 2. `help` or `tour`: without touching any file, give the orientation in

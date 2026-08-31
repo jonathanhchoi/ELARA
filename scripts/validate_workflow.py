@@ -76,9 +76,10 @@ UNVERSIONED_OUTPUTS = {
 }
 
 # Optional state keys added after schema 1.0, and their allowed values.
-OPTIONAL_STATE_KEYS = {"usage", "checkpoints"}
+OPTIONAL_STATE_KEYS = {"usage", "checkpoints", "failure_handling"}
 STATE_USAGES = {"pipeline", "tools"}
 STATE_CHECKPOINTS = {"none", "stages", "plans", "all"}
+STATE_FAILURE_HANDLING = {"autonomous", "interactive"}
 
 # Every numeric guard below (int(stage_id[:2]) and friends) relies on this
 # pattern having been checked first.
@@ -289,9 +290,10 @@ def validate_state(root: Path) -> list[str]:
         "updated_at",
     }
     errors: list[str] = []
-    # `usage` (schema 1.1) and `checkpoints` (schema 1.2) are optional so that
-    # state files written under earlier schemas stay valid; absent means the
-    # whole pipeline and no extra pauses.
+    # `usage` (schema 1.1), `checkpoints` (schema 1.2), and `failure_handling`
+    # (schema 1.3) are optional so that state files written under earlier
+    # schemas stay valid; absent means the whole pipeline, no extra pauses,
+    # and autonomous handling of coding-run failures.
     if not required <= set(meta) <= required | OPTIONAL_STATE_KEYS:
         errors.append(f"{path}: state keys do not match the public state contract")
     if "usage" in meta and meta["usage"] not in STATE_USAGES:
@@ -299,6 +301,11 @@ def validate_state(root: Path) -> list[str]:
     if "checkpoints" in meta and meta["checkpoints"] not in STATE_CHECKPOINTS:
         errors.append(
             f"{path}: checkpoints must be one of {sorted(STATE_CHECKPOINTS)}, not {meta['checkpoints']!r}"
+        )
+    if "failure_handling" in meta and meta["failure_handling"] not in STATE_FAILURE_HANDLING:
+        errors.append(
+            f"{path}: failure_handling must be one of {sorted(STATE_FAILURE_HANDLING)},"
+            f" not {meta['failure_handling']!r}"
         )
     if meta.get("status") not in STATE_STATUSES:
         errors.append(f"{path}: invalid status {meta.get('status')!r}")

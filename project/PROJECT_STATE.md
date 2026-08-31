@@ -1,9 +1,10 @@
 ---
-schema_version: "1.2"
-workflow_version: "2.4.2"
+schema_version: "1.3"
+workflow_version: "2.5.0"
 project_slug: null
 usage: "pipeline"
 checkpoints: "none"
+failure_handling: "autonomous"
 current_stage: "00-initialize"
 status: "ready"
 active_artifacts: {}
@@ -31,6 +32,15 @@ defaults to `pipeline`.
 the gates: `none` (the default: the assistant continues between stages and
 executes its plans without waiting), `stages`, `plans`, or `all`. It is
 optional and defaults to `none`; see `workflow/shared/guardrails.md` section 11.
+`failure_handling` records what the assistant does when an individual document
+or unit fails during the full coding run (Stage 11): `autonomous` (the default:
+it decides each case under the approved rules, records every decision in that
+run's failure-decisions log, keeps the run going, and presents the complete
+list at the end of the run and at the next gate) or `interactive` (it pauses at
+the checkpoint where failures are found and asks the researcher to decide
+each). It is optional and defaults to `autonomous`; it never relaxes a gate, a
+spending limit, or a required review. See `workflow/shared/guardrails.md`
+section 11.
 
 Do not hand-edit state merely to bypass a prerequisite or gate. State changes
 must correspond to a verified stage transition, append-only run entry, and, when

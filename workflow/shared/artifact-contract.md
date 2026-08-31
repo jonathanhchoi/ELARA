@@ -113,8 +113,8 @@ native formats; this PDF default does not convert them into page documents.
 types:
 
 - `schema_version`: quoted state-schema version (`1.1` adds the optional
-  `usage` key, `1.2` the optional `checkpoints` key; `1.0` and `1.1` files
-  remain valid).
+  `usage` key, `1.2` the optional `checkpoints` key, `1.3` the optional
+  `failure_handling` key; files written under earlier schemas remain valid).
 - `workflow_version`: quoted pipeline release version.
 - `project_slug`: quoted stable slug after Stage 00 charter approval, or `null`
   throughout the untouched, running, waiting, and pre-approval Stage 00 states.
@@ -136,6 +136,21 @@ types:
   executing it), or `all` (both). Absent means `none`. Stage 00 records the
   researcher's answer; changing it later is a recorded decision. A checkpoint
   preference adds pauses; it never removes a gate.
+- `failure_handling` (optional): how unit-level failures during the Stage 11
+  coding run are dispositioned — `autonomous` (the default: the assistant
+  decides each one under the frozen rules, records it in the run's
+  failure-decisions log under the run directory, keeps the run going, and
+  presents the complete digest at the end of the run and at the next gate,
+  per `workflow/shared/guardrails.md` §11) or `interactive` (the assistant
+  pauses at the batch or validation checkpoint where it detects failures and
+  asks the researcher to dispose of each, in one batched message per
+  checkpoint). Absent means `autonomous`. Stage 00 records the researcher's
+  answer; changing it later is a recorded decision, and the Stage 08
+  interview confirms or changes it before the full run. The mode governs
+  only the disposition of individual failed units under rules already
+  frozen; it never relaxes a gate, budget stop, authorization requirement,
+  deviation handling, blind adjudication, or a review a stage assigns to the
+  researcher.
 - `current_stage`: quoted canonical stage ID.
 - `status`: one of `ready`, `running`, `awaiting_approval`,
   `waiting_for_user`, `failed`, `complete`, or `superseded`. Treat any other

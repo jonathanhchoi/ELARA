@@ -89,6 +89,10 @@ for a real decision — the formal gates, a fact only you hold, or a cost beyond
 the budget you set. Choices it makes in between are recorded as provisional
 and shown to you at the next gate to keep or change. If you would rather be
 consulted before each step or before each plan, say so once and it will.
+The same goes for failures during the full coding run: normally the assistant
+decides each failed document under the approved rules, records the decision,
+and shows you the complete list at the end of the run — or, if you prefer, it
+will check with you on each failure as it is found; say so once at setup.
 Agreement to continue never substitutes for approval at a formal gate.
 
 If you already have a question, codebook, dataset, analysis, draft, or referee
