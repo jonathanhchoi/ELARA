@@ -52,7 +52,10 @@ adversarial conditions, and recorded budget. Then use Codex
 `request_user_input` or Claude Code `AskUserQuestion` for one to three adaptive
 rounds that elicit the researcher's preferences about the pilot sample,
 independent pre-coding, one-unit execution architecture, validation and
-quotation checks, retries and stopping rules, success thresholds, researcher
+quotation checks, retries and stopping rules — including confirming or changing
+the `failure_handling` preference recorded at Stage 00, which governs how the
+Stage 11 full run handles individual unit failures, and the run-level stopping
+rule Stage 11 will apply to widespread failure — success thresholds, researcher
 review and disagreement handling, model route, and time and cost limits. For
 each consequential choice, show the controlling evidence, put a reasoned
 recommendation first, offer realistic alternatives and consequences, and

@@ -702,6 +702,68 @@ class WorkflowContractTests(unittest.TestCase):
             errors = validate_state(root)
             self.assertTrue(any("checkpoints must be one of" in error for error in errors), errors)
 
+    def test_state_failure_handling_key_is_optional_and_validated(self) -> None:
+        template = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")
+        self.assertIn('failure_handling: "autonomous"', template)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "project").mkdir()
+            state = root / "project" / "PROJECT_STATE.md"
+            # A schema-1.2 state file without the key still validates: absent means autonomous.
+            state.write_text(template.replace('failure_handling: "autonomous"\n', ""), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            initialized = template.replace("project_slug: null", 'project_slug: "fixture"').replace(
+                "updated_at: null", 'updated_at: "2026-08-31T00:00:00Z"'
+            )
+            state.write_text(
+                initialized.replace('failure_handling: "autonomous"', 'failure_handling: "interactive"'),
+                encoding="utf-8",
+            )
+            self.assertEqual(validate_state(root), [])
+            state.write_text(
+                initialized.replace('failure_handling: "autonomous"', 'failure_handling: "manual"'),
+                encoding="utf-8",
+            )
+            errors = validate_state(root)
+            self.assertTrue(any("failure_handling must be one of" in error for error in errors), errors)
+
+    def test_failure_handling_governs_only_the_coding_run(self) -> None:
+        # The researcher's failure-handling preference is declared in guardrails
+        # section 11, documented in the state contract, elicited at Stage 00,
+        # confirmed at the Stage 08 interview, and executed by Stage 11 — which
+        # alone declares the per-run judgment log. Every other stage is untouched.
+        guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(encoding="utf-8")
+        self.assertIn('failure_handling: "interactive"', guardrails)
+        self.assertIn("failure-decisions log", guardrails)
+        self.assertIn("Neither failure-handling", guardrails)
+        contract = (ROOT / "workflow" / "shared" / "artifact-contract.md").read_text(encoding="utf-8")
+        self.assertIn("`failure_handling` (optional)", contract)
+        self.assertIn("Absent means `autonomous`", contract)
+        stages = {meta["stage_id"]: (meta, body) for _, meta, body in load_stages(ROOT)}
+        _, body_00 = stages["00-initialize"]
+        self.assertIn("`failure_handling`", body_00)
+        self.assertIn("ask me about each failure", body_00)
+        _, body_08 = stages["08-pilot"]
+        self.assertIn("failure_handling", body_08)
+        meta_11, body_11 = stages["11-scale-up"]
+        self.assertIn("project/runs/<run_id>/failure_decisions.jsonl", meta_11["declared_outputs"])
+        joined_11 = " ".join(body_11.split())
+        self.assertIn("failure-handling mode", joined_11)
+        self.assertIn("run-level stopping rule", joined_11)
+        for stage_id, (meta, body) in stages.items():
+            if stage_id in ("00-initialize", "08-pilot", "11-scale-up"):
+                continue
+            self.assertNotIn("failure_handling", body, stage_id)
+            self.assertNotIn(
+                "failure_decisions", " ".join(meta.get("declared_outputs", [])), stage_id
+            )
+        fanout = (ROOT / "workflow" / "shared" / "observation-fanout.md").read_text(encoding="utf-8")
+        self.assertIn("failure_decisions.jsonl", fanout)
+        pipeline = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
+        self.assertIn("`failure_handling`", pipeline)
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("check with you on each failure", readme)
+
     def test_kit_is_low_touch_between_gates(self) -> None:
         guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(encoding="utf-8")
         self.assertIn("## 11. Autonomy", guardrails)

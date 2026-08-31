@@ -94,8 +94,14 @@ or approval.
   for the researcher to keep or change. A researcher who prefers to be
   consulted more often says so once; Stage 00 records it as `checkpoints` in
   `project/PROJECT_STATE.md` (`stages`, `plans`, or `all`), and the router then
-  pauses before each stage, before executing each plan, or both. Neither
-  setting relaxes a gate.
+  pauses before each stage, before executing each plan, or both. Likewise for
+  failures during the full coding run: by default the assistant decides each
+  failed document or unit under the approved rules, records the decision, and
+  presents the complete list at the end of the run and at the next gate; a
+  researcher who would rather decide each failure says so once and Stage 00
+  records `failure_handling: "interactive"`, which pauses at the checkpoint
+  where failures are found. Neither setting relaxes a gate, a spending limit,
+  or a required review.
 - **Specific-tools mode.** The researcher picks from the menu below. Stage 00
   runs its adoption path aimed at that tool, with the interview cut to two
   questions (a name for the project and what the researcher wants done): it asks
@@ -261,6 +267,11 @@ On either host the kit's controllers (`scripts/unit_fanout.py`,
 `scripts/research_fanout.py`) fix the assignment list on disk, say what is still
 pending, validate returns, bound attempts, and merge — so interrupted parallel
 work resumes in a later session from the files, and no unit is silently dropped.
+In the Stage 11 full coding run, each failed or unusable unit also gets a
+recorded judgment — made by the assistant under the frozen rules and reported
+in one complete list at the end (the default), or put to the researcher at the
+checkpoint where it is found if they chose `failure_handling: "interactive"`
+at setup.
 Workers have a fixed, limited set of tools (coding workers no web; research
 workers web search and fetch; none an interactive surface), a time box, and one
 unique return path each; shared ledgers are edited serially by the parent.
@@ -476,6 +487,24 @@ in-pane attempts run as one batched sequence so no unknown page rests in the
 pane between tool calls. No state field, stage order, approval gate, file
 format, or research safeguard changes, so existing projects need no migration.
 
+Version 2.5.0 lets the researcher choose how individual document or unit
+failures during the Stage 11 full coding run are handled. A new optional
+`failure_handling` key in `project/PROJECT_STATE.md` (state schema 1.3) records
+the choice: `autonomous` — the default — has the assistant decide each failure
+under the frozen rules, record every judgment in the run's
+`failure_decisions.jsonl`, keep the run going, and present the complete digest
+at the end of the run and at the next gate; `interactive` pauses at the batch
+or validation checkpoint where failures are detected and puts each one to the
+researcher, with operational content only. Stage 00 asks for the preference,
+the Stage 08 interview confirms or changes it before the full run, and either
+value can be changed later as a recorded decision. The mode governs only the
+disposition of individual failed units in Stage 11: gates, budget and
+authorization stops, the systematic-failure stop, deviation handling, the
+pilot's row-by-row review, and every other stage's behavior are unchanged. The
+new state key is optional and validated; a state file without it behaves as
+`autonomous`, and files written under earlier schemas remain valid, so
+existing projects need no migration.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:
@@ -496,7 +525,10 @@ history is never rewritten. The optional `usage` key of `PROJECT_STATE.md`
 (`pipeline` or `tools`) is the usage mode that Stage 00 writes and the router
 reads; it is validated, and absent means `pipeline`. The optional `checkpoints`
 key (`none`, `stages`, `plans`, or `all`) is the researcher's preference for
-extra pauses; it is validated, and absent means `none`. `project/BOOTSTRAP.md`, when present, is
+extra pauses; it is validated, and absent means `none`. The optional
+`failure_handling` key (`autonomous` or `interactive`) is the researcher's
+preference for how individual failures during the Stage 11 full coding run are
+decided; it is validated, and absent means `autonomous`. `project/BOOTSTRAP.md`, when present, is
 the installer's report: how the kit was installed, what the folder already held,
 which Python to use, and the doctor's result. `project/ELARA_MANIFEST.json`,
 rewritten on every installer run, records which files in the folder are the

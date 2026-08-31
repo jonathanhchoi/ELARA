@@ -297,7 +297,21 @@ issue. This section is the complete list of reasons to stop; nothing else is.
   6. the researcher asked to be consulted more often — a checkpoint preference
      recorded as `checkpoints` in `PROJECT_STATE.md` (`stages`, `plans`, or
      `all`; absent or `none` means low-touch), in which case also stop before
-     starting the next stage, before executing a plan, or both.
+     starting the next stage, before executing a plan, or both; or a
+     failure-handling preference recorded as `failure_handling: "interactive"`
+     in `PROJECT_STATE.md` (absent or `autonomous` means the default under
+     **Otherwise proceed** below), in which case also stop at each batch or
+     validation checkpoint of the Stage 11 coding run where a unit-level
+     failure awaits disposition: present every failure pending at that
+     checkpoint in one message — typed status, blinded validation detail,
+     attempt counts, and a recommended disposition; operational content only,
+     never labels or outcome patterns — record each answer, and set
+     `waiting_for_user` when the session cannot wait. In either
+     failure-handling mode the dispositions offered are only those the frozen
+     rules allow (a linked retry the recorded policy permits, an explicit
+     typed failure row, or a stop onto the recorded failure route); an
+     instruction outside them routes as a change or deviation, never as a
+     mid-run fix.
   7. a stage marked `long_running: true` is ready to execute but its exact
      front-matter `goal_condition` is not the active host goal — give the
      researcher the complete `/goal <goal_condition>` command once and wait.
@@ -314,6 +328,22 @@ issue. This section is the complete list of reasons to stop; nothing else is.
   answer; a change routes like any other change. Purely operational choices
   (file names, formats, batch sizes, ordering, how a command is run) go in the
   run manifest, not the decision log, unless they can affect a result.
+  Unit-level failures during the Stage 11 coding run (a typed failure status,
+  an invalid return, an exhausted retry) are dispositioned the same low-touch
+  way when `failure_handling` is absent or `autonomous`: apply the frozen
+  retry and stopping rules, choose the disposition those rules allow, append
+  one row per failure event to the run's failure-decisions log
+  (`failure_decisions.jsonl` in the run directory: unit and attempt, what
+  happened, the disposition, who decided, a one-line rationale, timestamp),
+  and continue. These rows stay in the run record rather than swamping
+  `DECISIONS.md`; one `assistant-default` decision per run links to the log,
+  and the complete digest is presented at the end of the run and again at the
+  next gate with the other provisional decisions. Neither failure-handling
+  mode reaches anything else in this section: hard gates, budget and
+  authorization stops, outward-facing actions, deviations from frozen or
+  preregistered artifacts, blind adjudication, model or route changes
+  mid-run, and every review a stage assigns to the researcher are unchanged
+  by the mode.
 - **Never decide provisionally:** project selection, the feasibility go/no-go,
   data authorization or the model route for restricted material, the content
   frozen at preregistration, blind adjudication, a manuscript edit, or any

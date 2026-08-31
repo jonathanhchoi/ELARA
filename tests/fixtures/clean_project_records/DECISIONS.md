@@ -11,6 +11,12 @@ alternatives. The next gate presents every provisional record since the last
 gate; the researcher's gate decision names the IDs it keeps, and a changed one is
 superseded by a new researcher record.
 
+Individual failure decisions made during a full coding run live in that run's
+`failure_decisions.jsonl`, not here: an autonomous run appends one
+`assistant-default` record linking to that log, and an interactive run appends
+one researcher record per answered checkpoint, with the per-unit detail in the
+log.
+
 ## Record format
 
 Append one block per decision at the end of this file:

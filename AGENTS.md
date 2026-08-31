@@ -75,7 +75,12 @@ very fast research assistant whose work is verified, never trusted.
    stop conditions in `workflow/shared/guardrails.md` §11 are the complete list.
    Every other choice takes the sensible default, is recorded as a provisional
    `assistant-default` decision, and is presented at the next gate for the
-   researcher to keep or change.
+   researcher to keep or change. During the Stage 11 coding run, individual
+   unit failures follow the recorded `failure_handling` preference (§11):
+   absent or `autonomous`, decide each under the frozen rules, log the
+   judgment in the run's failure-decisions file, and present the complete
+   digest at the end of the run; `interactive` adds a pause at the checkpoint
+   where failures are detected.
 10. At installation/first use, after a kit update, or when the host/account/model
     route changes, follow `workflow/shared/model-readiness.md`. Verify the
     current strongest applicable model and actual access from live evidence,

@@ -167,7 +167,10 @@ a model. Inspect the frozen design, codebook, schema, list of eligible units,
 authorization, adversarial-review conditions, and recorded budget. Ask about the
 five-to-ten-unit diagnostic sample and why it is informative; independent human
 pre-coding; architecture and one-unit execution; success thresholds; quote,
-schema, retry, and stopping rules; human review and disagreement categories;
+schema, retry, and stopping rules — including the `failure_handling` preference
+recorded at Stage 00 (confirm or change it; it governs how the Stage 11 run
+dispositions individual unit failures) and the run-level stopping rule Stage 11
+will apply to widespread failure; human review and disagreement categories;
 model route; and spending and time limits.
 
 The proposal fixes the sample, thresholds, commands, checks, review sequence,
