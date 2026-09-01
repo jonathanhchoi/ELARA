@@ -36,7 +36,9 @@ The researcher must decide or approve:
 - constructs, operationalizations, primary and secondary outcomes, comparisons, estimands, and hypotheses;
 - treatment of opinions, parties' assertions, dissents, duplicate documents, missingness, and ambiguous cases;
 - error tolerances, validation targets, correction for multiple comparisons, and which hypotheses and analyses must be fully specified and preregistered before outcomes are examined rather than treated as exploratory; and
-- resource, privacy, model, and stopping constraints.
+- resource limits and stopping rules, privacy and confidentiality limits, and
+  exactly which documents, data, prompts, or other information may be sent to
+  each model or provider.
 
 Present meaningful alternatives and consequences. Never make the choice merely because one option is easier to code.
 
@@ -88,7 +90,9 @@ At minimum, cover every material open choice about:
    benchmarks, correction for multiple comparisons, and subgroup analyses;
 5. validation precision, double coding, adjudication, error tolerances, and
    measurement-error correction; and
-6. resource, privacy, model, and stopping constraints.
+6. resource limits and stopping rules, privacy and confidentiality limits, and
+   exactly which documents, data, prompts, or other information may be sent to
+   each model or provider.
 
 Still in Plan Mode, synthesize the answers into a decision-complete proposed
 design that links each hypothesis to its estimand, evidence, validation, and
@@ -113,8 +117,8 @@ but do not start a goal.
 3. Define the target population, sampling frame, document unit, coding unit, unit of analysis, clustering level, and denominator for every reported quantity. Explain how multiple documents, opinions, passages, or observations within a matter relate.
 4. Specify inclusion, exclusion, deduplication, time, jurisdiction, language, version, and missing-document rules. Make the unit space enumerable before coding.
 5. Define each construct independently of a model. Prefer document-observable, quote-backed components over holistic ratings. Map constructs to planned variables but reserve full edge-case rules for Stage 05.
-6. Create hypotheses_vNNN.md with stable IDs, theory, variables, population, comparison, direction or explicitly nondirectional test, and decision rule. Label primary, secondary, falsification, and exploratory questions. Do not retrofit hypotheses to pilot or study outcomes.
-7. Create `estimands_vNNN.csv` with stable IDs and columns for population, unit, outcome or measure, exposure or comparison, contrast, aggregation, denominator, clustering, missing-data treatment, error-correction requirement, linked hypothesis, inference procedure (how standard errors are calculated, clustering level, small-sample correction, confidence level, and whether the test is one- or two-sided, consistent with the hypotheses file), family of related hypotheses for correction of multiple comparisons, correction method, minimum detectable effect or target precision, assumed power and significance level, and effective sample size under the central projection of how many records remain after screening and coding.
+6. Create hypotheses_vNNN.md. Give every hypothesis a short identifier (for example, `H001`) and use that same identifier whenever the hypothesis appears in another file or later version. For each hypothesis, specify the theory, variables, population, comparison, direction or explicitly nondirectional test, and decision rule. Label primary, secondary, falsification, and exploratory questions. Do not retrofit hypotheses to pilot or study outcomes.
+7. Create `estimands_vNNN.csv`. Give every quantity to estimate a short identifier (for example, `E001`) and use that same identifier whenever it appears in another file or later version. Include columns for population, unit, outcome or measure, exposure or comparison, contrast, aggregation, denominator, clustering, missing-data treatment, error-correction requirement, linked hypothesis, inference procedure (how standard errors are calculated, clustering level, small-sample correction, confidence level, and whether the test is one- or two-sided, consistent with the hypotheses file), family of related hypotheses for correction of multiple comparisons, correction method, minimum detectable effect or target precision, assumed power and significance level, and effective sample size under the central projection of how many records remain after screening and coding.
 8. Design sampling and power or precision analysis using the Stage 03 projections of how many records remain after each screening step, base rates, and preserved minimum-detectable-effect calculations. State which units were inspected during feasibility checks (from `probe_exposure_manifest.csv`), used for prompt development, used for the pilot, reserved for human validation, and used in the study; prevent overlap where independence is required, and exclude check-exposed and pilot units from the validation sample kept separate from development. Size the validation sample from the approved precision targets on per-class error rates, and include an independently double-coded reliability subsample (ordinarily ten to twenty percent) unless the researcher records a justification for a single-coder design. Fix the held-out validation sampling rule and random seed (the starting value used to reproduce sample selection) now, using a rule that could not be chosen after outcomes exist — for example, applying SHA-256 to the Stage 09 recorded list of frozen files.
 9. Specify the LLM's bounded role: one supplied document or unit per call by default, codebook and schema as authority, quotation plus justification before label, uncertain escape, typed unusable rows, no outcome prediction, and no parametric-memory facts.
 10. Specify deterministic mechanical checks: schema validation, exact or documented normalized quote matching, identifier and enum checks, coverage reconciliation, duplicate detection, retry limits, refusal tracking, and raw-output preservation.
@@ -125,7 +129,7 @@ but do not start a goal.
 
 ## Artifacts
 
-methods_plan_vNNN.md is the integrated design and must link stable hypothesis and estimand IDs. hypotheses_vNNN.md and estimands_vNNN.csv are machine-comparable specifications, not prose duplicates. sampling_validation_plan_vNNN.md must identify sample partitions (including the units inspected during feasibility), the exact held-out selection seed or derivation rule, target precision with the power and minimum-detectable-effect assumptions and formulas archived from Stage 03, the double-coded reliability subsample, adjudication, thresholds, and correction inputs. The record for the run identifies the exact source versions and decisions.
+methods_plan_vNNN.md is the integrated design and must link hypothesis and estimand identifiers. hypotheses_vNNN.md and estimands_vNNN.csv are machine-comparable specifications, not prose duplicates. sampling_validation_plan_vNNN.md must identify sample partitions (including the units inspected during feasibility), the exact held-out selection seed or derivation rule, target precision with the power and minimum-detectable-effect assumptions and formulas archived from Stage 03, the double-coded reliability subsample, adjudication, thresholds, and correction inputs. The record for the run identifies the exact source versions and decisions.
 
 ## Verification
 

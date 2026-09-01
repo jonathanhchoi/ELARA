@@ -132,6 +132,8 @@ class WorkflowContractTests(unittest.TestCase):
     def test_methods_language_uses_plain_conventional_terms(self) -> None:
         paths = (
             ROOT / "workflow" / "stages" / "04-methods-design.md",
+            ROOT / "workflow" / "stages" / "05-codebook-and-schema.md",
+            ROOT / "workflow" / "stages" / "06-data-authorization.md",
             ROOT / "workflow" / "stages" / "09-freeze-and-preregister.md",
             ROOT / "workflow" / "stages" / "14-analysis-and-correction.md",
             ROOT / "workflow" / "shared" / "execution-control.md",
@@ -144,6 +146,10 @@ class WorkflowContractTests(unittest.TestCase):
             "confirmatory unit of analysis": r"\bconfirmatory (?:units? of analysis|analysis units?)\b",
             "confirmatory estimand": r"\bconfirmatory estimands?(?: boundary)?\b",
             "confirmatory hypothesis": r"\bconfirmatory hypotheses?\b",
+            "stable identifier logic": r"\bstable (?:identifier|id) logic\b",
+            "model exposure envelope": r"\bmodel exposure envelope\b",
+            "hosted-model exposure": r"\bhosted[- ]model exposure\b",
+            "model exposure": r"\bmodel exposure\b",
         }
         for path in paths:
             text = path.read_text(encoding="utf-8")
@@ -155,6 +161,7 @@ class WorkflowContractTests(unittest.TestCase):
 
         agents = " ".join((ROOT / "AGENTS.md").read_text(encoding="utf-8").split())
         stage = " ".join(paths[0].read_text(encoding="utf-8").split())
+        stage_05 = " ".join(paths[1].read_text(encoding="utf-8").split())
         for phrase in (
             "unit of analysis",
             "outcome` or `dependent variable",
@@ -164,6 +171,20 @@ class WorkflowContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, agents)
             self.assertIn(phrase, stage)
+
+        for phrase in ("stable identifier logic", "model exposure envelope"):
+            self.assertIn(phrase, agents)
+        for phrase in (
+            "Give every hypothesis a short identifier",
+            "use that same identifier whenever the hypothesis appears",
+            "exactly which documents, data, prompts, or other information may be sent",
+        ):
+            self.assertIn(phrase, stage)
+        for phrase in (
+            "identified consistently across files and versions",
+            "exactly which documents, data, prompts, or other information may be sent",
+        ):
+            self.assertIn(phrase, stage_05)
 
     def test_generated_wrappers_inherit_plain_language_rule(self) -> None:
         prohibited = re.compile(

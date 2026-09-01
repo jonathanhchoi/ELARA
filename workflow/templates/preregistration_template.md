@@ -34,8 +34,9 @@ of eligible units and the value used to verify that the list has not changed.
 
 ## Corpus sources and authorization limits
 
-TODO-PREREG each source, access route, coverage, and the authorization record
-version with its limits on model exposure and redistribution.
+TODO-PREREG each source, access route, coverage, the authorization record
+version, exactly what it permits sending to each model or provider, and its
+redistribution limits.
 
 ## Sampling and partitions
 

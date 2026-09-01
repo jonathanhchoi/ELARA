@@ -132,7 +132,11 @@ shared, and which are the researcher's, so a folder both use (for example
   conclusions are descriptive, associational, or causal in a sentence and, for
   causal conclusions, state the identification strategy and assumptions. Use
   `confirmatory` only for the conventional distinction between analyses fully
-  specified before outcomes are examined and exploratory analyses.
+  specified before outcomes are examined and exploratory analyses. Do not
+  invent labels such as "stable identifier logic" or "model exposure
+  envelope." Say `identifier` and explain if it must remain unchanged across
+  files or versions; say exactly which documents, data, prompts, or other
+  information may be sent to each model or provider.
 - Treat "artifact" as a context-dependent term, not a preferred word. Use it
   only when its established broad meaning is useful and define it if needed;
   otherwise say "file," "report," "dataset," "record," or "output." Preserve

@@ -516,6 +516,15 @@ preregistration and analysis instructions. No state field, stage order,
 approval gate, file format, or research safeguard changes, so existing
 projects need no migration.
 
+Version 2.5.2 removes two sources of invented compound labels from the Stage 04
+and Stage 05 interviews. It calls an identifier an identifier and explains when
+the same identifier must be used across files and versions. It also asks exactly
+which documents, data, prompts, or other information may be sent to each model
+or provider instead of giving that question an abstract label. The same plain
+language is carried through data authorization and preregistration. No state
+field, stage order, approval gate, file format, or research safeguard changes,
+so existing projects need no migration.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:

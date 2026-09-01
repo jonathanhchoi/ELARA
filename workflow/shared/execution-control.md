@@ -127,7 +127,9 @@ outcomes or dependent variables, comparisons, quantities to estimate
 specified and preregistered before outcomes are examined rather than treated as
 exploratory; clustering, missingness, power or precision, significance, and
 correction for multiple comparisons; validation, adjudication, and error
-correction; and resource, privacy, model, and stopping constraints.
+correction; resource limits and stopping rules, privacy and confidentiality
+limits; and exactly which documents, data, prompts, or other information may be
+sent to each model or provider.
 
 The proposed plan maps every hypothesis to its estimand, data, validation, and
 analysis. Acceptance authorizes drafting the versioned Stage 04 files; it is not
@@ -142,7 +144,9 @@ variables and categories; the coding unit and multiple observations; attribution
 to opinions, parties, quotations, incorporated material, majorities,
 concurrences, and dissents; inclusions, exclusions, duplicates, missing and
 ambiguous cases, conflicts, and supersession; uncertainty and not-applicable
-routes; stable identifiers; and what information a hosted model may receive.
+routes; how units and variables are identified consistently across files and
+versions; and exactly which documents, data, prompts, or other information may
+be sent to each model or provider.
 
 The proposal maps each construct and hypothesis to definitions, edge cases,
 schema fields, evidence requirements, unit counting, and validation fixtures.
