@@ -35,8 +35,10 @@ The researcher must approve:
 - positive and negative clarifications, edge cases, examples, and uncertain or not-applicable treatment;
 - whose statements count as the document's own and how majorities, concurrences, dissents, parties, quotations, and incorporated material are treated;
 - inclusion, exclusion, deduplication, gap, conflict, and supersession rules;
-- the complete list and fixed count of units eligible for coding and the stable ID logic; and
-- the exact information exposed to a hosted model.
+- the complete list and fixed count of units eligible for coding and how each
+  unit is identified consistently across files and versions; and
+- exactly which documents, data, prompts, or other information may be sent to
+  each model or provider.
 
 The agent may expose ambiguity and propose alternatives, but must not settle doctrinal or theoretical boundaries on the researcher's behalf. Put every material open choice above through the Plan-Mode interview before creating a provisional default. An express choice to use the recommendation is a researcher decision; silence is not.
 
@@ -50,8 +52,10 @@ prior decisions. Use `request_user_input` on Codex or `AskUserQuestion` on
 Claude Code in rounds of one to three plain-language questions, following the
 shared interview contract. Cover only material open decisions about substantive
 definitions and categories, coding units, attribution, edge cases, uncertainty,
-inclusion and exclusion, duplicates and conflicts, stable IDs, unit counting,
-evidence requirements, and hosted-model exposure.
+inclusion and exclusion, duplicates and conflicts, unit counting, how units and
+variables are identified consistently across files and versions, evidence
+requirements, and exactly which documents, data, prompts, or other information
+may be sent to each model or provider.
 
 Still in Plan Mode, synthesize a decision-complete proposal that maps every
 construct and hypothesis to definitions, examples, schema fields, evidence
@@ -69,7 +73,7 @@ one frozen version.
 
 1. Allocate a run ID only in execution and record all active input versions and researcher decisions.
 2. Define the coding unit first. Explain when a document yields zero, one, or multiple observations; how overlapping passages, repeated statements, quoted authorities, separate opinions, and duplicate documents are handled; and which identifier links an observation to its source and unit-space row.
-3. For every variable, provide a stable ID, type, allowed values, one-sentence definition, operational rule, positive clarifications, negative clarifications, boundary cases, worked positive and negative examples with provenance, and the evidence required. Tell coders to apply the written definition rather than background knowledge.
+3. For every variable, provide a short identifier and use it consistently across files and versions. Also provide the type, allowed values, one-sentence definition, operational rule, positive clarifications, negative clarifications, boundary cases, worked positive and negative examples with provenance, and the evidence required. Tell coders to apply the written definition rather than background knowledge.
 4. Include explicit uncertain, not_applicable, and unusable-document paths where appropriate. Keep substantive uncertainty distinct from missing data, unreadable text, wrong document, refusal, schema failure, and access failure. Never force a guess or return nothing.
 5. Require each substantive observation, wherever feasible, to carry an exact verbatim quotation, source location, and one-sentence justification before the label. If documented normalization is needed for OCR or line breaks, preserve the original quote and normalization rule. For an absence, relation, or synthesis that no single passage can establish, require an explicit no-quote or multiple-passage evidence record instead. That record must identify every source and location reviewed, explain why no single quotation suffices, and state how the evidence supports the label. A citation or memory-based paraphrase cannot substitute for inspecting the original source.
 6. Specify scope and attribution rules: distinguish a document's own position from a party, quoted source, dissent, concurrence, or background account. Define conflict resolution between sources and require unresolved conflicts to remain explicit.
@@ -88,7 +92,7 @@ The codebook, machine-readable output rules, complete list of coding units, prom
 
 - Trace every codebook variable through schema fields to an approved estimand; confirm no orphan or newly invented variable.
 - Parse the JSON Schema and require every valid fixture to pass and every intentionally invalid fixture to fail for the expected reason.
-- Reconcile unit-space counts by inclusion, exclusion, missing status, and planned partition; confirm stable IDs are unique and the file hash is recorded.
+- Reconcile unit-space counts by inclusion, exclusion, missing status, and planned partition; confirm identifiers are unique, are used consistently across files and versions, and the file hash is recorded.
 - Confirm unit-space closure against the source: no two rows share an underlying unit, classification fields trace to the source's registry, every alternate identifier the source assigns to an anchor or unit is covered by the construction queries, and the enumerated counts reconcile against the source's reported totals with any shortfall explained row by row.
 - Confirm that substantive observations cannot validate without one approved evidence path, justification, label, provenance, and status fields.
 - Confirm uncertainty and each failure type are distinguishable and no pathway silently drops a unit.
