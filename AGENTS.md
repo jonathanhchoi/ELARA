@@ -125,6 +125,14 @@ shared, and which are the researcher's, so a folder both use (for example
   software infrastructure surrounding an LLM that enables it to operate as an
   agent (the agent harness)." A term is not justified merely because it can be
   defined.
+- When discussing methods, use standard terms without inventing compound
+  labels. Say `unit of analysis`; `hypothesis`; `outcome` or `dependent
+  variable` for a measured response; `quantity to estimate (estimand)` for the
+  target quantity; and `correction for multiple comparisons`. Describe whether
+  conclusions are descriptive, associational, or causal in a sentence and, for
+  causal conclusions, state the identification strategy and assumptions. Use
+  `confirmatory` only for the conventional distinction between analyses fully
+  specified before outcomes are examined and exploratory analyses.
 - Treat "artifact" as a context-dependent term, not a preferred word. Use it
   only when its established broad meaning is useful and define it if needed;
   otherwise say "file," "report," "dataset," "record," or "output." Preserve

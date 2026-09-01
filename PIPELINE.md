@@ -505,6 +505,17 @@ new state key is optional and validated; a state file without it behaves as
 `autonomous`, and files written under earlier schemas remain valid, so
 existing projects need no migration.
 
+Version 2.5.1 replaces avoidable methods-design jargon with conventional,
+plain-language terms. Stage 04 now asks whether proposed conclusions are
+descriptive, associational, or causal and states any causal identification
+strategy and assumptions; distinguishes an outcome or dependent variable from
+the quantity to estimate (the estimand); and asks for the correction for
+multiple comparisons. It does not attach new labels to a unit of analysis,
+hypothesis, or estimand. The same terminology is carried through
+preregistration and analysis instructions. No state field, stage order,
+approval gate, file format, or research safeguard changes, so existing
+projects need no migration.
+
 ## Persistent state
 
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:

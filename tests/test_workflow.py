@@ -129,6 +129,42 @@ class WorkflowContractTests(unittest.TestCase):
             if re.search(r"\bagent harness\b", prose, flags=re.IGNORECASE):
                 self.assertIn(definition, " ".join(prose.split()), label)
 
+    def test_methods_language_uses_plain_conventional_terms(self) -> None:
+        paths = (
+            ROOT / "workflow" / "stages" / "04-methods-design.md",
+            ROOT / "workflow" / "stages" / "09-freeze-and-preregister.md",
+            ROOT / "workflow" / "stages" / "14-analysis-and-correction.md",
+            ROOT / "workflow" / "shared" / "execution-control.md",
+            ROOT / "workflow" / "shared" / "guardrails.md",
+            ROOT / "workflow" / "templates" / "preregistration_template.md",
+        )
+        prohibited = {
+            "claim boundary": r"\bclaim boundaries?\b",
+            "multiplicity": r"\bmultiplicity\b",
+            "confirmatory unit of analysis": r"\bconfirmatory (?:units? of analysis|analysis units?)\b",
+            "confirmatory estimand": r"\bconfirmatory estimands?(?: boundary)?\b",
+            "confirmatory hypothesis": r"\bconfirmatory hypotheses?\b",
+        }
+        for path in paths:
+            text = path.read_text(encoding="utf-8")
+            for term, pattern in prohibited.items():
+                self.assertIsNone(
+                    re.search(pattern, text, flags=re.IGNORECASE),
+                    f"{path.relative_to(ROOT)} exposes avoidable methods jargon: {term}",
+                )
+
+        agents = " ".join((ROOT / "AGENTS.md").read_text(encoding="utf-8").split())
+        stage = " ".join(paths[0].read_text(encoding="utf-8").split())
+        for phrase in (
+            "unit of analysis",
+            "outcome` or `dependent variable",
+            "quantity to estimate (estimand)",
+            "correction for multiple comparisons",
+            "identification strategy and assumptions",
+        ):
+            self.assertIn(phrase, agents)
+            self.assertIn(phrase, stage)
+
     def test_generated_wrappers_inherit_plain_language_rule(self) -> None:
         prohibited = re.compile(
             r"\b(?:fan[- ]outs?|typed gaps?|unit[- ]space manifests?|front[- ]matter|"

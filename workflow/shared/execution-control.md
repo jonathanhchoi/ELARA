@@ -118,12 +118,16 @@ selection.
 Enter Plan Mode before settling methods or hypotheses. Inspect the active
 preemption and feasibility files, recorded conditions and decisions,
 probe-exposure record, and actual metadata or authorized samples first. Cover
-only material open choices: the claim boundary and meaning of plausible
-results; population, frame, scope, units, inclusions, and exclusions;
-constructs, outcomes, comparisons, estimands, and hypotheses; confirmatory and
-exploratory status; clustering, missingness, power or precision, significance,
-and multiple testing; validation, adjudication, and error correction; and
-resource, privacy, model, and stopping constraints.
+only material open choices: whether the study supports descriptive,
+associational, or causal conclusions, the identification strategy and
+assumptions for any causal conclusion, and the meaning of plausible results;
+population, frame, scope, units, inclusions, and exclusions; constructs,
+outcomes or dependent variables, comparisons, quantities to estimate
+(estimands), and hypotheses; which hypotheses and analyses must be fully
+specified and preregistered before outcomes are examined rather than treated as
+exploratory; clustering, missingness, power or precision, significance, and
+correction for multiple comparisons; validation, adjudication, and error
+correction; and resource, privacy, model, and stopping constraints.
 
 The proposed plan maps every hypothesis to its estimand, data, validation, and
 analysis. Acceptance authorizes drafting the versioned Stage 04 files; it is not
