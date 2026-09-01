@@ -22,8 +22,8 @@ Turn the accepted project into a decision-complete empirical design without outs
 
 1. Read AGENTS.md and PROJECT_STATE.md, then confirm that the preemption and feasibility gates are approved and load their exact active versions and conditions.
 2. Verify that the proposed research question, contribution, collection, and resource limits still match those reviews. Flag any material change for an earlier-stage rerun. Compare the current date to the recommended novelty recheck date recorded with the preemption disposition; if it has passed and the review flagged medium-or-high scoop risk, rerun the Stage 02 searches that test whether further searching still finds relevant work and the closest-author searches before designing methods against an outdated verdict.
-3. Identify all researcher-owned choices that remain open. Do not hide them in technical defaults. Power and significance defaults, precision targets, and multiplicity procedures are researcher decisions to approve explicitly, not silent settings.
-4. Confirm that no study outcome has been computed or inspected beyond the exposure recorded in the Stage 03 probe-exposure manifest. Feasibility probes legitimately produce outcome information; load the manifest, record its extent, and design the confirmatory/exploratory distinction around it. If other outcome information is already known, record that fact as well.
+3. Identify all researcher-owned choices that remain open. Do not hide them in technical defaults. Power and significance defaults, precision targets, and corrections for multiple comparisons are researcher decisions to approve explicitly, not silent settings.
+4. Confirm that no study outcome has been computed or inspected beyond the exposure recorded in the Stage 03 probe-exposure manifest. Feasibility probes legitimately produce outcome information; load the manifest, record its extent, and account for it when deciding which hypotheses and analyses must be fully specified and preregistered before outcomes are examined and which analyses will be exploratory. If other outcome information is already known, record that fact as well.
 5. Read the actual metadata structure or representative authorized files before proposing fields or code. Do not assume the data shape.
 
 ## Researcher decisions
@@ -31,14 +31,22 @@ Turn the accepted project into a decision-complete empirical design without outs
 The researcher must decide or approve:
 
 - the substantive theory and honest contribution;
-- descriptive, associational, or causal claim boundaries and any identification assumptions;
+- whether the study supports descriptive, associational, or causal conclusions and, for a causal study, the identification strategy and assumptions;
 - target population, sampling frame, inclusion and exclusion rules, temporal and jurisdictional scope;
 - constructs, operationalizations, primary and secondary outcomes, comparisons, estimands, and hypotheses;
 - treatment of opinions, parties' assertions, dissents, duplicate documents, missingness, and ambiguous cases;
-- error tolerances, validation targets, multiplicity policy, and confirmatory versus exploratory analyses; and
+- error tolerances, validation targets, correction for multiple comparisons, and which hypotheses and analyses must be fully specified and preregistered before outcomes are examined rather than treated as exploratory; and
 - resource, privacy, model, and stopping constraints.
 
 Present meaningful alternatives and consequences. Never make the choice merely because one option is easier to code.
+
+Use standard methods terms consistently in questions and design files. Say
+`unit of analysis`; `hypothesis`; `outcome` or `dependent variable` for a
+measured response; and `quantity to estimate (estimand)` for the target
+quantity. Do not add labels that blur these distinct concepts. Say `correction
+for multiple comparisons`, and describe the intended conclusions and any
+causal identification strategy in a sentence rather than naming an abstract
+boundary.
 
 Elicit these choices through the interactive Plan-Mode interview below. Do not
 create an `assistant-default` for a material open Stage 04 choice before asking
@@ -67,14 +75,17 @@ the exact later boundary at which the choice must be resolved.
 
 At minimum, cover every material open choice about:
 
-1. the theory, honest contribution, descriptive/associational/causal boundary,
-   and what plausible results would mean;
+1. the theory, honest contribution, whether the study supports descriptive,
+   associational, or causal conclusions, the identification strategy and
+   assumptions for any causal conclusion, and what plausible results would mean;
 2. the target population, sampling frame, scope, units, inclusions, exclusions,
    duplicates, missing documents, and ambiguous cases;
-3. constructs, operationalizations, outcomes, comparisons, estimands,
-   hypotheses, and confirmatory versus exploratory status;
+3. constructs, operationalizations, outcomes or dependent variables,
+   comparisons, quantities to estimate (estimands), hypotheses, and which
+   hypotheses and analyses must be fully specified and preregistered before
+   outcomes are examined rather than treated as exploratory;
 4. clustering, missingness, power or precision, significance, effect-size
-   benchmarks, multiple testing, and subgroup analyses;
+   benchmarks, correction for multiple comparisons, and subgroup analyses;
 5. validation precision, double coding, adjudication, error tolerances, and
    measurement-error correction; and
 6. resource, privacy, model, and stopping constraints.
@@ -103,12 +114,12 @@ but do not start a goal.
 4. Specify inclusion, exclusion, deduplication, time, jurisdiction, language, version, and missing-document rules. Make the unit space enumerable before coding.
 5. Define each construct independently of a model. Prefer document-observable, quote-backed components over holistic ratings. Map constructs to planned variables but reserve full edge-case rules for Stage 05.
 6. Create hypotheses_vNNN.md with stable IDs, theory, variables, population, comparison, direction or explicitly nondirectional test, and decision rule. Label primary, secondary, falsification, and exploratory questions. Do not retrofit hypotheses to pilot or study outcomes.
-7. Create `estimands_vNNN.csv` with stable IDs and columns for population, unit, outcome or measure, exposure or comparison, contrast, aggregation, denominator, clustering, missing-data treatment, error-correction requirement, linked hypothesis, inference procedure (how standard errors are calculated, clustering level, small-sample correction, confidence level, and whether the test is one- or two-sided, consistent with the hypotheses file), multiple-testing family and correction method, minimum detectable effect or target precision, assumed power and significance level, and effective sample size under the central projection of how many records remain after screening and coding.
+7. Create `estimands_vNNN.csv` with stable IDs and columns for population, unit, outcome or measure, exposure or comparison, contrast, aggregation, denominator, clustering, missing-data treatment, error-correction requirement, linked hypothesis, inference procedure (how standard errors are calculated, clustering level, small-sample correction, confidence level, and whether the test is one- or two-sided, consistent with the hypotheses file), family of related hypotheses for correction of multiple comparisons, correction method, minimum detectable effect or target precision, assumed power and significance level, and effective sample size under the central projection of how many records remain after screening and coding.
 8. Design sampling and power or precision analysis using the Stage 03 projections of how many records remain after each screening step, base rates, and preserved minimum-detectable-effect calculations. State which units were inspected during feasibility checks (from `probe_exposure_manifest.csv`), used for prompt development, used for the pilot, reserved for human validation, and used in the study; prevent overlap where independence is required, and exclude check-exposed and pilot units from the validation sample kept separate from development. Size the validation sample from the approved precision targets on per-class error rates, and include an independently double-coded reliability subsample (ordinarily ten to twenty percent) unless the researcher records a justification for a single-coder design. Fix the held-out validation sampling rule and random seed (the starting value used to reproduce sample selection) now, using a rule that could not be chosen after outcomes exist — for example, applying SHA-256 to the Stage 09 recorded list of frozen files.
 9. Specify the LLM's bounded role: one supplied document or unit per call by default, codebook and schema as authority, quotation plus justification before label, uncertain escape, typed unusable rows, no outcome prediction, and no parametric-memory facts.
 10. Specify deterministic mechanical checks: schema validation, exact or documented normalized quote matching, identifier and enum checks, coverage reconciliation, duplicate detection, retry limits, refusal tracking, and raw-output preservation.
 11. Specify the human validation and blind adjudication design, performance metrics by class and subgroup, acceptance thresholds chosen before results, and the measurement-error correction or sensitivity analyses that use those estimates. Follow the protocol in workflow/shared/measurement-error-correction-guide.md when matching the correction to the estimand and validation design: its requirements are durable, but its named estimators are dated leads, so verify candidates against current literature retrieved during this project and present the tradeoffs; the choice remains the researcher's and must be feasible under the planned sample.
-12. Specify analysis that produces the same results from the same inputs and rules: transformations, models or descriptive summaries, clustering, weighting, missingness, robustness, table and figure generation, and the distinction between preregistered and exploratory outputs. Define the policy for correcting for multiple tests concretely: enumerate the family of confirmatory tests by hypothesis ID; name the exact adjustment procedure — for example, a familywise correction for the family of confirmatory tests and a false-discovery-rate procedure for secondary families — or record the researcher's written justification for none; and enumerate planned heterogeneity and subgroup analyses, labeling each confirmatory or exploratory. Prespecify the treatment of records lost before analysis: a corpus gap-rate threshold and the planned response when it is exceeded, such as bounds or documented reweighting. Do not invent causal identification for a descriptive question.
+12. Specify analysis that produces the same results from the same inputs and rules: transformations, models or descriptive summaries, clustering, weighting, missingness, robustness, table and figure generation, and the distinction between preregistered and exploratory outputs. Define the correction for multiple comparisons concretely: group the hypothesis IDs that will be tested together into families; name the exact adjustment procedure — for example, a familywise-error-rate correction for the family of preregistered primary tests and a false-discovery-rate procedure for secondary families — or record the researcher's written justification for none; and enumerate planned heterogeneity and subgroup analyses, identifying which are preregistered and which are exploratory. Prespecify the treatment of records lost before analysis: a corpus gap-rate threshold and the planned response when it is exceeded, such as bounds or documented reweighting. Do not invent causal identification for a descriptive question.
 13. Document data authorization dependencies, model and prompt logging, cost controls, progress ledgers, failure and stopping rules, scope-lock behavior, and amendment triggers.
 14. Self-critique the design against selection, leakage, construct validity, dependence, subgroup error, outcome peeking, and researcher degrees of freedom. Present unresolved choices rather than silently resolving them.
 
@@ -121,7 +132,7 @@ methods_plan_vNNN.md is the integrated design and must link stable hypothesis an
 - Trace every hypothesis to one or more estimands and every estimand to observable variables, a denominator, and an analysis.
 - Confirm that population, frame, document unit, coding unit, and analysis unit are distinct where necessary and never used interchangeably.
 - Confirm that feasibility-probe, prompt-development, pilot, held-out validation, and study sets cannot leak into one another contrary to the plan, and that the held-out seed or derivation rule is fixed.
-- Confirm that validation thresholds, precision targets, minimum detectable effects, multiplicity procedures, per-estimand inference procedures, and correction methods are prespecified and feasible under the Stage 03 budget.
+- Confirm that validation thresholds, precision targets, minimum detectable effects, corrections for multiple comparisons, per-estimand inference procedures, and other correction methods are prespecified and feasible under the Stage 03 budget.
 - Confirm that every unresolved substantive choice is visible and no study outcome informed the design without disclosure.
 - Confirm that every material open methods choice was put to the researcher in Plan Mode, every answer or explicit deferral is traceable to the resulting files, and accepting the host plan was not recorded as approval of the final methods gate.
 - Compare the artifacts with accepted preemption and feasibility conditions and route any material divergence upstream.

@@ -104,20 +104,20 @@ TODO-PREREG the prespecified correction per estimand (see
 `workflow/shared/measurement-error-correction-guide.md`), the validation
 quantities it consumes, and the planned sensitivity analyses.
 
-## Missingness, multiplicity, robustness, attrition, and stopping rules
+## Missingness, correction for multiple comparisons, robustness, attrition, and stopping rules
 
-TODO-PREREG the missing-data rules; the policy for correcting for multiple tests
-(the multiplicity policy), with family
-definitions by hypothesis ID and the exact correction procedure (or the
+TODO-PREREG the missing-data rules; the correction for multiple comparisons,
+with family definitions by hypothesis ID and the exact procedure (or the
 researcher's recorded justification for none); the robustness conditions
 (prompt paraphrases, second model) and their materiality criterion; the corpus
 gap-rate threshold and prespecified attrition treatment; and the stopping
 rules.
 
-## Confirmatory versus exploratory boundary
+## Preregistered and exploratory analyses
 
-TODO-PREREG which analyses are confirmatory and fully specified here, and the
-rule under which later analyses are labeled exploratory.
+TODO-PREREG which hypotheses and analyses are fully specified here before study
+outcomes are examined, and the rule under which later analyses are labeled
+exploratory.
 
 ## Deviations and amendments
 

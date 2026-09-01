@@ -259,7 +259,7 @@ stage files and shared guides:
 
 At design stages, when a named default matters to a consequential choice —
 which measurement-error correction, which agreement statistic, which
-multiplicity procedure, which robustness design, which tool — check whether
+multiple-comparisons procedure, which robustness design, which tool — check whether
 current practice has superseded it: reason from the estimand and design first,
 then verify against literature actually retrieved during this project, not
 kit memory or model memory. Recommend one option with evidence, record it as a

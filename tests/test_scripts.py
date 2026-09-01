@@ -560,7 +560,12 @@ class PreregistrationTemplateTests(unittest.TestCase):
         for section in sections:
             title, _newline, body = section.partition("\n")
             self.assertIn("TODO-PREREG", body, f"section {title!r} has no TODO-PREREG marker")
-        for term in ("seed", "minimum detectable", "multiplicity", "frozen_analysis"):
+        for term in (
+            "seed",
+            "minimum detectable",
+            "correction for multiple comparisons",
+            "frozen_analysis",
+        ):
             self.assertIn(term, text)
 
 
