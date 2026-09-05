@@ -215,6 +215,9 @@ description: "Start a new project, adopt an existing one, show the menu of tools
    read the canonical file named by `current_stage`, verify its prerequisites (imported
    artifacts and researcher-asserted approvals recorded at adoption satisfy them), and follow
    it. Create or reconcile the native stage plan before work.
+   For interrupted Stage 11 work, read `workflow/shared/operational-recovery.md`,
+   verify `run_checkpoint` when present, and reconcile current disk evidence.
+   Never equate a live verifier with active coding or repeat an unchanged failure.
 {tracker}
    For `long_running: true`, resume only the matching active goal; otherwise give the exact
    `/goal <goal_condition>` handoff and stop. Never replace another active goal.

@@ -152,7 +152,7 @@ types:
   deviation handling, blind adjudication, or a review a stage assigns to the
   researcher.
 - `current_stage`: quoted canonical stage ID.
-- `status`: one of `ready`, `running`, `awaiting_approval`,
+- `status`: one of `ready`, `paused`, `running`, `awaiting_approval`,
   `waiting_for_user`, `failed`, `complete`, or `superseded`. Treat any other
   value as malformed state: stop and report a state-recovery issue rather than
   guessing what it meant.
@@ -262,6 +262,12 @@ only after the researcher actually completes or confirms that action.
   rows remain in manifests and denominator accounting.
 
 ## 10. Replication and retention
+
+State schema 1.4 adds optional `run_checkpoint`: null, or an inline object with
+`path` and `sha256` naming an immutable, payload-free local checkpoint. Old state
+files remain valid. Verify it on resume; a `running` state cannot point to a
+paused/stopped checkpoint. The checkpoint records evidence, not permission to
+dispatch. Follow `operational-recovery.md` for reconciliation and migration.
 
 Stage 16 must package or reference every active artifact needed to reproduce each
 reported number: frozen prompts, raw outputs where sharing is authorized,

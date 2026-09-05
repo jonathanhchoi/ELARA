@@ -47,6 +47,13 @@ and record the fallback; never code units serially in the parent's context.
 
 ## Work
 
+Use `workflow/shared/operational-recovery.md` for infrastructure failures and
+handoffs. New or explicitly migrated adapters persist separate launch intent,
+acknowledgement, return, validation, and reconciliation records with
+`scripts/fanout_lifecycle.py`. Keep these and immutable checkpoints under the
+active run's `batch_checks/` directory. An interrupted old run must be verified
+and migrated explicitly; do not relabel old evidence or rerun completed units.
+
 1. Allocate a unique run ID and output versions, record exact input hashes and every model and sampling setting including provider defaults, and append a ledger start. Resume only from the durable unit ledger, never from recollection or a progress estimate.
 2. Create one self-contained assignment per coding unit under `workflow/shared/observation-fanout.md` (`python scripts/unit_fanout.py prepare`), then run the fan-out through the host's orchestrator as that contract directs — in Claude Code the saved `elr-observation-fanout` workflow, launched by the assistant; in Codex the kit's `elr_worker` sub-agents in bounded waves (`$elr-code-observations` and `/elr-code-observations` name this same route). Give each request a fresh model context containing only the frozen system instructions, codebook, prompt, schema, that unit's metadata, and that unit's source text or approved excerpt. Never pack multiple coding units into one prompt; a coding unit may contain several related documents only where the approved codebook and unit-space manifest define it that way. Require every worker to pass its return envelope on standard input to `python scripts/unit_fanout.py submit`; workers do not write canonical return paths directly.
 3. Parallelize only assignments that write separate prompt, response, and attempt files. Merge results, update shared ledgers, and modify shared scripts serially. Do not claim that work continues after the executing process has stopped.

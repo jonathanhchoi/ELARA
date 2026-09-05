@@ -279,6 +279,12 @@ search packet contains every source that remains unresolved after the protocol.
 
 ## Codex adapter
 
+For interruption handling and cross-session checkpoints, also read
+`workflow/shared/operational-recovery.md`. The lifecycle journal is an optional,
+explicitly adopted addition, never a replacement for the frozen controller or
+host-native restricted-worker route. Do not infer launch eligibility from a
+missing return or replay an unacknowledged launch without resolving finality.
+
 Codex runs the fan-out as the kit's custom sub-agents (`.codex/agents/`), spawned by name by the
 parent session with the host's own sub-agent tools; the parent never processes assignments in its
 own context and never launches a general-purpose or `default` sub-agent for kit work.

@@ -527,6 +527,14 @@ so existing projects need no migration.
 
 ## Persistent state
 
+Version 2.6.0 adds optional `run_checkpoint` (state schema 1.4), a provider-neutral
+launch journal, and baseline/protected-file checks in the updater. It distinguishes
+failed units from pre-launch infrastructure failures, requires meaningful restart
+tests and accurate activity reports, and reuses existing scoped recovery authority.
+Existing state files remain valid. Existing research runs do not silently adopt
+new runtime behavior or lose their frozen executable files. See
+`workflow/shared/operational-recovery.md` for explicit migration and handoff.
+
 `project/PROJECT_STATE.md` is the mutable router. Valid statuses are:
 
 | Status | Meaning |
@@ -535,6 +543,7 @@ so existing projects need no migration.
 | `running` | A unique execution run is open. |
 | `awaiting_approval` | A named human gate blocks advancement. |
 | `waiting_for_user` | Specific information or an external action is required. |
+| `paused` | Work was deliberately paused; preserve its checkpoint and do not resume without the applicable authority. |
 | `failed` | Verification failed; use a declared failure route. |
 | `complete` | The selected workflow endpoint has been verified. |
 | `superseded` | This state snapshot or project copy is no longer active. |

@@ -37,11 +37,13 @@ if sys.version_info < (3, 10):
     sys.exit(1)
 
 import argparse  # noqa: E402
+import hashlib  # noqa: E402
 import datetime  # noqa: E402
 import io  # noqa: E402
 import json  # noqa: E402
 import os  # noqa: E402
 import platform  # noqa: E402
+import re  # noqa: E402
 import shutil  # noqa: E402
 import stat  # noqa: E402
 import subprocess  # noqa: E402
@@ -667,6 +669,9 @@ def build_manifest(summary):
         "shared_paths": sorted(set(files["shared_paths"])),
         "project_paths": sorted(set(files["project_paths"])),
         "researcher_paths": sorted(set(files["researcher_paths"])),
+        "baseline_hashes": files.get("baseline_hashes", {}),
+        "protected_bindings": files.get("protected_bindings", {}),
+        "update_conflicts": files.get("update_conflicts", []),
         "researcher_files_in_kit_folders": {
             record["folder"]: record["yours"] for record in summary.get("shared_folders") or []
         },
@@ -715,15 +720,72 @@ def install(source, target, update, already_installed=False, researcher_paths=()
     target = Path(target)
     outcome = empty_outcome(researcher_paths)
     theirs = set(researcher_paths)
+    previous = read_manifest(target)
+    if update and (target / MANIFEST_RELATIVE).exists() and previous is None:
+        raise BootstrapError("Invalid installation manifest; refusing an unverified update.")
+    previous = previous or {}
+    baselines = dict(previous.get("baseline_hashes", {}))
+    protected = dict(previous.get("protected_bindings", {}))
+    protection_path = target / "project/ELARA_PROTECTED_PATHS.json"
+    if protection_path.exists():
+        try:
+            protection = json.loads(read_text(protection_path))
+            if protection.get("schema_version") != "1.0" or not isinstance(protection.get("bindings"), dict):
+                raise ValueError()
+            protected.update(protection["bindings"])
+        except (ValueError, OSError, AttributeError, TypeError):
+            raise BootstrapError("Invalid active-run protection record; refusing update.") from None
+    for relative, digest in {**baselines, **protected}.items():
+        if (not isinstance(relative, str) or Path(relative).is_absolute()
+                or ".." in Path(relative).parts or "\\" in relative
+                or not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+                or not (target / relative).resolve().is_relative_to(target.resolve())):
+            raise BootstrapError("Invalid protected path or baseline hash.")
+    blocked = {}
+    installed_hashes = dict(baselines)
+    # Check every binding, including files removed from the incoming kit and
+    # files whose incoming bytes happen to match unauthorized local changes.
+    for relative, expected in protected.items():
+        path = target / relative
+        actual = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
+        if actual != expected:
+            blocked[relative] = {"path": relative, "reason": "protected_file_drift",
+                                 "current_sha256": actual, "incoming_sha256": None}
+
+    def allowed(destination, data, *, shared=False):
+        relative = destination.relative_to(target).as_posix()
+        if not destination.resolve().is_relative_to(target.resolve()):
+            raise BootstrapError("Installation path escapes target.")
+        current = destination.read_bytes() if destination.exists() else None
+        current_hash = hashlib.sha256(current).hexdigest() if current is not None else None
+        reason = None
+        if relative in protected and current_hash != protected[relative]:
+            reason = "protected_file_drift"
+        elif relative in protected and current != data:
+            reason = "protected_active_run"
+        elif current is not None and current != data and update and already_installed:
+            if relative not in baselines:
+                reason = "unknown_installation_baseline"
+            elif current_hash != baselines[relative]:
+                reason = "locally_modified"
+        if reason:
+            blocked[relative] = {"path": relative, "reason": reason,
+                                 "current_sha256": current_hash,
+                                 "incoming_sha256": hashlib.sha256(data).hexdigest()}
+            return False
+        # Never adopt a conflicting local version as a new trusted baseline.
+        installed_hashes[relative] = hashlib.sha256(data).hexdigest()
+        return True
 
     def put(destination, data):
-        if dry_run:
+        if not allowed(destination, data) or dry_run:
             return
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(data)
 
     def put_text(destination, text):
-        if not dry_run:
+        data = text.encode("utf-8")
+        if allowed(destination, data, shared=True) and not dry_run:
             write_text(destination, text)
 
     def owned(relative, kind="kit"):
@@ -750,6 +812,7 @@ def install(source, target, update, already_installed=False, researcher_paths=()
             alias = target / alias_relative
             if alias.exists():
                 if alias.read_bytes() == kit_bytes:
+                    allowed(alias, kit_bytes)
                     outcome["unchanged"].append(alias_relative)
                 elif update:
                     put(alias, kit_bytes)
@@ -768,6 +831,7 @@ def install(source, target, update, already_installed=False, researcher_paths=()
                     # An earlier kit version installed this file under its plain
                     # name; keep that location rather than leaving two copies.
                     if existing_bytes == kit_bytes:
+                        allowed(destination, kit_bytes)
                         outcome["unchanged"].append(relative + " (this kit file, where an earlier kit version put it)")
                     elif update:
                         put(destination, kit_bytes)
@@ -791,6 +855,7 @@ def install(source, target, update, already_installed=False, researcher_paths=()
             continue
         existing_bytes = destination.read_bytes()
         if existing_bytes == kit_bytes:
+            allowed(destination, kit_bytes)
             outcome["unchanged"].append(relative)
             owned(relative, "project" if relative in PROJECT_OWNED else "kit")
             continue
@@ -861,6 +926,15 @@ def install(source, target, update, already_installed=False, researcher_paths=()
         else:
             outcome["kept"].append(relative + " (differs from this kit version; --update refreshes it)")
         owned(relative)
+    for key in ("updated", "installed", "merged", "prepended", "aliased", "unchanged"):
+        outcome[key] = [item for item in outcome[key]
+                        if not any(item == path or item.startswith(path + " ") for path in blocked)]
+    outcome["kept"].extend(path + " (" + row["reason"] + "; preserved)" for path, row in sorted(blocked.items()))
+    # Only bytes proved identical to the incoming kit or written by this install
+    # establish a baseline. A no-update pass must never bless local modifications.
+    outcome["baseline_hashes"] = installed_hashes
+    outcome["protected_bindings"] = protected
+    outcome["update_conflicts"] = list(blocked.values())
     return outcome
 
 
@@ -1378,6 +1452,7 @@ def machine_summary(summary):
         "merged": summary["files"]["merged"] + summary["files"]["prepended"],
         "researcher_paths": sorted(set(summary["files"]["researcher_paths"])),
         "essential_conflicts": summary.get("essential_conflicts") or [],
+        "update_conflicts": summary["files"].get("update_conflicts", []),
         "manifest_path": None if summary.get("dry_run") else MANIFEST_RELATIVE,
         "existing_materials": summary.get("existing_materials") or [],
         "shared_folders": summary.get("shared_folders") or [],
@@ -1603,6 +1678,13 @@ def bootstrap(args):
     summary["essential_conflicts"] = conflicts
     if conflicts:
         summary["warnings"].append(essential_conflict_warning(conflicts))
+    if files.get("update_conflicts"):
+        summary["warnings"].append(
+            "Partial update: " + str(len(files["update_conflicts"]))
+            + " protected, modified, or unverified file(s) were preserved. "
+            "The source kit version is not a claim of byte-for-byte installation parity; "
+            "review update_conflicts and retained run bindings before research resumes."
+        )
     # A dry run only checks whether the dependency is present; it installs nothing.
     dependency = ensure_dependency(target, sys.executable, args.no_install or dry_run)
     summary["dependency"] = dependency

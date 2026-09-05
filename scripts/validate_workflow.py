@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -76,7 +78,7 @@ UNVERSIONED_OUTPUTS = {
 }
 
 # Optional state keys added after schema 1.0, and their allowed values.
-OPTIONAL_STATE_KEYS = {"usage", "checkpoints", "failure_handling"}
+OPTIONAL_STATE_KEYS = {"usage", "checkpoints", "failure_handling", "run_checkpoint"}
 STATE_USAGES = {"pipeline", "tools"}
 STATE_CHECKPOINTS = {"none", "stages", "plans", "all"}
 STATE_FAILURE_HANDLING = {"autonomous", "interactive"}
@@ -309,6 +311,27 @@ def validate_state(root: Path) -> list[str]:
         )
     if meta.get("status") not in STATE_STATUSES:
         errors.append(f"{path}: invalid status {meta.get('status')!r}")
+    checkpoint = meta.get("run_checkpoint")
+    if checkpoint is not None:
+        try:
+            if not isinstance(checkpoint, dict) or set(checkpoint) != {"path", "sha256"}:
+                raise ValueError()
+            relative = checkpoint["path"]
+            target = (root / relative).resolve()
+            if (not isinstance(relative, str) or Path(relative).is_absolute()
+                    or not target.is_relative_to(root.resolve())
+                    or not re.fullmatch(r"[0-9a-f]{64}", checkpoint["sha256"])):
+                raise ValueError()
+            raw = target.read_bytes()
+            if hashlib.sha256(raw).hexdigest() != checkpoint["sha256"]:
+                raise ValueError()
+            saved = json.loads(raw)
+            if saved.get("payload_values_included") is not False:
+                raise ValueError()
+            if meta.get("status") == "running" and saved.get("phase") in {"paused", "stopped"}:
+                errors.append(f"{path}: running state contradicts paused/stopped checkpoint")
+        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+            errors.append(f"{path}: run_checkpoint must identify an unchanged payload-free local checkpoint")
     current_stage = meta.get("current_stage")
     if current_stage not in EXPECTED_STAGE_IDS:
         errors.append(f"{path}: unknown current_stage {current_stage!r}")
