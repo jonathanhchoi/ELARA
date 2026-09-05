@@ -1,5 +1,11 @@
 # ELARA: Empirical Legal Analysis with Research Agents
 
+Version 2.6.0 adds durable launch checkpoints, operational recovery guidance, and
+update protection for locally modified or frozen execution files. See
+[restarting a coding run](workflow/shared/operational-recovery.md). Existing
+scientific instruments and controller formats are unchanged; old runs adopt
+the optional lifecycle journal only through an explicit migration.
+
 ELARA is the companion package for *ELARA: A Framework for Empirical Legal
 Research with AI Agents* by Jonathan H. Choi. It turns Claude Code or Codex into
 a research assistant for empirical legal work. The assistant can help you move

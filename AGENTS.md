@@ -89,6 +89,13 @@ very fast research assistant whose work is verified, never trusted.
     never silently change models, reasoning settings, subscriptions, or a
     frozen research instrument. Read-only requests remain read-only.
 
+For Stage 11 interruptions and handoffs, follow
+`workflow/shared/operational-recovery.md`: classify infrastructure failures
+separately from failed units, use existing scoped recovery authority, and verify
+the actual failed operation before calling a restart ready. Process liveness is
+not coding progress. Preserve a current checkpoint; never loop on the same
+failure without new evidence or an independently reviewed repair.
+
 During a research run, edit only paths under `project/` that the current stage
 declares (plus the repository-local Git change-tracking the researcher
 approved at Stage 00, which lives in `.git/`). Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,

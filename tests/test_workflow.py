@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import re
 import sys
@@ -664,6 +665,40 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIn("`project_slug` is null", content, path)
                 self.assertIn("workflow/stages/00-initialize.md", content, path)
         self.assertEqual(checked, 2 * len(EXPECTED_STAGE_IDS))
+
+    def test_checkpoint_anchor_and_paused_running_contradiction(self) -> None:
+        template = (ROOT / "project/PROJECT_STATE.md").read_text(encoding="utf-8")
+        template = template.replace("project_slug: null", 'project_slug: "fixture"').replace(
+            "updated_at: null", 'updated_at: "2026-09-05T00:00:00Z"')
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "project").mkdir()
+            state = root / "project/PROJECT_STATE.md"
+            checkpoint = root / "project/checkpoint.json"
+            checkpoint.write_text(json.dumps({"phase": "paused", "payload_values_included": False}), encoding="utf-8")
+            binding = {"path": "project/checkpoint.json", "sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest()}
+            anchored = template.replace("run_checkpoint: null", "run_checkpoint: " + json.dumps(binding))
+            state.write_text(anchored, encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            state.write_text(anchored.replace('status: "ready"', 'status: "paused"'), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            state.write_text(anchored.replace('status: "ready"', 'status: "running"'), encoding="utf-8")
+            self.assertTrue(any("contradicts" in e for e in validate_state(root)))
+            checkpoint.write_text('{}', encoding="utf-8")
+            self.assertTrue(any("unchanged payload-free" in e for e in validate_state(root)))
+
+    def test_checkpoint_path_escape_is_rejected_and_legacy_is_supported(self) -> None:
+        template = (ROOT / "project/PROJECT_STATE.md").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "project").mkdir()
+            state = root / "project/PROJECT_STATE.md"
+            state.write_text(template.replace("run_checkpoint: null\n", ""), encoding="utf-8")
+            self.assertEqual(validate_state(root), [])
+            for path in ("../outside.json", str(root.parent / "outside.json")):
+                binding = {"path": path, "sha256": "a" * 64}
+                state.write_text(template.replace("run_checkpoint: null", "run_checkpoint: " + json.dumps(binding)), encoding="utf-8")
+                self.assertTrue(any("unchanged payload-free" in e for e in validate_state(root)))
 
     def test_state_usage_key_is_optional_and_validated(self) -> None:
         template = (ROOT / "project" / "PROJECT_STATE.md").read_text(encoding="utf-8")

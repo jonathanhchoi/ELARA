@@ -335,8 +335,8 @@ class ExistingFolderTests(unittest.TestCase):
             self.assertEqual(summary["merged"], [])
             for relative, content in first.items():
                 self.assertEqual((target / relative).read_bytes(), content, relative)
-            # Simulate an older kit file and a locally edited stage; --update refreshes both,
-            # never the project state, the researcher's files, or their text in merged files.
+            # Local edits are no longer mistaken for clean old releases. Updates
+            # preserve them and report conflicts against the installation baseline.
             (target / "PIPELINE.md").write_text("old kit map\n", encoding="utf-8")
             (target / "workflow" / "stages" / "19-cite-check.md").write_text("old\n", encoding="utf-8")
             state = target / "project" / "PROJECT_STATE.md"
@@ -346,10 +346,9 @@ class ExistingFolderTests(unittest.TestCase):
             self.assertEqual(summary["files"]["updated"], 0)
             self.assertTrue(any(item.startswith("PIPELINE.md") for item in summary["kept"]))
             summary = install(target, "--update")
-            self.assertGreaterEqual(summary["files"]["updated"], 2)
-            self.assertEqual(
-                (target / "PIPELINE.md").read_bytes(), (ROOT / "PIPELINE.md").read_bytes()
-            )
+            self.assertEqual((target / "PIPELINE.md").read_text(encoding="utf-8"), "old kit map\n")
+            self.assertEqual({r["path"] for r in summary["update_conflicts"]},
+                             {"PIPELINE.md", "workflow/stages/19-cite-check.md"})
             self.assertEqual(state.read_text(encoding="utf-8"), state_text)
             self.assertEqual((target / "README.md").read_bytes(), first["README.md"])
             claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
@@ -518,12 +517,13 @@ class ExistingFolderTests(unittest.TestCase):
             (target / "PIPELINE.md").write_text("old\n", encoding="utf-8")
             summary = install(target, "--update")
             self.assertEqual((target / "scripts" / "doctor.py").read_text(encoding="utf-8"), "# my own doctor\n")
-            self.assertEqual((target / "PIPELINE.md").read_bytes(), (ROOT / "PIPELINE.md").read_bytes())
+            self.assertEqual((target / "PIPELINE.md").read_text(encoding="utf-8"), "old\n")
+            self.assertIn("PIPELINE.md", {r["path"] for r in summary["update_conflicts"]})
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             self.assertEqual(manifest["researcher_paths"], ["scripts/doctor.py"])
             self.assertEqual(summary["essential_conflicts"], ["scripts/doctor.py"])
 
-    def test_kit_readme_installed_by_an_earlier_version_is_refreshed_in_place(self) -> None:
+    def test_legacy_readme_without_authenticated_baseline_is_preserved_in_place(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "paper"
             target.mkdir()
@@ -536,7 +536,8 @@ class ExistingFolderTests(unittest.TestCase):
             self.assertTrue(any(item.startswith("README.md (an earlier kit version") for item in summary["kept"]))
             self.assertEqual((target / "README.md").read_text(encoding="utf-8"), legacy)
             summary = install(target, "--update")
-            self.assertEqual((target / "README.md").read_bytes(), (ROOT / "README.md").read_bytes())
+            self.assertEqual((target / "README.md").read_text(encoding="utf-8"), legacy)
+            self.assertIn("README.md", {r["path"] for r in summary["update_conflicts"]})
             self.assertFalse((target / "ELARA_README.md").exists())
             manifest = json.loads((target / "project" / "ELARA_MANIFEST.json").read_text(encoding="utf-8"))
             self.assertIn("README.md", manifest["kit_paths"])

@@ -289,6 +289,12 @@ fallback, not a reason to weaken the completion condition.
 
 ## Completion report
 
+For paused or interrupted Stage 11 work, follow
+`workflow/shared/operational-recovery.md`. Verify the recorded `run_checkpoint`
+when present, reconcile it against current disk evidence, and replace stale
+active pointers before dispatch. Do not report a live verifier as live coding.
+An explicitly paused task must not continue an earlier production goal.
+
 Before returning control, reconcile the native plan against disk and report:
 the completed or blocked plan item; files or commands that prove it; exact
 counts where applicable; the active goal's outcome for a long stage; the state

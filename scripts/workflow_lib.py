@@ -38,6 +38,7 @@ REQUIRED_STAGE_SECTIONS = (
 INTERACTION_PROFILES = {"normal", "plan", "execute", "plan_then_execute"}
 STATE_STATUSES = {
     "ready",
+    "paused",
     "running",
     "awaiting_approval",
     "waiting_for_user",

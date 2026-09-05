@@ -274,6 +274,13 @@ idea through the revision queue and amendment process like any other change.
 
 ## 11. Autonomy: when to ask, when to proceed
 
+For Stage 11 infrastructure interruptions, apply
+`workflow/shared/operational-recovery.md`. Existing scoped recovery authority
+permits reviewed, tested implementation repairs; do not repeatedly ask the same
+approval. This does not authorize scientific changes, assumed retry eligibility,
+or bypassing a stop. Preserve the incident and verify the failed operation before
+resumption. Identical unsuccessful operations without new evidence are not progress.
+
 ELARA is low-touch by default. The researcher decides at gates; between gates
 the assistant works, and it interrupts the researcher only for a real gating
 issue. This section is the complete list of reasons to stop; nothing else is.
