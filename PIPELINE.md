@@ -34,9 +34,11 @@ steps. A stage's `paper_steps` field records the crosswalk above.
 Before any new stage or optional tool, including Stage 00, automatic transitions,
 and new recovery runs, the parent follows `workflow/shared/kit-updates.md` and
 runs `scripts/check_update.py`. It checks the exact installed commit against
-GitHub `main`, requests agreement to any update, and pauses on a declined
-update, an unavailable check, or unresolved installation evidence. Help, status,
-and menu-only requests remain available. Existing runs retain their software.
+GitHub `main`, installs verified compatible updates automatically, and uses
+freshly authenticated installed bytes if GitHub is unavailable. Conflicts enter
+autonomous investigation; only a real missing researcher decision requires an
+input request. Help, status, and menu remain available. Existing runs retain
+their software unless a reviewed operational migration is already authorized.
 
 1. `$elr` in Codex or `/elr` in Claude reads `project/PROJECT_STATE.md`.
 2. It reads the current authoritative stage instructions and the shared workflow contracts.
@@ -45,8 +47,9 @@ and menu-only requests remain available. Existing runs retain their software.
 4. It creates or updates the host's stage plan so that the plan agrees with the
    project files, then follows the mode handoff; metadata cannot change an
    application's mode automatically.
-5. A long stage resumes its matching goal or gives the researcher the exact
-   `/goal` command. Execution then receives a unique run ID, writes only
+5. A long stage resumes a goal covering its authorized work and evidence, or
+   follows the goal-activation and foreground-fallback rules in
+   `workflow/shared/execution-control.md`. Execution receives a unique run ID, writes only
    declared versioned paths under `project/`, appends to the ledgers, and
    verifies every declared result.
 6. A human gate sets `status: awaiting_approval`; silence is not approval. A
@@ -210,8 +213,8 @@ version.
 |---|---|
 | `normal` | Track the short stage in the native plan and gather a researcher decision; no Plan Mode or goal. |
 | `plan` | Track the work, inspect in Plan Mode, make no file changes, and return the exact execution handoff. |
-| `execute` | Track and run approved execution. If `long_running: true`, use the stage's exact completion condition as the durable goal. The host coordinates any parallel sub-agents under `workflow/shared/observation-fanout.md`. |
-| `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Stages 01, 04, 05, 07, 08, 09, and 17 use Plan Mode and the host's question interface at their declared decision boundaries; the Stage 01 and 09 interviews are partial, and the Stage 07 interview follows the independent critiques. Other stages enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 18 and 20 always stop because their plan is the manuscript-edit gate). A long execution phase uses the exact stage goal. |
+| `execute` | Track and run approved execution. If `long_running: true`, keep the stage's completion condition covered by a durable goal or the documented foreground fallback. The host coordinates any parallel sub-agents under `workflow/shared/observation-fanout.md`. |
+| `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Stages 01, 04, 05, 07, 08, 09, and 17 use Plan Mode and the host's question interface at their declared decision boundaries; the Stage 01 and 09 interviews are partial, and the Stage 07 interview follows the independent critiques. Other stages enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 18 and 20 always stop because their plan is the manuscript-edit gate). A long execution phase follows the shared equivalent-goal and foreground-fallback rules. |
 
 Plan phases do not alter state, ledgers, or research files. A mode or permission
 setting never waives a human gate, data restriction, or version rule.
@@ -220,10 +223,11 @@ Every substantive stage and utility uses the host's native tracker: Codex uses
 `update_plan`; Claude Code uses `TaskCreate`, `TaskUpdate`, and `TaskList`. The
 tracker is rebuilt from the files on resume and is not part of the research
 record. Every stage marked `long_running: true` has a completion condition that
-the validator checks. If the matching goal is not active, the assistant gives
-the exact `/goal ...` command and stops for the one-time activation. It never
-replaces another active goal. One goal covers one stage, not the full pipeline
-or an individual worker. Stages 01–03, 07–08, 10–12, 14–16, and 19 are
+the validator checks. An existing goal covering the authorized work and evidence
+is sufficient regardless of wording. If no covering goal exists, follow the
+activation rules; unavailable goal features use foreground execution with durable
+checkpoints. Never replace an unrelated active goal. Request new goals per stage;
+preserve broader user-requested goals that already cover it. Stages 01–03, 07–08, 10–12, 14–16, and 19 are
 long-running. See `workflow/shared/execution-control.md`.
 
 ## Numbered stages
@@ -534,7 +538,15 @@ so existing projects need no migration.
 
 ## Persistent state
 
-Version 2.7.0 adds the stage-start GitHub check and update agreement. The
+Version 2.8.0 adds a shared operational recovery decision interface, optional
+`recovery_decision` state evidence (schema 1.5), routing consistency checks,
+equivalent-goal recognition, and a consistent fallback when host goals are
+unavailable. Infrastructure repair, review, and capability verification proceed
+under scoped authority; they do not create new researcher gates. Compatible
+updates install automatically and freshly verified installed bytes remain usable
+when GitHub is unavailable. Frozen research controls and explicit limits remain.
+
+Version 2.7.0 introduced the stage-start GitHub check and update agreement. The
 installation manifest records `installed_commit`, `installation_complete`, and
 `installed_hashes` separately from the project's historical `workflow_version`.
 New runs archive their successful check; interrupted updates retain

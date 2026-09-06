@@ -50,15 +50,15 @@ the canonical `interaction_profile` as follows:
   whose plan is the manuscript-edit gate.
 
 For every stage marked `long_running: true`, inspect `/goal` status before its
-first execution write. Resume only if the exact front-matter `goal_condition`
-is active. If none is active, print the complete `/goal <goal_condition>` command
-and stop; if another goal is active, do not replace or clear it. The parent
-keeps that one stage goal and the task list current while saved workflows run
+first execution write. Reuse a goal covering the stage's authorized work and
+completion evidence regardless of wording. If none is active and goals are
+available, give the `/goal <goal_condition>` handoff; never replace or clear an
+unrelated goal. The parent keeps the completion contract and task list current while saved workflows run
 fan-outs. Surface verification results and exact counts in checkpoint and final
 turns because Claude's goal evaluator sees the conversation, not project files.
 If goals are unavailable or disabled, record the fallback and use the same task
-plan and durable disk checkpoints. Never use one goal for the whole pipeline or
-one goal per worker.
+plan and durable disk checkpoints. Request new goals per stage rather than per
+worker; preserve a broader user-requested goal that already covers the stage.
 
 Claude permission modes control tool access; they never waive a workflow gate or
 data-authorization requirement. Nor do they add stops: outside the gates and

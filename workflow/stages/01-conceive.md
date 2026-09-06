@@ -39,6 +39,9 @@ Pause after presenting the profile if any material inference is disputed. At the
 
 ## Mode handoff
 
+Apply the equivalent-goal and host-unavailability fallback rules in
+`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
+
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. Use the two targeted Plan-Mode interviews in
 `workflow/shared/execution-control.md`, not one continuous planning session.
@@ -51,11 +54,11 @@ plan for review. Do not write any project file, create a run, update state, or
 browse-download files while this interview is active.
 
 After the researcher accepts that proposal, leave Plan Mode and continue into
-execution in the same session. The
-`goal_condition` recorded in the settings at the top of this file must be the
-active goal before execution begins. If it is not active, provide
-`/goal <goal_condition>` and stop. Run the landmark, brainstorming, screening,
-and verification work under that goal. After the verified shortlist exists,
+execution in the same session. Apply the shared goal rules: reuse an existing
+goal covering this stage's work and evidence, request `/goal <goal_condition>` only when
+needed and available, and use foreground execution with durable checkpoints
+when goal features are unavailable. Run the landmark, brainstorming, screening,
+and verification work under that completion contract. After the verified shortlist exists,
 re-enter Plan Mode and use the same question control to compare, redirect, or
 combine candidates. An express selection tied to the exact report is the
 `project-selection` decision; accepting a generic host plan, the goal, or a mode
@@ -65,7 +68,7 @@ interview.
 
 ## Work
 
-1. After the first Plan-Mode proposal is accepted and the exact goal is active, allocate a unique run ID and archive the exact inputs and active artifact hashes in the run manifest.
+1. After the first Plan-Mode proposal is accepted and the shared goal or foreground-fallback requirements are satisfied, allocate a unique run ID and archive the exact inputs and active artifact hashes in the run manifest.
 2. Write the confirmed profile from the Plan-Mode synthesis, covering recurring substantive themes, actual methodological approach, familiar collections of documents or data, theoretical commitments, reusable sequences of research steps, and every future-research passage, limitation, footnote, or announced project that ELARA should not duplicate. Cite the input file and page or section for every inference and record the researcher's corrections or express adoption of the recommendation in DECISIONS.md.
 3. Using live web research, identify the important and widely cited empirical works in the confirmed fields. Support their recognized importance with retrieved evidence such as reviews, handbooks, syllabi, or citation data. For each landmark, state its question, importance, principal data limitation, and the extension or adjacent test made newly feasible by LLM-scale text measurement.
 4. Brainstorm broadly from the confirmed profile and landmark limitations, not by executing the researcher's prior-paper to-do list. Generate at least ten distinct candidates before filtering. Exclude near-duplicates of prior work and claimed-agenda items unless the researcher expressly reopens them.

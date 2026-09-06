@@ -367,8 +367,10 @@ class WorkflowContractTests(unittest.TestCase):
             "`TaskCreate`",
             "`TaskUpdate`",
             "`TaskList`",
-            "one goal per stage",
-            "never one goal for the whole pipeline",
+            "When requesting a new goal, use one per stage",
+            "Existing equivalent user goals remain valid.",
+            "wording need not match verbatim.",
+            "foreground fallback",
         ):
             self.assertIn(needle, control, needle)
 
@@ -400,7 +402,7 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn(tool, claude_wrapper)
         for wrapper in (codex_wrapper, claude_wrapper):
             self.assertIn("`/goal <goal_condition>`", wrapper)
-            self.assertIn("never replace another active goal", wrapper)
+            self.assertIn("never replace an unrelated active goal", wrapper)
 
         from doctor import DISCOVERY_SURFACES
 
@@ -416,7 +418,10 @@ class WorkflowContractTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("`/goal <goal_condition>`", guardrails)
-        self.assertIn("do not replace or clear it", guardrails)
+        flat_guardrails = " ".join(guardrails.split())
+        self.assertIn("an unrelated active goal conflicts", flat_guardrails)
+        self.assertIn("never require verbatim reactivation of equivalent work", flat_guardrails)
+        self.assertIn("foreground fallback and durable checkpoints", flat_guardrails)
         # The README stays a quick-start document; PIPELINE.md is the public
         # reference for how plans and goals run.
         pipeline_text = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")

@@ -303,11 +303,16 @@ def github_commit(ref=DEFAULT_REF):
                 "url": "https://github.com/" + REPOSITORY + "/commit/" + sha}
     except (URLError, OSError, ValueError, KeyError, TypeError, IndexError):
         # Never include headers, tokens, or response bodies in an error report.
-        raise BootstrapError("Could not verify ELARA on GitHub (connection, rate limit, or invalid response). Retry later; the new stage remains paused.") from None
+        raise BootstrapError("Could not verify ELARA on GitHub (connection, rate limit, or invalid response). The stage checker must verify installed bytes before applying its fallback.") from None
 
 
 def local_source_info(source):
-    """A local revision is authoritative only in a clean official kit checkout."""
+    """Authenticate a clean revision reachable from the official fetched main.
+
+    An official-looking remote URL alone cannot authenticate a local commit.
+    The fetched tracking ref supplies the upstream lineage; a local-only commit
+    remains unverified even when its worktree is clean.
+    """
     result = {"kind": "local copy", "location": str(source), "commit": git_commit(source)}
     if not result["commit"]:
         return result
@@ -316,9 +321,11 @@ def local_source_info(source):
                                 capture_output=True, text=True, timeout=15, check=False)
         status = subprocess.run(["git", "-C", str(source), "status", "--porcelain", "--untracked-files=all"],
                                 capture_output=True, text=True, timeout=15, check=False)
+        lineage = subprocess.run(["git", "-C", str(source), "merge-base", "--is-ancestor", "HEAD", "refs/remotes/origin/main"],
+                                 capture_output=True, text=True, timeout=15, check=False)
         official = {"https://github.com/" + REPOSITORY, "https://github.com/" + REPOSITORY + ".git",
                     "git@github.com:" + REPOSITORY + ".git"}
-        if remote.returncode == status.returncode == 0 and remote.stdout.strip() in official and not status.stdout.strip():
+        if remote.returncode == status.returncode == lineage.returncode == 0 and remote.stdout.strip() in official and not status.stdout.strip():
             result["verified_commit"] = result["commit"]
     except (OSError, subprocess.SubprocessError):
         pass
@@ -1213,9 +1220,10 @@ def next_steps(summary):
     steps = []
     steps.append(
         "Before starting any new stage or tool, follow workflow/shared/kit-updates.md and run "
-        "scripts/check_update.py for that stage. Ask for the researcher's agreement before an "
-        "update, install only the approved commit, verify it, and reread the updated instructions. "
-        "An unavailable check, declined update, conflict, or incomplete installation leaves the new stage paused. "
+        "scripts/check_update.py for that stage. Apply verified compatible updates automatically "
+        "when writes are authorized, verify the exact commit, and reread updated instructions. "
+        "When GitHub is unavailable use freshly authenticated installed bytes. Investigate conflicts "
+        "autonomously; ask only for unresolved researcher choices and honor explicit update limits. "
         "Resume an existing run under its recorded software; do not reinitialize an existing project."
     )
     steps.append(

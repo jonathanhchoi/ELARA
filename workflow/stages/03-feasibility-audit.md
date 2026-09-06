@@ -44,11 +44,13 @@ The evidence audit may recommend defaults, but it does not silently turn those r
 
 ## Mode handoff
 
+Apply the equivalent-goal and host-unavailability fallback rules in
+`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
+
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. This is a long-running execution stage: the `goal_condition`
-recorded in the settings at the top of this file must be the active goal before
-execution begins. If it is not
-active, provide `/goal <goal_condition>` and stop. Do not proceed on a paper plan
+recorded in the settings at the top of this file must be covered by the active goal before
+execution begins. If no covering goal is active and the host exposes goals, provide `/goal <goal_condition>` and stop. Do not proceed on a paper plan
 or perform the audit in Plan Mode. Run and archive only authorized live probes,
 keep the plan current through verification, and stop at the
 `feasibility-go-no-go` gate.

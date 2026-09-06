@@ -9,9 +9,13 @@ very fast research assistant whose work is verified, never trusted.
 Before starting any new stage or optional tool, follow
 `workflow/shared/kit-updates.md` and run `scripts/check_update.py` for that stage.
 This includes direct requests, Stage 00, automatic transitions, and new recovery
-runs. Start only after a live `ready: true` result. Ask for explicit agreement to
-an available update; a declined update, failed check, or unresolved installation
-leaves the new stage paused. Existing runs resume under their recorded software.
+runs. Require `ready: true` before execution; the update contract permits a
+read-only plan on verified installed bytes while an update is deferred.
+Automatically install verified compatible updates
+when writes are authorized; if GitHub is unavailable, use freshly authenticated
+installed bytes and retry at the next stage boundary. Investigate conflicts
+autonomously. Ask only for a genuine unresolved researcher choice. Existing runs
+resume under their recorded software and scoped operational migration authority.
 Status, help, and menu-only requests remain read-only and need no check.
 
 1. Read `project/PROJECT_STATE.md` before doing research work.
@@ -28,9 +32,12 @@ Status, help, and menu-only requests remain read-only and need no check.
    pipeline or specific tools; that answer is the project's usage mode, recorded
    as `usage` (`pipeline` or `tools`) in the state front matter. If state
    is missing or malformed but project history exists, stop and report a
-   state-recovery issue; never erase history by reinitializing. If state says
-   `awaiting_approval` or `waiting_for_user`, request the recorded input and do
-   not advance. If it says `failed`, use the current stage's `failure_routes`.
+   state-recovery issue; never erase history by reinitializing. Before repeating
+   `awaiting_approval` or `waiting_for_user`, reconcile current user instructions
+   and recorded decisions with the concrete action. Resolve stale requests and
+   validate the routing state. For operational recovery, use the shared decision
+   interface in `scripts/recovery_decision.py`; only `request_user` requires a
+   new decision. If state says `failed`, use the current stage's `failure_routes`.
 5. In an adopted project, artifacts imported at Stage 00 and pinned in
    `active_artifacts` satisfy a stage's required inputs, and approvals recorded
    with basis `researcher-asserted` satisfy its gate prerequisites. Verify what
@@ -54,11 +61,11 @@ Status, help, and menu-only requests remain read-only and need no check.
    plan is the manuscript-edit gate. Each interview has a separately stated
    execution effect; accepting a host plan never silently approves a later
    research gate or external action.
-   A stage marked
-   `long_running: true` executes only under its exact front-matter
-   `goal_condition`: inspect the current goal, resume it if it matches, or give
-   the complete `/goal <goal_condition>` handoff and stop; never replace a
-   different active goal and never use one goal for the whole pipeline. Claude
+   A stage marked `long_running: true` uses its front-matter `goal_condition`
+   as the completion contract. Resume an existing goal that covers the same
+   authorized work and evidence, even if worded differently. Never replace an
+   unrelated goal. If goal features are unavailable, use the documented
+   foreground-execution fallback with durable checkpoints. Claude
    Code tracks work with its Task tools and Codex with `update_plan`; both hosts
    use `/goal` for the durable stage loop. See
    `workflow/shared/execution-control.md`.
@@ -110,7 +117,7 @@ approved at Stage 00, which lives in `.git/`). Do not modify the kit's own files
 `PIPELINE.md`, the kit README (`ELARA_README.md` in a project folder;
 `README.md` in a plain clone of the kit), `workflow/`, `.agents/`, `.claude/`,
 `.codex/`, `scripts/`, and `tests/` — unless the researcher explicitly asks to
-develop the kit itself or agrees to the exact kit update under
+develop the kit itself or the compatible update is covered under
 `workflow/shared/kit-updates.md`. That update permission never changes frozen
 research files or approvals. Files that were in this folder before ELARA was
 installed are the researcher's: never move, rename, edit, or delete them;

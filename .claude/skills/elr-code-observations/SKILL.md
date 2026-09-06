@@ -7,7 +7,8 @@ description: "Run empirical legal research coding or audit assignments in parall
 
 The parent must satisfy `workflow/shared/kit-updates.md` with
 `scripts/check_update.py` and `ready: true` before a new stage run begins.
-A declined update pauses that new run. Within an existing run, preserve the
+Use compatible automatic updates and verified installed fallback; a declined
+specific change remains binding. Within an existing run, preserve the
 recorded software; do not repeat update checks per worker, batch, or retry.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`,

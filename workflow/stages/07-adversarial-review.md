@@ -40,14 +40,17 @@ No critic, synthesizer, or majority vote substitutes for this judgment. After th
 
 ## Mode handoff
 
+Apply the equivalent-goal and host-unavailability fallback rules in
+`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
+
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. Plan the independent review assignments, attack surfaces, evidence
 requirements, non-overlapping file ownership, synthesis rules, and upstream
 invalidation tests read-only; do not write a project file, create critiques,
 allocate a run, or touch state until that plan is complete. Because this stage is
-long-running, the `goal_condition` recorded in the settings at the top of this
-file must be the active goal before execution begins. If it is not active,
-provide `/goal <goal_condition>` and stop. The goal stays with the parent while
+long-running, apply the shared goal rules before execution: reuse a covering
+goal, request `/goal <goal_condition>` only when needed and available, and use the documented
+foreground fallback when goal features are unavailable. The completion contract stays with the parent while
 independent critics run in parallel under the contract.
 
 Do not use the researcher interview to influence the independent critiques.

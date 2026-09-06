@@ -81,14 +81,71 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(snapshot(self.target), before)
         self.assertEqual(self.check(NEW)["status"], "update_available")
 
-    def test_network_failure_cannot_reuse_a_previous_success(self):
+    def test_network_failure_reverifies_installed_bytes_instead_of_reusing_success(self):
         self.install()
         self.assertTrue(self.check()["ready"])
         before = snapshot(self.target)
         with patch.object(bootstrap, "github_commit", side_effect=bootstrap.BootstrapError("GitHub unavailable")):
             result = check_update.check(self.target, STAGE)
-        self.assertEqual(result["status"], "unavailable")
+        self.assertEqual(result["status"], "verified_installed")
+        self.assertTrue(result["ready"])
+        self.assertFalse(result["upstream_checked"])
+        self.assertEqual(result["retry_at"], "next_stage_boundary")
+        self.assertEqual(snapshot(self.target), before)
+        (self.target / "scripts/example.py").write_text("changed after previous success")
+        with patch.object(bootstrap, "github_commit", side_effect=bootstrap.BootstrapError("unavailable")):
+            self.assertFalse(check_update.check(self.target, STAGE)["ready"])
+
+    def test_network_failure_does_not_trust_legacy_label_or_incomplete_installation(self):
+        self.install()
+        path = self.target / bootstrap.MANIFEST_RELATIVE
+        manifest = json.loads(path.read_text())
+        manifest.pop("installed_commit")
+        path.write_text(json.dumps(manifest))
+        with patch.object(bootstrap, "github_commit", side_effect=bootstrap.BootstrapError("unavailable")):
+            self.assertFalse(check_update.check(self.target, STAGE)["ready"])
+        self.install()
+        (self.target / bootstrap.UPDATE_PENDING_RELATIVE).write_text("{}")
+        with patch.object(bootstrap, "github_commit", side_effect=bootstrap.BootstrapError("unavailable")):
+            self.assertFalse(check_update.check(self.target, STAGE)["ready"])
+
+    def prepare(self):
+        info = {"kind": "download", "commit": NEW, "verified_commit": NEW,
+                "location": "https://github.com/" + bootstrap.REPOSITORY, "ref": NEW}
+        with patch.object(bootstrap, "github_commit", return_value={"commit": NEW, "subject": "new", "url": "https://github.com/example"}), \
+                patch.object(bootstrap, "resolve_source", return_value=(self.source, info)) as resolve, \
+                patch.object(bootstrap, "ensure_dependency", return_value={"status": "present"}), \
+                patch.object(bootstrap, "run_doctor", return_value={"ok": True, "failures": [], "warnings": []}):
+            result = check_update.prepare(self.target, STAGE)
+            self.assertEqual(resolve.call_args.args[0].ref, NEW)
+            self.assertTrue(resolve.call_args.args[0].require_clean)
+            self.assertFalse(resolve.call_args.args[0].skip_doctor)
+            return result
+
+    def test_compatible_update_installs_exact_commit_automatically_and_preserves_research(self):
+        self.install()
+        (self.source / "scripts/example.py").write_text("new code")
+        state = self.target / "project/PROJECT_STATE.md"
+        state.write_text("researcher state must remain exact")
+        before = state.read_bytes()
+        result = self.prepare()
+        self.assertTrue(result["ready"], result)
+        self.assertEqual(result["status"], "updated")
+        self.assertEqual(result["installed_commit"], NEW)
+        self.assertEqual(state.read_bytes(), before)
+        self.assertEqual((self.target / "scripts/example.py").read_text(), "new code")
+        self.assertFalse((self.target / bootstrap.UPDATE_PENDING_RELATIVE).exists())
+
+    def test_automatic_update_conflict_preserves_files_and_routes_to_repair(self):
+        self.install()
+        (self.source / "scripts/example.py").write_text("new code")
+        original = (self.target / "scripts/example.py").read_bytes()
+        (self.target / "project/ELARA_PROTECTED_PATHS.json").write_text(json.dumps({
+            "schema_version": "1.0", "bindings": {"scripts/example.py": hashlib.sha256(original).hexdigest()}}))
+        before = snapshot(self.target)
+        result = self.prepare()
         self.assertFalse(result["ready"])
+        self.assertEqual(result["next_action"], "repair")
         self.assertEqual(snapshot(self.target), before)
 
     def test_modified_missing_and_incomplete_inventory_never_pass(self):
@@ -261,11 +318,18 @@ class SourceIdentityTests(unittest.TestCase):
             (root / "README.md").write_text("original")
             git("add", "README.md")
             git("-c", "user.name=ELARA Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture")
+            self.assertNotIn("verified_commit", bootstrap.local_source_info(root))
+            # Public fixture for the tracking ref written by an official fetch.
+            git("update-ref", "refs/remotes/origin/main", "HEAD")
             identity = bootstrap.local_source_info(root)
             self.assertEqual(len(identity["verified_commit"]), 40)
             (root / "README.md").write_text("local edit")
             self.assertNotIn("verified_commit", bootstrap.local_source_info(root))
             (root / "README.md").write_text("original")
+            (root / "local-only.txt").write_text("unpushed local implementation")
+            git("add", "local-only.txt")
+            git("-c", "user.name=ELARA Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "local only")
+            self.assertNotIn("verified_commit", bootstrap.local_source_info(root))
             git("remote", "set-url", "origin", "https://github.com/example/research.git")
             self.assertNotIn("verified_commit", bootstrap.local_source_info(root))
 

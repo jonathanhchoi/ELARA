@@ -149,8 +149,9 @@ researcher explicitly changes the kit's governing instructions.
   fresh session can resume without chat history or duplication.
 - Follow `workflow/shared/execution-control.md`: keep the host's native stage
   plan aligned with these durable checkpoints, and run every stage marked
-  `long_running: true` under its exact front-matter `goal_condition` after the
-  researcher activates it. A native plan or goal is never a provenance record.
+  `long_running: true` under an authorized goal covering its `goal_condition`,
+  or use the documented host-unavailability fallback. A native plan or goal is
+  never a provenance record.
 
 ## 7. Parallel work and shared files
 
@@ -320,14 +321,16 @@ issue. This section is the complete list of reasons to stop; nothing else is.
      typed failure row, or a stop onto the recorded failure route); an
      instruction outside them routes as a change or deviation, never as a
      mid-run fix.
-  7. a stage marked `long_running: true` is ready to execute but its exact
-     front-matter `goal_condition` is not the active host goal — give the
-     researcher the complete `/goal <goal_condition>` command once and wait.
-     If a different goal is active, do not replace or clear it.
-  8. before a new stage or optional tool, `kit-updates.md` reports an available
-     update requiring the researcher's explicit agreement, an unavailable
-     GitHub check, or unresolved installation evidence. Pause the new stage;
-     no provisional default or offline exception can satisfy this prerequisite.
+  7. a long stage has no active goal covering its authorized work and the host
+     exposes goal activation, or an unrelated active goal conflicts. Give the
+     `/goal <goal_condition>` handoff once; never require verbatim reactivation
+     of equivalent work. When the feature is unavailable, use the documented
+     foreground fallback and durable checkpoints.
+  8. an update conflict under `kit-updates.md` requires a genuine researcher
+     choice after autonomous investigation, or the researcher expressly limited
+     updates. Compatible verified updates proceed automatically. A failed GitHub
+     check permits freshly authenticated installed bytes; an incomplete or
+     conflicting installation enters repair, not an automatic permission request.
 - **Otherwise proceed.** Except for material choices within the interactive
   Plan-Mode interview boundaries declared for Stages 01, 04, 05, 07, 08, 09,
   and 17 in `workflow/shared/execution-control.md`, take the sensible default —

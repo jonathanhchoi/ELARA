@@ -55,7 +55,7 @@ the run manifest, under `kit-updates.md`. This identifies the installed ELARA
 commit without rewriting the project's historical `workflow_version`.
 `project/ELARA_MANIFEST.json`, `project/BOOTSTRAP.md`, and the temporary
 `project/ELARA_UPDATE_PENDING.json` are installer-managed operational records,
-not research artifacts; update consent cannot change a frozen research file.
+not research artifacts; update authority cannot change a frozen research file.
 
 Every rerunnable or approvable artifact uses a three-digit version suffix before
 the extension:
@@ -170,6 +170,21 @@ types:
 - `outstanding_user_inputs`: array of concrete unanswered requests.
 - `last_run_id`: quoted run ID or `null`.
 - `updated_at`: quoted UTC ISO 8601 timestamp or `null` before first write.
+- `run_checkpoint` (optional, schema 1.4): unchanged payload-free checkpoint
+  reference with `path` and `sha256`. If repeated in `active_artifacts`, both
+  references must agree. Never add a competing top-level continuation pointer.
+- `recovery_decision` (optional, schema 1.5): `request` and `result`, each a
+  repository-relative `path`/`sha256` reference for `recovery_decision.py`.
+  The validator recomputes the decision, verifies its run identity, and checks
+  routing and unresolved inputs. Hashes and matching assertions alone do not
+  prove the underlying authority or research findings; retain their sources.
+
+`ready`, `running`, and `complete` must not retain unresolved user requests;
+`waiting_for_user` and `awaiting_approval` must identify a concrete unresolved
+input. Before asking again, reconcile current instructions and prior decisions,
+preserve the outgoing state, and clear only requests actually resolved.
+Infrastructure repair uses `paused` while operational work continues; only an
+unresolved researcher decision uses `waiting_for_user`.
 
 The body below the front matter is prose for humans; the front matter alone
 routes.
