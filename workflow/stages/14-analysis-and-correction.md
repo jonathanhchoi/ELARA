@@ -33,6 +33,9 @@ The researcher decides the quantities to estimate, model specifications, how hyp
 
 ## Mode handoff
 
+Apply the equivalent-goal and host-unavailability fallback rules in
+`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
+
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. Plan first, read-only. Do not write any project file until the plan
 is complete. Present a decision-complete, hypothesis-by-hypothesis execution
@@ -44,10 +47,10 @@ before executing, because it must be fixed before any result is seen; only
 operational choices take a provisional `assistant-default`. Then continue into execution in the same session, without waiting,
 unless a stop condition in `workflow/shared/guardrails.md` §11 holds;
 only then enter Plan Mode, stop, and give the exact execution handoff. Because
-the execution is long-running, the `goal_condition` recorded in the settings at
-the top of this file must be the
-active goal before the first execution write. If it is not active, provide
-`/goal <goal_condition>` and stop. Keep each hypothesis separately runnable and
+the execution is long-running, apply the shared goal rules before the first
+execution write: reuse a covering goal, request `/goal <goal_condition>` only when needed and
+available, and use the documented foreground fallback when goal features are
+unavailable. Keep each hypothesis separately runnable and
 the native plan current through the clean rebuild.
 
 ## Work

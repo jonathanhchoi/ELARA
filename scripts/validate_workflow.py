@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from check_docs import validate_docs
+from recovery_decision import decide, read_reference
 from sync_skill_wrappers import sync
 from workflow_lib import (
     INTERACTION_PROFILES,
@@ -78,7 +79,7 @@ UNVERSIONED_OUTPUTS = {
 }
 
 # Optional state keys added after schema 1.0, and their allowed values.
-OPTIONAL_STATE_KEYS = {"usage", "checkpoints", "failure_handling", "run_checkpoint"}
+OPTIONAL_STATE_KEYS = {"usage", "checkpoints", "failure_handling", "run_checkpoint", "recovery_decision"}
 STATE_USAGES = {"pipeline", "tools"}
 STATE_CHECKPOINTS = {"none", "stages", "plans", "all"}
 STATE_FAILURE_HANDLING = {"autonomous", "interactive"}
@@ -236,7 +237,7 @@ def validate_stage(
     if "workflow/shared/execution-control.md" not in body:
         errors.append(f"{path}: stage must route through the native plan/goal contract")
     if meta["long_running"] is True and "<goal_condition>" not in body:
-        errors.append(f"{path}: long_running stage must use its exact goal_condition handoff")
+        errors.append(f"{path}: long_running stage must document its new-goal activation handoff")
     return errors
 
 
@@ -343,6 +344,30 @@ def validate_state(root: Path) -> list[str]:
         errors.append(f"{path}: outstanding_user_inputs must be an inline array")
     elif not all(isinstance(item, str) and item for item in meta["outstanding_user_inputs"]):
         errors.append(f"{path}: every outstanding_user_inputs item must be a nonempty string")
+    inputs = meta.get("outstanding_user_inputs")
+    if isinstance(inputs, list):
+        if meta.get("status") in {"waiting_for_user", "awaiting_approval"} and not inputs:
+            errors.append(f"{path}: a user-wait state requires a concrete unresolved input")
+        if inputs and meta.get("status") in {"ready", "running", "complete"}:
+            errors.append(f"{path}: unresolved user inputs contradict ready/running/complete routing")
+    artifacts = meta.get("active_artifacts")
+    if isinstance(artifacts, dict) and "run_checkpoint" in artifacts and artifacts["run_checkpoint"] != checkpoint:
+        errors.append(f"{path}: active run_checkpoint contradicts the routing checkpoint")
+    recovery = meta.get("recovery_decision")
+    if recovery is not None:
+        try:
+            if not isinstance(recovery, dict) or set(recovery) != {"request", "result"}:
+                raise ValueError()
+            request = json.loads(read_reference(root, recovery["request"]))
+            saved = json.loads(read_reference(root, recovery["result"]))
+            actual = decide(root, request)
+            if saved != actual or request["run_id"] != meta.get("last_run_id"):
+                raise ValueError()
+            allowed_statuses = {"ready", "running"} if actual["state_status"] == "ready" else {actual["state_status"]}
+            if meta.get("status") not in allowed_statuses or inputs != actual["outstanding_user_inputs"]:
+                errors.append(f"{path}: recovery decision contradicts routing or unresolved inputs")
+        except (OSError, ValueError, KeyError, TypeError):
+            errors.append(f"{path}: recovery_decision must bind unchanged, reproducible request and result records")
     for key in ("schema_version", "workflow_version"):
         if not isinstance(meta.get(key), str) or not meta[key]:
             errors.append(f"{path}: {key} must be a nonempty quoted string")

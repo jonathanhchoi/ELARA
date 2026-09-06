@@ -1,8 +1,9 @@
 """Read-only GitHub currency and installation check before a new ELARA stage.
 
-Exit 0 only when current; 2 means an update is available, 3 means GitHub could
-not be checked, and 4 means installation evidence needs attention. This does
-not install anything, grant consent, or authorize research work.
+Exit 0 means verified usable installed bytes; 2 means an update is available,
+3 means no usable installation could be verified, and 4 means installation
+evidence needs repair. --auto-update installs an exact, conflict-free update.
+Neither mode authorizes research or changes frozen run bindings.
 """
 
 from __future__ import annotations
@@ -93,15 +94,24 @@ def check(root: Path, stage: str) -> dict:
         if problems:
             result.update(status="conflict", problems=problems)
             return result
-        upstream = bootstrap.github_commit()
-        result.update(latest_commit=upstream["commit"], latest_change=upstream["subject"],
-                      latest_url=upstream["url"])
         installed = result["installed_commit"]
         if installed is None and manifest is None:
             local = bootstrap.local_source_info(root)
             installed = local.get("verified_commit")
             result["installed_commit"] = installed
             result["installed_version"] = bootstrap.kit_version(root)
+        # Reverify bytes on every call; a previous successful network result is
+        # never the basis of offline fallback. Legacy labels alone do not pass.
+        try:
+            upstream = bootstrap.github_commit()
+        except bootstrap.BootstrapError:
+            if installed is not None:
+                result.update(ready=True, status="verified_installed", retry_at="next_stage_boundary",
+                              identity_basis="current installed file verification", upstream_checked=False)
+                return result
+            raise
+        result.update(latest_commit=upstream["commit"], latest_change=upstream["subject"],
+                      latest_url=upstream["url"], upstream_checked=True)
         if installed is not None:
             current = installed == upstream["commit"]
             result.update(ready=current, status="current" if current else "update_available")
@@ -135,26 +145,59 @@ def check(root: Path, stage: str) -> dict:
     return result
 
 
+def prepare(root: Path, stage: str) -> dict:
+    """Apply the automatic-update policy, with the existing protected installer.
+
+    Call only when writes are authorized. The inspected upstream commit is the
+    exact target; moving main does not produce an approval or recheck loop.
+    The installer performs clean preflight, preserves ownership/protections,
+    records interruptions, and runs its doctor on the installed code.
+    """
+    result = check(root, stage)
+    if result["status"] != "update_available":
+        return result
+    target = result["latest_commit"]
+    args = argparse.Namespace(into=str(root), update=True, require_clean=True,
+                              ref=target, source=None, dry_run=False, no_install=False,
+                              skip_doctor=False, keep=True, platform="auto", model_evidence=None)
+    try:
+        report = bootstrap.bootstrap(args)
+        manifest, problems = installation_evidence(root.resolve())
+        if (not report["ok"] or not report["installation_complete"] or problems
+                or (manifest or {}).get("installed_commit") != target
+                or (root / bootstrap.UPDATE_PENDING_RELATIVE).exists()):
+            result.update(status="conflict", ready=False, next_action="repair",
+                          problems=problems or ["Update verification did not finish."])
+            return result
+        result.update(status="updated", ready=True, installed_commit=target,
+                      installed_version=manifest["kit_version"], next_action="reload_instructions")
+    except (bootstrap.BootstrapError, OSError, ValueError, TypeError, KeyError):
+        result.update(status="conflict", ready=False, next_action="repair",
+                      problems=["Inspect the protected installation and complete or repair the exact update; no researcher decision is implied."])
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--stage", required=True, help="canonical stage or utility identifier")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--auto-update", action="store_true", help="install a verified compatible update when writes are authorized")
     args = parser.parse_args()
-    result = check(args.root, args.stage)
+    result = prepare(args.root, args.stage) if args.auto_update else check(args.root, args.stage)
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
         print("ELARA: " + result["status"].replace("_", " "))
         if result["ready"]:
-            print("Current on GitHub at " + result["checked_at"] + ". Continue under the stage's existing approvals.")
+            print("Installed bytes verified at " + result["checked_at"] + ". Continue under the stage's existing approvals.")
         else:
             print("The new stage remains paused. Follow workflow/shared/kit-updates.md.")
         for problem in result["problems"]:
             print(json.dumps(problem) if isinstance(problem, dict) else problem)
         if result["latest_commit"]:
             print("Latest commit: " + result["latest_commit"])
-    return {"current": 0, "update_available": 2, "unavailable": 3}.get(result["status"], 4)
+    return 0 if result["ready"] else {"update_available": 2, "unavailable": 3}.get(result["status"], 4)
 
 
 if __name__ == "__main__":

@@ -9,10 +9,12 @@ forward-test target.
    `update_plan` plan or Claude Code creates Task-tool entries for prerequisites, plan/execution,
    verification, and handoff; exactly one item is in progress, and items are completed only after
    their declared evidence exists.
-3. **Long stage requires its exact goal.** Invoke Stage 11 with no active goal. The assistant reads
-   `goal_condition`, returns the complete `/goal ...` handoff, and makes no execution write. With
-   that goal active, the parent resumes from disk, maintains the native plan, runs the host
-   orchestrator, and surfaces exact verification counts before the goal completes.
+3. **Long stages preserve their completion contract.** Invoke Stage 11 with an existing
+   user goal covering the same authorized work and evidence but using different wording.
+   The assistant resumes it without another activation request. With no active goal and
+   available goal features, it gives the `/goal ...` handoff. With unavailable goal
+   features, it uses foreground execution and durable checkpoints. Every route retains
+   the native plan, host orchestrator, and verified completion evidence.
 4. **An unrelated goal is preserved.** Invoke a long stage while another goal is active. The
    assistant reports the conflict and waits; it does not replace, clear, merge, or mark the other
    goal complete.
@@ -87,17 +89,26 @@ forward-test target.
     failure still stops the run, and a researcher instruction outside the frozen rules is routed
     as a change or deviation, never applied mid-run.
 
-21. **Every new stage checks ELARA and requests update consent when needed.** Exercise
+21. **Every new stage checks ELARA without redundant update consent.** Exercise
     Stage 00, an automatic transition, a directly named recovery stage, and an optional tool
     on each host. Before substantive work the parent runs `check_update.py` for that entry.
-    A current result proceeds without asking; an available update produces a preview and
-    an exact-commit approval request. A refusal produces no installation or new-stage work.
-    A network failure, malformed identity, local/protected-file conflict, or interrupted
-    update also prevents the new stage. After agreement, the parent updates the approved
-    commit, verifies and reloads instructions, and checks again. A changed upstream commit
-    needs new agreement. Status/help/menu still work offline; an existing coding run keeps
+    A current result proceeds without asking; a compatible update uses an exact-commit
+    clean preflight and installs automatically when writes are authorized. Explicit
+    researcher limits remain. A network failure uses freshly authenticated installed
+    bytes, but malformed identity, local/protected conflicts, and interrupted updates
+    require repair. The parent verifies and reloads instructions after installation.
+    Movement of main does not create a repeated approval loop. An existing coding run keeps
     its recorded software, with no update checks by workers or per retry. Planning records
     stay in the conversation until the stage is authorized to write.
+
+22. **Operational repair uses standing authority.** An infrastructure failure stops
+    dispatch. The shared decision interface routes it to diagnosis, boundary tests,
+    independent review, fresh synthetic capability and reviewed activation, then resumes
+    the same run with zero redundant approval requests. Old-candidate or other-run
+    evidence fails; configuration text alone never proves live behavior. Explicit limits,
+    revocations, scientific changes, and unknown corpus-attempt eligibility remain stops.
+    A resolved decision clears stale waiting state only after history preservation and
+    validation; assistant-written status does not create restrictions.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.

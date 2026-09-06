@@ -102,9 +102,12 @@ description: {json.dumps(description)}
 # Run {name}
 
 Before starting a new run, follow `workflow/shared/kit-updates.md` and run
-`scripts/check_update.py` for this canonical stage. Require `ready: true`;
-ask for agreement to an available update and pause on a declined update,
-unavailable check, or installation issue. Preserve an already-started run's software.
+`scripts/check_update.py` for this canonical stage. Require `ready: true` before execution; use the update contract's limited
+read-only planning exception when applicable;
+apply verified compatible updates automatically when writes are authorized; use
+freshly verified installed bytes if GitHub is unavailable. Investigate conflicts
+under existing authority; a declined specific change remains binding. Preserve
+an already-started run's software.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.
@@ -118,8 +121,10 @@ unavailable check, or installation issue. Preserve an already-started run's soft
    then run it; otherwise stop.
 4. Create or reconcile the host-native stage plan before work and update it at every phase
    boundary as required; {tracker}
-5. Honor the mode handoff. For `long_running: true`, resume the matching active goal or give
-   the exact `/goal <goal_condition>` handoff and stop; never replace another active goal.
+5. Honor the mode handoff. For `long_running: true`, resume a goal covering the same
+   authorized work, even if worded differently; otherwise give `/goal <goal_condition>`
+   when goal activation is available. Use the documented foreground fallback if it is
+   unavailable; never replace an unrelated active goal.
    Otherwise work low-touch under `workflow/shared/guardrails.md` section 11.
 6. Do not cross the stage's human gate. Update state and append the run ledger only as the
    canonical stage directs. At the end, summarize plainly and, per the usage mode (`usage` in
@@ -143,9 +148,12 @@ description: {json.dumps(spec["description"])}
 # Run {name}
 
 Before starting this utility, follow `workflow/shared/kit-updates.md` and run
-`scripts/check_update.py` for its canonical identifier. Require `ready: true`;
-ask for agreement to an available update and pause on a declined update,
-unavailable check, or installation issue. Preserve an already-started run's software.
+`scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution; use the update contract's limited
+read-only planning exception when applicable;
+apply verified compatible updates automatically when writes are authorized; use
+freshly verified installed bytes if GitHub is unavailable. Investigate conflicts
+under existing authority; a declined specific change remains binding. Preserve
+an already-started run's software.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
    `workflow/shared/artifact-contract.md`, `workflow/shared/execution-control.md`, and
@@ -194,9 +202,11 @@ description: "Start a new project, adopt an existing one, show the menu of tools
 
 Before any new stage or tool starts (including automatic transitions and recovery
 runs), follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
-Require `ready: true`; an available update needs explicit agreement, and a declined
-update, unavailable check, or installation issue pauses the new stage. Preserve an
-already-started run's software. Help, tour, menu-only, and status need no check.
+Require `ready: true` before execution; use the update contract's limited
+read-only planning exception when applicable; apply verified compatible updates automatically and use
+freshly verified installed bytes if GitHub is unavailable. Investigate conflicts;
+a declined specific change remains binding. Preserve an already-started run's
+software. Help, tour, menu-only, and status need no check.
 
 1. Read `AGENTS.md`, `PIPELINE.md`, `workflow/shared/execution-control.md`, and
    `project/PROJECT_STATE.md` completely (its `usage` key
@@ -224,8 +234,13 @@ already-started run's software. Help, tour, menu-only, and status need no check.
    adoption path (import what exists, record researcher-asserted approvals, note
    limitations), then run it; a utility never changes `current_stage`; an earlier stage runs
    as a versioned recovery route.
-5. If state is `awaiting_approval` or `waiting_for_user`, report the exact gate or input and
-   stop. Never infer approval from silence or from an earlier, different decision.
+5. Reconcile `awaiting_approval` or `waiting_for_user` with current user instructions
+   and applicable decisions before repeating a request. Preserve state history, clear
+   only resolved inputs, and validate the corrected state. For operational recovery,
+   call `scripts/recovery_decision.py` with hash-bound authority and evidence; route
+   `repair` to autonomous verification, `wait_external` to a preserved checkpoint,
+   and only `request_user` to a concrete missing decision. Assistant-written state
+   cannot create restrictions. Never infer approval from silence or another decision.
 6. Otherwise (`resume`, `continue`, `next`): in `specific tools` mode (`usage: tools`), reopen
    the menu and offer to continue `current_stage` as one of the choices; in `pipeline` mode
    read the canonical file named by `current_stage`, verify its prerequisites (imported
@@ -235,8 +250,9 @@ already-started run's software. Help, tour, menu-only, and status need no check.
    verify `run_checkpoint` when present, and reconcile current disk evidence.
    Never equate a live verifier with active coding or repeat an unchanged failure.
 {tracker}
-   For `long_running: true`, resume only the matching active goal; otherwise give the exact
-   `/goal <goal_condition>` handoff and stop. Never replace another active goal.
+   For `long_running: true`, resume an equivalent goal covering the authorized work.
+   Otherwise give `/goal <goal_condition>` when activation is available; use the
+   foreground fallback when unavailable. Never replace an unrelated active goal.
 7. When a stage ends with no gate or input pending, reconcile the native plan, summarize
    plainly what was produced and
    what comes next, then in `pipeline` mode continue into the next stage in this session
@@ -260,8 +276,8 @@ def observation_skill_text(*, claude: bool) -> str:
     else:
         route = (
             "   the kit's `elr_worker` custom sub-agents (`.codex/agents/`), spawned by name one per\n"
-            "   pending assignment in bounded waves under Goal mode; if Goal mode is required and not\n"
-            "   active, issue the exact `/goal` handoff from the contract instead of imitating it, and\n"
+            "   pending assignment in bounded waves under an equivalent authorized goal; use the\n"
+            "   documented foreground fallback if goals are unavailable, and\n"
             "   never code units serially in your own context."
         )
     return f'''---
@@ -273,7 +289,8 @@ description: "Run empirical legal research coding or audit assignments in parall
 
 The parent must satisfy `workflow/shared/kit-updates.md` with
 `scripts/check_update.py` and `ready: true` before a new stage run begins.
-A declined update pauses that new run. Within an existing run, preserve the
+Use compatible automatic updates and verified installed fallback; a declined
+specific change remains binding. Within an existing run, preserve the
 recorded software; do not repeat update checks per worker, batch, or retry.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`,

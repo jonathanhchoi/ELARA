@@ -9,8 +9,10 @@ is a control surface, not evidence that research work occurred.
 
 Before beginning a new stage or utility, including its read-only plan, follow
 `workflow/shared/kit-updates.md`. Recheck before execution if a plan approval or
-pause occurred before the run began. A current installation does not supply a
-research approval; a host plan cannot waive the update check or update consent.
+pause occurred before the run began. Read-only planning may use verified installed
+bytes with an available update deferred under that contract; execution requires
+the completed update check. A current installation does not supply a research
+approval, and a host plan cannot waive an explicit researcher update restriction.
 
 Except for a one-step `help`, `menu`, or status response, begin every stage or
 utility by creating a short plan in the host's native tracker. Derive it from
@@ -188,7 +190,7 @@ model route; and spending and time limits.
 
 The proposal fixes the sample, thresholds, commands, checks, review sequence,
 and cost ceiling. Acceptance authorizes building and running that fixed pilot
-after the exact Stage 08 goal is active; it is not `pilot-acceptance` and cannot
+after the Stage 08 goal or foreground-fallback requirements are satisfied; it is not `pilot-acceptance` and cannot
 authorize a mid-pilot reinterpretation.
 
 #### Stage 09 preregistration-setup interview
@@ -231,13 +233,18 @@ that must not change, and the gate or failure condition that ends the run.
 
 Before the first execution write or external call in a long-running stage:
 
-1. Inspect goal status. If the same stage goal is active, resume it from disk.
-   If a different unfinished goal is active, do not replace, clear, or combine
-   it; report the conflict and wait for the researcher.
-2. If no goal is active, provide exactly
+1. Inspect goal status. Resume an existing goal whose authorized scope covers
+   this stage's work and completion evidence; wording need not match verbatim.
+   Record how the stage contract is covered. A broader user-requested goal is
+   not unrelated merely because it also includes operational repairs. Do not
+   invent a pipeline-wide goal or replace, clear, or combine an unrelated goal.
+   A genuinely unrelated unfinished goal requires the researcher's choice.
+2. If no goal is active and the host exposes the feature, provide exactly
    `/goal <goal_condition>` and stop so the researcher can activate the host's
    durable loop. A stage or skill invocation is not itself permission to create
-   a goal. Do not imitate Goal mode with repeated ordinary turns.
+   a goal. Do not imitate Goal mode with repeated ordinary turns. If the feature
+   is unavailable, disabled, or fails, use the foreground fallback below rather
+   than repeating an impossible activation request.
 3. Under the active goal, keep the native stage plan current and surface compact
    checkpoint reports: current item, verified evidence, exact remaining count,
    elapsed time, a revised ETA range with its basis, and any blocker. Persist
@@ -246,8 +253,9 @@ Before the first execution write or external call in a long-running stage:
    canonical state transition or section 11 stop has been recorded. Do not mark
    it complete because a turn, wave, or command ended.
 
-Use one goal per stage, never one goal for the whole pipeline and never one goal
-per worker. The host's workflow or sub-agent orchestrator owns fan-out; the
+When requesting a new goal, use one per stage, never create one for the whole
+pipeline or per worker. Existing equivalent user goals remain valid. The host's
+workflow or sub-agent orchestrator owns fan-out; the
 stage goal keeps the parent working through plan items, waves, serial
 validation, and final reconciliation. A bounded stage (`long_running: false`)
 uses the native plan but does not start a goal.
@@ -266,7 +274,7 @@ fallback, not a reason to weaken the completion condition.
   described above. Use `request_user_input` for those decision interviews. The
   plan tracker by itself does not make a session read-only.
 - For a researcher-activated goal, inspect it with `get_goal`; create it with
-  the exact front-matter condition only when the researcher explicitly invokes
+  the front-matter condition only when the researcher explicitly invokes
   `/goal`; and use `update_goal` only when the canonical completion or blocked
   rule is actually satisfied. Never replace another active goal.
 - During a Codex fan-out, the active stage goal remains with the parent while
@@ -283,8 +291,9 @@ fallback, not a reason to weaken the completion condition.
   04, 05, 07, 08, 09, and 17 interview boundary. Use `AskUserQuestion` for those
   decision rounds. Leaving Plan Mode is not a research approval; plan
   acceptance has only the stage-specific effect stated above.
-- A researcher activates the exact front-matter condition with `/goal`. Check it
-  with `/goal`, never replace an unrelated active goal, and remember that its
+- A researcher activates a goal with `/goal`; reuse one covering the stage
+  contract regardless of wording. Check it with `/goal`, use the documented
+  fallback when unavailable, never replace an unrelated active goal, and remember that its
   evaluator can see only evidence surfaced in the conversation. Therefore every
   checkpoint and final turn states the verification result and exact counts,
   not merely "done."

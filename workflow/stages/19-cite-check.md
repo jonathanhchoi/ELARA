@@ -33,11 +33,13 @@ The researcher decides which unavailable sources to supply, the governing citati
 
 ## Mode handoff
 
+Apply the equivalent-goal and host-unavailability fallback rules in
+`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
+
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. This is a long-running audit stage: the `goal_condition` recorded
-in the settings at the top of this file must be the active goal before
-execution begins. If it is not
-active, provide `/goal <goal_condition>` and stop. Do not use Plan Mode for the
+in the settings at the top of this file must be covered by the active goal before
+execution begins. If no covering goal is active and the host exposes goals, provide `/goal <goal_condition>` and stop. Do not use Plan Mode for the
 audit. The parent keeps the goal and plan current while claim-citation pairs run
 as parallel research assignments under `workflow/shared/observation-fanout.md`: one pair per
 brief, sealed by `scripts/research_fanout.py prepare`; Claude Code launches the

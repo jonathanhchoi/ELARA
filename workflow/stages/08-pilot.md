@@ -44,6 +44,9 @@ failed thresholds, or accept the pilot.
 
 ## Mode handoff
 
+Apply the equivalent-goal and host-unavailability fallback rules in
+`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
+
 Follow `workflow/shared/execution-control.md` and always enter the host's native
 read-only Plan Mode before any Stage 08 project write, run allocation, code
 build, coding-model call, state update, or ledger append. First inspect the
@@ -71,8 +74,8 @@ condition in `workflow/shared/guardrails.md` §11 holds. Plan acceptance
 authorizes only the described pilot execution; it does not accept the pilot or
 waive any later gate. Stop if projected model-call cost exceeds the recorded
 budget. Because this stage is long-running, the `goal_condition` recorded in
-the settings at the top of this file must be the active goal before execution
-begins. If it is not active, provide `/goal <goal_condition>` and stop.
+the settings at the top of this file must be covered by the active goal before execution
+begins. If no covering goal is active and the host exposes goals, provide `/goal <goal_condition>` and stop.
 Once assignments are fixed, the host coordinates the parallel sub-agent assignments under
 `workflow/shared/observation-fanout.md`: Claude Code launches the saved
 `elr-observation-fanout` workflow and Codex spawns the kit's `elr_worker`

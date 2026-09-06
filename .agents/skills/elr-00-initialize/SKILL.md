@@ -6,9 +6,12 @@ description: "Run ELR stage 00-initialize: Initialize the project. Use when this
 # Run elr-00-initialize
 
 Before starting a new run, follow `workflow/shared/kit-updates.md` and run
-`scripts/check_update.py` for this canonical stage. Require `ready: true`;
-ask for agreement to an available update and pause on a declined update,
-unavailable check, or installation issue. Preserve an already-started run's software.
+`scripts/check_update.py` for this canonical stage. Require `ready: true` before execution; use the update contract's limited
+read-only planning exception when applicable;
+apply verified compatible updates automatically when writes are authorized; use
+freshly verified installed bytes if GitHub is unavailable. Investigate conflicts
+under existing authority; a declined specific change remains binding. Preserve
+an already-started run's software.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.
@@ -22,8 +25,10 @@ unavailable check, or installation issue. Preserve an already-started run's soft
    then run it; otherwise stop.
 4. Create or reconcile the host-native stage plan before work and update it at every phase
    boundary as required; On Codex use `update_plan` and keep exactly one item `in_progress`.
-5. Honor the mode handoff. For `long_running: true`, resume the matching active goal or give
-   the exact `/goal <goal_condition>` handoff and stop; never replace another active goal.
+5. Honor the mode handoff. For `long_running: true`, resume a goal covering the same
+   authorized work, even if worded differently; otherwise give `/goal <goal_condition>`
+   when goal activation is available. Use the documented foreground fallback if it is
+   unavailable; never replace an unrelated active goal.
    Otherwise work low-touch under `workflow/shared/guardrails.md` section 11.
 6. Do not cross the stage's human gate. Update state and append the run ledger only as the
    canonical stage directs. At the end, summarize plainly and, per the usage mode (`usage` in

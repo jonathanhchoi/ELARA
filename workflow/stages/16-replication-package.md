@@ -33,11 +33,13 @@ The researcher decides the public, controlled-access, and nonshareable component
 
 ## Mode handoff
 
+Apply the equivalent-goal and host-unavailability fallback rules in
+`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
+
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. This is a long-running execution stage: the `goal_condition`
-recorded in the settings at the top of this file must be the active goal before
-execution begins. If it is not
-active, provide `/goal <goal_condition>` and stop. Do not perform packaging in
+recorded in the settings at the top of this file must be covered by the active goal before
+execution begins. If no covering goal is active and the host exposes goals, provide `/goal <goal_condition>` and stop. Do not perform packaging in
 Plan Mode. Keep the native plan and durable run checkpoints aligned through the
 clean rebuild and fresh-agent verification. If goals are unavailable, record
 the fallback and use normal approved execution with the same completion

@@ -1,11 +1,12 @@
 ---
-schema_version: "1.4"
-workflow_version: "2.7.0"
+schema_version: "1.5"
+workflow_version: "2.8.0"
 project_slug: null
 usage: "pipeline"
 checkpoints: "none"
 failure_handling: "autonomous"
 run_checkpoint: null
+recovery_decision: null
 current_stage: "00-initialize"
 status: "ready"
 active_artifacts: {}

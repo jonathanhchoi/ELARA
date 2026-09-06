@@ -289,8 +289,9 @@ Codex runs the fan-out as the kit's custom sub-agents (`.codex/agents/`), spawne
 parent session with the host's own sub-agent tools; the parent never processes assignments in its
 own context and never launches a general-purpose or `default` sub-agent for kit work.
 
-1. The parent must already be running the canonical stage's exact front-matter goal and native
-   plan under `workflow/shared/execution-control.md`. If that goal is not active, return to the
+1. The parent uses an authorized goal covering the canonical stage's completion contract and native
+   plan under `workflow/shared/execution-control.md`, including its equivalent-goal and
+   foreground-fallback rules. If goal activation is available but no covering goal is active, return to the
    stage handoff and give `/goal <goal_condition>`; do not create a narrower fan-out goal. The
    stage goal covers every wave, serial validation, merge, and final verification. Workers never
    create goals or plans.

@@ -1,9 +1,10 @@
 # ELARA: Empirical Legal Analysis with Research Agents
 
-Version 2.7.0 checks GitHub before every new stage or tool and asks for your
-agreement before installing an available update. If the check cannot complete,
-you decline, or installation needs attention, the new stage waits. Work already
-underway keeps its recorded software. See [keeping ELARA current](#keeping-elara-current).
+Version 2.8.0 repairs operational failures under existing authority, separates
+verification from researcher decisions, and checks the actual failing operation
+before resuming. Compatible updates install automatically; when GitHub is
+unavailable, verified installed files remain usable. Work already underway keeps
+its recorded research controls. See [keeping ELARA current](#keeping-elara-current).
 
 ELARA is the companion package for *ELARA: A Framework for Empirical Legal
 Research with AI Agents* by Jonathan H. Choi. It turns Claude Code or Codex into
@@ -447,13 +448,15 @@ unavailable or malformed.
 
 Before starting each new stage or optional tool, the assistant checks the latest
 commit on this repository's `main` branch. If your installation is current, it
-continues. Otherwise, it explains the update and asks you to agree before
-installing it. You do not need Git, a GitHub account, or terminal knowledge.
+continues. Otherwise, it explains and automatically installs a verified compatible
+update, preserving your files and approved research controls. You do not need
+Git, a GitHub account, or terminal knowledge. Explicit limits you set still apply.
 
-Declining an update leaves the new stage paused. An unavailable GitHub check
-also pauses it until the check succeeds. Status, help, and the menu remain
-available. An existing run resumes with its recorded software; the assistant
-does not change the software in the middle of coding or at each retry.
+If GitHub is unavailable, the assistant verifies the installed files and continues
+when their exact identity is established, checking again at the next new stage.
+It investigates conflicts and asks only for choices that need your judgment.
+An existing run resumes with its recorded software; reviewed operational repairs
+may proceed under your existing authorization while preserving frozen controls.
 
 Updates preserve your files, project records, and approved research methods.
 The installer previews conflicts and verifies the result. It will not call a

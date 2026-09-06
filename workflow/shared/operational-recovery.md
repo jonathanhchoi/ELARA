@@ -5,6 +5,50 @@ restricted workers; `unit_fanout.py` still validates, retries, and merges.
 `scripts/fanout_lifecycle.py` is a provider-neutral journal, not a launcher,
 scientific validator, source of retry permission, or replacement model route.
 
+## Reconcile authority before requesting a decision
+
+Current user instructions govern the concrete action. Read applicable standing
+decisions and their scope, limits, revocations, and later changes before asking.
+An assistant-written handoff, seal, scope file, or waiting state records authority;
+it cannot independently narrow or expand it. A researcher-supplied handoff can
+contain a real limit, which a later explicit instruction can supersede. Preserve
+both records and explain the prospective effect. A single-use runtime does not
+make standing recovery authority single-use.
+
+Routers and host adapters use `scripts/recovery_decision.py` for the same closed
+decision. Its `decide(root, request)` API and `--root ... --request ...` CLI are
+read-only. Requests identify the action, run, scientific binding hash, all
+applicable researcher instructions (source path, SHA-256, exact quote, scope),
+current restrictions, and evidence references. The parent must accurately
+interpret those instructions and include every applicable limit; hashing a quote
+cannot establish its meaning or create consent. Do not supply a permission
+boolean or treat a helper's result as independent research authorization.
+
+- `proceed`: the action is covered and its required operational evidence exists.
+- `repair`: investigate or complete missing verification under existing scope;
+  dispatch remains stopped. Independent review, testing, and sealing are work
+  for the assistant, not new requests for researcher approval.
+- `wait_external`: record a verified external capability problem and preserve
+  the checkpoint. Do not relaunch unchanged work or recreate monitoring unless
+  requested. A timeout while a handle remains live is still a live operation.
+- `request_user`: a concrete researcher decision remains, such as missing or
+  exhausted authority, a revoked instruction, scientific change, or unresolved
+  corpus-attempt eligibility. Ask once for that decision and its actual source.
+
+Required evidence is separate for offline boundary tests, live capability,
+independent review, activation review, unchanged scientific bindings, preserved
+history, exclusive ownership, and reconciled attempts. The helper verifies
+hash-bound summary receipts; their producers must derive each finding from the
+actual operation and preserve underlying evidence. It does not validate research
+results or allocate retries. An adapter must enforce the decision before its
+own dispatch checks, not merely display it in a report.
+
+Before rewriting routing state, preserve the outgoing bytes, append the current
+decision, clear only resolved inputs, and validate state. Optional
+`recovery_decision` binds request/result references so the validator can reproduce
+the decision and reject stale routing. Use existing `active_artifacts` and
+`run_checkpoint` fields; do not invent competing top-level routing pointers.
+
 ## Classify the interruption before acting
 
 - **Unit failure:** apply the recorded `failure_handling` preference and frozen
@@ -31,8 +75,11 @@ Use one versioned runtime with explicit configuration and compatibility adapters
 Do not generate another recursively inherited wrapper, launch namespace, or
 historical exception table for each recoverable incident. Preserve old code as
 evidence, not as a requirement to recursively execute all old versions. If an
-old run sealed implementation bytes, record and approve operational migration
-before changing the entrypoint. Never weaken the old seal or discard history.
+old run sealed implementation bytes, record independently reviewed operational
+migration before changing the entrypoint. Existing scoped researcher authority
+can cover that migration after scientific bindings and preserved history are
+verified; do not ask again merely because the implementation changed. Never
+weaken the old seal, discard history, or change corpus retry eligibility.
 
 For a new or explicitly migrated run, the host adapter uses `Journal` as follows:
 
@@ -87,6 +134,12 @@ checks before it. It must not stage state, create retries, or start workers.
 Test an interrupted wave and a fresh process using the real controller with a
 synthetic host. A separate synthetic restricted-worker round-trip establishes
 live capability; offline checks alone cannot establish model access.
+Capability and production must exercise the same command-construction and hook
+transport implementation with their authorized configuration differences made
+explicit. Check the actual downstream arguments and installed host's event
+contract. A configuration key appearing in a file proves neither acceptance nor
+enforcement. A startup warning alone is not a failed permission gate. Review the
+diagnostic assumptions alongside the repair and keep those observations separate.
 
 `VerificationTransaction` reuses expensive proof computation in one process only
 while every bound file still hashes identically. It rechecks bytes, not just
