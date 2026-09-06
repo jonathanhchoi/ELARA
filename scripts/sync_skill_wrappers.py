@@ -101,6 +101,11 @@ description: {json.dumps(description)}
 
 # Run {name}
 
+Before starting a new run, follow `workflow/shared/kit-updates.md` and run
+`scripts/check_update.py` for this canonical stage. Require `ready: true`;
+ask for agreement to an available update and pause on a declined update,
+unavailable check, or installation issue. Preserve an already-started run's software.
+
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.
 {extra_read}2. Read `{canonical}` completely and follow it as the single source of substantive
@@ -136,6 +141,11 @@ description: {json.dumps(spec["description"])}
 {extra}---
 
 # Run {name}
+
+Before starting this utility, follow `workflow/shared/kit-updates.md` and run
+`scripts/check_update.py` for its canonical identifier. Require `ready: true`;
+ask for agreement to an available update and pause on a declined update,
+unavailable check, or installation issue. Preserve an already-started run's software.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
    `workflow/shared/artifact-contract.md`, `workflow/shared/execution-control.md`, and
@@ -181,6 +191,12 @@ description: "Start a new project, adopt an existing one, show the menu of tools
 ---
 
 # Route the empirical legal research workflow
+
+Before any new stage or tool starts (including automatic transitions and recovery
+runs), follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
+Require `ready: true`; an available update needs explicit agreement, and a declined
+update, unavailable check, or installation issue pauses the new stage. Preserve an
+already-started run's software. Help, tour, menu-only, and status need no check.
 
 1. Read `AGENTS.md`, `PIPELINE.md`, `workflow/shared/execution-control.md`, and
    `project/PROJECT_STATE.md` completely (its `usage` key
@@ -254,6 +270,11 @@ description: "Run empirical legal research coding or audit assignments in parall
 ---
 
 # Code observations with isolated subagents
+
+The parent must satisfy `workflow/shared/kit-updates.md` with
+`scripts/check_update.py` and `ready: true` before a new stage run begins.
+A declined update pauses that new run. Within an existing run, preserve the
+recorded software; do not repeat update checks per worker, batch, or retry.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`,
    `workflow/shared/execution-control.md`, and

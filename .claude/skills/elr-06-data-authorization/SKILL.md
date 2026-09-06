@@ -6,6 +6,11 @@ disable-model-invocation: true
 
 # Run elr-06-data-authorization
 
+Before starting a new run, follow `workflow/shared/kit-updates.md` and run
+`scripts/check_update.py` for this canonical stage. Require `ready: true`;
+ask for agreement to an available update and pause on a declined update,
+unavailable check, or installation issue. Preserve an already-started run's software.
+
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.
 2. Read `workflow/stages/06-data-authorization.md` completely and follow it as the single source of substantive

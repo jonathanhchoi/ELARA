@@ -110,6 +110,13 @@ pursue an earlier production goal after the task changes.
 
 ## Update safety
 
+Before new stages, follow `kit-updates.md`; continuing an already-started run
+preserves its recorded software. `--require-clean` refuses known conflicts before
+installation. `project/ELARA_UPDATE_PENDING.json` identifies an update that has
+not completed verification. Never clear it or relabel a partial installation as
+current to permit a new stage. `installed_commit` is separate from the requested
+source version; the checker verifies the recorded installed files as well.
+
 `bootstrap.py --update --dry-run --json` previews conflicts. The install manifest
 records baseline SHA-256 hashes. Modified kit-owned files and differing files
 with unknown legacy baselines are preserved. Never adopt modified bytes as a

@@ -31,6 +31,13 @@ steps. A stage's `paper_steps` field records the crosswalk above.
 
 ## How routing works
 
+Before any new stage or optional tool, including Stage 00, automatic transitions,
+and new recovery runs, the parent follows `workflow/shared/kit-updates.md` and
+runs `scripts/check_update.py`. It checks the exact installed commit against
+GitHub `main`, requests agreement to any update, and pauses on a declined
+update, an unavailable check, or unresolved installation evidence. Help, status,
+and menu-only requests remain available. Existing runs retain their software.
+
 1. `$elr` in Codex or `/elr` in Claude reads `project/PROJECT_STATE.md`.
 2. It reads the current authoritative stage instructions and the shared workflow contracts.
 3. It checks prerequisites, the exact file versions currently in use, approvals,
@@ -526,6 +533,13 @@ field, stage order, approval gate, file format, or research safeguard changes,
 so existing projects need no migration.
 
 ## Persistent state
+
+Version 2.7.0 adds the stage-start GitHub check and update agreement. The
+installation manifest records `installed_commit`, `installation_complete`, and
+`installed_hashes` separately from the project's historical `workflow_version`.
+New runs archive their successful check; interrupted updates retain
+`project/ELARA_UPDATE_PENDING.json` until completion. There is no project-state
+schema change, and updates do not silently change frozen research instruments.
 
 Version 2.6.0 adds optional `run_checkpoint` (state schema 1.4), a provider-neutral
 launch journal, and baseline/protected-file checks in the updater. It distinguishes

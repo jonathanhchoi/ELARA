@@ -6,6 +6,14 @@ very fast research assistant whose work is verified, never trusted.
 
 ## Route every request from project state
 
+Before starting any new stage or optional tool, follow
+`workflow/shared/kit-updates.md` and run `scripts/check_update.py` for that stage.
+This includes direct requests, Stage 00, automatic transitions, and new recovery
+runs. Start only after a live `ready: true` result. Ask for explicit agreement to
+an available update; a declined update, failed check, or unresolved installation
+leaves the new stage paused. Existing runs resume under their recorded software.
+Status, help, and menu-only requests remain read-only and need no check.
+
 1. Read `project/PROJECT_STATE.md` before doing research work.
 2. Read `workflow/shared/guardrails.md` and
    `workflow/shared/artifact-contract.md`, then
@@ -102,7 +110,9 @@ approved at Stage 00, which lives in `.git/`). Do not modify the kit's own files
 `PIPELINE.md`, the kit README (`ELARA_README.md` in a project folder;
 `README.md` in a plain clone of the kit), `workflow/`, `.agents/`, `.claude/`,
 `.codex/`, `scripts/`, and `tests/` — unless the researcher explicitly asks to
-develop the kit itself. Files that were in this folder before ELARA was
+develop the kit itself or agrees to the exact kit update under
+`workflow/shared/kit-updates.md`. That update permission never changes frozen
+research files or approvals. Files that were in this folder before ELARA was
 installed are the researcher's: never move, rename, edit, or delete them;
 import copies. `project/BOOTSTRAP.md` lists them, and
 `project/ELARA_MANIFEST.json` records which files are the kit's, which are

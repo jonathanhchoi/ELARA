@@ -1,10 +1,9 @@
 # ELARA: Empirical Legal Analysis with Research Agents
 
-Version 2.6.0 adds durable launch checkpoints, operational recovery guidance, and
-update protection for locally modified or frozen execution files. See
-[restarting a coding run](workflow/shared/operational-recovery.md). Existing
-scientific instruments and controller formats are unchanged; old runs adopt
-the optional lifecycle journal only through an explicit migration.
+Version 2.7.0 checks GitHub before every new stage or tool and asks for your
+agreement before installing an available update. If the check cannot complete,
+you decline, or installation needs attention, the new stage waits. Work already
+underway keeps its recorded software. See [keeping ELARA current](#keeping-elara-current).
 
 ELARA is the companion package for *ELARA: A Framework for Empirical Legal
 Research with AI Agents* by Jonathan H. Choi. It turns Claude Code or Codex into
@@ -443,6 +442,34 @@ that installed kit and substitute blank fixtures for the four live project
 records. They never treat the project's state or append-only ledgers as clean
 installation templates. They stop safely rather than guessing if that file is
 unavailable or malformed.
+
+## Keeping ELARA current
+
+Before starting each new stage or optional tool, the assistant checks the latest
+commit on this repository's `main` branch. If your installation is current, it
+continues. Otherwise, it explains the update and asks you to agree before
+installing it. You do not need Git, a GitHub account, or terminal knowledge.
+
+Declining an update leaves the new stage paused. An unavailable GitHub check
+also pauses it until the check succeeds. Status, help, and the menu remain
+available. An existing run resumes with its recorded software; the assistant
+does not change the software in the middle of coding or at each retry.
+
+Updates preserve your files, project records, and approved research methods.
+The installer previews conflicts and verifies the result. It will not call a
+partial installation current or overwrite a locally modified or protected file
+to finish an update. ZIP installations and older records are checked against
+the actual upstream files when their exact commit is unknown.
+
+**Already using an older ELARA?** It needs one update to acquire this feature.
+Ask your assistant to update ELARA from this repository while preserving your
+research files and any frozen run, then follow the new stage-start checks.
+Very old installations without file baselines may need their original source
+verified before the protected updater can replace files.
+
+The agent's instructions require the executable check at every stage entry;
+this is not an operating-system restriction on commands outside ELARA.
+The detailed procedure is in [kit-updates.md](workflow/shared/kit-updates.md).
 
 ## License
 

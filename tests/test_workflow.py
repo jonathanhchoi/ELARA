@@ -482,7 +482,8 @@ class WorkflowContractTests(unittest.TestCase):
         for path, content in expected.items():
             self.assertEqual(path.read_text(encoding="utf-8"), content)
             if path.name == "SKILL.md" and path.parent.name.startswith("elr-"):
-                self.assertLess(len(content.splitlines()), 30)
+                # The shared update prerequisite adds five routing-only lines.
+                self.assertLess(len(content.splitlines()), 35)
                 self.assertIn("workflow/stages/", content)
 
     def test_manuscript_stages_reference_contract_and_publication_profile(self) -> None:
@@ -535,7 +536,7 @@ class WorkflowContractTests(unittest.TestCase):
                 wrapper_text = wrapper.read_text(encoding="utf-8")
                 self.assertIn(spec["canonical"], wrapper_text)
                 self.assertIn(spec["route"], wrapper_text)
-                self.assertLess(len(wrapper_text.splitlines()), 30)
+                self.assertLess(len(wrapper_text.splitlines()), 35)
             yaml = ROOT / ".agents" / "skills" / name / "agents" / "openai.yaml"
             self.assertIn("allow_implicit_invocation: false", yaml.read_text(encoding="utf-8"))
 

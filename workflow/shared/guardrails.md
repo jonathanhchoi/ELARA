@@ -268,7 +268,8 @@ working; the researcher confirms or changes it at the stage's gate (§11). Do th
 same for numeric defaults, which are conventions to approve at the gate, not
 settings to inherit silently.
 
-Currency checking belongs to design stages only. Once a design is frozen, a
+Checking current research methods belongs to design stages only. The separate
+kit-version check in `kit-updates.md` applies before every new stage. Once a design is frozen, a
 newer method, model, or tool is not a reason to change it mid-run; route the
 idea through the revision queue and amendment process like any other change.
 
@@ -323,6 +324,10 @@ issue. This section is the complete list of reasons to stop; nothing else is.
      front-matter `goal_condition` is not the active host goal — give the
      researcher the complete `/goal <goal_condition>` command once and wait.
      If a different goal is active, do not replace or clear it.
+  8. before a new stage or optional tool, `kit-updates.md` reports an available
+     update requiring the researcher's explicit agreement, an unavailable
+     GitHub check, or unresolved installation evidence. Pause the new stage;
+     no provisional default or offline exception can satisfy this prerequisite.
 - **Otherwise proceed.** Except for material choices within the interactive
   Plan-Mode interview boundaries declared for Stages 01, 04, 05, 07, 08, 09,
   and 17 in `workflow/shared/execution-control.md`, take the sensible default —

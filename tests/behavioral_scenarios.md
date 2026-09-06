@@ -87,6 +87,18 @@ forward-test target.
     failure still stops the run, and a researcher instruction outside the frozen rules is routed
     as a change or deviation, never applied mid-run.
 
+21. **Every new stage checks ELARA and requests update consent when needed.** Exercise
+    Stage 00, an automatic transition, a directly named recovery stage, and an optional tool
+    on each host. Before substantive work the parent runs `check_update.py` for that entry.
+    A current result proceeds without asking; an available update produces a preview and
+    an exact-commit approval request. A refusal produces no installation or new-stage work.
+    A network failure, malformed identity, local/protected-file conflict, or interrupted
+    update also prevents the new stage. After agreement, the parent updates the approved
+    commit, verifies and reloads instructions, and checks again. A changed upstream commit
+    needs new agreement. Status/help/menu still work offline; an existing coding run keeps
+    its recorded software, with no update checks by workers or per retry. Planning records
+    stay in the conversation until the stage is authorized to write.
+
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.
 `test_acceptance.py` checks those records against the canonical front matter, exercises clean-copy
