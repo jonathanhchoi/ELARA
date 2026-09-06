@@ -141,6 +141,17 @@ contract. A configuration key appearing in a file proves neither acceptance nor
 enforcement. A startup warning alone is not a failed permission gate. Review the
 diagnostic assumptions alongside the repair and keep those observations separate.
 
+Bind each worker and helper interpreter explicitly to the reviewed, tested runtime
+configuration and record its executable in the manifest. Before launch, reject any
+setup-selected interpreter that differs from that binding and repair the mismatch
+under existing authority. If setup uses `sys.executable`, verify its value instead of
+silently inheriting the setup environment's default. Exercise the required read,
+write, or submit operation with the bound interpreter in the actual restricted
+worker or helper context. Successful setup, printed arguments, or the presence of
+an operating-system application alias do not establish readiness in that context.
+Preserve failed-boundary evidence; a failed read alone does not prove that an
+interpreter alias caused it.
+
 For an isolated Codex invocation, inspect its effective working root, active
 configuration layers, and loaded agent and hook sources. `--ignore-user-config`
 omits the user configuration file while retaining the authentication location
