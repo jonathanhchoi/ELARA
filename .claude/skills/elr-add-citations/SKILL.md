@@ -6,6 +6,11 @@ disable-model-invocation: true
 
 # Run elr-add-citations
 
+Before starting this utility, follow `workflow/shared/kit-updates.md` and run
+`scripts/check_update.py` for its canonical identifier. Require `ready: true`;
+ask for agreement to an available update and pause on a declined update,
+unavailable check, or installation issue. Preserve an already-started run's software.
+
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
    `workflow/shared/artifact-contract.md`, `workflow/shared/execution-control.md`, and
    `workflow/shared/manuscript-editing-contract.md` completely,

@@ -49,6 +49,14 @@ errors, and exact reconciliation counts.
 
 ## 3. Artifact versions
 
+Each new run archives its successful stage-start check as
+`kit_update_check.json` inside the immutable run directory and references it in
+the run manifest, under `kit-updates.md`. This identifies the installed ELARA
+commit without rewriting the project's historical `workflow_version`.
+`project/ELARA_MANIFEST.json`, `project/BOOTSTRAP.md`, and the temporary
+`project/ELARA_UPDATE_PENDING.json` are installer-managed operational records,
+not research artifacts; update consent cannot change a frozen research file.
+
 Every rerunnable or approvable artifact uses a three-digit version suffix before
 the extension:
 

@@ -7,6 +7,11 @@ is a control surface, not evidence that research work occurred.
 
 ## One stage, one native plan
 
+Before beginning a new stage or utility, including its read-only plan, follow
+`workflow/shared/kit-updates.md`. Recheck before execution if a plan approval or
+pause occurred before the run began. A current installation does not supply a
+research approval; a host plan cannot waive the update check or update consent.
+
 Except for a one-step `help`, `menu`, or status response, begin every stage or
 utility by creating a short plan in the host's native tracker. Derive it from
 the canonical file rather than inventing a second workflow. Use four to seven

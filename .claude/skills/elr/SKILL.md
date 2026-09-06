@@ -5,6 +5,12 @@ description: "Start a new project, adopt an existing one, show the menu of tools
 
 # Route the empirical legal research workflow
 
+Before any new stage or tool starts (including automatic transitions and recovery
+runs), follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
+Require `ready: true`; an available update needs explicit agreement, and a declined
+update, unavailable check, or installation issue pauses the new stage. Preserve an
+already-started run's software. Help, tour, menu-only, and status need no check.
+
 1. Read `AGENTS.md`, `PIPELINE.md`, `workflow/shared/execution-control.md`, and
    `project/PROJECT_STATE.md` completely (its `usage` key
    records the usage mode: `pipeline`, or `tools` for specific tools; absent means `pipeline`;

@@ -52,18 +52,16 @@ import zipfile  # noqa: E402
 from pathlib import Path  # noqa: E402
 from urllib.error import URLError  # noqa: E402
 from urllib.request import Request, urlopen  # noqa: E402
+from urllib.parse import quote  # noqa: E402
 
 
 REPOSITORY = "jonathanhchoi/ELARA"
 DEFAULT_REF = "main"
-ARCHIVE_URLS = (
-    "https://github.com/%s/archive/refs/heads/%s.zip",
-    "https://github.com/%s/archive/refs/tags/%s.zip",
-)
 KIT_TITLE = "# ELARA: Empirical Legal Analysis with Research Agents"
 REPORT_RELATIVE = "project/BOOTSTRAP.md"
 MANIFEST_RELATIVE = "project/ELARA_MANIFEST.json"
 MANIFEST_SCHEMA_VERSION = "1.0"
+UPDATE_PENDING_RELATIVE = "project/ELARA_UPDATE_PENDING.json"
 LOOSE_SCRIPT_NAMES = ("bootstrap.py", "elara_bootstrap.py")
 
 # Stop counting a pre-existing folder's files past this many; the report then
@@ -273,7 +271,7 @@ def git_commit(root):
         return None
     try:
         completed = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "--short", "HEAD"],
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
             text=True,
             capture_output=True,
             timeout=30,
@@ -284,6 +282,47 @@ def git_commit(root):
     if completed.returncode != 0:
         return None
     return completed.stdout.strip() or None
+
+
+def github_commit(ref=DEFAULT_REF):
+    """Resolve one official upstream revision, without needing Git or a login."""
+    headers = {"User-Agent": "elara-update-check", "Accept": "application/vnd.github+json"}
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    url = "https://api.github.com/repos/" + REPOSITORY + "/commits/" + quote(ref, safe="")
+    try:
+        with urlopen(Request(url, headers=headers), timeout=15) as response:
+            record = json.loads(response.read())
+        sha = record["sha"]
+        if not isinstance(sha, str) or re.fullmatch(r"[0-9a-f]{40}", sha) is None:
+            raise ValueError("invalid commit")
+        if re.fullmatch(r"[0-9a-f]{40}", ref) and sha != ref:
+            raise ValueError("requested commit did not match")
+        return {"commit": sha, "subject": record["commit"]["message"].splitlines()[0],
+                "url": "https://github.com/" + REPOSITORY + "/commit/" + sha}
+    except (URLError, OSError, ValueError, KeyError, TypeError, IndexError):
+        # Never include headers, tokens, or response bodies in an error report.
+        raise BootstrapError("Could not verify ELARA on GitHub (connection, rate limit, or invalid response). Retry later; the new stage remains paused.") from None
+
+
+def local_source_info(source):
+    """A local revision is authoritative only in a clean official kit checkout."""
+    result = {"kind": "local copy", "location": str(source), "commit": git_commit(source)}
+    if not result["commit"]:
+        return result
+    try:
+        remote = subprocess.run(["git", "-C", str(source), "remote", "get-url", "origin"],
+                                capture_output=True, text=True, timeout=15, check=False)
+        status = subprocess.run(["git", "-C", str(source), "status", "--porcelain", "--untracked-files=all"],
+                                capture_output=True, text=True, timeout=15, check=False)
+        official = {"https://github.com/" + REPOSITORY, "https://github.com/" + REPOSITORY + ".git",
+                    "git@github.com:" + REPOSITORY + ".git"}
+        if remote.returncode == status.returncode == 0 and remote.stdout.strip() in official and not status.stdout.strip():
+            result["verified_commit"] = result["commit"]
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return result
 
 
 def is_kit_agents(text):
@@ -304,15 +343,17 @@ def is_kit_readme(text):
 def download_kit(ref, workdir):
     """Fetch the kit for ``ref`` from GitHub; return (kit_root, source description).
 
-    Tries, in order: the public archive URL; the same archive with a GitHub token
-    from GH_TOKEN or GITHUB_TOKEN (private repositories); a shallow ``git clone``
-    using whatever credentials Git already has; and the ``gh`` CLI. The first
-    route that yields a kit wins.
+    Resolves the ref through GitHub first, then tries an immutable archive URL,
+    authenticated archive, shallow Git fetch, and the gh CLI for that same
+    commit. No route may silently download a moving branch after consent.
     """
+    resolved = github_commit(ref)
+    commit = resolved["commit"]
+    source_info = {"kind": "download", "location": resolved["url"], "ref": ref,
+                   "commit": commit, "verified_commit": commit}
     errors = []
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    for template in ARCHIVE_URLS:
-        url = template % (REPOSITORY, ref)
+    for url in ("https://github.com/" + REPOSITORY + "/archive/" + commit + ".zip",):
         for use_token in (False, True):
             if use_token and not token:
                 continue
@@ -327,35 +368,34 @@ def download_kit(ref, workdir):
                 errors.append(url + (" (with token)" if use_token else "") + " -> " + str(exc))
                 continue
             root = extract_archive(io.BytesIO(payload), workdir)
-            return root, {"kind": "download", "location": url, "ref": ref}
+            return root, dict(source_info, location=url)
     if shutil.which("git"):
         clone_dir = Path(workdir) / "clone"
         environment = dict(os.environ)
         environment["GIT_TERMINAL_PROMPT"] = "0"
-        command = [
-            "git", "clone", "--quiet", "--depth", "1", "--branch", ref,
-            "https://github.com/" + REPOSITORY + ".git", str(clone_dir),
-        ]
         try:
-            completed = subprocess.run(
-                command, text=True, capture_output=True, timeout=600, check=False, env=environment
-            )
+            commands = [
+                ["git", "init", "--quiet", str(clone_dir)],
+                ["git", "-C", str(clone_dir), "fetch", "--quiet", "--depth", "1",
+                 "https://github.com/" + REPOSITORY + ".git", commit],
+                ["git", "-C", str(clone_dir), "checkout", "--quiet", "--detach", "FETCH_HEAD"],
+            ]
+            for command in commands:
+                completed = subprocess.run(command, text=True, capture_output=True,
+                                           timeout=60, check=False, env=environment)
+                if completed.returncode != 0:
+                    break
         except (OSError, subprocess.SubprocessError) as exc:
             completed = None
             errors.append("git clone -> " + str(exc))
-        if completed is not None and completed.returncode == 0 and is_kit_root(clone_dir):
-            return clone_dir, {
-                "kind": "git clone",
-                "location": "https://github.com/" + REPOSITORY + ".git",
-                "ref": ref,
-                "commit": git_commit(clone_dir),
-            }
+        if completed is not None and completed.returncode == 0 and is_kit_root(clone_dir) and git_commit(clone_dir) == commit:
+            return clone_dir, dict(source_info, kind="git fetch")
         if completed is not None:
             errors.append("git clone -> " + (completed.stderr or completed.stdout or "failed").strip()[-400:])
     else:
         errors.append("git clone -> git is not installed")
     if shutil.which("gh"):
-        command = ["gh", "api", "repos/" + REPOSITORY + "/zipball/" + ref]
+        command = ["gh", "api", "repos/" + REPOSITORY + "/zipball/" + commit]
         try:
             completed = subprocess.run(command, capture_output=True, timeout=600, check=False)
         except (OSError, subprocess.SubprocessError) as exc:
@@ -364,7 +404,7 @@ def download_kit(ref, workdir):
         if completed is not None and completed.returncode == 0 and completed.stdout:
             try:
                 root = extract_archive(io.BytesIO(completed.stdout), workdir)
-                return root, {"kind": "download (gh)", "location": " ".join(command), "ref": ref}
+                return root, dict(source_info, kind="download (gh)")
             except BootstrapError as exc:
                 errors.append("gh api zipball -> " + str(exc))
         elif completed is not None:
@@ -411,18 +451,14 @@ def resolve_source(args, workdir):
             return root, {"kind": "archive", "location": str(source)}
         if is_kit_root(source):
             check_clean_source(source)
-            return source, {
-                "kind": "local copy",
-                "location": str(source),
-                "commit": git_commit(source),
-            }
+            return source, local_source_info(source)
         raise BootstrapError("--source is neither a kit folder nor a ZIP archive: " + str(source))
     own = own_kit_root()
     if own is not None and not args.update:
         # --update always fetches a fresh kit: the copy this script sits in is
         # usually the installed project itself.
         check_clean_source(own)
-        return own, {"kind": "local copy", "location": str(own), "commit": git_commit(own)}
+        return own, local_source_info(own)
     return download_kit(args.ref, workdir)
 
 
@@ -665,6 +701,9 @@ def build_manifest(summary):
         "written": summary["timestamp"],
         "kit_version": summary.get("kit_version"),
         "kit_source": summary["source"],
+        "installed_commit": summary.get("installed_commit"),
+        "installation_complete": summary.get("installation_complete", False),
+        "installed_hashes": summary.get("installed_hashes", {}),
         "kit_paths": sorted(set(files["kit_paths"])),
         "shared_paths": sorted(set(files["shared_paths"])),
         "project_paths": sorted(set(files["project_paths"])),
@@ -703,7 +742,7 @@ def empty_outcome(researcher_paths=()):
     }
 
 
-def install(source, target, update, already_installed=False, researcher_paths=(), dry_run=False):
+def install(source, target, update, already_installed=False, researcher_paths=(), dry_run=False, require_clean=False):
     """Copy the kit into target. Returns the per-file outcome lists.
 
     Besides the outcome lists, the result records ownership: ``kit_paths`` are
@@ -724,6 +763,16 @@ def install(source, target, update, already_installed=False, researcher_paths=()
     if update and (target / MANIFEST_RELATIVE).exists() and previous is None:
         raise BootstrapError("Invalid installation manifest; refusing an unverified update.")
     previous = previous or {}
+    for key in ("kit_paths", "shared_paths", "researcher_paths"):
+        paths = previous.get(key, [])
+        if not isinstance(paths, list):
+            raise BootstrapError("Invalid installation path list.")
+        for relative in paths:
+            if (not isinstance(relative, str) or not relative or ":" in relative
+                    or "\\" in relative or Path(relative).is_absolute()
+                    or ".." in Path(relative).parts
+                    or not (target / relative).resolve().is_relative_to(target.resolve())):
+                raise BootstrapError("Invalid installation path.")
     baselines = dict(previous.get("baseline_hashes", {}))
     protected = dict(previous.get("protected_bindings", {}))
     protection_path = target / "project/ELARA_PROTECTED_PATHS.json"
@@ -772,6 +821,8 @@ def install(source, target, update, already_installed=False, researcher_paths=()
             blocked[relative] = {"path": relative, "reason": reason,
                                  "current_sha256": current_hash,
                                  "incoming_sha256": hashlib.sha256(data).hexdigest()}
+            if require_clean and not dry_run:
+                raise BootstrapError("Update stopped because a file changed or became protected: " + relative)
             return False
         # Never adopt a conflicting local version as a new trusted baseline.
         installed_hashes[relative] = hashlib.sha256(data).hexdigest()
@@ -926,6 +977,17 @@ def install(source, target, update, already_installed=False, researcher_paths=()
         else:
             outcome["kept"].append(relative + " (differs from this kit version; --update refreshes it)")
         owned(relative)
+    # A removed upstream file can still be invoked by an old skill or import.
+    # Preserve it for review, but do not call this installation fully updated.
+    current_paths = set(outcome["kit_paths"] + outcome["shared_paths"])
+    old_paths = set(previous.get("kit_paths", []) + previous.get("shared_paths", []))
+    for relative in sorted(old_paths - current_paths - PROJECT_OWNED):
+        path = target / relative
+        if path.exists():
+            blocked.setdefault(relative, {"path": relative, "reason": "removed_upstream"})
+            # Keep its ownership across partial updates so a retry cannot
+            # forget the retained file and incorrectly certify completion.
+            owned(relative, "shared" if relative in previous.get("shared_paths", []) else "kit")
     for key in ("updated", "installed", "merged", "prepended", "aliased", "unchanged"):
         outcome[key] = [item for item in outcome[key]
                         if not any(item == path or item.startswith(path + " ") for path in blocked)]
@@ -936,6 +998,17 @@ def install(source, target, update, already_installed=False, researcher_paths=()
     outcome["protected_bindings"] = protected
     outcome["update_conflicts"] = list(blocked.values())
     return outcome
+
+
+def installation_matches(preview):
+    """An update preview with no remaining work proves distribution parity."""
+    return not (preview.get("update_conflicts") or essential_conflicts(preview["researcher_paths"])
+                or any(preview[key] for key in ("installed", "updated", "merged", "prepended", "aliased")))
+
+
+def installed_file_hashes(target, files):
+    return {relative: hashlib.sha256((Path(target) / relative).read_bytes()).hexdigest()
+            for relative in sorted(set(files["kit_paths"] + files["shared_paths"]) - PROJECT_OWNED)}
 
 
 # --------------------------------------------------------------------------- environment
@@ -1138,6 +1211,13 @@ def format_list(items, empty="none"):
 
 def next_steps(summary):
     steps = []
+    steps.append(
+        "Before starting any new stage or tool, follow workflow/shared/kit-updates.md and run "
+        "scripts/check_update.py for that stage. Ask for the researcher's agreement before an "
+        "update, install only the approved commit, verify it, and reread the updated instructions. "
+        "An unavailable check, declined update, conflict, or incomplete installation leaves the new stage paused. "
+        "Resume an existing run under its recorded software; do not reinitialize an existing project."
+    )
     steps.append(
         "Read AGENTS.md (the standing rules) and PIPELINE.md (the map and the menu of tools), "
         "then " + REPORT_RELATIVE + " (this report)."
@@ -1440,6 +1520,8 @@ def machine_summary(summary):
         "target": summary["target"],
         "source": summary["source"],
         "kit_version": summary.get("kit_version"),
+        "installed_commit": summary.get("installed_commit"),
+        "installation_complete": summary.get("installation_complete", False),
         "update": summary["update"],
         "dry_run": bool(summary.get("dry_run")),
         "already_installed": summary.get("already_installed", False),
@@ -1595,6 +1677,10 @@ def print_human(summary):
 def bootstrap(args):
     target = Path(args.into).expanduser().resolve()
     dry_run = bool(getattr(args, "dry_run", False))
+    require_clean = bool(getattr(args, "require_clean", False))
+    pending_path = target / UPDATE_PENDING_RELATIVE
+    if pending_path.is_symlink() or not pending_path.resolve().is_relative_to(target):
+        raise BootstrapError("The update record must remain inside the project folder.")
     loose = loose_script_path()
     ignore_names = set()
     if loose is not None and loose.parent == target:
@@ -1618,9 +1704,24 @@ def bootstrap(args):
         kit_top = kit_top_level(source)
         existing_materials = snapshot_existing(target, ignore_names)
         shared_before = shared_folder_snapshot(target, kit_top, ignore_names)
+        if args.update and source == target:
+            raise BootstrapError("An update needs a separate verified source; never use the installed copy as its own update.")
+        if require_clean:
+            preview = install(source, target, args.update, already_installed=already_installed,
+                              researcher_paths=(previous_manifest or {}).get("researcher_paths") or [], dry_run=True)
+            if preview["update_conflicts"] or essential_conflicts(preview["researcher_paths"]):
+                raise BootstrapError("Update conflicts must be resolved before installation. Run --update --dry-run --json to inspect them; no kit files were changed.")
+        if args.update and not dry_run:
+            write_text(pending_path, json.dumps({
+                "schema_version": "1.0", "started_at": utc_now(),
+                "previous_commit": (previous_manifest or {}).get("installed_commit"),
+                "requested_commit": source_info.get("verified_commit"),
+            }, indent=2) + "\n")
         if target == source:
             # "python scripts/bootstrap.py" inside a downloaded kit: nothing to copy.
             files = empty_outcome()
+            files["baseline_hashes"] = dict((previous_manifest or {}).get("baseline_hashes", {}))
+            files["protected_bindings"] = dict((previous_manifest or {}).get("protected_bindings", {}))
             for relative, _absolute in kit_files(source):
                 files["unchanged"].append(relative)
                 files["project_paths" if relative in PROJECT_OWNED else "kit_paths"].append(relative)
@@ -1634,7 +1735,18 @@ def bootstrap(args):
                 already_installed=already_installed,
                 researcher_paths=(previous_manifest or {}).get("researcher_paths") or [],
                 dry_run=dry_run,
+                require_clean=require_clean,
             )
+        complete = False
+        installed_hashes = {}
+        if not dry_run:
+            parity = install(source, target, True, already_installed=True,
+                             researcher_paths=files["researcher_paths"], dry_run=True)
+            complete = installation_matches(parity) and not files.get("update_conflicts")
+            if complete and source_info.get("verified_commit"):
+                installed_hashes = installed_file_hashes(target, files)
+                # This includes shared files and in-place ZIP/clone installs.
+                files["baseline_hashes"] = dict(installed_hashes)
         if already_installed:
             # Report only what is not part of the kit itself: whatever the kit
             # actually owns here at top level (a researcher's README.md is theirs).
@@ -1651,6 +1763,9 @@ def bootstrap(args):
             "target_is_git_repository": (target / ".git").exists(),
             "temporary_source": temporary_source,
             "source": source_info,
+            "installed_commit": source_info.get("verified_commit") if complete else None,
+            "installation_complete": complete,
+            "installed_hashes": installed_hashes,
             # This field describes the kit whose files this run installs.  An
             # existing project's protected state may intentionally retain the
             # workflow version under which its active run began, so it cannot
@@ -1755,6 +1870,8 @@ def bootstrap(args):
     summary["ok"] = bool(
         (summary["doctor"].get("skipped") or summary["doctor"].get("ok"))
         and dependency.get("status") in ("present", "installed")
+        and not files.get("update_conflicts")
+        and not conflicts
     )
     # A kit copy cloned or unzipped inside the project folder under the README's
     # `.elara-kit` convention was only needed to install from: remove it now, so
@@ -1770,6 +1887,8 @@ def bootstrap(args):
         json.dumps(build_manifest(summary), indent=2, sort_keys=True) + "\n",
     )
     summary["manifest_path"] = MANIFEST_RELATIVE
+    if args.update and summary["ok"] and summary["installation_complete"]:
+        pending_path.unlink(missing_ok=True)
     if loose is not None and loose.parent == target and not args.keep:
         try:
             loose.unlink()
@@ -1799,6 +1918,10 @@ def main():
         "--update",
         action="store_true",
         help="refresh kit-owned files that differ from this kit version (never project state, ledgers, or a file that was yours before the kit)",
+    )
+    parser.add_argument(
+        "--require-clean", action="store_true",
+        help="refuse all known update conflicts before writing; preserve an interrupted-update marker until verification succeeds",
     )
     parser.add_argument(
         "--dry-run",
