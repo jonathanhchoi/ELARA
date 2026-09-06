@@ -141,6 +141,25 @@ contract. A configuration key appearing in a file proves neither acceptance nor
 enforcement. A startup warning alone is not a failed permission gate. Review the
 diagnostic assumptions alongside the repair and keep those observations separate.
 
+For an isolated Codex invocation, inspect its effective working root, active
+configuration layers, and loaded agent and hook sources. `--ignore-user-config`
+omits the user configuration file while retaining the authentication location
+([official CLI reference](https://learn.chatgpt.com/docs/developer-commands#codex-exec)).
+Project configuration and hooks load only for a trusted project; review of an
+individual hook's definition is separate from loading its source
+([configuration](https://learn.chatgpt.com/docs/config-file/config-advanced#project-config-files-codexconfigtoml),
+[hooks](https://learn.chatgpt.com/docs/hooks#review-and-trust-hooks)).
+Omitting user settings may therefore explain lost role or hook discovery when
+those settings supplied the required configuration or project trust. Treat this
+as a diagnostic inference to test, not a proven cause of every host failure.
+Under existing scoped authority, prefer supported invocation-only corrections
+for the approved workspace and reviewed hook definitions; do not persist broad
+trust changes or weaken the approved restrictions. A hook-trust option does not
+establish that a project source loaded. For the corrected synthetic check, use a
+fresh, single-use runtime through the actual command construction. Retain earlier
+failure evidence and verify the required named role and lifecycle events before
+resuming dispatch.
+
 `VerificationTransaction` reuses expensive proof computation in one process only
 while every bound file still hashes identically. It rechecks bytes, not just
 timestamps, and never persists a bypass or carries trust to another wave. Apply

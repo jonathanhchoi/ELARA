@@ -108,9 +108,13 @@ mid-write; relaunched identically, it did the same thing again.
    `subagent_type`. Never launch a worker as a general-purpose or default agent. Claude Code loads
    a project's first `.claude/agents/` directory only at session start: after installing or
    updating the kit into a folder that had none, restart once before fanning out. On Codex, confirm
-   at Stage 00 (and record in the access snapshot) that the host lists the kit's custom agents; if it
-   does not, spawn the host's built-in worker with the same developer instructions pasted from the
-   TOML file and record the residual limitation.
+   at Stage 00 (and record in the access snapshot) that the host lists the kit's custom agents. If
+   a named role or required hook is missing, first diagnose the exact invocation's working root,
+   active configuration layers, and loaded roles and hooks under `operational-recovery.md`.
+   Apply supported invocation-scoped operational repairs under existing authority. Use a built-in
+   worker only when the selected route already authorizes that fallback, with the same developer
+   instructions and enforced restrictions, and record the residual limitation. Never substitute
+   a frozen named role; an unresolved change to the approved route follows its existing decision process.
 2. **Bot walls, paywalls, and rate limits are typed access gaps.** A worker that meets a 401/403/429,
    CAPTCHA, "verifying you are human" page, or login wall records `{url, status_or_message,
    timestamp_utc}` and moves on — one retry at most for a 429, no spoofing, no other surface. Sites
@@ -126,8 +130,12 @@ mid-write; relaunched identically, it did the same thing again.
    sleep, poll, or wait more than about 30 s in total. Neither host runtime kills a worker on the
    time box for the kit, so the box is enforced by the worker's own bounded calls and by the
    parent's watch: a worker still running well past its box is stopped from the host's run view
-   (`/workflows` on Claude Code; the agent thread controls on Codex) or by the assistant, its
-   assignment stays pending on disk, and the next run of the fan-out picks it up as a new attempt.
+   (`/workflows` on Claude Code; the agent thread controls on Codex) or by the assistant. An
+   authorized time box remains binding unless the researcher changes it. Preserve the timeout,
+   handle state, and original assignment and attempt; reconcile finality and retry eligibility
+   under the frozen controller before another launch. An absent return or elapsed time alone
+   never creates a new attempt. Keep affected dispatch stopped while finality or retry eligibility
+   is unresolved, following `operational-recovery.md`.
 4. **Crash-resume from disk.** Every fan-out lives under the run directory — never in the
    assistant's session scratchpad, which changes with the session: the sealed manifest (one row per
    assignment: id, kind, brief or assignment file, unique return path), the briefs or assignments,
