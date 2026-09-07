@@ -308,8 +308,11 @@ own context and never launches a general-purpose or `default` sub-agent for kit 
    research fan-out) to obtain the pending list; spawn one `elr_worker` (coding/audit) or
    `elr_research_worker` (research) per pending assignment, up to six at once and never more than
    the session's thread cap, each with a message naming exactly its one assignment or brief and its
-   attempt number and unique return path (plus the frozen model and effort where the host lets a spawn set them); wait for
-   the whole wave; close the workers; run `status` again; append the ledger checkpoint; update
+   attempt number and unique return path (plus the frozen model and effort where the host lets a spawn set them);
+   distinguish rejected tool calls from accepted worker launches under
+   `workflow/shared/operational-recovery.md`. Apply its separate rules for correction within a
+   live parent and reconciliation after a stop. Wait only on positively acknowledged worker IDs.
+   After the wave's workers finish, close them; run `status` again; append the ledger checkpoint; update
    the parent native plan with the exact counts; repeat
    until nothing is pending. Never reuse a worker context for another unit. Each coding worker
    uses the controller's `submit` rather than writing the return path directly.
