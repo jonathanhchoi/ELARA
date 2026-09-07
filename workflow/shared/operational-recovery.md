@@ -69,6 +69,24 @@ relaunch that attempt, invent a no-judgment finding, fabricate a return, or
 allocate a retry from absence alone. Explicit exceptions remain scoped to the
 units and attempts the researcher approved.
 
+Distinguish a rejected tool call from an accepted worker launch. Within the same
+authorized live parent, an exact native refusal before the spawn handler permits
+correcting a known non-message mismatch to the frozen canonical values only when
+no earlier spawn for that assignment was accepted or has an unknown outcome.
+The reviewed workflow and standing authority cover this correction without a
+per-call researcher decision. Preserve worker instructions, profile, guard
+enforcement, and the one-accepted-spawn limit for that assignment; wait only after
+positive acceptance identifies the worker. For that assignment, do not repeat an
+unchanged failed call, and never spawn again after acceptance. The parent must
+not inspect protected guard or controller files to make this correction.
+
+After the parent stops, or an unacknowledged journal intent leaves launch finality
+unresolved, the outer deterministic adapter reconciles recorded launch, guard,
+and controller evidence before resumption. Preserve rejected calls and every
+intent; the old runtime remains used. A denial establishes non-execution only
+for the identified call. It neither settles another call with an unknown outcome
+nor allocates a corpus retry, which remains governed by frozen policy.
+
 ## One stable implementation, durable evidence
 
 Use one versioned runtime with explicit configuration and compatibility adapters.
