@@ -171,6 +171,19 @@ fresh, single-use runtime through the actual command construction. Retain earlie
 failure evidence and verify the required named role and lifecycle events before
 resuming dispatch.
 
+On Windows, configuration isolation can also omit native sandbox settings.
+Verify the effective backend and explicitly bind the invocation to one supported
+by the installed host, preserving the approved filesystem and network restrictions
+and approval policy. In Codex 0.149.1, an unmatched command is forbidden under
+`Never` when the Windows backend is `Disabled` and managed filesystem restrictions
+exclude full-disk write access ([exec-policy check, lines 730–766](https://github.com/openai/codex/blob/ff29a44391deccde0aba0f8390337d7f3c319ea4/codex-rs/core/src/exec_policy.rs#L730-L766),
+[restriction predicate, lines 817–824](https://github.com/openai/codex/blob/ff29a44391deccde0aba0f8390337d7f3c319ea4/codex-rs/core/src/exec_policy.rs#L817-L824)).
+Distinguish an evidenced native policy rejection from a researcher refusal;
+diagnose and repair within existing scope. Do not enable approval prompts, bypass
+the sandbox, or broaden access merely to force a probe through. Configuration text
+and a matching source branch do not establish readiness: complete the existing
+fresh synthetic round-trip through the actual restricted worker operation.
+
 `VerificationTransaction` reuses expensive proof computation in one process only
 while every bound file still hashes identically. It rechecks bytes, not just
 timestamps, and never persists a bypass or carries trust to another wave. Apply

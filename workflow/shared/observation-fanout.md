@@ -109,8 +109,9 @@ mid-write; relaunched identically, it did the same thing again.
    a project's first `.claude/agents/` directory only at session start: after installing or
    updating the kit into a folder that had none, restart once before fanning out. On Codex, confirm
    at Stage 00 (and record in the access snapshot) that the host lists the kit's custom agents. If
-   a named role or required hook is missing, first diagnose the exact invocation's working root,
-   active configuration layers, and loaded roles and hooks under `operational-recovery.md`.
+   a named role or required hook is missing, or native policy rejects a required command, first
+   diagnose the exact invocation's working root, active configuration layers, loaded roles and
+   hooks, and (on Windows) effective native sandbox backend under `operational-recovery.md`.
    Apply supported invocation-scoped operational repairs under existing authority. Use a built-in
    worker only when the selected route already authorizes that fallback, with the same developer
    instructions and enforced restrictions, and record the residual limitation. Never substitute
