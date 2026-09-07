@@ -256,7 +256,7 @@ Before the first execution write or external call in a long-running stage:
 When requesting a new goal, use one per stage, never create one for the whole
 pipeline or per worker. Existing equivalent user goals remain valid. The host's
 workflow or sub-agent orchestrator owns fan-out; the
-stage goal keeps the parent working through plan items, waves, serial
+stage goal keeps the parent working through plan items, worker completions, serial
 validation, and final reconciliation. A bounded stage (`long_running: false`)
 uses the native plan but does not start a goal.
 
@@ -279,7 +279,7 @@ fallback, not a reason to weaken the completion condition.
   rule is actually satisfied. Never replace another active goal.
 - During a Codex fan-out, the active stage goal remains with the parent while
   the named `elr_worker` or `elr_research_worker` sub-agents handle individual
-  assignments in bounded waves under `workflow/shared/observation-fanout.md`.
+  assignments in a bounded rolling pool under `workflow/shared/observation-fanout.md`.
 
 ## Claude Code adapter
 

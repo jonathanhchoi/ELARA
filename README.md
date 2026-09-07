@@ -1,10 +1,14 @@
 # ELARA: Empirical Legal Analysis with Research Agents
 
-Version 2.8.0 repairs operational failures under existing authority, separates
-verification from researcher decisions, and checks the actual failing operation
-before resuming. Compatible updates install automatically; when GitHub is
-unavailable, verified installed files remain usable. Work already underway keeps
-its recorded research controls. See [keeping ELARA current](#keeping-elara-current).
+Version 2.9.0 keeps parallel workers busy by filling each available slot when an
+assignment finishes. New runs start with up to six workers and increase gradually
+to at most twelve when checkpoints pass and capacity permits; an explicit worker
+limit stays fixed. Coding, research, and review work use the same scheduling
+rules while keeping one assignment per fresh worker and serial validation.
+Existing runs keep their recorded scheduler unless a paused run is explicitly
+migrated after review. Research controls and approved checkpoints remain binding.
+See [how parallel work runs](PIPELINE.md#how-parallel-work-runs) and
+[keeping ELARA current](#keeping-elara-current).
 
 ELARA is the companion package for *ELARA: A Framework for Empirical Legal
 Research with AI Agents* by Jonathan H. Choi. It turns Claude Code or Codex into

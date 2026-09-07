@@ -34,9 +34,13 @@ the canonical `interaction_profile` as follows:
   saved dynamic workflows, which you launch yourself as part of the stage:
   `elr-observation-fanout` (`{ "run_dir": ... }`) for coding and audit units,
   `elr-research-fanout` (`{ "fanout_dir": ... }`) for research units, both under
-  `workflow/shared/observation-fanout.md`. Do not launch workers one at a time
-  with the Agent tool while workflows are available, and do not process the
-  units serially in your own context.
+  `workflow/shared/observation-fanout.md`. For policy-enabled runs also supply a stable
+  native-session `owner` and verified available-worker `capacity`; explicit `concurrency`
+  stays fixed, otherwise the recorded target controls the rolling pool. Legacy runs keep
+  their original scheduler. For the first invocation after reviewed paused-run migration,
+  pass the parent's `resume_request` and `request_root` through the workflow; do not
+  pre-open and replay an existing session. Do not launch workers one at a time with the Agent tool while
+  workflows are available, and do not process the units serially in your own context.
 - `plan_then_execute`: put the read-only plan phase first in the task list. For
   Stages 01, 04, 05, 07, 08, 09, and 17, enter Plan Mode at every decision
   boundary declared in `workflow/shared/execution-control.md` and use
@@ -75,7 +79,7 @@ parent validates, merges, and edits shared ledgers. Workflow agents run with the
 allowlist: the first `python scripts/unit_fanout.py …` / `research_fanout.py …` command and the
 first web fetch may prompt once, and the first launch of each saved workflow asks whether to allow
 it — tell the researcher once, in plain language, that approving "don't ask again for this
-workflow in this project" lets a run of many waves proceed without further prompts. If workflows
+workflow in this project" lets a run of many assignments proceed without further prompts. If workflows
 are disabled or the host is older than 2.1.154, launch workers directly with the Agent tool, one
 assignment per call, with the restricted `subagent_type` below, and record that route.
 

@@ -42,7 +42,7 @@ in the settings at the top of this file must be covered by the active goal befor
 execution begins. If no covering goal is active and the host exposes goals, provide `/goal <goal_condition>` and stop. Do not run the audit in Plan
 Mode. The parent keeps the goal and plan current while the host orchestrator
 runs audit units under `workflow/shared/observation-fanout.md`: Codex spawns
-`elr_worker` sub-agents in bounded waves; Claude Code launches the saved
+`elr_worker` sub-agents in a bounded rolling pool; Claude Code launches the saved
 `elr-observation-fanout` workflow until nothing is pending. If the orchestrator
 is unavailable, launch the same restricted worker type one assignment per call
 and record the fallback. Preserve audit separation and make no coding

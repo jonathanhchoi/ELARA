@@ -114,6 +114,9 @@ def prepare(fanout_dir: Path) -> dict[str, Any]:
         raise FanoutError("spec.json must be a JSON object")
     if spec.get("contract_version") != CONTRACT_VERSION:
         raise FanoutError(f"contract_version must be {CONTRACT_VERSION!r}")
+    concurrency = spec.get("concurrency")
+    if concurrency is not None and (type(concurrency) is not int or concurrency < 1):
+        raise FanoutError("concurrency must be a positive integer")
     fanout_id = _safe_identifier(spec.get("fanout_id"), "fanout_id")
     kind = _safe_identifier(spec.get("kind"), "kind")
     time_box = _positive_int(spec.get("time_box_minutes"), "time_box_minutes", DEFAULT_TIME_BOX_MINUTES)
@@ -186,6 +189,9 @@ def prepare(fanout_dir: Path) -> dict[str, Any]:
         for row in rows:
             writer.writerow({column: row[column] for column in MANIFEST_COLUMNS})
     atomic_json(fanout_dir / "seal.json", {"manifest_sha256": sha256_file(manifest_path)})
+    from fanout_dispatch import initialize_policy
+
+    initialize_policy(fanout_dir, concurrency=concurrency)
     return manifest
 
 
@@ -398,6 +404,13 @@ def status(
     later ``status`` can bound attempts; it is meaningful only with ``include_pending``.
     """
     fanout_dir = fanout_dir.resolve()
+    if record_launch:
+        from fanout_dispatch import assert_legacy_launch_allowed
+
+        try:
+            assert_legacy_launch_allowed(fanout_dir)
+        except ValueError as exc:
+            raise FanoutError(str(exc)) from exc
     manifest = verify_integrity(fanout_dir)
     grouped_rows = _attempt_rows(manifest)
     launches = _launches(fanout_dir, manifest)

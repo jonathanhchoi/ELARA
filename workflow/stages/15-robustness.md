@@ -44,7 +44,7 @@ execution begins. If no covering goal is active and the host exposes goals, prov
 search in Plan Mode. The parent keeps the goal and plan current while the host
 orchestrator runs condition units under
 `workflow/shared/observation-fanout.md`: Codex spawns `elr_worker` sub-agents in
-bounded waves; Claude Code launches the saved `elr-observation-fanout` workflow
+a bounded rolling pool; Claude Code launches the saved `elr-observation-fanout` workflow
 until nothing is pending. If the orchestrator is unavailable, launch the same
 restricted worker type one assignment per call and record the fallback. Apply
 identical checks and downstream analysis; never tune on the comparison.

@@ -267,12 +267,23 @@ in Stages 08, 11, 12, and 15; searches, author and citation chains, and
 retrieval in Stage 02; independent critics in Stage 07; claim-citation pairs in
 Stage 19; fresh reviews — the work runs in parallel, with one bounded assignment
 per isolated sub-agent under `workflow/shared/observation-fanout.md`. The host
-coordinates the sub-agents rather than the assistant launching them by hand:
+coordinates fresh sub-agents and refills completed slots individually:
 
 | Host | How parallel work is coordinated | Worker definitions |
 |---|---|---|
 | Claude Code | The kit's saved dynamic workflows, `elr-observation-fanout` (coding and audit units) and `elr-research-fanout` (research units), which the assistant launches as part of the stage; the researcher can watch them in `/workflows` | `.claude/agents/elr-worker.md`, `.claude/agents/elr-research-worker.md` |
-| Codex | The kit's custom sub-agents, spawned by name in bounded waves; the parent retains the stage plan and goal | `.codex/agents/elr-worker.toml` (`elr_worker`), `.codex/agents/elr-research-worker.toml` (`elr_research_worker`) |
+| Codex | The kit's custom sub-agents, spawned by name in a bounded rolling pool; the parent retains the stage plan and goal | `.codex/agents/elr-worker.toml` (`elr_worker`), `.codex/agents/elr-research-worker.toml` (`elr_research_worker`) |
+
+New runs use continuous scheduling within each approved batch or research round.
+They start with at most six workers and add one at a passing checkpoint when
+eligible work remains, up to twelve and never above the available host, research,
+or service limit. Throttling reduces the next session's target by half; an explicit
+worker limit stays fixed. Codex records native launch intent and acknowledgement;
+Claude workflows record actual worker starts and completed results without claiming
+unavailable native handles. Each worker checks its assignment-specific start ticket
+before reading sources.
+The helper owns these operational records, and validation and shared writes remain
+serial. A stopped or unknown worker is reconciled before its work can be retried.
 
 On either host the kit's controllers (`scripts/unit_fanout.py`,
 `scripts/research_fanout.py`) fix the assignment list on disk, say what is still
@@ -537,6 +548,14 @@ field, stage order, approval gate, file format, or research safeguard changes,
 so existing projects need no migration.
 
 ## Persistent state
+
+Version 2.9.0 adds operational scheduling policy, owned dispatch sessions, and
+assignment-specific start tickets for new parallel runs. Existing runs without
+that policy keep their recorded scheduler. A paused run can migrate only through
+an explicit, reviewed adoption that preserves the scientific inputs, source seals,
+returns, attempts, and checkpoint history; migration stays paused until separately
+authorized to resume. A frozen concurrency rule still requires the existing
+research amendment process. No project-state schema migration is required.
 
 Version 2.8.0 adds a shared operational recovery decision interface, optional
 `recovery_decision` state evidence (schema 1.5), routing consistency checks,
