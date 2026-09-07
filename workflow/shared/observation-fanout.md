@@ -14,8 +14,8 @@ retrievals. Two kinds of fan-out share it:
 
 ## The host orchestrates; the kit validates
 
-The parallel wave itself is run by the host's own orchestrator, never by the assistant launching
-workers one at a time by hand and never by an all-tools default agent:
+The host's own orchestrator runs the parallel workers. New runs use a bounded rolling pool,
+never serial work in the parent context and never an all-tools default agent:
 
 - **Claude Code** runs every fan-out as one of the kit's saved dynamic workflows —
   `.claude/workflows/elr-observation-fanout.js` for coding and audit units,
@@ -28,13 +28,15 @@ workers one at a time by hand and never by an all-tools default agent:
   `/workflows`.
 - **Codex** runs every fan-out as the kit's custom sub-agents — `elr_worker` and
   `elr_research_worker`, defined in `.codex/agents/` — spawned by name by the parent session, one per
-  assignment, in bounded waves, with the host's own sub-agent tools (spawn, wait, close; a CSV batch
+  assignment, with completed slots refilled individually using the host's own sub-agent tools
+  (spawn, wait, and explicit close when offered; otherwise verified automatic release on native
+  terminal completion; a CSV batch
   fan-out tool when the host offers one that can run the kit's restricted agents). The one parent
   stage goal supplies persistence and the native stage plan records progress; sub-agents supply
   parallelism. See `workflow/shared/execution-control.md`.
 - **Either host**: the kit's controllers (`scripts/unit_fanout.py`, `scripts/research_fanout.py`)
   fix the manifest on disk, say what is pending, validate returns, bound attempts, and merge — the
-  same files whichever host ran the wave. Resume evidence is the files under the run directory, so
+  same scientific files whichever host ran the assignments. Resume evidence is the files under the run directory, so
   a fan-out that a session or host crash interrupted continues in the next session with the same
   command. If the host's orchestrator is unavailable, the fallback is never a serial imitation
   inside the parent's own context: on Claude Code (workflows disabled, or a host older than
@@ -43,12 +45,93 @@ workers one at a time by hand and never by an all-tools default agent:
   `waiting_for_user` and ask the researcher to enable sub-agents — a host setting only they can
   change — or, where the accepted pilot fixed an API route as the instrument, run that route.
 
+## Scheduling policy and admission
+
+Newly prepared coding, audit, research, critique, retrieval, and review runs use
+`scripts/fanout_dispatch.py` for operational scheduling records while the host
+still launches every restricted worker. Keep the policy outside the frozen
+scientific assignments. Runs without a recorded policy use their original
+scheduler; installing an update does not migrate a run or authorize a resume.
+
+The default starts with at most six workers. At each passing batch checkpoint,
+the stage parent may increase the target by one for the next dispatch session when
+eligible backlog remains and at least the session target number of workers have
+cleanly reconciled, up to twelve. It must explicitly record the passed
+scientific, evidence, budget, and stop-rule checks before requesting that increase.
+Worker completion, a workflow verifier, reconciliation, or closing a session does
+not establish a passing scientific checkpoint or grow the target. Respect lower host capacity, researcher limits, frozen
+instrument limits, and shared service limits. A positive explicit `concurrency`
+is a fixed ceiling and disables automatic increases; provider throttling may still
+reduce the effective target below that ceiling. Verify available worker
+slots after reserving capacity for the parent and controller agents; do not infer
+capacity from a product name or advertised maximum. Hold the target fixed within
+a session. Confirmed provider throttle/backoff evidence halves the effective target (rounded down, minimum
+one) for the next session, wait through two passing checkpoints before further
+growth, and honor the service's retry delay. Do not use labels,
+outcome frequencies, or substantive findings to choose concurrency.
+
+Refill a completed slot promptly while other workers continue. Approved batch
+sizes, research rounds, retry eligibility, cost ceilings, and researcher-selected
+checkpoints still bound admission; do not dispatch the next batch early. Validate
+returns and make shared writes serially. A checkpoint that requires a stop stops
+refill immediately; reconcile the live workers under the existing time-box and
+recovery rules. Unknown worker finality, a failed admission operation, or ambiguous
+ownership never counts as a free slot or permission to launch the unit again.
+
+Before admitting work, the parent opens an owned dispatch session with the exact
+run directory, kind, available capacity, and any accepted block/limit. The helper
+reserves ordered, assignment-specific tickets, not worker launches. On Codex,
+the parent records native launch intent before spawning and acknowledgement only
+after the host accepts an identifiable worker. Claude's saved workflow exposes a
+completed agent result rather than a native acceptance handle: preserve the planned
+ticket, use its worker start receipt as evidence of actual execution, and record
+completed native evidence only after the awaited result. Do not manufacture an
+acknowledgement or a never-started disposition from missing workflow output.
+Each fresh worker must run
+`python scripts/fanout_dispatch.py start --ticket <ticket-path>` before reading
+scientific assignment content. A successful response contains only its own
+assignment identity and paths. After the canonical return exists, it runs
+`python scripts/fanout_dispatch.py finish --ticket <ticket-path>`; coding submit
+may already have recorded this return. These helper-mediated writes are narrowly
+permitted, never permission to read or edit the scheduler registry. A failed or
+refused start ends that worker without reading, coding, fetching, or retrying.
+Controller-only discovery and verification agents do not start scientific tickets.
+The parent performs full controller integrity checks at dispatch-session and validation
+boundaries. Each worker guard rehashes the ticket's common manifest, seal, specification,
+and frozen-input bindings plus its own assignment or brief; it does not scan sibling
+assignments and returns while holding the admission lock. Closed sessions move into
+immutable hashed segments whose history is authenticated before a later session opens;
+the active admission record must not replay the entire corpus on every worker call.
+
+Each ticket, observed intent or acknowledgement, start, return, validation, and
+checkpoint must reconcile from disk; unavailable native evidence remains explicitly
+unobservable. Use native evidence for the exact ticket when a worker
+stops without a return; a host completion alone proves neither a valid return nor
+retry eligibility. Preserve all unknown attempts and pause affected admission.
+An explicitly paused existing run may adopt this policy only through reviewed,
+opt-in migration under `operational-recovery.md`, never by replacing its seals.
+
+
+When the parent has confirmed provider throttling, record it through
+`python scripts/fanout_dispatch.py reconcile --run-dir <run-dir> --owner <owner>
+--throttled --retry-after-seconds <observed-seconds>`, together with any exact native
+completion evidence. Preserve the provider evidence that supplied the delay. The
+helper blocks new session admission, launch intents, and worker starts until the
+latest recorded deadline has passed. If the provider gives no verifiable wait,
+omit `--retry-after-seconds`: admission stays blocked for an unknown backoff, with
+no guessed restart time. After verifying provider availability from new native
+evidence, the parent may run `python scripts/fanout_dispatch.py resolve-backoff
+--run-dir <run-dir> --owner <owner> --evidence-sha256 <availability-evidence-hash>`.
+This never shortens a still-active known Retry-After deadline or resolves an
+unknown worker's finality. Existing workers may finish and preserve their returns;
+the parent retains the existing checkpoint, ownership, and resume rules.
+
 ## Freeze before fan-out
 
 1. Freeze and hash the unit roster, codebook, task instructions, schema, source representation,
    model and effort, retry policy, terminal statuses, batch size, cost ceiling, and run code.
    Revalidate the specification, every frozen input, and every generated assignment before each
-   status check, worker wave, merge, or analysis; any drift stops the run.
+   status check, dispatch session, merge, or analysis; any drift stops the run.
 2. Build an immutable assignment manifest with one row or JSON object per attempt. Each entry
    names a unique `assignment_id`, stable `unit_id`, assignment kind, attempt number, exact frozen
    input hashes, and one unique worker-return path. A coding unit may contain one document or
@@ -61,15 +144,20 @@ workers one at a time by hand and never by an all-tools default agent:
 
 ## Worker isolation
 
-Give each fresh subagent exactly one assignment. Include only the applicable frozen instructions,
-schema, unit metadata, and that unit's authorized source content or locator. Do not include earlier
+Give each subagent one new, non-forked context and exactly one assignment. Do not inherit the
+parent conversation, earlier answers, or another worker's context. Where the native spawn schema
+supports it, explicitly set `fork_turns: "none"`; otherwise verify the host's equivalent fresh-context
+behavior. A named restricted role alone does not establish context isolation. If the host cannot
+exclude the parent conversation, pause that route under the existing capability rules. Include
+only the applicable frozen instructions, schema, unit metadata, and that unit's authorized source
+content or locator. Do not include earlier
 answers, outcome counts, human gold labels, another worker's reasoning, or prior verifier findings.
 Disable or forbid memory, web, and unrelated file inspection unless the frozen method explicitly
 requires them. A shared filesystem is not statistical independence; workers must be told not to
 read sibling assignments, worker returns, aggregates, or ledgers, and this residual limitation must
 be reported when the platform cannot enforce filesystem isolation.
 
-The worker must not write its return path directly. It constructs one return envelope in memory and
+A coding or audit worker must not write its return path directly. It constructs one return envelope in memory and
 sends that JSON on standard input to `python scripts/unit_fanout.py submit --run-dir <run-dir>
 --assignment-id <assignment-id>`. The controller revalidates the sealed manifest, assignment hash,
 IDs, schema, and unique path before creating the file, refuses every overwrite, and emits only an
@@ -100,7 +188,7 @@ mid-write; relaunched identically, it did the same thing again.
    (`elr_research_worker`) (`developer_instructions`, `sandbox_mode`, no MCP servers). `elr-worker`
    / `elr_worker` (coding/audit, and the controller `status` steps of the workflows): read the
    assignment and source, run the controller's `submit`; no web, no writes to the run directory
-   beyond the controller's own. `elr-research-worker` / `elr_research_worker` (search, retrieval,
+   beyond the submit controller and its assigned dispatch start/finish helper. `elr-research-worker` / `elr_research_worker` (search, retrieval,
    critique, review): web fetch and search plus read/write of its own return path. Neither can reach
    an interactive surface — the host's in-app browser, computer use, desktop or other MCP tools,
    sub-agent spawning, user prompts, task or scheduling tools. The saved workflows set these
@@ -122,7 +210,7 @@ mid-write; relaunched identically, it did the same thing again.
    known to sit behind bot walls (SSRN's `papers.ssrn.com`, HeinOnline, Westlaw, Lexis, JSTOR,
    Google Scholar) are reached only through open APIs and indexes (OpenAlex, CrossRef, Semantic
    Scholar, repository OAI/JSON endpoints, web-search snippets) or through the researcher's own
-   authorized session, never by a worker. The parent aggregates the gaps after the wave. In Stage
+   authorized session, never by a worker. The parent aggregates the gaps after the research round. In Stage
    02 it first applies the parent-only browser fallback below to materially relevant download gaps;
    every unresolved gap then goes into the access-limitations record and manual search packet.
 3. **Time boxes and timeouts.** Every worker gets a time box (default 12 minutes for a search or
@@ -143,44 +231,35 @@ mid-write; relaunched identically, it did the same thing again.
    the workers' returns (written incrementally by research workers, `"complete": false` until the
    end; created once by the controller for coding workers), and the append-only launch record.
    The controllers derive what is pending from those files alone, so a run interrupted by a host
-   or session crash resumes in any later session by launching the same workflow or wave again.
+   or session crash resumes only after reconciling tickets, native handles, and returns from disk.
    Attempts are bounded: the coding controller allows the linked retry its policy names
    (`unit_fanout.py retry`); the research controller records each launch and stops offering an
    assignment after `max_attempts` (default 3), reporting it as `exhausted`; `--include-exhausted`
    adds diagnostics but never reuses an immutable return path. Additional authorized work starts a
    new explicitly versioned fan-out wave, and every exhausted assignment is surfaced in the stage's
    limitations, never silently dropped.
-5. **Bounded concurrency and checkpoints.** The host runtime bounds concurrency (Claude Code's
-   workflow runtime: at most 16 agents at once and 1,000 per run; Codex: the session's
-   `[agents]` thread cap); the kit's research workflow additionally runs its workers in waves of six
-   at once by default (`concurrency` argument) because research workers usually share
-   rate-limited APIs, and the coding workflow accepts the same argument for a shared, rate-limited
-   model route. On Codex the parent spawns at most six workers per wave (fewer under a shared
-   rate limit), waits for the whole wave, and only then spawns the next. After each run or wave
-   the parent validates returns from files, merges serially, and appends a ledger checkpoint with
-   exact counts. During the Stage 11 coding run, the disposition of each failed, invalid, or
-   exhausted unit found at these checkpoints follows the researcher's recorded `failure_handling`
-   preference as `workflow/stages/11-scale-up.md` and `workflow/shared/guardrails.md` §11 direct:
-   decide under the frozen rules, append the judgment to the run's `failure_decisions.jsonl`, and
-   continue when the preference is absent or `autonomous`; pause at the checkpoint and present
-   the pending failures when it is `interactive`. Only the parent appends that log, serially.
-   Writes to manifests, merged aggregates, ledgers, and state are atomic (temporary
-   file, then replace); the controllers already write that way. After every wave, the parent
-scans for files created during the wave outside the run directory's expected paths (worker
-returns, attempts, seals, and the parent's own `failure_decisions.jsonl`) — the repository root
-and working directory included. Any stray
-worker write is a containment finding: record it in the run ledger with the file's path and
-disposition, remove or quarantine it, and treat repetition as a stop condition for the wave
-in either failure-handling mode.
-Tool restrictions bound what a worker may invoke, not where a shell may write; only this scan
-closes that gap. At launch and after each status
-   check or wave, the parent tells the researcher the exact terminal and outstanding counts,
-   elapsed wall-clock time, retries or exhausted assignments, and a revised time-remaining range.
-   Before measured throughput exists, base the provisional range on the number of waves and worker
-   time boxes; afterward use observed wall-clock wave throughput and the actual remaining waves.
-   If a wave runs longer than about five minutes, give the same operational update from the host's
-   run view at about five-minute intervals where the host permits. Never expose interim labels or
-   other substantive outcomes in these updates.
+5. **Bounded concurrency and checkpoints.** Follow the recorded scheduling policy above.
+   On either host, refill individual completed slots within the accepted batch or research round;
+   use the session's fixed target and lower effective capacity. Legacy runs retain their recorded
+   scheduler until explicitly migrated. The parent validates returns from files, merges serially,
+   and appends a ledger checkpoint with exact counts. During Stage 11, disposition of each failed,
+   invalid, or exhausted unit follows `workflow/stages/11-scale-up.md` and `guardrails.md` §11:
+   decide under frozen rules and append to `failure_decisions.jsonl` when the preference is absent
+   or `autonomous`; stop refill at the detecting checkpoint when it is `interactive`, reconcile
+   live assignments, and present the pending failures. Only the parent appends that log, serially.
+   Writes to manifests, merged aggregates, ledgers, and state are atomic (temporary file, then
+   replace). At validation checkpoints scan for unexpected writes, including the repository root
+   and working directory. Assigned returns, controller-created attempt files, and the helper-owned
+   dispatch records are expected; arbitrary worker scratch files are not. Record each containment
+   finding with its path and disposition, remove or quarantine it, and stop admission if it repeats.
+   Tool restrictions do not by themselves bound every shell write. At launch and checkpoints,
+   report exact terminal, active, and outstanding counts, elapsed time, retries, and an ETA range.
+   Before measured throughput exists, use a range based on assignment durations, the recorded
+   worker target, and checkpoint overhead. Thereafter use observed completed-assignment throughput
+   and remaining work, including required batch drains. Record the helper's start-to-return registration metrics and refill delay when observable.
+   Average registered workers and reconciled attempts per minute are operational estimates,
+   not measurements of active model inference, token throughput, or native process liveness. Send an operational update about every five minutes where the host
+   permits. Never expose interim labels or outcome distributions.
 
 ## Research fan-outs
 
@@ -198,7 +277,7 @@ manifest.csv       the same attempt rows as CSV (for audit and parent tooling, n
 seal.json          hash of manifest.json; `status` fails closed on drift
 returns/<id>__attempt-NNN.json
                    the worker's return: {"assignment_id", "attempt", "complete": true|false, ...}
-attempts.jsonl     append-only launch rows written by `status --record-launch`
+attempts.jsonl     append-only launch rows; ticketed runs record only actual worker starts
 dispositions.jsonl append-only parent records for failed or stage-schema-unusable attempts
 ```
 
@@ -211,8 +290,10 @@ above — never other workers' findings, running tallies, or the verdict the sta
 The worker's return is a JSON object with `assignment_id`, `attempt`, `complete`, and the stage's
 `result` fields, plus `access_gaps` and timestamps. The controller validates assignment identity,
 attempt identity, and operational completion; the stage validates the rest when it merges.
-`status --include-pending --record-launch` lists what to launch, including its attempt-specific path,
-and records the launch. `status` alone reports assignment states (`expected`, `complete`,
+`status --include-pending` lists eligible attempts and their paths without recording a launch.
+For a policy-enabled run, reserve through the dispatch helper and record each research launch
+only when that worker passes its start guard. The legacy `--record-launch` route remains for
+unmigrated runs. `status` alone reports assignment states (`expected`, `complete`,
 `incomplete`, `missing`, `invalid`, `exhausted`, and `pending`) plus an attempt-level reconciliation
 of `attempted`, `succeeded`, `failed`, `unusable`, and `outstanding`. Keep those denominators
 distinct in the run ledger.
@@ -221,7 +302,8 @@ When a return says `complete: true` but fails the brief's stage-specific schema,
 edit, move, or overwrite it. It records the terminal attempt with `python
 scripts/research_fanout.py record-disposition --fanout-dir <dir> --assignment-id <id> --attempt
 <number> --terminal unusable --reason <exact validation failure>`, then runs `status
---include-pending --record-launch` to obtain the next sealed attempt path. Use terminal `failed` for
+--include-pending` to inspect the next controller-authorized sealed attempt. Reserve it through
+the dispatch helper for policy-enabled runs; a status listing is not a launch. Use terminal `failed` for
 a launched worker or route that failed without a usable result. Once all sealed attempts are used,
 the assignment stays exhausted; start a new explicitly versioned fan-out wave if the research design
 authorizes more work. `--include-exhausted` reports diagnostic details but never reopens or reuses a
@@ -302,28 +384,54 @@ own context and never launches a general-purpose or `default` sub-agent for kit 
    plan under `workflow/shared/execution-control.md`, including its equivalent-goal and
    foreground-fallback rules. If goal activation is available but no covering goal is active, return to the
    stage handoff and give `/goal <goal_condition>`; do not create a narrower fan-out goal. The
-   stage goal covers every wave, serial validation, merge, and final verification. Workers never
+   stage goal covers all assignments, serial validation, merge, and final verification. Workers never
    create goals or plans.
-2. Each wave: run the controller's `status --include-pending` (with `--record-launch` for a
-   research fan-out) to obtain the pending list; spawn one `elr_worker` (coding/audit) or
-   `elr_research_worker` (research) per pending assignment, up to six at once and never more than
-   the session's thread cap, each with a message naming exactly its one assignment or brief and its
-   attempt number and unique return path (plus the frozen model and effort where the host lets a spawn set them);
-   distinguish rejected tool calls from accepted worker launches under
-   `workflow/shared/operational-recovery.md`. Apply its separate rules for correction within a
-   live parent and reconciliation after a stop. Wait only on positively acknowledged worker IDs.
-   After the wave's workers finish, close them; run `status` again; append the ledger checkpoint; update
-   the parent native plan with the exact counts; repeat
-   until nothing is pending. Never reuse a worker context for another unit. Each coding worker
-   uses the controller's `submit` rather than writing the return path directly.
+2. For a policy-enabled run, open a session with
+   `python scripts/fanout_dispatch.py open-session --run-dir <run-dir> --kind coding|research
+   --owner <native-session-id> --host codex --capacity <available-worker-slots>` and the recorded
+   optional `--concurrency`, `--block`, or `--limit`. Dispatch only the returned reserved tickets,
+   in order, up to the target. Before each spawn, run `intent --ticket <ticket-path> --owner <owner>`;
+   after positive host acceptance, run `ack --ticket <ticket-path> --owner <owner>
+   --evidence-sha256 <native-acknowledgement-hash>` through the same helper. Give a fresh
+   `elr_worker` or `elr_research_worker` a non-forked context (explicit `fork_turns: "none"`
+   where supported, or the verified native equivalent), only its own start command and frozen
+   settings, then its one assignment or brief through the successful receipt. Never embed scientific content ahead
+   of the start guard. Wait only on acknowledged handles. When the native runtime confirms a
+   worker is terminal, close its handle if the host offers an explicit close operation. If the
+   host has no close operation, accept automatic slot release only after verifying that its
+   capacity limit counts active workers and terminal completion releases that capacity. A
+   terminal thread may remain available for follow-up without occupying an active slot; never
+   use that thread for another assignment. Reconcile the exact ticket and canonical return
+   serially, confirm the runtime has capacity for a fresh worker, then refill without waiting
+   for unrelated workers. Missing close tooling alone is not a route failure; unknown native
+   finality or unverified capacity still stops admission. Record the host's release behavior
+   with the runtime capability evidence.
+   Run `reconcile --run-dir <run-dir> --owner <owner>` and `close-session` using the same run
+   and owner. After all required stage validation, evidence, budget, and stop-rule checks pass,
+   the stage parent explicitly records the checkpoint decision with
+   `python scripts/fanout_dispatch.py checkpoint --run-dir <run-dir> --owner <owner> --passed`.
+   This requires a closed session; completion receipts and workflow verification alone never
+   authorize adaptive growth. Without `--passed`, checkpoint snapshots operational state only
+   (recorded throttling may still reduce the next target). The helper checks actual eligible
+   backlog, clean reconciliation count, capacity, and cooldown; the next session uses its stored target. Reconcile native evidence with `--host-evidence`
+   when needed: a JSON list of objects containing `ticket_id`, `status` (`completed`,
+   `never_started`, or `unknown`), and `evidence_sha256`. `never_started` requires positive exact
+   evidence and no accepted or started record; it is never inferred from a missing return.
+   Use `--stop-admissions` when a native call fails or has an ambiguous outcome. Correct rejected
+   calls and reconcile stops under `operational-recovery.md`; do not allocate scientific retries
+   in the scheduler. If open reports `mode: legacy`, keep the run's original bounded-wave route
+   unless the researcher explicitly adopts a reviewed migration. Each coding worker uses the
+   controller's `submit`, never direct return-path writes. Never reuse a context for another unit.
 3. A CSV batch fan-out tool (the host reads a CSV, spawns one worker per row, and collects results
-   — `spawn_agents_on_csv` in Codex as of 2026-08) may run a coding wave from the coding controller's
+   — `spawn_agents_on_csv` in Codex as of 2026-08) may run coding assignments from the coding controller's
    active assignment rows only when its workers can be given the kit's restricted agent, or when the
    parent has confirmed for that turn that the sandbox denies network and no MCP or browser tools are
    configured, and records that in the run manifest. Never dispatch a research `manifest.csv`
    wholesale: it includes sealed but unused retry slots. Research workers receive only the current
    `pending_assignments` returned by `research_fanout.py status`; otherwise spawn the named agents
-   directly.
+   directly. For policy-enabled runs, a CSV route must preserve ticket start guards, individual
+   completion/reconciliation, the recorded concurrency policy, and native launch evidence; if it
+   cannot, use direct restricted-worker spawning.
 4. Discover the session's actual sub-agent capacity and whether the kit's custom agents are loaded;
    do not assume a portable default. The manifest and ledger, not conversation memory, determine
    what remains; every worker return path stays under the run directory.
@@ -332,7 +440,7 @@ Field names of the custom-agent files (`name`, `description`, `developer_instruc
 `sandbox_mode`, `mcp_servers`) and the tool names above are the host's schema as of 2026-08 — a
 dated default under `guardrails.md` §10: Stage 00 records the host version and what it actually
 lists, and the invariants above (restricted worker, one unit per fresh context, manifest on disk,
-bounded waves and attempts, serial merge) hold whatever the host calls its knobs.
+bounded concurrency and attempts, serial merge) hold whatever the host calls its knobs.
 
 ## Claude Code adapter
 
@@ -343,21 +451,41 @@ pipeline or of the stage is the opt-in for that. No permission mode change is ne
 containing spaces.
 
 - **Coding and audit units**: `elr-observation-fanout` with `{ "run_dir": "<run-dir>" }` (optional
-  `block`, `concurrency`, `model`, `effort`; `fixture: true` only for an explicit kit validation
+  `block`, `limit`, `concurrency`, `model`, `effort`; `fixture: true` only for an explicit kit validation
   fixture). One discovery agent runs the controller's `status`, then one `elr-worker` per pending
   assignment submits through the controller, then an operational verifier runs `status` again.
   `/elr-code-observations` validates the handoff first when the researcher invokes it explicitly.
 - **Research units**: `elr-research-fanout` with `{ "fanout_dir": "<prepared-fan-out-directory>" }`
-  (optional `concurrency` — default six — `limit`, `include_exhausted`, `model`, `effort`). One
-  discovery agent runs the controller's `status --include-pending --record-launch`, then one
-  `elr-research-worker` per pending assignment reads its brief and writes its return, in waves,
-  then an operational verifier runs `status` again.
+  (optional fixed `concurrency`, `limit`, `include_exhausted`, `model`, `effort`). A discovery
+  agent opens the session and fresh `elr-research-worker` instances run ticketed assignments
+  in a rolling pool. Record a research launch when its worker actually starts, never by marking
+  the entire pending list launched in advance. The verifier reconciles and closes the operational
+  session; the stage parent separately approves the scientific checkpoint. A legacy
+  run retains its prior workflow path.
+- Policy-enabled workflows require a stable native-session `owner`; pass verified available
+  worker `capacity` after controller/parent reserve, including values below six. If omitted,
+  capacity defaults conservatively to six. The recorded target is fixed within that batch/session;
+  optional `concurrency` sets a fixed ceiling; recorded provider backoff can lower the effective target. Preserve `block`, `limit`, model, and effort
+  constraints. Each invocation admits at most 998 workers, reserving two of the runtime's 1,000
+  agent calls for discovery and verification. Continue remaining work in a reconciled later
+  session without crossing an approved batch or research-round boundary. Existing workflow
+  arguments still work for legacy runs without a scheduling policy.
+  For the first invocation of an explicitly migrated paused run, the parent also supplies
+  `resume_request` and `request_root`: paths to the reviewed `resume_dispatch` decision request
+  and its project root. The workflow passes them to that same discovery `open-session` call.
+  Do not pre-open a session and then ask a workflow to replay its tickets; an existing session
+  returns no new tickets and requires reconciliation instead.
+- Claude's saved workflow does not expose structured provider-throttle or Retry-After evidence.
+  A null result or host exception stops admission and preserves the uncertainty; it never becomes
+  a rate-limit diagnosis by parsing raw error text. A research site's HTTP 429 is an access gap,
+  not evidence that the model provider has throttled the worker pool. The parent must obtain
+  actual native provider evidence before recording a provider backoff or changing its duration.
 - Every agent runs as the kit's restricted `agentType`, so the tool surface is enforced by the
   platform. Workflow agents run with the researcher's tool allowlist: the first `python
   scripts/unit_fanout.py …` or `research_fanout.py …` command and the first web fetch may prompt
   once; approving them for the project lets the rest of the run proceed without prompts. The first
   launch of a saved workflow asks whether to allow it; "don't ask again for this workflow in this
-  project" is the right answer for a run of many waves. The runtime's `Large workflow` notice past
+  project" permits a run of many assignments. The runtime's `Large workflow` notice past
   25 agents is advisory — a coding run's scale is fixed by the manifest, not by the size guideline
   Claude uses when it writes new workflows.
 - The runtime runs at most 16 agents concurrently and 1,000 per run; a 500-unit job fits but
@@ -368,12 +496,12 @@ containing spaces.
   workflow's model for every worker: record it in the run manifest as capability drift.
 - Only when workflows are unavailable (disabled, or a host older than 2.1.154) may the assistant
   launch workers directly with the Agent tool, one assignment per call, `subagent_type`
-  `elr-worker` or `elr-research-worker`, under the same manifest, waves, and controllers — and it
+  `elr-worker` or `elr-research-worker`, under the same manifest, scheduling policy, and controllers — and it
   records that route in the run manifest.
 
 ## Serial validation and resumption
 
-After each bounded wave, the parent process—not a worker—must validate IDs, schema, quotations,
+As workers complete, the parent process—not a worker—must validate IDs, schema, quotations,
 allowed statuses, frozen hashes, and path scope. Archive invalid returns and create a new linked
 attempt under the frozen retry rule; never overwrite. Update shared ledgers and manifests serially.
 Interim status may reveal only operational counts, failures, retries, time, and cost. Do not reveal
@@ -388,7 +516,8 @@ assignment to return to aggregate.
 ## Provenance and limits
 
 Record the platform, route, requested and reported model when observable, effort and sampling
-settings or `unobservable`, host version, timestamps, concurrency wave, prompt and input hashes,
+settings or `unobservable`, host version, dispatch/start/completion timestamps, scheduling policy,
+actual concurrency, checkpoint identity, prompt and input hashes,
 request IDs, usage, latency, errors, retries, skill/contract hash, and repository revision. Never
 claim that a subagent run is the same wire request as an API call: host system instructions, tool
 definitions, context, sampling controls, and model snapshots may differ. Validate end-to-end route

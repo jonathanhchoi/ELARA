@@ -214,6 +214,9 @@ def prepare(spec_path: Path, run_dir: Path) -> dict[str, Any]:
         raise FanoutError("run specification must be a JSON object")
     if spec.get("contract_version") != CONTRACT_VERSION:
         raise FanoutError(f"contract_version must be {CONTRACT_VERSION!r}")
+    concurrency = spec.get("concurrency")
+    if concurrency is not None and (type(concurrency) is not int or concurrency < 1):
+        raise FanoutError("concurrency must be a positive integer")
     run_id = _safe_identifier(spec.get("run_id"), "run_id")
     assignment_kind = _safe_identifier(spec.get("assignment_kind"), "assignment_kind")
 
@@ -353,6 +356,11 @@ def prepare(spec_path: Path, run_dir: Path) -> dict[str, Any]:
     )
     # Seal last: the manifest hash is frozen before any model call.
     _write_seal(run_dir)
+    # Scheduling is operational metadata, separate from the frozen scientific
+    # manifest. Older runs acquire no policy merely by being read or resumed.
+    from fanout_dispatch import initialize_policy
+
+    initialize_policy(run_dir, concurrency=concurrency)
     return manifest
 
 
@@ -477,6 +485,12 @@ def submit(
             f"assignment_id is not in the active manifest: {assignment_id}"
         )
     row = matches[0]
+    from fanout_dispatch import assert_submission_allowed, finish_assignment
+
+    try:
+        assert_submission_allowed(run_dir, assignment_id, row["attempt"])
+    except ValueError as exc:
+        raise FanoutError(str(exc)) from exc
     assignment = load_json(Path(row["assignment_path"]))
     return_path = Path(row["return_path"]).resolve()
     assignment_return_path = Path(assignment["allowed_write_path"]).resolve()
@@ -517,6 +531,12 @@ def submit(
             "persisted worker return failed post-write validation: "
             + "; ".join(persisted_errors)
         )
+    # A persisted canonical return remains authoritative if interruption occurs
+    # before this operational marker; parent reconciliation can recover it.
+    try:
+        finish_assignment(run_dir, assignment_id, assignment["attempt"])
+    except ValueError as exc:
+        raise FanoutError(str(exc)) from exc
     return {
         "assignment_id": assignment["assignment_id"],
         "unit_id": assignment["unit_id"],
@@ -648,6 +668,12 @@ def retry(
     terminal success is still refused.
     """
     run_dir = run_dir.resolve()
+    from fanout_dispatch import assert_drained
+
+    try:
+        assert_drained(run_dir)
+    except ValueError as exc:
+        raise FanoutError(str(exc)) from exc
     manifest = verify_run_integrity(run_dir)
     _safe_identifier(assignment_id, "assignment_id")
     active_rows = manifest["assignments"]

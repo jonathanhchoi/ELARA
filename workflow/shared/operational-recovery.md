@@ -87,6 +87,66 @@ intent; the old runtime remains used. A denial establishes non-execution only
 for the identified call. It neither settles another call with an unknown outcome
 nor allocates a corpus retry, which remains governed by frozen policy.
 
+## Opt-in migration to continuous scheduling
+
+An installed update never converts an existing parallel run implicitly. A run
+without a scheduling policy keeps its original scheduler, including its wave
+barriers. To adopt continuous scheduling, the researcher must explicitly choose
+migration for the named paused run. Migration itself does not authorize workers
+or resume a researcher-requested stop.
+
+First run `python scripts/fanout_dispatch.py migrate --run-dir <run-dir>
+--kind coding|research --owner <native-session-id> --host codex|claude
+--capacity <available-worker-slots> --dry-run`. Inspect the exact source seals,
+frozen scientific and operational bindings, accepted batch size, concurrency and
+budget restrictions, all accepted or unknown native launches, returns, retries,
+and checkpoint lineage. Obtain independent review of the migration evidence.
+Require quiescence and resolved finality; a missing return is not proof no worker
+started. Preserve all old sealed bytes and raw records, and add operational
+migration evidence instead of rewriting a seal or old assignment.
+
+The activation command supplies `--request <migration-request-json>
+--request-root <project-root>` using the existing `recovery_decision.py` request
+contract. It requires action `operational_migration` and the exact `run_id`,
+`binding_sha256`, and `candidate_sha256` from the dry-run plan; inspect and approve
+those concrete bytes, not an unconstrained future change. The migrated run stays
+paused. A separate `resume_dispatch` request for the same candidate is required
+on `open-session --request <resume-request-json> --request-root <project-root>`;
+migration approval alone never starts a worker. If the frozen instrument or
+preregistration fixes scheduling, concurrency, scientific worker instructions, or another
+changed scientific binding, route through its amendment and reapproval process.
+Do not reclassify that change as infrastructure repair. An operational start guard
+must leave the scientific assignment and its visible coding prompt unchanged.
+Record original and new implementation hashes and the compatible dispatch policy,
+then test interruption, duplicate admission, and unknown-native-outcome behavior
+with synthetic assignments before any authorized real-data resume.
+
+For a continuous run interrupted under an old native-session owner, first preserve
+and reconcile the exact old tickets and native evidence. Preview ownership recovery
+with `python scripts/fanout_dispatch.py recover-session --run-dir <run-dir>
+--expected-owner <old-owner> --owner <new-owner> --dry-run`. Its candidate binds the
+old session, both owners, scientific bindings, adapter, policy, and current event
+head. Activation uses `--request <reviewed-resume-request> --request-root <project-root>`
+with action `resume_dispatch` for that exact candidate. It requires every prior
+attempt's finality to be resolved; time elapsed, an absent process, or an empty return
+path cannot satisfy that condition. Recovery closes the old operational session;
+it does not launch or reassign work. Open a new session only under the recorded
+resume authority and current controller eligibility.
+
+Dispatch checkpoints and closed-session segments preserve the operational record
+without rewriting scientific source seals. Keep their hashes and lineage with the
+run's recovery evidence. The helper's average registered workers and attempt-rate
+metrics measure recorded start-to-return intervals; they do not establish active
+model inference, token throughput, or direct native-worker liveness.
+
+Provider backoff is a separate admission constraint. Preserve an observed Retry-After
+as `reconcile --throttled --retry-after-seconds <observed-seconds>`; without a known
+delay, `--throttled` keeps admission blocked until new provider-availability evidence
+is supplied to `resolve-backoff --evidence-sha256 <hash>`. Use the existing run and
+owner in both commands. Neither elapsed guesswork, a website's HTTP 429, a null
+workflow result, nor a raw exception string establishes model-provider availability.
+Resolving backoff never waives an outstanding attempt, ownership, or researcher stop.
+
 ## One stable implementation, durable evidence
 
 Use one versioned runtime with explicit configuration and compatibility adapters.

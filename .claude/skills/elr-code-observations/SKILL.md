@@ -19,7 +19,10 @@ recorded software; do not repeat update checks per worker, batch, or retry.
 3. Validate the immutable assignment manifest and its canonical visible-prompt and response-schema
    hashes before spawning anything. Give each fresh worker exactly one assignment and one unique
    return path; workers never edit shared files.
-4. Require workers to send their return envelope through `python scripts/unit_fanout.py submit`;
+4. For a new or explicitly migrated run, require the assigned dispatch ticket start command before
+   any assignment read, and its finish command after submission. Controller-only discovery and
+   verification steps do not start scientific assignments. Require workers to send their return
+   envelope through `python scripts/unit_fanout.py submit`;
    they do not write the worker-return path directly or expose substantive labels in receipts.
 5. Run the fan-out through the host's orchestrator as the shared contract directs — never one
    hand-launched worker at a time and never an all-tools agent. On this host that means
@@ -29,5 +32,5 @@ recorded software; do not repeat update checks per worker, batch, or retry.
    workflows are unavailable, launch `elr-worker` directly, one assignment per call, and
    record that route.
 6. The parent keeps the one stage goal and native plan; workers never create either. Validate
-   returns, update the plan, and edit ledgers serially after each bounded wave. Resume from
+   returns and confirm completed slots are released individually; update the plan and ledgers serially at checkpoints. Resume from
    files, preserve every attempt, expose only operational progress, and reconcile before merging.

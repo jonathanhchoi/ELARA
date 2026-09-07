@@ -487,8 +487,8 @@ class WorkflowContractTests(unittest.TestCase):
         for path, content in expected.items():
             self.assertEqual(path.read_text(encoding="utf-8"), content)
             if path.name == "SKILL.md" and path.parent.name.startswith("elr-"):
-                # The shared update prerequisite adds five routing-only lines.
-                self.assertLess(len(content.splitlines()), 35)
+                # Update checks and dispatch routing remain thin pointers.
+                self.assertLess(len(content.splitlines()), 37)
                 self.assertIn("workflow/stages/", content)
 
     def test_manuscript_stages_reference_contract_and_publication_profile(self) -> None:
@@ -572,8 +572,8 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn("about every five minutes", text)
             self.assertIn("eta range", text)
             self.assertIn("elapsed time", text)
-        self.assertIn("observed wall-clock wave throughput", fanout)
-        self.assertIn("actual remaining waves", fanout)
+        self.assertIn("observed completed-assignment throughput", fanout)
+        self.assertIn("remaining work, including required batch drains", fanout)
         self.assertIn("never expose interim labels", fanout)
         self.assertIn("pair plan creation", execution_control)
         self.assertIn("revised eta range", execution_control)
@@ -950,7 +950,7 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn(heading, contract)
         flat_contract = " ".join(contract.split())
         for needle in ("elr-observation-fanout", "elr-research-fanout", "elr_worker", "elr_research_worker",
-                       "scripts/research_fanout.py", "never by the assistant launching workers one at a time"):
+                       "scripts/research_fanout.py", "never serial work in the parent context"):
             self.assertIn(needle, flat_contract, needle)
         self.assertIn("record-disposition", flat_contract)
         self.assertIn("never reopens or reuses a return path", flat_contract)
@@ -1027,8 +1027,8 @@ class WorkflowContractTests(unittest.TestCase):
         fanout = (ROOT / "workflow" / "shared" / "observation-fanout.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("scans for files created during the wave", fanout)
-        self.assertIn("containment finding", fanout)
+        self.assertIn("At validation checkpoints scan for unexpected writes", fanout)
+        self.assertIn("containment finding", " ".join(fanout.split()))
         # PIPELINE.md carries the public browser-fallback explanation; the
         # README stays a quick-start document.
         text = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")

@@ -44,7 +44,7 @@ audit. The parent keeps the goal and plan current while claim-citation pairs run
 as parallel research assignments under `workflow/shared/observation-fanout.md`: one pair per
 brief, sealed by `scripts/research_fanout.py prepare`; Claude Code launches the
 saved `elr-research-fanout` workflow and Codex spawns `elr_research_worker`
-sub-agents in bounded waves. Never use hand-launched or all-tools workers. If
+sub-agents in a bounded rolling pool. Never use hand-launched or all-tools workers. If
 goals are unavailable, record the fallback and use normal approved execution
 with the same completion condition and durable checkpoints.
 

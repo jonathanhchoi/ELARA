@@ -72,8 +72,8 @@ Status, help, and menu-only requests remain read-only and need no check.
 7. Every fan-out on either host runs through the host's own orchestrator:
    Claude Code runs the kit's saved dynamic workflows in `.claude/workflows/`,
    which the assistant launches itself; Codex spawns the kit's custom
-   sub-agents in `.codex/agents/` in bounded waves. The stage goal stays with
-   the parent through wave validation and reconciliation. See
+   sub-agents in `.codex/agents/` in a bounded rolling pool. The stage goal stays with
+   the parent through serial validation, checkpoints, and reconciliation. See
    `workflow/shared/observation-fanout.md`.
 8. When a stage finishes and no gate or input is pending, do not stop silently
    and do not wait: summarize in a few plain-language lines what was produced
@@ -264,7 +264,7 @@ shared, and which are the researcher's, so a folder both use (for example
   they are produced; report progress and remaining time under
   `workflow/shared/guardrails.md` §6, never with vague or stale estimates.
 - Keep the host-native plan synchronized with the run: update it at phase and
-  wave checkpoints and before the completion report. For a long stage, report
+  run checkpoints and before the completion report. For a long stage, report
   the exact verification evidence and counts in the conversation so the goal
   evaluator can judge the front-matter condition. Neither surface replaces the
   ledger or state.
@@ -272,7 +272,7 @@ shared, and which are the researcher's, so a folder both use (for example
   comment, or other bounded unit per subagent. A coding unit may contain one
   document or several related documents; do not assume that document boundaries
   define units. Follow `workflow/shared/observation-fanout.md`: the host's
-  orchestrator runs the wave (Claude Code: the kit's saved workflows; Codex: the
+  orchestrator maintains the worker pool (Claude Code: the kit's saved workflows; Codex: the
   kit's custom sub-agents `elr_worker` and `elr_research_worker`) — never
   hand-launched workers one at a time, never an all-tools agent, never a serial
   imitation in the parent's context — while workers get fresh contexts and

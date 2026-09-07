@@ -79,7 +79,7 @@ begins. If no covering goal is active and the host exposes goals, provide `/goal
 Once assignments are fixed, the host coordinates the parallel sub-agent assignments under
 `workflow/shared/observation-fanout.md`: Claude Code launches the saved
 `elr-observation-fanout` workflow and Codex spawns the kit's `elr_worker`
-sub-agents in bounded waves. The goal stays with the parent through serial
+sub-agents in a bounded rolling pool. The goal stays with the parent through serial
 validation and reconciliation. Neither the plan, goal, nor mode switch accepts
 the pilot.
 

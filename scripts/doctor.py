@@ -62,6 +62,7 @@ DISCOVERY_SURFACES = (
     "PIPELINE.md",
     "requirements.txt",
     "scripts/bootstrap.py",
+    "scripts/fanout_dispatch.py",
     "scripts/model_readiness.py",
     "workflow/shared/model-readiness.md",
     "workflow/shared/guardrails.md",

@@ -129,8 +129,8 @@ researcher explicitly changes the kit's governing instructions.
   enough evidence for a responsible completion ETA, say so and give the time to
   the first checkpoint that will make one possible.
 - While long work is active, give a short operational update after every major
-  phase or bounded fan-out wave and at least about every five minutes when the
-  host permits. Structure commands, waits, and worker waves to yield control at
+  phase or validation checkpoint and at least about every five minutes when the
+  host permits. Structure commands, waits, and dispatch sessions to yield control at
   that cadence where practical; when a host operation cannot yield, update
   immediately before it starts and after it returns. Each update states the
   exact completed and total counts where a denominator exists, elapsed time,
@@ -165,15 +165,19 @@ researcher explicitly changes the kit's governing instructions.
 - Reject duplicate, missing, misidentified, or out-of-schema unit returns before
   aggregation. Record retries as new attempts rather than erasing failures.
 - The host's own orchestrator runs every fan-out; the assistant never launches
-  workers one at a time by hand while that orchestrator is available, and never
-  imitates a fan-out serially inside its own context. On Claude Code the
+  a serial sequence of workers while that orchestrator is available, and never
+  imitates a fan-out inside its own context. On Claude Code the
   orchestrator is the kit's saved dynamic workflows (`.claude/workflows/
   elr-observation-fanout.js` for coding and audit units,
   `elr-research-fanout.js` for research units), which the assistant launches
   itself as part of the stage; on Codex it is the kit's custom sub-agents
-  (`.codex/agents/`), spawned by name in bounded waves. The kit's controllers
+  (`.codex/agents/`), spawned by name in a bounded rolling pool. The kit's controllers
   (`scripts/unit_fanout.py`, `scripts/research_fanout.py`) fix the manifest,
-  say what is pending, validate, and merge on either host.
+  say what is pending, validate, and merge on either host. New runs follow the
+  recorded rolling policy in `observation-fanout.md`; unmigrated runs keep their
+  original scheduler. The dispatch helper writes only operational records. A
+  ticketed worker runs its own start guard before reading assignment content
+  and finish after its return; it never reads or edits the shared registry.
 - Give every worker a fixed, minimal tool surface, enforced by the platform
   where it can be (the kit ships `.claude/agents/elr-worker.md` and
   `elr-research-worker.md` for Claude Code, and `.codex/agents/elr-worker.toml`
@@ -192,15 +196,18 @@ researcher explicitly changes the kit's governing instructions.
   `workflow/shared/observation-fanout.md` to materially relevant download gaps;
   the browser is never added to a worker. The parent turns every unresolved gap
   into the stage's access-limitations record and manual search packet.
-- Every parallel wave is bounded and resumable from disk: a sealed fan-out
+- Every parallel run is bounded and resumable from disk: a sealed fan-out
   manifest under the run directory (assignment, brief or assignment file,
   unique return path), worker returns written under the run directory (never
   the assistant's session-specific scratchpad; incrementally for research
   workers), a per-worker time box, bounded attempts enforced by the controller
   (a launch record; an assignment that used its attempts is reported as
-  exhausted, never silently dropped), a concurrency ceiling (the host runtime's,
-  and six per wave for research workers by default), and a ledger checkpoint
-  with exact counts after each run or wave. This applies to every parallelized
+  exhausted, never silently dropped), and the recorded concurrency policy. New
+  runs start at up to six workers, increase by one after a passing checkpoint
+  with eligible backlog up to twelve, and halve on throttle/backoff evidence;
+  lower host, researcher, instrument, and service limits control. Explicit
+  concurrency stays fixed. Refill individual slots within the approved batch
+  or research round and record exact counts at each required checkpoint. This applies to every parallelized
   stage — searches and retrieval as much as coding.
 
 ## 8. Audit separation and correction
