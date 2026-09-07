@@ -18,7 +18,7 @@ function item(index) {
   }
 }
 
-async function host(kind, { count = 18, target = 6, mode = 'continuous', args = {}, discovery = {}, verification = {} } = {}) {
+async function host(kind, { count = 18, target = 6, mode = 'continuous', args = {}, discovery = {}, verification = {}, nativeExtraStrings = false } = {}) {
   const file = `.claude/workflows/elr-${kind === 'coding' ? 'observation' : 'research'}-fanout.js`
   if (!sources.has(file)) sources.set(file, readFile(path.join(root, file), 'utf8'))
   const source = (await sources.get(file)).replace('export const meta =', 'const meta =')
@@ -35,12 +35,22 @@ async function host(kind, { count = 18, target = 6, mode = 'continuous', args = 
   }
   const calls = [], logs = [], starts = [], finishes = [], waiting = new Map()
   let active = 0, peak = 0, done = false, outcome, failure, verifyPrompt
+  // The installed native StructuredOutput tool can stringify undeclared extra properties.
+  // Control fields must therefore be explicitly typed rather than relying on additionalProperties.
+  const structured = (value, schema) => {
+    if (!nativeExtraStrings || value === null) return value
+    if (Array.isArray(value)) return value.map(entry => structured(entry, schema.items || {}))
+    if (typeof value !== 'object') return value
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key,
+      schema.properties?.[key] ? structured(entry, schema.properties[key])
+        : typeof entry === 'string' ? entry : JSON.stringify(entry)]))
+  }
   const agent = async (prompt, options) => {
     calls.push({ prompt, options })
     assert.ok(calls.length <= 1000, 'workflow exceeded its total agent budget')
     if (options.phase !== 'Workers') {
       assert.equal(active, 0, 'controller verification overlapped unfinished workers')
-      if (options.label === 'discover-pending') return discovered
+      if (options.label === 'discover-pending') return structured(discovered, options.schema)
       verifyPrompt = prompt
       const status = kind === 'coding'
         ? { expected: count, terminal: finishes.length, invalid: 0, pending: count - finishes.length }
@@ -61,7 +71,7 @@ async function host(kind, { count = 18, target = 6, mode = 'continuous', args = 
         assert.deepEqual(evidence.map(row => Number(row.ticket_id.replace('ticket-', ''))),
           evidence.map(row => Number(row.ticket_id.replace('ticket-', ''))).sort((a, b) => a - b))
       }
-      return { ...status, ...verification }
+      return structured({ ...status, ...verification }, options.schema)
     }
     const index = mode === 'continuous' || kind === 'research'
       ? Number(options.label.replace('assignment-', '')) : Number(options.label.replace('.json', ''))
@@ -222,6 +232,13 @@ for (const kind of ['coding', 'research']) {
       assert.equal(h.starts.length, 0)
     })
   }
+
+  await test(`${kind}: native extra-property stringification preserves typed control fields`, async () => {
+    const h = await host(kind, { count: 3, target: 2, nativeExtraStrings: true })
+    assert.equal((await h.drain()).admission_stopped, false)
+    assert.equal(h.starts.length, 3)
+    assert.equal(h.peak, 2)
+  })
 
   await test(`${kind}: structured discovery failure surfaces safely before batch validation`, async () => {
     const h = await host(kind, { discovery: {

@@ -113,7 +113,25 @@ A command error never permits the legacy route; do not include raw error payload
       required: ['mode'],
       properties: {
         mode: { type: 'string', enum: ['continuous', 'legacy', 'failed'] },
-        tickets: { type: 'array', items: { type: 'object' } },
+        owner: { type: 'string' },
+        state: { type: 'string' },
+        reused_session: { type: 'boolean' },
+        status: { type: 'string' },
+        error: { type: 'string' },
+        tickets: {
+          type: 'array', items: {
+            type: 'object', required: ['ticket_id', 'ticket_path', 'assignment_id', 'attempt', 'return_path', 'brief_path'],
+            properties: {
+              ticket_id: { type: 'string' },
+              ticket_path: { type: 'string' },
+              assignment_id: { type: 'string' },
+              attempt: { type: 'integer' },
+              return_path: { type: 'string' },
+              brief_path: { type: 'string' },
+            },
+            additionalProperties: true,
+          },
+        },
         target: { type: 'integer' },
         pending_assignments: {
           type: 'array',
@@ -314,7 +332,7 @@ ${launched.length} launched workers returned a receipt.`,
           type: 'object', required: ['reconciliation', 'close'],
           properties: {
             reconciliation: { type: 'object', required: ['can_close'], properties: { can_close: { type: 'boolean' } } },
-            close: { type: ['object', 'null'] },
+            close: { type: ['object', 'null'], properties: { state: { type: 'string' } }, additionalProperties: true },
           },
         },
         attempt_counts: {

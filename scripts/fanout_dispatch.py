@@ -17,6 +17,7 @@ from pathlib import Path
 import re
 import sqlite3
 import sys
+import tempfile
 import uuid
 
 sys.dont_write_bytecode = True
@@ -120,13 +121,51 @@ def initialize_policy(run_dir, concurrency=None):
     return policy
 
 
+def _seed_database(path):
+    """Publish a closed, valid empty SQLite image only when the target is absent.
+
+    Some virtual filesystems return IOERR_READ for a newly created empty file.
+    Build the initial header locally, then publish complete bytes on the target
+    filesystem. The local file never contains run state. Neither this operation
+    nor the later connection retries a transaction or replaces an existing DB.
+    """
+    if path.exists():
+        return
+    with tempfile.TemporaryDirectory(prefix="elara-dispatch-seed-") as temporary:
+        local = Path(temporary) / "empty.sqlite3"
+        db = sqlite3.connect(str(local), isolation_level=None)
+        try:
+            db.execute("VACUUM")
+        finally:
+            db.close()
+        raw = local.read_bytes()
+    candidate = path.with_name(".dispatch-seed-" + uuid.uuid4().hex + ".sqlite3")
+    try:
+        with candidate.open("xb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            if os.name == "nt":
+                # Windows rename is atomic and refuses an existing destination.
+                os.rename(candidate, path)
+            else:
+                # POSIX rename replaces a destination; an exclusive link does not.
+                os.link(candidate, path)
+        except FileExistsError:
+            pass
+    finally:
+        candidate.unlink(missing_ok=True)
+
+
 @contextmanager
 def _db(run_dir, *, write=False, create=False):
     path = _db_path(run_dir)
     if create:
         path.parent.mkdir(parents=True, exist_ok=True)
+        _seed_database(path)
     require(create or path.is_file(), "dispatch_not_initialized")
-    uri = path.as_uri() + ("?mode=rwc" if create else "?mode=rw" if write else "?mode=ro")
+    uri = path.as_uri() + ("?mode=rw" if write or create else "?mode=ro")
     db = sqlite3.connect(uri, uri=True, timeout=10, isolation_level=None)
     db.row_factory = sqlite3.Row
     try:

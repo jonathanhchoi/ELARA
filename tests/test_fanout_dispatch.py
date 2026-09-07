@@ -15,6 +15,7 @@ from unittest.mock import patch
 
 import test_unit_fanout as coding_fixtures
 import test_research_fanout as research_fixtures
+import fanout_dispatch as dispatch
 from fanout_dispatch import (
     DispatchError, acknowledge, assert_drained, checkpoint, close_session,
     finish, initialize_policy, inspect, migrate, open_session, reconcile,
@@ -52,6 +53,82 @@ class DispatchTests(unittest.TestCase):
         args = {"kind": kind, "host": "codex", "owner": "native-parent-1", "capacity": 12}
         args.update(changes)
         return open_session(self.run, **args)
+
+    def test_first_dispatch_connection_receives_complete_seed_image(self):
+        self.coding(1)
+        actual_connect = sqlite3.connect
+        observed = []
+
+        def reject_fresh_empty_database(name, *args, **kwargs):
+            if str(name).startswith(dispatch._db_path(self.run).as_uri()):
+                observed.append(str(name))
+                raw = dispatch._db_path(self.run).read_bytes()
+                if not raw:
+                    error = sqlite3.OperationalError("disk I/O error")
+                    error.sqlite_errorcode = 266
+                    error.sqlite_errorname = "SQLITE_IOERR_READ"
+                    raise error
+                self.assertEqual(raw[:16], b"SQLite format 3\x00")
+                self.assertGreaterEqual(len(raw), 512)
+                self.assertTrue(str(name).endswith("?mode=rw"))
+            return actual_connect(name, *args, **kwargs)
+
+        with patch.object(dispatch.sqlite3, "connect", side_effect=reject_fresh_empty_database):
+            session = self.open()
+        self.assertEqual(len(observed), 1)
+        self.assertEqual(session["state"], "active")
+        self.assertFalse(list(dispatch._directory(self.run).glob(".dispatch-seed-*")))
+
+    def test_seed_never_replaces_existing_database_or_retries_connection(self):
+        self.coding(1)
+        path = dispatch._db_path(self.run)
+        path.parent.mkdir(parents=True)
+        for original in (b"", b"existing unrelated or incomplete database"):
+            path.write_bytes(original)
+            dispatch._seed_database(path)
+            self.assertEqual(path.read_bytes(), original)
+        path.write_bytes(b"")
+        error = sqlite3.OperationalError("disk I/O error")
+        error.sqlite_errorcode = 266
+        with patch.object(dispatch.sqlite3, "connect", side_effect=error) as connect:
+            with self.assertRaises(sqlite3.OperationalError):
+                self.open()
+        self.assertEqual(connect.call_count, 1)
+        self.assertEqual(path.read_bytes(), b"")
+
+    def test_concurrent_seed_publication_keeps_one_complete_database(self):
+        self.coding(2)
+        path = dispatch._db_path(self.run)
+        path.parent.mkdir(parents=True)
+        barrier = threading.Barrier(6)
+
+        def initialize():
+            barrier.wait()
+            dispatch._seed_database(path)
+
+        with ThreadPoolExecutor(max_workers=6) as workers:
+            list(workers.map(lambda _: initialize(), range(6)))
+        self.assertEqual(path.read_bytes()[:16], b"SQLite format 3\x00")
+        db = sqlite3.connect(path)
+        try:
+            self.assertEqual(db.execute("PRAGMA integrity_check").fetchone()[0], "ok")
+            self.assertEqual(db.execute("SELECT count(*) FROM sqlite_master").fetchone()[0], 0)
+        finally:
+            db.close()
+        owner_barrier = threading.Barrier(2)
+
+        def claim(owner):
+            owner_barrier.wait()
+            try:
+                return self.open(owner=owner)
+            except DispatchError as error:
+                return str(error)
+
+        with ThreadPoolExecutor(max_workers=2) as workers:
+            claimed = list(workers.map(claim, ("first-owner", "second-owner")))
+        self.assertEqual(sum(isinstance(value, dict) for value in claimed), 1)
+        self.assertIn("dispatch_owner_exists_reconcile_before_recovery", claimed)
+        self.assertFalse(list(path.parent.glob(".dispatch-seed-*")))
 
     def complete(self, ticket):
         start(ticket["ticket_path"])

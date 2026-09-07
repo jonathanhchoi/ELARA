@@ -119,8 +119,27 @@ A command error never permits the legacy route; do not include raw error payload
         required: ['mode'],
         properties: {
           mode: { type: 'string', enum: ['continuous', 'legacy', 'failed'] },
+          owner: { type: 'string' },
+          state: { type: 'string' },
+          reused_session: { type: 'boolean' },
+          status: { type: 'string' },
+          error: { type: 'string' },
           assignments: { type: 'array', items: { type: 'string' } },
-          tickets: { type: 'array', items: { type: 'object' } },
+          tickets: {
+            type: 'array', items: {
+              type: 'object', required: ['ticket_id', 'ticket_path', 'assignment_id', 'attempt', 'return_path', 'assignment_path', 'unit_id'],
+              properties: {
+                ticket_id: { type: 'string' },
+                ticket_path: { type: 'string' },
+                assignment_id: { type: 'string' },
+                attempt: { type: 'integer' },
+                return_path: { type: 'string' },
+                assignment_path: { type: 'string' },
+                unit_id: { type: 'string' },
+              },
+              additionalProperties: true,
+            },
+          },
           target: { type: 'integer' },
         },
         additionalProperties: true,
@@ -305,7 +324,7 @@ or expose other substantive outcomes. There were ${receipts.filter(Boolean).leng
           type: 'object', required: ['reconciliation', 'close'],
           properties: {
             reconciliation: { type: 'object', required: ['can_close'], properties: { can_close: { type: 'boolean' } } },
-            close: { type: ['object', 'null'] },
+            close: { type: ['object', 'null'], properties: { state: { type: 'string' } }, additionalProperties: true },
           },
         },
       },
