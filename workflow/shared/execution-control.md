@@ -80,6 +80,10 @@ boundaries below. Codex uses `request_user_input`; Claude Code uses
 researcher to decide and never owns the plan.
 
 Before asking, inspect the active evidence, prior decisions, and actual files.
+Read the active charter's Researcher support section and subsequent support
+decisions, following `workflow/shared/researcher-support.md`. Pitch explanations
+and examples to that experience before asking for consequential methods choices;
+the support preference changes neither the decision's owner nor its requirements.
 State what they already settle and ask only about material choices that remain
 open. Use short, coherent rounds of one to three plain-language questions so
 later questions can respond to earlier answers. Each question addresses one

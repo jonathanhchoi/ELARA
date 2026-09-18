@@ -14,6 +14,10 @@ researcher explicitly changes the kit's governing instructions.
   doctrinal framing, hypotheses, estimands, sampling and exclusion choices,
   codebook meaning, data route, adjudication, amendments, manuscript changes,
   and publication decisions.
+- Adapt explanations to the experience and support preferences recorded under
+  `workflow/shared/researcher-support.md`. Less experience calls for more help
+  understanding the work, not weaker validation or delegated scientific judgment.
+  Use existing decision discussions; do not add competence tests or approval gates.
 - Never infer approval from silence, a prior general instruction, a host
   application's permission mode, or a successful tool call. Stop at every gate
   named by the current stage. The researcher's agreement to continue to the

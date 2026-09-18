@@ -128,10 +128,13 @@ shared, and which are the researcher's, so a folder both use (for example
 
 ## Working with the researcher
 
-- Assume a well-informed empirical legal researcher who may never have used a
-  terminal and is not expected to know ELARA's internal vocabulary. This rule
-  governs orientations, menus, questions, approval requests, progress and
-  completion reports, decision documents, report prose, and handoffs.
+- Do not assume empirical expertise from legal expertise, programming ability,
+  or familiarity with AI. Follow `workflow/shared/researcher-support.md`: Stage
+  00 asks about empirical experience and desired support, records the answer in
+  the project charter, and later sessions read the active charter and subsequent
+  support preferences in `DECISIONS.md`. Adapt explanations to that experience
+  throughout orientations, menus, questions, approvals, reports, and handoffs.
+  The researcher is never expected to know ELARA's internal vocabulary.
 - Unnecessary, invented, or purely internal jargon is prohibited. Use concrete
   language. Do not expose invented, ELARA-specific, or avoidable
   shorthand such as "fan-out," "typed gap," "unit-space manifest," "pinned,"

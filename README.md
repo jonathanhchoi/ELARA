@@ -1,13 +1,11 @@
 # ELARA: Empirical Legal Analysis with Research Agents
 
-Version 2.9.0 keeps parallel workers busy by filling each available slot when an
-assignment finishes. New runs start with up to six workers and increase gradually
-to at most twelve when checkpoints pass and capacity permits; an explicit worker
-limit stays fixed. Coding, research, and review work use the same scheduling
-rules while keeping one assignment per fresh worker and serial validation.
-Existing runs keep their recorded scheduler unless a paused run is explicitly
-migrated after review. Research controls and approved checkpoints remain binding.
-See [how parallel work runs](PIPELINE.md#how-parallel-work-runs) and
+Version 2.10.0 asks about your empirical experience and intended output during
+setup. It remembers where you want help and adjusts the amount and complexity of
+explanation throughout the project. Someone learning a method gets concrete
+examples and fuller explanations; an experienced researcher can choose concise
+technical discussion. Research standards and decisions remain the same.
+See [researcher support](workflow/shared/researcher-support.md) and
 [keeping ELARA current](#keeping-elara-current).
 
 ELARA is the companion package for *ELARA: A Framework for Empirical Legal
@@ -89,6 +87,16 @@ optional article-planning and publication steps at the end. The tools menu lets 
 tasks such as a preemption review, feasibility audit, methods design, codebook,
 human validation, a skeleton draft, manuscript integration, citation checking, or proofreading.
 See [PIPELINE.md](PIPELINE.md) for the complete menu.
+
+In that setup conversation, say what output you want, such as a complete study,
+a descriptive table for a larger article, or a coded dataset. ELARA also asks how
+familiar you are with empirical methods, which choices you want help understanding,
+and whether an empirical collaborator will help. You can describe your experience
+in your own words or say you are unsure. It records your answer in the project
+charter, uses it in later sessions and individual tools, and adjusts when you ask
+for more or less explanation. This is separate from familiarity with AI or code.
+An existing project gets the question at its next ordinary interaction, without
+restarting setup or interrupting an active coding run.
 
 ELARA then works out what it can from your files, asks the few things it still
 needs in one message (each with a suggested answer, so "go with your
