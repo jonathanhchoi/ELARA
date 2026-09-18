@@ -87,6 +87,14 @@ it at any time by saying so; the router records the change the same way. Usage
 mode decides only what is offered next; it never alters a prerequisite, gate,
 or approval.
 
+The same setup conversation identifies the useful finished output and asks about
+empirical experience, desired explanations, and available methodological support.
+The charter records these preferences in a Researcher support section. All stages
+and tools read the active charter and later support decisions so the preference
+survives a restart. See `workflow/shared/researcher-support.md`. Detailed claims
+and hypotheses are settled during methods design, and expertise preferences do
+not relax research requirements or create new gates.
+
 - **Pipeline mode.** The assistant walks the researcher through each stage. When
   a stage finishes and no gate or input is pending, it summarizes in a few
   plain-language lines what was produced and where it is, and continues into
@@ -114,7 +122,8 @@ or approval.
   or a required review.
 - **Specific-tools mode.** The researcher picks from the menu below. Stage 00
   runs its adoption path aimed at that tool, with the interview cut to two
-  questions (a name for the project and what the researcher wants done): it asks
+  questions (the project name and intended output together, then empirical
+  experience and desired support, reusing earlier answers): it asks
   only for the materials the tool needs, imports them, records
   researcher-asserted approvals for the gates before it, writes a short
   workspace charter, and lands there. When the tool finishes, the router offers
@@ -548,6 +557,11 @@ field, stage order, approval gate, file format, or research safeguard changes,
 so existing projects need no migration.
 
 ## Persistent state
+
+Version 2.10.0 records intended output and researcher support in the existing
+versioned project charter and decision ledger. No new state key or schema
+migration is required. Existing projects can add the preference at their next
+ordinary interaction without reopening approvals or changing active runs.
 
 Version 2.9.0 adds operational scheduling policy, owned dispatch sessions, and
 assignment-specific start tickets for new parallel runs. Existing runs without
