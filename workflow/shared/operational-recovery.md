@@ -5,6 +5,14 @@ restricted workers; `unit_fanout.py` still validates, retries, and merges.
 `scripts/fanout_lifecycle.py` is a provider-neutral journal, not a launcher,
 scientific validator, source of retry permission, or replacement model route.
 
+For storage locations and copies, also follow `workflow/shared/storage.md`.
+Reconcile from the recorded active working root. A cloud export failure is
+separate from a coding failure: preserve local successes and retry the copy,
+not the model assignments. A copied checkpoint does not authorize execution
+from new paths. Never relocate an active run or rewrite its sealed paths;
+verify exclusive ownership, dependencies, and preserved history before any
+transition to a local companion workspace.
+
 ## Reconcile authority before requesting a decision
 
 Current user instructions govern the concrete action. Read applicable standing

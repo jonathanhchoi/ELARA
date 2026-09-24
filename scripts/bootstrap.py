@@ -115,7 +115,7 @@ MARK_END = "<!-- elara:end -->"
 LINE_MARK_BEGIN = "# >>> ELARA (added by scripts/bootstrap.py) >>>"
 LINE_MARK_END = "# <<< ELARA <<<"
 
-# A path component that starts with one of these names marks a folder that a
+# A path component that starts with one of these names suggests a folder that a
 # sync service manages ("OneDrive - University", "My Drive", "Dropbox (Personal)",
 # "GoogleDrive-name@example.org", "Mobile Documents", macOS "CloudStorage").
 CLOUD_SYNC_HINTS = (
@@ -1181,7 +1181,7 @@ def cloud_sync_service(target):
 
 
 def unsynced_folder_suggestion():
-    """A concrete unsynced location to suggest: directly under the home folder."""
+    """Suggest a local candidate; the assistant must check its sync settings."""
     try:
         home = Path.home()
     except (RuntimeError, OSError):
@@ -1194,16 +1194,19 @@ def cloud_sync_warning(target):
     if not service:
         return None
     windows_note = (
-        " On Windows 11, Desktop and Documents are usually inside OneDrive."
+        " On Windows, Desktop and Documents may themselves be synced."
         if os.name == "nt" else ""
     )
     return (
-        "This folder is inside a cloud-synced location (" + service + "). ELARA works here, but "
-        "sync services can corrupt append-only logs and Git repositories mid-write, restore "
-        "superseded files, and copy restricted source material to the cloud. A local, unsynced "
-        "folder is safer, for example " + unsynced_folder_suggestion() + "." + windows_note
-        + " Stage 00 offers, before it writes any project state, to set ELARA up in such a folder "
-        "instead and import your materials from here by path; nothing of yours has to move."
+        "This folder appears to use cloud synchronization (" + service + "). You can keep "
+        "source materials and shared results here. Stage 00 helps set up a persistent local "
+        "working folder outside synchronization, for example " + unsynced_folder_suggestion()
+        + ", for repeated reads, active logs, coding, and builds, then copies verified results "
+        "back at batch or stage checkpoints. This reduces downloads and intermediate sync work; "
+        "your originals stay here. Check the proposed folder's actual sync settings."
+        + windows_note + " Follow workflow/shared/storage.md; an existing run keeps its recorded "
+        "paths until a verified stopping point. Cloud copies still require the applicable data "
+        "authorization, and a completed copy does not by itself confirm a cloud upload."
     )
 
 
@@ -1274,13 +1277,19 @@ def next_steps(summary):
         steps.append(step)
     if summary.get("cloud_sync_service"):
         steps.append(
-            "This folder is inside a cloud-synced location (" + str(summary["cloud_sync_service"])
-            + "; see Warnings). Right after the orientation, and before any project state is "
-            "written, say so plainly and offer once to set ELARA up in an unsynced folder instead "
-            "(for example " + unsynced_folder_suggestion() + "): run `python scripts/bootstrap.py "
-            "--into <that folder>` yourself, tell the researcher to reopen the app there, and let "
-            "Stage 00 import their materials from here by path. Record their choice as a decision "
-            "either way. If they stay here, do not recommend `git init` in this folder, and say why."
+            "This folder appears to use cloud synchronization (" + str(summary["cloud_sync_service"])
+            + "; see Warnings). After the orientation, follow workflow/shared/storage.md: "
+            "recommend pairing it with a persistent local working folder (for example "
+            + unsynced_folder_suggestion() + ") and a designated cloud results folder. Reuse "
+            "recorded choices and explain both locations together. For a new workspace, run "
+            "`python scripts/bootstrap.py --into <local folder> --source <verified clean kit>` "
+            "yourself within the agreed scope. Use a clean kit folder or ZIP, never this "
+            "mixed project folder as the source. Reopen the host there when needed and import "
+            "verified copies of the "
+            "necessary materials. Record the locations and copying policy in the charter and "
+            "DECISIONS.md. The installer does not migrate research state. Preserve existing "
+            "runs and their fixed paths until a verified stopping point; keep live Git metadata "
+            "local and copy verified outputs back at checkpoints, not after every write."
         )
     conflicts = summary.get("essential_conflicts") or []
     if conflicts:

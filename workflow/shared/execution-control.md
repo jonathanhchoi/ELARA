@@ -14,6 +14,12 @@ bytes with an available update deferred under that contract; execution requires
 the completed update check. A current installation does not supply a research
 approval, and a host plan cannot waive an explicit researcher update restriction.
 
+Before execution and on resume, follow `workflow/shared/storage.md`: read the
+recorded working and export locations, use the local workspace for processing,
+and include authorized exports in the batch or stage checkpoint. Reconcile
+pending copies without waiting for cloud uploads between individual operations.
+Existing prepared runs keep their recorded paths until a verified transition.
+
 Except for a one-step `help`, `menu`, or status response, begin every stage or
 utility by creating a short plan in the host's native tracker. Derive it from
 the canonical file rather than inventing a second workflow. Use four to seven

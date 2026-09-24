@@ -6,13 +6,24 @@ applies to every stage and overrides convenient but lossy file-writing habits.
 ## 1. Paths and control files
 
 - All research inputs, state, runs, and outputs live under `project/`.
+  `workflow/shared/storage.md` recommends a local working root alongside cloud
+  source materials and results; existing runs retain their recorded paths until
+  a verified transition, and an explicit decision to stay synced is respected.
+  Imported copies and processing use that recorded active root. Verified exports to the recorded
+  cloud destination are copies, not another authoritative state. For each
+  executing stage or utility with an open run, this shared contract additionally
+  declares `project/runs/<run_id>/storage/` for versioned export staging,
+  manifests, and receipts, even when its stage lists only `run_manifest.json`.
+  It also permits verified copies to the authorized cloud export folder. These
+  narrow operational outputs cannot change stage inputs or research results.
 - Canonical prompts, wrappers, scripts, tests, and repository instructions are
   kit infrastructure. Research stages read them but do not alter them.
 - `project/PROJECT_STATE.md` is the only mutable routing pointer.
 - `project/DECISIONS.md`, `project/RUN_LEDGER.md`, and
   `project/DEVIATIONS.md` are append-only records. Correct a record by appending a
   superseding record that links to it; never edit or delete the original.
-- A stage may write only paths listed in its `declared_outputs`. Incidental logs,
+- A stage may write only paths listed in its `declared_outputs` and the storage
+  outputs explicitly declared above. Incidental logs,
   caches, prompts, and raw responses must be covered by a declared run directory
   or declared output path.
 
