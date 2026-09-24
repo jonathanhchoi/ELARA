@@ -21,10 +21,7 @@ the setup and runs the commands. You answer its questions and make the calls.
 ## Start here
 
 1. Open Claude Code or Codex in the folder where you want to work. This can be
-   an empty folder or one that already contains your draft, data, or notes. A
-   Google Drive, OneDrive, or Dropbox folder is fine for your materials and
-   shared results. If you use one, the assistant will help set up a local
-   working folder for processing and copy verified results back (see below).
+   an empty folder or one that already contains your draft, data, or notes.
 2. Paste this message and press Enter.
 
    ```text
@@ -122,35 +119,6 @@ an explanation of what to do next. If the command is not recognized after
 installation, restart the app once in that folder. Repository-local commands
 load when the app starts.
 
-### Working with cloud storage
-
-You can keep source materials and shared results in Google Drive, OneDrive,
-Dropbox, or similar services. ELARA pairs that folder with a persistent local
-working folder outside synchronization, for example
-`C:\Users\<you>\elara\<project>`. The assistant checks the location; Desktop and
-Documents may themselves be synced. You do not need to move your originals.
-
-The assistant copies the inputs it needs, checks that the copies match, and
-does repeated searches, document extraction, coding, validation, tests, and
-document builds locally. Active logs, checkpoints, temporary files, and Git
-change tracking stay there. Large collections can be copied in manageable
-portions. This avoids repeatedly downloading files or making the sync service
-process every intermediate write. Google Drive's mirrored or offline files can
-reduce downloads too, but they are still managed by the sync service.
-
-At agreed batch or stage checkpoints, the assistant copies verified results
-and consistent snapshots to a designated folder in your cloud storage. It
-preserves earlier versions and keeps a record of anything still to copy. A
-file copied into a synced folder is not necessarily uploaded yet; the assistant
-reports that distinction. Resume active work in the local folder. A saved cloud
-snapshot identifies its source and is not a second running project.
-
-The assistant records the locations and copying preferences during setup and
-handles subsequent copies within that scope. Existing runs keep their recorded
-paths until a verified stopping point; installing an update does not move them.
-The operational instructions are in
-[`workflow/shared/storage.md`](workflow/shared/storage.md).
-
 ### Sensitive material
 
 Do not place licensed, confidential, sealed, privileged, or personal material
@@ -190,10 +158,7 @@ On Windows, right-click a downloaded ZIP and choose **Extract All**. This
 preserves the hidden `.claude` and `.agents` folders and the rest of the
 directory structure.
 
-Use one active working copy for each research project. If your materials are in
-cloud storage, Stage 00 helps create a local companion folder and records where
-to copy results back. Initialize Git change tracking in that local folder;
-keep its live `.git` directory outside synchronization.
+Use one active working copy for each research project.
 
 ### 2. Run the preflight
 
