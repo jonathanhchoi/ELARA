@@ -24,7 +24,9 @@ utilities can go in `manuscript/`; a marked-up PDF for `elr-apply-markup` in
   case, generic names such as `final.pdf`, and paths that contain credentials or
   personal identifiers.
 - Make sure cloud-backed files are fully downloaded rather than placeholders and
-  that archives can be opened.
+  that archives can be opened. The assistant stages verified local copies for
+  repeated processing under `workflow/shared/storage.md`; originals can stay
+  in cloud storage, and large collections can be staged in bounded portions.
 - Retain the original format. Do not OCR, normalize, or convert a file in place;
   those transformations become versioned derivatives later.
 - Record provenance: who supplied it, where it came from, relevant URL or stable

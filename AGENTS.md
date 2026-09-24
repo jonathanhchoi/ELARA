@@ -21,7 +21,9 @@ Status, help, and menu-only requests remain read-only and need no check.
 1. Read `project/PROJECT_STATE.md` before doing research work.
 2. Read `workflow/shared/guardrails.md` and
    `workflow/shared/artifact-contract.md`, then
-   `workflow/shared/execution-control.md`.
+   `workflow/shared/execution-control.md` and `workflow/shared/storage.md`.
+   Use the recorded local working root for active processing and the agreed
+   cloud folder for verified exports; check these locations again on resume.
 3. Read the canonical file in `workflow/stages/` named by `current_stage`.
    Canonical stage files control prerequisites, inputs, outputs, gates, failure
    routes, and the next stage; native skills are only wrappers.
@@ -111,9 +113,13 @@ the actual failed operation before calling a restart ready. Process liveness is
 not coding progress. Preserve a current checkpoint; never loop on the same
 failure without new evidence or an independently reviewed repair.
 
-During a research run, edit only paths under `project/` that the current stage
-declares (plus the repository-local Git change-tracking the researcher
-approved at Stage 00, which lives in `.git/`). Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,
+During a research run, edit only paths under the active `project/` that the
+current stage declares, plus the operational storage outputs declared in
+`workflow/shared/artifact-contract.md`. `workflow/shared/storage.md` permits
+verified copies to the recorded cloud export folder within the authorized scope, with receipts
+in the local run record. This does not authorize editing cloud originals.
+Repository-local Git change tracking approved at Stage 00 may also write to the
+local `.git/`. Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,
 `PIPELINE.md`, the kit README (`ELARA_README.md` in a project folder;
 `README.md` in a plain clone of the kit), `workflow/`, `.agents/`, `.claude/`,
 `.codex/`, `scripts/`, and `tests/` — unless the researcher explicitly asks to

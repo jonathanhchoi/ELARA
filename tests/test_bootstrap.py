@@ -631,13 +631,50 @@ class ExistingFolderTests(unittest.TestCase):
                         self.assertIsNone(warning)
                     else:
                         self.assertIn(expected, warning)
-                        self.assertIn("Stage 00 offers", warning)
+                        self.assertIn("persistent local working folder", warning)
+                        self.assertIn("copies verified results back", warning)
+                        self.assertIn("existing run keeps its recorded paths", warning)
                 # Windows records where OneDrive lives; anything under it is synced whatever its name.
                 onedrive = base / "cloud"
                 onedrive.mkdir()
                 with mock.patch.dict(os.environ, {"OneDrive": str(onedrive)}):
                     self.assertEqual(bootstrap.cloud_sync_service(onedrive / "paper"), "OneDrive")
                     self.assertIsNone(bootstrap.cloud_sync_service(base / "elsewhere" / "paper"))
+
+    def test_cloud_setup_preserves_originals_and_installs_a_local_companion(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cloud = Path(tmp) / "My Drive" / "study"
+            cloud.mkdir(parents=True)
+            original = cloud / "researcher-notes.txt"
+            original.write_bytes(b"Keep this original in Drive.\n")
+            installed = install(cloud, "--skip-doctor")
+            self.assertEqual(installed["_returncode"], 0, installed)
+            self.assertEqual(installed["cloud_sync_service"], "Google Drive")
+            report = (cloud / "project" / "BOOTSTRAP.md").read_text(encoding="utf-8")
+            self.assertIn("workflow/shared/storage.md", report)
+            self.assertIn("designated cloud results folder", report)
+            self.assertIn("installer does not migrate research state", report)
+            self.assertIn("--source <verified clean kit>", report)
+
+            # Run from the cloud installation but explicitly use a clean source,
+            # as instructed: a mixed source would also copy the researcher's notes.
+            local = Path(tmp) / "local" / "study"
+            completed = run_bootstrap(
+                "--into", str(local), "--source", str(ROOT), "--no-install",
+                "--skip-doctor", "--json", cwd=cloud,
+                script=cloud / "scripts" / "bootstrap.py",
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertIsNone(json.loads(completed.stdout)["cloud_sync_service"])
+            self.assertEqual(original.read_bytes(), b"Keep this original in Drive.\n")
+            self.assertFalse((local / original.name).exists())
+            storage = local / "workflow" / "shared" / "storage.md"
+            self.assertEqual(storage.read_bytes(), (ROOT / "workflow/shared/storage.md").read_bytes())
+            self.assertEqual(validate_repository(local), [])
+
+            # An installed kit missing the new execution contract is incomplete.
+            storage.unlink()
+            self.assertIn("missing workflow/shared/storage.md", validate_repository(local))
 
     def test_folder_counts_past_the_cap_are_reported_as_more_than(self) -> None:
         import bootstrap

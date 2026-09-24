@@ -516,6 +516,7 @@ def validate_repository(root: Path) -> list[str]:
         "PIPELINE.md",
         "workflow/shared/guardrails.md",
         "workflow/shared/artifact-contract.md",
+        "workflow/shared/storage.md",
         "workflow/shared/manuscript-editing-contract.md",
         "workflow/shared/fresh-review.md",
         "workflow/shared/model-readiness.md",

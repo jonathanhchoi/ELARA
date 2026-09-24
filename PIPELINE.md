@@ -558,6 +558,12 @@ so existing projects need no migration.
 
 ## Persistent state
 
+Version 2.11.0 supports cloud source materials and shared results alongside a
+persistent local workspace for active processing. Stage 00 records the locations
+and copying policy; batch and stage checkpoints export verified snapshots.
+Existing prepared runs retain their paths and history. The storage contract is
+`workflow/shared/storage.md`; no project-state schema change is required.
+
 Version 2.10.0 records intended output and researcher support in the existing
 versioned project charter and decision ledger. No new state key or schema
 migration is required. Existing projects can add the preference at their next

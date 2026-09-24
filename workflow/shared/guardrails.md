@@ -27,7 +27,11 @@ researcher explicitly changes the kit's governing instructions.
   reasons to stop, and everything else proceeds on a recorded provisional
   default that the researcher confirms or changes at the next gate.
 - During a research run, modify only the current stage's declared outputs under
-  `project/`. The kit infrastructure is read-only unless the researcher
+  the active `project/`, plus the operational storage outputs declared in
+  `workflow/shared/artifact-contract.md`. Under `workflow/shared/storage.md`,
+  verified copies may also be written to the recorded cloud export folder within the
+  authorized scope, with receipts in the local run record; cloud originals
+  remain untouched. The kit infrastructure is read-only unless the researcher
   explicitly asks to develop the pipeline itself.
 - Make targeted changes. Preserve unrelated files, uncommitted work, manual
   annotations, and artifacts outside the declared scope. Files that were in

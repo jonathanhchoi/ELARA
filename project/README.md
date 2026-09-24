@@ -2,7 +2,13 @@
 
 This directory contains one empirical legal research project. Repository
 instructions and canonical prompts live outside `project/`; research stages may
-read those files but write only their declared outputs here.
+read those files but write only their declared outputs here, plus verified
+exports to an authorized cloud destination under `workflow/shared/storage.md`.
+
+If you use cloud storage, the charter records a local working folder and where
+the assistant copies results back. Open the local folder to resume. Your source
+materials stay where they are; saved cloud snapshots identify the active local
+copy and are not separate running projects.
 
 ## Start
 
