@@ -5,12 +5,7 @@ description: "Start a new project, adopt an existing one, show the menu of tools
 
 # Route the empirical legal research workflow
 
-First follow `workflow/shared/storage.md`: run the read-only `scripts/storage.py status`
-from the project home and resolve the active working root before reading state or checking
-updates. Keep the home folder as the researcher's entry point; the agent handles local
-processing, verified checkpoint exports, and pending-copy retries automatically within scope.
-Status, help, and planning stay read-only. The agent chooses inputs, timing, and recovery.
-
+First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
 Before any new stage or tool starts (including automatic transitions and recovery
 runs), follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
 Require `ready: true` before execution; use the update contract's limited

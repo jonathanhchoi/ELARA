@@ -5,12 +5,7 @@ description: "Run empirical legal research coding or audit assignments in parall
 
 # Code observations with isolated subagents
 
-First follow `workflow/shared/storage.md`: run the read-only `scripts/storage.py status`
-from the project home and resolve the active working root before reading state or checking
-updates. Keep the home folder as the researcher's entry point; the agent handles local
-processing, verified checkpoint exports, and pending-copy retries automatically within scope.
-Status, help, and planning stay read-only. The agent chooses inputs, timing, and recovery.
-
+First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
 The parent must satisfy `workflow/shared/kit-updates.md` with
 `scripts/check_update.py` and `ready: true` before a new stage run begins.
 Use compatible automatic updates and verified installed fallback; a declined
