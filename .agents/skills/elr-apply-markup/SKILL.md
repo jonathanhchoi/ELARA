@@ -5,6 +5,12 @@ description: "Transcribe the researcher's hand markup on a PDF into a reviewable
 
 # Run elr-apply-markup
 
+First follow `workflow/shared/storage.md`: run the read-only `scripts/storage.py status`
+from the project home and resolve the active working root before reading state or checking
+updates. Keep the home folder as the researcher's entry point; the agent handles local
+processing, verified checkpoint exports, and pending-copy retries automatically within scope.
+Status, help, and planning stay read-only. The agent chooses inputs, timing, and recovery.
+
 Before starting this utility, follow `workflow/shared/kit-updates.md` and run
 `scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution; use the update contract's limited
 read-only planning exception when applicable;

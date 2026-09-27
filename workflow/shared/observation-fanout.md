@@ -1,5 +1,11 @@
 # One-unit subagent fan-out contract
 
+Before preparing or dispatching work, resolve the active local root under
+`storage.md`. Supply that working directory and absolute assignment/controller
+paths to the host's workers; verify their scoped access before starting. Workers
+do not resolve project-home state or export files. The parent chooses consistent
+checkpoints and automatically publishes them under the storage contract.
+
 Use this contract whenever a canonical stage requires many independent model judgments or
 retrievals. Two kinds of fan-out share it:
 

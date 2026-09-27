@@ -629,3 +629,9 @@ rewritten on every installer run, records which files in the folder are the
 kit's, which are shared, and which were the researcher's before the kit arrived.
 See `workflow/shared/artifact-contract.md` for exact naming and invalidation
 rules.
+
+Version 2.12.0 makes local processing and verified copy-back automatic for cloud
+project homes. The coding agent selects inputs, checkpoints, and recovery; the
+small storage helper binds the active root and verifies file operations. The
+researcher keeps opening the original folder. Existing history requires a
+verified transition, and pending copies never require rerunning research.

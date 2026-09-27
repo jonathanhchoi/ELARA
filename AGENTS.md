@@ -6,6 +6,11 @@ very fast research assistant whose work is verified, never trusted.
 
 ## Route every request from project state
 
+First resolve the active working root with `scripts/storage.py status` under
+`workflow/shared/storage.md`, before reading state or checking for updates.
+The researcher keeps opening the project home; the agent handles local work and
+verified copy-back automatically. Status and planning remain read-only.
+
 Before starting any new stage or optional tool, follow
 `workflow/shared/kit-updates.md` and run `scripts/check_update.py` for that stage.
 This includes direct requests, Stage 00, automatic transitions, and new recovery
@@ -22,8 +27,10 @@ Status, help, and menu-only requests remain read-only and need no check.
 2. Read `workflow/shared/guardrails.md` and
    `workflow/shared/artifact-contract.md`, then
    `workflow/shared/execution-control.md` and `workflow/shared/storage.md`.
-   Use the recorded local working root for active processing and the agreed
-   cloud folder for verified exports; check these locations again on resume.
+   Use the resolved local working root for active processing, automatically
+   publish verified checkpoints and retry pending exports within scope, and
+   check these locations again on resume. Storage decisions belong to the agent
+   within the researcher's instructions; the helper verifies file operations.
 3. Read the canonical file in `workflow/stages/` named by `current_stage`.
    Canonical stage files control prerequisites, inputs, outputs, gates, failure
    routes, and the next stage; native skills are only wrappers.

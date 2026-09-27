@@ -6,6 +6,12 @@ disable-model-invocation: true
 
 # Run elr-13-human-validation
 
+First follow `workflow/shared/storage.md`: run the read-only `scripts/storage.py status`
+from the project home and resolve the active working root before reading state or checking
+updates. Keep the home folder as the researcher's entry point; the agent handles local
+processing, verified checkpoint exports, and pending-copy retries automatically within scope.
+Status, help, and planning stay read-only. The agent chooses inputs, timing, and recovery.
+
 Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
 Require `ready: true` before execution; use its read-only planning exception when applicable.
 Automatically install verified compatible updates when writes are authorized; unavailable GitHub uses freshly verified installed bytes.

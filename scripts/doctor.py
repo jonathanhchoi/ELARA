@@ -62,6 +62,7 @@ DISCOVERY_SURFACES = (
     "PIPELINE.md",
     "requirements.txt",
     "scripts/bootstrap.py",
+    "scripts/storage.py",
     "scripts/fanout_dispatch.py",
     "scripts/model_readiness.py",
     "workflow/shared/model-readiness.md",
@@ -588,6 +589,15 @@ def build_report(root, platform="auto", smoke=True, model_evidence=None):
     """Return a complete machine-readable preflight report."""
     root = root.resolve()
     failures = []
+    storage_record = {"status": "unmanaged", "working_root": str(root)}
+    try:
+        if (root / "project/ELARA_STORAGE.json").exists():
+            from storage import status
+            storage_record = status(root)
+            root = Path(storage_record["working_root"])
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        storage_record = {"status": "needs_recovery", "error": str(exc)}
+        failures.append("storage recovery needed: " + str(exc))
     for relative in DISCOVERY_SURFACES:
         alternatives = relative if isinstance(relative, tuple) else (relative,)
         if not any((root / candidate).is_file() for candidate in alternatives):
@@ -672,6 +682,7 @@ def build_report(root, platform="auto", smoke=True, model_evidence=None):
         "schema_version": "1.0",
         "ok": not failures,
         "kit_root": str(root),
+        "storage": storage_record,
         "python": {
             "executable": sys.executable,
             "version": ".".join(str(part) for part in sys.version_info[:3]),

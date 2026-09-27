@@ -12,6 +12,13 @@ from workflow_lib import FrontmatterError, load_stages, repository_root, skill_n
 
 OBSERVATION_SKILL = "elr-code-observations"
 
+STORAGE_ROUTING = """First follow `workflow/shared/storage.md`: run the read-only `scripts/storage.py status`
+from the project home and resolve the active working root before reading state or checking
+updates. Keep the home folder as the researcher's entry point; the agent handles local
+processing, verified checkpoint exports, and pending-copy retries automatically within scope.
+Status, help, and planning stay read-only. The agent chooses inputs, timing, and recovery.
+"""
+
 # Manuscript stages also read the manuscript-editing contract and the active
 # publication profile. The profile is loaded only here, on demand, never from
 # AGENTS.md or CLAUDE.md, so style rules stay out of coding and analysis runs.
@@ -101,6 +108,7 @@ description: {json.dumps(description)}
 
 # Run {name}
 
+{STORAGE_ROUTING}
 Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
 Require `ready: true` before execution; use its read-only planning exception when applicable.
 Automatically install verified compatible updates when writes are authorized; unavailable GitHub uses freshly verified installed bytes.
@@ -141,6 +149,7 @@ description: {json.dumps(spec["description"])}
 
 # Run {name}
 
+{STORAGE_ROUTING}
 Before starting this utility, follow `workflow/shared/kit-updates.md` and run
 `scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution; use the update contract's limited
 read-only planning exception when applicable;
@@ -194,6 +203,7 @@ description: "Start a new project, adopt an existing one, show the menu of tools
 
 # Route the empirical legal research workflow
 
+{STORAGE_ROUTING}
 Before any new stage or tool starts (including automatic transitions and recovery
 runs), follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
 Require `ready: true` before execution; use the update contract's limited
@@ -282,6 +292,7 @@ description: "Run empirical legal research coding or audit assignments in parall
 
 # Code observations with isolated subagents
 
+{STORAGE_ROUTING}
 The parent must satisfy `workflow/shared/kit-updates.md` with
 `scripts/check_update.py` and `ready: true` before a new stage run begins.
 Use compatible automatic updates and verified installed fallback; a declined

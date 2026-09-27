@@ -7,6 +7,9 @@ as upstream. Maintaining ELARA itself is not a research-stage invocation.
 
 ## When to check
 
+- Resolve the active root under `storage.md` first. Check/update that kit; also
+  refresh the project home's entry instructions with the protected installer
+  when they differ. Each copy needs its own verified installation evidence.
 - Check before Stage 00, selected stages or tools, automatic transitions, and
   new recovery runs of completed stages. Recheck after a long pause before a
   run begins. Routing, status, help, and menu-only requests stay read-only.

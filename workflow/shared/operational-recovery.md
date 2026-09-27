@@ -6,7 +6,9 @@ restricted workers; `unit_fanout.py` still validates, retries, and merges.
 scientific validator, source of retry permission, or replacement model route.
 
 For storage locations and copies, also follow `workflow/shared/storage.md`.
-Reconcile from the recorded active working root. A cloud export failure is
+Resolve `scripts/storage.py status` before reading state and reconcile from the
+recorded active working root; automatically retry pending exports on writable
+resumes. A cloud export failure is
 separate from a coding failure: preserve local successes and retry the copy,
 not the model assignments. A copied checkpoint does not authorize execution
 from new paths. Never relocate an active run or rewrite its sealed paths;

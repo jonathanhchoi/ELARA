@@ -2,6 +2,10 @@
 
 # Claude Code adapter
 
+Resolve the active working root under `workflow/shared/storage.md` before state
+or updates. Keep the project home as the user's entry point and give commands
+and workers the verified local working directory and required file access.
+
 Use `/elr` to start, adopt, show the menu of tools, resume, or report status.
 Use `/elr-<stage-slug>` or `/elr-<utility>` when the router or researcher names
 a particular stage or tool. The command is a thin wrapper: always follow the
