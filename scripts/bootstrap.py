@@ -79,7 +79,7 @@ ESSENTIAL_PREFIXES = ("scripts/", "workflow/", ".agents/", ".claude/", ".codex/"
 ESSENTIAL_FILES = {"PIPELINE.md"}
 
 # Never copied into a project folder.
-EXCLUDED_DIRECTORIES = {".git", "__pycache__", ".pytest_cache", ".github", ".venv", "build"}
+EXCLUDED_DIRECTORIES = {".git", "__pycache__", ".pytest_cache", ".github", ".venv", "build", "ELARA_Results"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
 EXCLUDED_NAMES = {".DS_Store", "Thumbs.db", "Desktop.ini", "desktop.ini", "settings.local.json"}
 EXCLUDED_PREFIXES = ("tests/tmp/", "tests/.tmp/")
@@ -123,6 +123,7 @@ CLOUD_SYNC_HINTS = (
     ("google drive", "Google Drive"),
     ("googledrive", "Google Drive"),
     ("my drive", "Google Drive"),
+    ("shared drives", "Google Drive"),
     ("dropbox", "Dropbox"),
     ("icloud", "iCloud"),
     ("mobile documents", "iCloud"),
@@ -584,6 +585,8 @@ def snapshot_existing(target, ignore_names):
     for entry in sorted(target.iterdir(), key=lambda p: p.name.lower()):
         name = entry.name
         if name in ignore_names or name in EXCLUDED_NAMES or name in (".git", ".venv", "__pycache__"):
+            continue
+        if name == "ELARA_Results" and (target / "project/ELARA_STORAGE.json").exists():
             continue
         record = {"name": name, "kind": "folder" if entry.is_dir() else "file"}
         if entry.is_dir():
@@ -1180,34 +1183,37 @@ def cloud_sync_service(target):
     return None
 
 
-def unsynced_folder_suggestion():
-    """Suggest a local candidate; the assistant must check its sync settings."""
+def setup_storage(source, source_info, target, args, complete):
+    """Use the clean source's helper, never a conflicting file in the project."""
+    if not cloud_sync_service(target) and not (target / "project/ELARA_STORAGE.json").exists():
+        return {"status": "unmanaged", "working_root": str(target)}
+    if getattr(args, "dry_run", False):
+        return {"status": "planned", "project_home": str(target)}
+    if not complete:
+        return {"status": "needs_recovery", "error": "Complete the kit installation before configuring local processing."}
+    command = [sys.executable, str(source / "scripts/storage.py"), "setup", "--root", str(target), "--kit", str(source)]
+    if args.no_install:
+        command.append("--no-install")
+    result = run_command(command, timeout=1500)
     try:
-        home = Path.home()
-    except (RuntimeError, OSError):
-        return "a folder directly under your home folder"
-    return str(home / "elara" / "<project-name>")
-
-
-def cloud_sync_warning(target):
-    service = cloud_sync_service(target)
-    if not service:
-        return None
-    windows_note = (
-        " On Windows, Desktop and Documents may themselves be synced."
-        if os.name == "nt" else ""
-    )
-    return (
-        "This folder appears to use cloud synchronization (" + service + "). You can keep "
-        "source materials and shared results here. Stage 00 helps set up a persistent local "
-        "working folder outside synchronization, for example " + unsynced_folder_suggestion()
-        + ", for repeated reads, active logs, coding, and builds, then copies verified results "
-        "back at batch or stage checkpoints. This reduces downloads and intermediate sync work; "
-        "your originals stay here. Check the proposed folder's actual sync settings."
-        + windows_note + " Follow workflow/shared/storage.md; an existing run keeps its recorded "
-        "paths until a verified stopping point. Cloud copies still require the applicable data "
-        "authorization, and a completed copy does not by itself confirm a cloud upload."
-    )
+        value = json.loads(result["stdout"])
+    except (ValueError, TypeError):
+        value = {"status": "needs_recovery", "error": (result["stderr"] or "Storage setup produced no report")[-1500:]}
+    if value.pop("created", False) and source_info.get("verified_commit"):
+        # A downloaded immutable archive has no .git. Carry its authenticated
+        # provenance to the new companion only after checking distribution parity.
+        local = Path(value["working_root"])
+        manifest = read_manifest(local)
+        parity = install(source, local, True, already_installed=True,
+                         researcher_paths=(manifest or {}).get("researcher_paths") or [], dry_run=True)
+        if not manifest or not installation_matches(parity):
+            return {"status": "needs_recovery", "error": "Local kit differs from the verified installation source."}
+        manifest["source"] = source_info
+        manifest["installed_commit"] = source_info["verified_commit"]
+        manifest["installed_hashes"] = installed_file_hashes(local, parity)
+        manifest["baseline_hashes"] = dict(manifest["installed_hashes"])
+        write_text(local / MANIFEST_RELATIVE, json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    return value
 
 
 # --------------------------------------------------------------------------- report
@@ -1221,6 +1227,17 @@ def format_list(items, empty="none"):
 
 def next_steps(summary):
     steps = []
+    storage = summary.get("storage") or {}
+    if storage.get("status") == "managed":
+        steps.append(
+            "Local processing is configured. Keep this folder as the researcher's entry point. "
+            "Before reading state or starting any stage, follow workflow/shared/storage.md and "
+            "resolve scripts/storage.py status. The active working root is " + storage["working_root"]
+            + ". Read the project-home BOOTSTRAP.md for original materials and instructions. "
+            "Run commands and workers at the active root, and automatically copy verified "
+            "results back to ELARA_Results here at useful checkpoints. Do not ask the researcher "
+            "to move folders or manage copying."
+        )
     steps.append(
         "Before starting any new stage or tool, follow workflow/shared/kit-updates.md and run "
         "scripts/check_update.py for that stage. Apply verified compatible updates automatically "
@@ -1275,21 +1292,13 @@ def next_steps(summary):
                 "not the kit's."
             )
         steps.append(step)
-    if summary.get("cloud_sync_service"):
+    if summary.get("cloud_sync_service") and storage.get("status") != "managed":
         steps.append(
-            "This folder appears to use cloud synchronization (" + str(summary["cloud_sync_service"])
-            + "; see Warnings). After the orientation, follow workflow/shared/storage.md: "
-            "recommend pairing it with a persistent local working folder (for example "
-            + unsynced_folder_suggestion() + ") and a designated cloud results folder. Reuse "
-            "recorded choices and explain both locations together. For a new workspace, run "
-            "`python scripts/bootstrap.py --into <local folder> --source <verified clean kit>` "
-            "yourself within the agreed scope. Use a clean kit folder or ZIP, never this "
-            "mixed project folder as the source. Reopen the host there when needed and import "
-            "verified copies of the "
-            "necessary materials. Record the locations and copying policy in the charter and "
-            "DECISIONS.md. The installer does not migrate research state. Preserve existing "
-            "runs and their fixed paths until a verified stopping point; keep live Git metadata "
-            "local and copy verified outputs back at checkpoints, not after every write."
+            "Follow workflow/shared/storage.md and finish local processing setup yourself. "
+            "Existing history requires a verified transition, not fresh templates. Investigate "
+            "any concrete setup failure; use a clean kit source and preserve existing run bindings. "
+            "The researcher keeps using this folder. Storage setup is routine authorized work, "
+            "not a recommendation or a separate approval gate."
         )
     conflicts = summary.get("essential_conflicts") or []
     if conflicts:
@@ -1564,6 +1573,7 @@ def machine_summary(summary):
         },
         "hosts": summary["hosts"],
         "cloud_sync_service": summary.get("cloud_sync_service"),
+        "storage": summary.get("storage"),
         "warnings": summary.get("warnings") or [],
         "model_readiness": summary.get("model_readiness"),
         "doctor": {
@@ -1646,6 +1656,8 @@ def print_human(summary):
         status += " (a real run installs it)"
     print("  jsonschema:  " + status + (" via " + dependency["how"] if dependency.get("how") else ""))
     print("  Use for ELARA scripts: " + str(summary["python_for_kit"]))
+    if (summary.get("storage") or {}).get("status") == "managed":
+        print("  Storage:     local processing configured; verified results return to ELARA_Results here.")
     hosts = summary["hosts"]
     print("  Assistant:   " + (", ".join(hosts["running_inside"]) or "not detected from the environment"))
     for warning in summary.get("warnings") or []:
@@ -1802,10 +1814,11 @@ def bootstrap(args):
             "hosts": detect_hosts(),
             "warnings": [],
         }
+        summary["storage"] = setup_storage(source, source_info, target, args, complete)
     summary["cloud_sync_service"] = cloud_sync_service(target)
-    warning = cloud_sync_warning(target)
-    if warning:
-        summary["warnings"].append(warning)
+    storage = summary["storage"]
+    if storage.get("error"):
+        summary["warnings"].append("Local processing setup needs repair: " + storage["error"])
     conflicts = essential_conflicts(files["researcher_paths"])
     summary["essential_conflicts"] = conflicts
     if conflicts:
@@ -1818,7 +1831,9 @@ def bootstrap(args):
             "review update_conflicts and retained run bindings before research resumes."
         )
     # A dry run only checks whether the dependency is present; it installs nothing.
-    dependency = ensure_dependency(target, sys.executable, args.no_install or dry_run)
+    active_target = Path(storage["working_root"]) if storage.get("status") == "managed" else target
+    dependency = ensure_dependency(active_target, storage.get("python_for_kit") or sys.executable,
+                                   args.no_install or dry_run or storage.get("status") in ("needs_transition", "needs_recovery"))
     summary["dependency"] = dependency
     summary["python_for_kit"] = dependency.get("python") or sys.executable
     summary["doctor_platform"] = doctor_platform(summary["hosts"], getattr(args, "platform", "auto"))
@@ -1850,7 +1865,7 @@ def bootstrap(args):
         }
     else:
         summary["doctor"] = run_doctor(
-            target, summary["python_for_kit"], summary["doctor_platform"],
+            active_target, summary["python_for_kit"], summary["doctor_platform"],
             getattr(args, "model_evidence", None),
         )
         summary["doctor"]["skipped"] = False
@@ -1889,6 +1904,7 @@ def bootstrap(args):
         and dependency.get("status") in ("present", "installed")
         and not files.get("update_conflicts")
         and not conflicts
+        and storage.get("status") != "needs_recovery"
     )
     # A kit copy cloned or unzipped inside the project folder under the README's
     # `.elara-kit` convention was only needed to install from: remove it now, so

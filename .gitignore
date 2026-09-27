@@ -5,6 +5,9 @@ project/inputs/*
 project/runs/
 project/tmp/
 project/cache/
+project/storage/
+project/ELARA_STORAGE.json
+ELARA_Results/
 
 # Credentials and local configuration
 .env

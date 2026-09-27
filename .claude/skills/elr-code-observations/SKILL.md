@@ -5,8 +5,8 @@ description: "Run empirical legal research coding or audit assignments in parall
 
 # Code observations with isolated subagents
 
-The parent must satisfy `workflow/shared/kit-updates.md` with
-`scripts/check_update.py` and `ready: true` before a new stage run begins.
+First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
+The parent must satisfy `workflow/shared/kit-updates.md` with `scripts/check_update.py` and `ready: true` before a new stage run begins.
 Use compatible automatic updates and verified installed fallback; a declined
 specific change remains binding. Within an existing run, preserve the
 recorded software; do not repeat update checks per worker, batch, or retry.

@@ -1,140 +1,140 @@
-# Cloud materials and local processing
+# Agent-managed storage
 
-Google Drive, OneDrive, Dropbox, iCloud, and similar services are supported
-locations for source materials and shared results. Pair them with a persistent
-local working folder outside synchronization for active processing. The parent
-agent manages this arrangement with the existing installer, imports, versioned
-outputs, and file tools. This is a workflow instruction, not a background sync
-service or a new research gate.
+Google Drive, OneDrive, Dropbox, iCloud, and similar folders are supported
+project homes. The researcher keeps opening that folder. ELARA automatically
+maintains a persistent local working folder and copies verified results back.
+Explain this briefly as configured behavior, not a storage advisory or another
+setup decision. Honor an explicit different preference and existing data-use
+limits. Routine setup and copying within this project's scope need no separate
+approval; ask only for a genuine unresolved researcher choice.
 
-## Choose and record the locations
+The coding agent chooses inputs, batch sizes, checkpoint contents, timing, and
+recovery from the actual project and tools. `scripts/storage.py` supplies file
+operations, not a research policy engine or background scheduler. Use these
+primitives or equivalent verified operations when the environment requires it,
+retaining the same evidence and invariants.
 
-At Stage 00, or before a later stage if storage has changed, read the active
-charter, DECISIONS.md, and any BOOTSTRAP.md report. Reuse the researcher's choices.
-The installer's path detection is a hint: it neither proves synchronization nor
-proves its absence. Inspect the actual location and available sync settings;
-user-reported cloud use also triggers this guidance. Do not change account-wide
-sync settings. Offline or mirrored files can avoid downloads but remain synced.
+## Resolve before reading state
 
-Recommend the local companion in the existing setup discussion. Record a
-`Storage` section in the versioned charter, with subsequent changes in
-DECISIONS.md, identifying:
+Before any stage, utility, resume, status, or update, run the read-only
+`python scripts/storage.py status --root <folder opened by the researcher>`.
+For a managed project, use its `working_root` for state, commands, the local
+interpreter, and workers. Resolve storage before the kit-update check, then
+reread the active kit's instructions. Status/help/Plan Mode never create a
+workspace, import files, retry exports, or change state. A missing or mismatched
+workspace is a recovery problem; never fall back to the cloud's old template.
 
-- the absolute local working root, its authoritative `project/PROJECT_STATE.md`,
-  and the cloud source locations whose originals must stay unchanged;
-- a dedicated cloud export folder, the files or data classes allowed there,
-  and whether it is shared with other people;
-- the copying schedule (default: verified batch or stage checkpoints), local
-  capacity, and any retention or access limits.
+`project/ELARA_STORAGE.json` in both locations records one project identity and
+one active working root. Keep the original folder as the user's entry point;
+use the host's supported working-directory and file-access controls for the
+local folder. Verify the parent and restricted workers can use it before a run.
+Do not weaken worker restrictions or ask the researcher to manually relocate
+the project. If host permission is required, request only the concrete access
+needed through the host. A copied folder is not permission for a second writer;
+a synced record is not a distributed lock between computers.
 
-Resolve the roots, including links or junctions. Keep the cloud export folder
-outside the local working root and use a dedicated destination that will not
-overwrite source files. Never infer that a folder is private from its name.
+Read the project home's BOOTSTRAP report, original instructions, and input
+locations as well as the active local records. Preserve the researcher's
+instructions there; do not lose them when using the clean local kit.
+Show result links in the project home once copied; report the local path when
+a result is still awaiting export.
 
-Bundle any unresolved choice with the existing setup or charter discussion.
-Once the arrangement and data route are authorized, routine copies within that
-scope need no repeated approval. Selecting cloud storage does not authorize
-sharing restricted data. A declined local setup is a recorded limitation, not
-permission to silently relocate files or add a blanket cloud-storage ban.
-In that case, keep the recorded active root and explain the expected I/O
-limitation; use separately authorized local staging where possible. The local
-arrangement below applies once adopted, never retroactively to a prepared run.
+## Setup and existing projects
 
-For a new workspace, the assistant runs
-`python scripts/bootstrap.py --into <local folder> --source <verified clean kit>`.
-Use a clean kit folder or ZIP, never the installed folder containing researcher
-materials as the installation source: bootstrap could copy unrelated files or
-merged instructions along with the kit. Reuse the verified clean download if
-available, or obtain a clean upstream copy under `kit-updates.md`. Check that
-the destination is writable, has enough space, and is outside known sync roots.
-A folder directly under the home directory is a candidate, not a
-guarantee. Work from the local root and use its interpreter and host definitions;
-reopen the host there when required. Keep source paths available for Stage 00's
-inventory and adoption imports. Bootstrap installs kit templates; it does not
-migrate an existing research project or its approvals.
+The installer configures new cloud projects automatically from its clean kit
+source. The working folder defaults to the platform's local application
+data/state directory, not a disposable cache. `ELARA_WORKSPACE_HOME` can select
+another base; the agent may choose it when capacity or local settings require.
+Path detection is a hint, not proof that synchronization is present or absent.
+Check the actual location, links, available space, and access. User-reported
+cloud use also triggers setup; do not change account-wide sync settings.
 
-## Work locally
+For an unconfigured fresh project the assistant runs:
 
-Keep one active project state. Its normal `project/` structure, run directories,
-logs, frozen assignments, and output paths are rooted in the local workspace.
-Keep live `.git` metadata, environments, caches, tests, extraction, repeated
-searches, coding, validation, and document builds outside synchronization. Store
-research intermediates and raw returns in the stage-declared local run paths,
-never in a disposable session scratchpad. Preserve every required audit record.
+```text
+python <clean-kit>/scripts/storage.py setup --root <project-home> --kit <clean-kit>
+```
 
-Copy only the authorized inputs needed for the task, using the existing import
-or acquisition paths. Verify source and destination SHA-256 values and sizes,
-record their mapping in the input inventory or run manifest, and reuse the
-verified local copy on repeated reads. Changed originals become new imported
-versions, never automatic replacements. Check capacity before copying; stage
-large collections in bounded portions and freeze each portion's local paths
-before preparing its assignments. Do not evict inputs referenced by an open run
-or promise that a cloud-only placeholder can be read offline. A missing download
-or insufficient space is a concrete limitation to resolve, not a reason to
-silently change the sample. Avoid repeated full-cloud-tree scans.
+Use a verified clean kit download or clone, never a mixed installed project as
+the source. Reuse its exact installed commit under `kit-updates.md`. An interrupted
+setup preserves its local files; inspect and finish that installation before
+binding it. Do not delete or replace an unrecognized local folder.
 
-## Copy at verified checkpoints
+For existing history, setup returns `needs_transition`. The agent inspects it,
+preserves a checkpoint, and carries forward state, ledgers, approved files,
+and dependencies at a verified stopping point. Do not replace history with blank
+templates or asserted approvals. Prepared runs keep their fixed paths, seals,
+software, and raw records until a verified operational transition is possible
+under `operational-recovery.md`; never rewrite sealed paths merely to make a
+copy run. Once the agent has verified the local project, record the transition:
 
-At the recorded batch or stage boundary, the parent performs these steps serially:
+```text
+python scripts/storage.py bind --root <project-home> --working-root <verified-local-project>
+```
 
-1. Reconcile outputs and counts locally. Select verified, closed files and a
-   consistent snapshot of state, ledgers, and required run records. Use an
-   existing immutable checkpoint where available; otherwise ensure all writers
-   to the selected files have stopped before copying them. Do not take a live
-   recursive copy of a directory whose workers are still writing.
-2. Assemble the snapshot under `project/runs/<run_id>/storage/` before
-   the run closes. Record a manifest of relative paths, sizes, SHA-256 values,
-   run/checkpoint identity, original working root, and omissions with reasons.
-   Include a short README identifying it as an archival copy and naming the
-   local root to resume. Copy only authorized data; omit disposable caches and
-   environments. Keep live Git metadata local; a closed Git backup archive may
-   be included only if requested and permitted.
-3. Copy to a new versioned subfolder of the recorded cloud export folder. Never
-   overwrite source materials or an earlier snapshot. Exclude the local staging
-   folder itself and prior export snapshots from recursive collection. Verify
-   destination bytes against the manifest and write a completion receipt last.
-   An incomplete destination without that receipt is not a usable checkpoint.
-4. Record the export location, verified hashes, time, and disposition in a
-   versioned receipt under that run's `storage/` and reference it from the run
-   manifest. Distinguish `copied to sync folder`, `upload confirmed` (only with
-   service evidence), and `pending` or `failed`. File
-   existence in a synced folder alone cannot prove remote availability. At a
-   handoff to another computer or person, verify upload and destination access
-   or explicitly report that the handoff is pending.
+Record the arrangement in the charter's Storage section and subsequent changes
+in DECISIONS.md: project home, active local root, results destination, permitted
+contents, copying schedule, and retention/access limits. The normal default is
+verified batch checkpoints, stage completion, and orderly handoff. Present the
+arrangement with the existing charter discussion, not as a prerequisite asking
+whether to set up local processing. Compatible kit updates must refresh both
+the active kit and the home's entry instructions through the protected installer;
+never use one copy's update evidence for the other.
 
-Do not wait for cloud uploads between individual assignments. If an export
-fails, preserve the verified local snapshot and the partial destination, record
-what remains, and continue authorized local work when the copying or retention
-policy allows it. Retry at the next checkpoint under the same scope, verifying
-already-copied bytes and using a new destination if any content conflicts.
-Never delete the only verified copy, and report outstanding exports at stage
-completion. A later retry records its receipt in the current open run; do not
-append to a closed run directory. Keep the snapshot as it was at its stated
-checkpoint rather than rewriting it to include its own later export receipt.
-No unrequested background scheduler is needed.
+## Work and checkpoint locally
 
-## Resume and existing projects
+Keep one active state and all intensive processing, live databases, worker
+returns, environments, caches, builds, and new Git metadata at the local root.
+Original materials remain where the researcher placed them. Stage only the
+authorized inputs needed, with sizes and SHA-256 hashes; reuse verified copies.
+For example, `storage.py stage --root <home> --source <file> --into
+project/inputs/source_v001.txt` verifies a copy and records provenance.
+Existing adoption paths under `project/artifacts/imported_vNNN/` remain valid
+with equivalent copy verification. Changed originals become new imports, never
+automatic replacements of frozen inputs. Handle large collections in bounded
+portions. The assistant downloads readable bytes as needed and diagnoses missing
+placeholders or space; it handles routine copying itself.
 
-Read the recorded storage locations before every stage and recovery. A cloud
-snapshot is not a second active project. Do not choose between local and cloud
-state using modification times, merge append-only logs automatically, or run
-two writers from different copies. If the local workspace is unavailable,
-reconcile the recorded checkpoint and paths before restoring or continuing.
+At a useful checkpoint, the parent reconciles results and selects a consistent
+set of closed files: deliverables, state, ledgers, prompts, raw returns, and
+other records needed to audit or recover that checkpoint. Include the exact kit
+identity and needed dependency paths. Use an immutable checkpoint or stop the
+selected files' writers first. Never recursively copy a live worker directory
+or live SQLite database and call it a checkpoint. The agent decides how to
+obtain a consistent snapshot and records omissions with reasons.
 
-Existing runs retain their fixed paths, seals, approvals, and raw records.
-Installing this guidance does not relocate them. At a verified stopping point,
-confirm that no worker or parent writer remains active or has an unknown
-outcome; preserve the original state and records, verify copied bytes, and check
-every dependency needed to resume. Do not rewrite sealed absolute paths to make
-a copied run appear portable. If those bindings cannot be honored, resume the
-run at its original root or follow `operational-recovery.md` for a separately
-verified, authorized transition. New runs can use the local root once the
-existing project state and dependencies have been carried forward and validated;
-never replace that history with fresh templates or researcher-asserted approvals.
+Save a selection JSON with `files` (relative file paths) and `omissions` (if any)
+under `project/storage/`, then run:
 
-Google documents streamed files, locally mirrored files, and the performance
-benefit of mirroring for extensive writes in
-[Drive for desktop help](https://support.google.com/drive/answer/13401938?hl=en)
-(accessed 2026-09-24). A separate unsynced working folder additionally keeps
-ELARA's intermediate writes out of the synchronization workload; actual speed
-depends on the files, cache, network, and device.
+```text
+python scripts/storage.py snapshot --root <home> --selection <selection.json> --label <run-or-checkpoint>
+python scripts/storage.py publish --root <home> --snapshot <returned-snapshot-id>
+```
+
+Snapshots and attempt receipts live under `project/storage/`, outside sealed
+run directories. Exports appear under `ELARA_Results/<snapshot-id>/` in the
+project home, with a file manifest, original working root, and `files/` holding
+the selected paths. Publish verifies destination bytes and writes COMPLETE.json
+last. A missing marker or mismatched manifest/files means an incomplete or
+damaged export. Exclude previous exports, staging records, live Git metadata,
+and disposable environments from subsequent snapshots. Never overwrite source
+materials, earlier exports, or the only verified local copy.
+
+## Retry and resume
+
+At checkpoints and writable resumes, the parent automatically runs
+`python scripts/storage.py retry --root <home-or-local-root>` to attempt pending
+exports once, then diagnoses remaining problems. A failed export preserves
+local successes; retry the copy, not model assignments. Continue authorized local
+work when capacity and the copying/retention policy allow it. If destination
+bytes conflict, preserve them and use `publish --name <new-folder-name>` after
+review. Report pending results at completion or handoff. No per-unit upload wait
+or fixed retry loop is required.
+
+`copied_to_sync_folder` confirms verified filesystem bytes, not cloud upload.
+Only report upload or recipient access as confirmed with service evidence.
+On another computer, a missing workspace requires reconciliation and restoration
+from a verified checkpoint under the existing recovery contract. Never choose
+between copies by timestamps, merge append-only logs, or silently start another
+active state. Retain necessary local inputs and audit records until the agent
+has verified that recovery and retention requirements are met.

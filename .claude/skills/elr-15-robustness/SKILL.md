@@ -6,8 +6,8 @@ disable-model-invocation: true
 
 # Run elr-15-robustness
 
-Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
-Require `ready: true` before execution; use its read-only planning exception when applicable.
+First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
+Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`; require `ready: true` before execution, respecting its read-only planning exception.
 Automatically install verified compatible updates when writes are authorized; unavailable GitHub uses freshly verified installed bytes.
 Investigate conflicts; a declined specific change remains binding. Preserve existing run software and scientific bindings.
 

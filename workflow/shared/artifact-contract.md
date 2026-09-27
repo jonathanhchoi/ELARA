@@ -6,14 +6,16 @@ applies to every stage and overrides convenient but lossy file-writing habits.
 ## 1. Paths and control files
 
 - All research inputs, state, runs, and outputs live under `project/`.
-  `workflow/shared/storage.md` recommends a local working root alongside cloud
-  source materials and results; existing runs retain their recorded paths until
-  a verified transition, and an explicit decision to stay synced is respected.
+  `workflow/shared/storage.md` automatically pairs cloud project homes with a
+  persistent local working root; existing runs retain their recorded paths until
+  a verified transition, and explicit researcher preferences are respected.
   Imported copies and processing use that recorded active root. Verified exports to the recorded
   cloud destination are copies, not another authoritative state. For each
-  executing stage or utility with an open run, this shared contract additionally
-  declares `project/runs/<run_id>/storage/` for versioned export staging,
-  manifests, and receipts, even when its stage lists only `run_manifest.json`.
+  writable setup, stage, utility, or recovery, this shared contract additionally
+  declares `project/ELARA_STORAGE.json` in both roots and `project/storage/`
+  in the local root for selections, versioned snapshots, and attempt receipts.
+  These operational records allow retries without changing a closed run.
+  Historical records under `project/runs/<run_id>/storage/` remain unchanged.
   It also permits verified copies to the authorized cloud export folder. These
   narrow operational outputs cannot change stage inputs or research results.
 - Canonical prompts, wrappers, scripts, tests, and repository instructions are

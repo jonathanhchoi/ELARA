@@ -80,6 +80,10 @@ def check(root: Path, stage: str) -> dict:
         "latest_commit": None, "problems": [],
     }
     try:
+        if (root / "project/ELARA_STORAGE.json").exists():
+            from storage import status
+            root = Path(status(root)["working_root"])
+        result["working_root"] = str(root)
         if (re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", stage) is None
                 or not any((root / "workflow" / folder / (stage + ".md")).is_file()
                            for folder in ("stages", "utilities"))):
@@ -156,6 +160,7 @@ def prepare(root: Path, stage: str) -> dict:
     result = check(root, stage)
     if result["status"] != "update_available":
         return result
+    root = Path(result["working_root"])
     target = result["latest_commit"]
     args = argparse.Namespace(into=str(root), update=True, require_clean=True,
                               ref=target, source=None, dry_run=False, no_install=False,

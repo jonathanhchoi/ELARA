@@ -12,6 +12,8 @@ from workflow_lib import FrontmatterError, load_stages, repository_root, skill_n
 
 OBSERVATION_SKILL = "elr-code-observations"
 
+STORAGE_ROUTING = "First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.\n"
+
 # Manuscript stages also read the manuscript-editing contract and the active
 # publication profile. The profile is loaded only here, on demand, never from
 # AGENTS.md or CLAUDE.md, so style rules stay out of coding and analysis runs.
@@ -101,8 +103,7 @@ description: {json.dumps(description)}
 
 # Run {name}
 
-Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
-Require `ready: true` before execution; use its read-only planning exception when applicable.
+{STORAGE_ROUTING}Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`; require `ready: true` before execution, respecting its read-only planning exception.
 Automatically install verified compatible updates when writes are authorized; unavailable GitHub uses freshly verified installed bytes.
 Investigate conflicts; a declined specific change remains binding. Preserve existing run software and scientific bindings.
 
@@ -141,7 +142,7 @@ description: {json.dumps(spec["description"])}
 
 # Run {name}
 
-Before starting this utility, follow `workflow/shared/kit-updates.md` and run
+{STORAGE_ROUTING}Before starting this utility, follow `workflow/shared/kit-updates.md` and run
 `scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution; use the update contract's limited
 read-only planning exception when applicable;
 apply verified compatible updates automatically when writes are authorized; use
@@ -194,7 +195,7 @@ description: "Start a new project, adopt an existing one, show the menu of tools
 
 # Route the empirical legal research workflow
 
-Before any new stage or tool starts (including automatic transitions and recovery
+{STORAGE_ROUTING}Before any new stage or tool starts (including automatic transitions and recovery
 runs), follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
 Require `ready: true` before execution; use the update contract's limited
 read-only planning exception when applicable; apply verified compatible updates automatically and use
@@ -282,8 +283,7 @@ description: "Run empirical legal research coding or audit assignments in parall
 
 # Code observations with isolated subagents
 
-The parent must satisfy `workflow/shared/kit-updates.md` with
-`scripts/check_update.py` and `ready: true` before a new stage run begins.
+{STORAGE_ROUTING}The parent must satisfy `workflow/shared/kit-updates.md` with `scripts/check_update.py` and `ready: true` before a new stage run begins.
 Use compatible automatic updates and verified installed fallback; a declined
 specific change remains binding. Within an existing run, preserve the
 recorded software; do not repeat update checks per worker, batch, or retry.

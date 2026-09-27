@@ -5,10 +5,11 @@ instructions and canonical prompts live outside `project/`; research stages may
 read those files but write only their declared outputs here, plus verified
 exports to an authorized cloud destination under `workflow/shared/storage.md`.
 
-If you use cloud storage, the charter records a local working folder and where
-the assistant copies results back. Open the local folder to resume. Your source
-materials stay where they are; saved cloud snapshots identify the active local
-copy and are not separate running projects.
+Keep opening your original project folder to resume. For cloud projects, ELARA
+handles local processing and copies verified results to `ELARA_Results/` there
+at checkpoints. Your source materials stay where they are. ELARA records the
+active local folder so later sessions continue the same project; saved cloud
+snapshots are archival copies, not separate running projects.
 
 ## Start
 

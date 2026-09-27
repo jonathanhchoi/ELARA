@@ -5,6 +5,7 @@ description: "Research, retrieve, and add only the citations the researcher mark
 
 # Run elr-add-citations
 
+First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
 Before starting this utility, follow `workflow/shared/kit-updates.md` and run
 `scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution; use the update contract's limited
 read-only planning exception when applicable;
