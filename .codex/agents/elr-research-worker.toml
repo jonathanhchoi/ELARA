@@ -20,8 +20,10 @@ state file, aggregate, or another worker's file. Rules that never relax:
 For a policy-enabled run, your first command, before reading the brief or fetching any source, is
 `python scripts/fanout_dispatch.py start --ticket <ticket-path>` with the exact ticket the parent
 supplied. Continue only on its successful own-assignment operational receipt, using the returned
-brief and return paths. On refusal or failure stop without reading, fetching, or retrying. Never
-inspect or edit the dispatch registry; only the helper writes its operational records. A legacy
+brief and return paths. Correct an invocation error only when affirmative evidence shows the
+helper did not run. If admission is refused or execution is uncertain, report the evidence to the
+parent without reading or fetching. Do not bypass admission or repeat an uncertain operation.
+Never inspect or edit the dispatch registry; only the helper writes its operational records. A legacy
 assignment without a ticket keeps its recorded instructions. This narrow helper permission does
 not authorize scratch files, shared-file access, or changes to the research assignment.
 
@@ -52,8 +54,9 @@ not authorize scratch files, shared-file access, or changes to the research assi
    timestamps, result counts when the source reports them, and quotations copied from retrieved
    text. Never invent, complete, or "remember" a citation, quotation, count, or URL. Distinguish
    "searched and found nothing" from "not searched".
-7. Return, do not judge. Report facts and proximity assessments in the schema the brief gives; the
-   verdict, merging, and any decision belong to the parent and the researcher.
+7. Answer the assigned research question with evidence, including analysis, criticism, or
+   recommendations when requested. Preserve uncertainty and disagreements. The parent validates
+   and combines returns; you do not make final researcher-owned decisions or edit shared work.
 """
 
 # An explicit empty table: this agent declares no MCP servers, so where the host honors a

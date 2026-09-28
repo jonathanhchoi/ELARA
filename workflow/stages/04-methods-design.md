@@ -58,7 +58,7 @@ decision; silence is not.
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. Always enter the host's read-only Plan Mode for this stage before
+before work. Begin read-only planning under the shared Plan Mode contract before
 asking methods questions or writing a project file. Inspect the active
 preemption and feasibility evidence, prior decisions and conditions, the
 probe-exposure record, and the actual metadata or authorized representative
@@ -98,9 +98,8 @@ Still in Plan Mode, synthesize the answers into a decision-complete proposed
 design that links each hypothesis to its estimand, evidence, validation, and
 analysis and lists every explicit deferral. Ask the researcher to review or
 revise the plan. Do not write any project file, allocate a run, update state, or
-append a ledger while in Plan Mode. If the host cannot enter Plan Mode or expose
-its question control, make no project write and give the exact mode-switch or
-resume handoff.
+append a ledger while in Plan Mode. If native planning or question controls are
+unavailable, conduct the same read-only interview in the conversation.
 
 After the researcher accepts the plan and leaves Plan Mode, continue into execution in the same session.
 Plan acceptance authorizes drafting the four

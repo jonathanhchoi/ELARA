@@ -236,8 +236,6 @@ def validate_stage(
         errors.append(f"{path}: stage must route through AGENTS.md and PROJECT_STATE.md")
     if "workflow/shared/execution-control.md" not in body:
         errors.append(f"{path}: stage must route through the native plan/goal contract")
-    if meta["long_running"] is True and "<goal_condition>" not in body:
-        errors.append(f"{path}: long_running stage must document its new-goal activation handoff")
     return errors
 
 

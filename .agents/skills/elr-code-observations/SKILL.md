@@ -27,10 +27,10 @@ recorded software; do not repeat update checks per worker, batch, or retry.
 5. Run the fan-out through the host's orchestrator as the shared contract directs — never one
    hand-launched worker at a time and never an all-tools agent. On this host that means
    the kit's `elr_worker` custom sub-agents (`.codex/agents/`), spawned by name in non-forked contexts, one per
-   pending assignment in a bounded rolling pool under an equivalent authorized goal. Close
+   pending assignment in a bounded rolling pool under the stage completion contract. Close
    terminal handles when supported; otherwise verify automatic slot release and available
    active-worker capacity before each fresh spawn. Never reuse a terminal worker context.
-   Use the documented foreground fallback if goals are unavailable; never code units in your own context.
-6. The parent keeps the one stage goal and native plan; workers never create either. Validate
+   Use foreground execution without a covering authorized goal; never code units in your own context.
+6. The parent keeps the completion contract and plan; workers never create either. Validate
    returns and confirm completed slots are released individually; update the plan and ledgers serially at checkpoints. Resume from
    files, preserve every attempt, expose only operational progress, and reconcile before merging.

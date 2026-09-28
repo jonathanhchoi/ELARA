@@ -57,32 +57,21 @@ Status, help, and menu-only requests remain read-only and need no check.
    its own skill — is authorized even when it is not current: satisfy its
    prerequisites through Stage 00's adoption path first (import what exists,
    record researcher-asserted approvals, note the limitations), then run it.
-6. Give every nontrivial stage or utility one native host plan derived from its
-   canonical file, keep exactly one item in progress, and update it only when
-   the declared evidence exists. Treat `interaction_profile` as a handoff, not
-   an automatic permission switch: `normal` is interactive; `plan` produces no
-   file changes; `execute` runs the tracked execution; `plan_then_execute`
-   completes its tracked read-only plan phase before any write and continues in
-   the same session unless a §11 stop applies. At the boundaries declared in
-   `workflow/shared/execution-control.md`, Stages 01, 04, 05, 07, 08, 09, and
-   17 enter Plan Mode and use the host's native structured-question control for
-   researcher decisions. Stages 18 and 20 always enter Plan Mode because their
-   plan is the manuscript-edit gate. Each interview has a separately stated
-   execution effect; accepting a host plan never silently approves a later
-   research gate or external action.
-   A stage marked `long_running: true` uses its front-matter `goal_condition`
-   as the completion contract. Resume an existing goal that covers the same
-   authorized work and evidence, even if worded differently. Never replace an
-   unrelated goal. If goal features are unavailable, use the documented
-   foreground-execution fallback with durable checkpoints. Claude
-   Code tracks work with its Task tools and Codex with `update_plan`; both hosts
-   use `/goal` for the durable stage loop. See
-   `workflow/shared/execution-control.md`.
+6. Keep a short plan for nontrivial work under
+   `workflow/shared/execution-control.md`. Use native planning and question
+   controls when available, with the shared conversational fallback otherwise.
+   Stages 01, 04, 05, 07, 08, 09, and 17 hold decision interviews at their
+   declared boundaries; Stages 18 and 20 obtain manuscript-edit permission.
+   Preserve each interview's read-only scope and stated execution effect.
+   A stage's `goal_condition` defines completion with or without a host goal.
+   Reuse a covering authorized goal when present; otherwise keep working in
+   the foreground with durable checkpoints. Never require goal activation to
+   continue authorized work or replace an unrelated goal.
 7. Every fan-out on either host runs through the host's own orchestrator:
    Claude Code runs the kit's saved dynamic workflows in `.claude/workflows/`,
    which the assistant launches itself; Codex spawns the kit's custom
-   sub-agents in `.codex/agents/` in a bounded rolling pool. The stage goal stays with
-   the parent through serial validation, checkpoints, and reconciliation. See
+   sub-agents in `.codex/agents/` in a bounded rolling pool. The parent remains
+   responsible through serial validation, checkpoints, and reconciliation. See
    `workflow/shared/observation-fanout.md`.
 8. When a stage finishes and no gate or input is pending, do not stop silently
    and do not wait: summarize in a few plain-language lines what was produced
@@ -92,11 +81,13 @@ Status, help, and menu-only requests remain read-only and need no check.
    spend beyond the recorded budget, it acts outside the folder, or a
    `checkpoints` preference asks for a pause); in `specific tools` mode
    (`usage: tools`) offer the menu, which `resume` also reopens. Agreement to
-   continue is never approval of a gate; every gate is put to the researcher
-   separately. Neither usage mode relaxes a gate, an authorization requirement,
+   continue is never approval of an unseen artifact; ask only for unresolved
+   gate decisions after reconciling current instructions and recorded approvals. Neither usage mode relaxes a gate, an authorization requirement,
    or audit separation.
-9. Be low-touch. Interrupt the researcher only for a real gating issue: the
-   stop conditions in `workflow/shared/guardrails.md` §11 are the complete list.
+9. Be low-touch. Carry authorized work through to completion, including its
+   delegation, verification, follow-up investigation, and routine recovery. Use
+   judgment within the agreed scope and resources. Interrupt only for an
+   unresolved researcher decision under `workflow/shared/guardrails.md` §11.
    Every other choice takes the sensible default, is recorded as a provisional
    `assistant-default` decision, and is presented at the next gate for the
    researcher to keep or change. During the Stage 11 coding run, individual
@@ -113,7 +104,7 @@ Status, help, and menu-only requests remain read-only and need no check.
     never silently change models, reasoning settings, subscriptions, or a
     frozen research instrument. Read-only requests remain read-only.
 
-For Stage 11 interruptions and handoffs, follow
+For interruptions and handoffs in any stage, follow
 `workflow/shared/operational-recovery.md`: classify infrastructure failures
 separately from failed units, use existing scoped recovery authority, and verify
 the actual failed operation before calling a restart ready. Process liveness is

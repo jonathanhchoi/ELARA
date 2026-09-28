@@ -21,9 +21,9 @@ pending copies without waiting for cloud uploads between individual operations.
 Existing prepared runs keep their recorded paths until a verified transition.
 
 Except for a one-step `help`, `menu`, or status response, begin every stage or
-utility by creating a short plan in the host's native tracker. Derive it from
-the canonical file rather than inventing a second workflow. Use four to seven
-verifiable items covering, as applicable:
+utility by creating a short plan in the host's native tracker when available,
+or in the conversation otherwise. Derive verifiable items from the canonical
+file, covering as applicable:
 
 1. prerequisite and authorization checks;
 2. the read-only design or plan phase;
@@ -55,6 +55,12 @@ list, discard stale items, and rebuild or update it to match the files. Never
 infer completion from a tracker left by an earlier session.
 
 ## Plan profiles and Plan Mode
+
+Throughout the kit, Plan Mode means a read-only planning and decision phase.
+Use the host's Plan Mode and structured questions when available and permitted;
+otherwise conduct the same interview in the conversation without project writes.
+The researcher's approval, not an interface transition, authorizes execution.
+Honor explicit plan-only requests and host-enforced restrictions in either case.
 
 `interaction_profile` determines how the native plan is used:
 
@@ -106,10 +112,9 @@ Write no project file, state entry, ledger row, run record, code, or revised
 research output while the interview is active. Files created before a mid-stage
 interview remain unchanged. Plan acceptance authorizes only the execution that
 the stage names below. It never by itself approves a separately named artifact
-gate, authorizes an external submission, or changes a frozen design. If the host
-cannot enter Plan Mode or expose its question control, stop at the interview
-boundary without the affected write and give the exact mode-switch or resume
-handoff.
+gate, authorizes an external submission, or changes a frozen design. Missing
+planning or question controls use the read-only conversational fallback above;
+do not ask the researcher to activate an interface merely to continue the interview.
 
 #### Stage 01 profile and shortlist interviews
 
@@ -118,8 +123,8 @@ First, inspect the researcher's supplied work and infer an interest profile
 before any Stage 01 project write. Ask only about disputed or unsupported
 inferences, substantive constraints, and whether a claimed future-work item may
 be reconsidered. Acceptance authorizes writing the confirmed profile and
-running the landmark, brainstorming, and preliminary novelty review; activate
-the Stage 01 goal before that execution begins.
+running the landmark, brainstorming, and preliminary novelty review under the
+Stage 01 completion contract.
 
 After the verified shortlist exists, re-enter Plan Mode to compare the
 candidates. Explain each candidate's contribution, either-way payoff, fit,
@@ -127,7 +132,7 @@ closest literature, access route, principal risk, and realistic combinations or
 redirections. An express answer selecting a candidate against the exact report
 is the `project-selection` decision; accepting a generic host plan is not. If a
 redirection or combination needs new research, leave Plan Mode, complete and
-verify it under the same stage goal, then return with a new report version for
+verify it under the same stage contract, then return with a new report version for
 selection.
 
 #### Stage 04 methods-design interview
@@ -173,7 +178,7 @@ final `codebook-schema-approval`. Do not create a provisional
 
 #### Stage 07 critique-disposition interview
 
-Run the independent critiques first under the active Stage 07 goal. Preserve
+Run the independent critiques first under the Stage 07 completion contract. Preserve
 their reports, build the issue matrix, and draft evidence-based disposition
 recommendations without revising the shared design or codebook. Then enter Plan
 Mode. Group duplicate issues but preserve disagreements among critics. For each
@@ -200,7 +205,7 @@ model route; and spending and time limits.
 
 The proposal fixes the sample, thresholds, commands, checks, review sequence,
 and cost ceiling. Acceptance authorizes building and running that fixed pilot
-after the Stage 08 goal or foreground-fallback requirements are satisfied; it is not `pilot-acceptance` and cannot
+under the Stage 08 completion contract; it is not `pilot-acceptance` and cannot
 authorize a mid-pilot reinterpretation.
 
 #### Stage 09 preregistration-setup interview
@@ -234,46 +239,31 @@ that versioned skeleton. It is not the later `skeleton-draft-approval`. An
 express skip answer is the gate decision, but record it only after leaving Plan
 Mode.
 
-## Long-running stages use one goal
+## Long-running stages keep a completion contract
 
 Every canonical stage with `long_running: true` has a nonempty
 `goal_condition` in front matter. That condition is the exact, testable contract
 for one stage. It states the work, the evidence that proves success, the scope
 that must not change, and the gate or failure condition that ends the run.
 
-Before the first execution write or external call in a long-running stage:
+Host goals are optional persistence support. Reuse an authorized goal covering
+the same work; wording need not match verbatim. Create or activate one only when
+the researcher requests it and host policy permits. Never replace an unrelated
+active goal or resume a researcher-requested pause.
 
-1. Inspect goal status. Resume an existing goal whose authorized scope covers
-   this stage's work and completion evidence; wording need not match verbatim.
-   Record how the stage contract is covered. A broader user-requested goal is
-   not unrelated merely because it also includes operational repairs. Do not
-   invent a pipeline-wide goal or replace, clear, or combine an unrelated goal.
-   A genuinely unrelated unfinished goal requires the researcher's choice.
-2. If no goal is active and the host exposes the feature, provide exactly
-   `/goal <goal_condition>` and stop so the researcher can activate the host's
-   durable loop. A stage or skill invocation is not itself permission to create
-   a goal. Do not imitate Goal mode with repeated ordinary turns. If the feature
-   is unavailable, disabled, or fails, use the foreground fallback below rather
-   than repeating an impossible activation request.
-3. Under the active goal, keep the native stage plan current and surface compact
-   checkpoint reports: current item, verified evidence, exact remaining count,
-   elapsed time, a revised ETA range with its basis, and any blocker. Persist
-   the corresponding run checkpoint before reporting it.
-4. A goal is complete only when its stated evidence has been surfaced and the
-   canonical state transition or section 11 stop has been recorded. Do not mark
-   it complete because a turn, wave, or command ended.
+Without a covering goal, continue authorized work in the foreground with the
+same plan, completion condition, and durable checkpoints. Do not stop to request
+`/goal <goal_condition>`, imitate a durable background loop, or promise execution
+after the session ends. If interrupted, leave a checkpoint that the next session
+can reconcile. This foreground fallback also applies when goals are available
+but have not been activated.
 
-When requesting a new goal, use one per stage, never create one for the whole
-pipeline or per worker. Existing equivalent user goals remain valid. The host's
-workflow or sub-agent orchestrator owns fan-out; the
-stage goal keeps the parent working through plan items, worker completions, serial
-validation, and final reconciliation. A bounded stage (`long_running: false`)
-uses the native plan but does not start a goal.
-
-If the host does not expose goals, goals are disabled by policy, or the feature
-fails, record that fact in the run manifest and use normal approved execution
-with the same native plan and durable on-disk checkpoints. Unavailability is a
-fallback, not a reason to weaken the completion condition.
+The parent remains responsible through worker completion, serial validation,
+and final reconciliation. Report verified counts, remaining work, elapsed time,
+a revised ETA range with its basis, and blockers at checkpoints. Mark work complete only when its required evidence
+exists; a turn, worker, or command ending does not establish completion. When a
+goal is active, follow the host's rules for its status as well as the research
+record. Workers never create goals or change the parent's goal.
 
 ## Codex adapter
 
@@ -283,11 +273,11 @@ fallback, not a reason to weaken the completion condition.
   and 20, and every Stage 01, 04, 05, 07, 08, 09, and 17 interview boundary
   described above. Use `request_user_input` for those decision interviews. The
   plan tracker by itself does not make a session read-only.
-- For a researcher-activated goal, inspect it with `get_goal`; create it with
-  the front-matter condition only when the researcher explicitly invokes
-  `/goal`; and use `update_goal` only when the canonical completion or blocked
-  rule is actually satisfied. Never replace another active goal.
-- During a Codex fan-out, the active stage goal remains with the parent while
+- For a researcher-requested goal, inspect it with `get_goal`; create it with
+  the front-matter condition when host policy permits. Use `update_goal` only
+  when the host's completion or blocked rule is actually satisfied. Never
+  replace another active goal.
+- During a Codex fan-out, the parent retains the plan and any active goal while
   the named `elr_worker` or `elr_research_worker` sub-agents handle individual
   assignments in a bounded rolling pool under `workflow/shared/observation-fanout.md`.
 
@@ -303,11 +293,11 @@ fallback, not a reason to weaken the completion condition.
   acceptance has only the stage-specific effect stated above.
 - A researcher activates a goal with `/goal`; reuse one covering the stage
   contract regardless of wording. Check it with `/goal`, use the documented
-  fallback when unavailable, never replace an unrelated active goal, and remember that its
+  foreground fallback without a covering goal, never replace an unrelated active goal, and remember that its
   evaluator can see only evidence surfaced in the conversation. Therefore every
   checkpoint and final turn states the verification result and exact counts,
   not merely "done."
-- During a Claude fan-out, the active stage goal remains with the parent while
+- During a Claude fan-out, the parent retains the plan and any active goal while
   the saved `elr-observation-fanout` or `elr-research-fanout` workflow runs the
   restricted workers under `workflow/shared/observation-fanout.md`.
 
@@ -321,6 +311,6 @@ An explicitly paused task must not continue an earlier production goal.
 
 Before returning control, reconcile the native plan against disk and report:
 the completed or blocked plan item; files or commands that prove it; exact
-counts where applicable; the active goal's outcome for a long stage; the state
+counts where applicable; the goal's outcome if one is active; the state
 transition; and the next gate or task. This report helps the host goal evaluator
 without becoming a substitute for the durable record.

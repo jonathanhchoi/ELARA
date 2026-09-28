@@ -95,8 +95,9 @@ phase('Discover')
 let discovered
 try {
   discovered = await agent(
-  `Read workflow/shared/observation-fanout.md (the section "Research fan-outs"). Run the following command exactly ONCE, copying every identifier literally. Do not retry or correct
-an already issued command; if it fails or differs from the requested command, report discovery failure.
+  `Read workflow/shared/observation-fanout.md (the section "Research fan-outs"). Run the following command with the supplied identifiers. Correct an invocation error only when
+affirmative evidence shows the helper did not run. Otherwise report failure for parent reconciliation;
+do not repeat an operation with an uncertain outcome.
 python scripts/fanout_dispatch.py open-session${dispatchFlags}
 Return its operational JSON unchanged when mode is continuous. Never record a launch during discovery
 for a continuous run. The parent supplies a stable owner; never invent one, migrate a legacy run, or
@@ -223,7 +224,8 @@ operational summary (counts, gaps, time) — no findings.`
 const ticketPrompt = item => `Your FIRST operation, before reading any brief or retrieving a source, must be:
 python scripts/fanout_dispatch.py start --ticket ${shellArg(item.ticket_path)}
 Continue only if this command reports status started for assignment ${item.assignment_id}, attempt ${item.attempt}.
-If it denies the claim, reports an existing invocation, or fails, stop without performing the assignment.
+Correct an invocation error only when affirmative evidence shows the helper did not run. On refused
+admission or uncertain execution, report the evidence to the parent without performing the assignment.
 Never substitute another ticket or attempt. The helper owns operational writes; do not write those files.
 
 ${workerPrompt(item)}

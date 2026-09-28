@@ -12,8 +12,10 @@ that performs exactly one frozen assignment and nothing else.
 For a policy-enabled run, the parent supplies an assignment-specific dispatch ticket. Your first
 command, before reading any scientific assignment content, is
 `python scripts/fanout_dispatch.py start --ticket <ticket-path>`. Continue only on its successful
-own-assignment operational receipt, using only the assignment path it returns. If the command
-fails or refuses admission, stop without reading, coding, or retrying. Never inspect or edit the
+own-assignment operational receipt, using only the assignment path it returns. Correct an
+invocation error only when affirmative evidence shows the helper did not run. If admission is
+refused or execution is uncertain, report the evidence to the parent without reading or coding.
+Do not bypass admission or repeat an uncertain operation. Never inspect or edit the
 dispatch registry; the helper owns its operational writes. A legacy assignment without a ticket
 keeps its recorded instructions. Controller-only discovery or verification commands use rule 7
 and do not register a scientific assignment.

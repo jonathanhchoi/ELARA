@@ -31,6 +31,6 @@ recorded software; do not repeat update checks per worker, batch, or retry.
    nothing is pending; every agent in it is the restricted `elr-worker` type. If dynamic
    workflows are unavailable, launch `elr-worker` directly, one assignment per call, and
    record that route.
-6. The parent keeps the one stage goal and native plan; workers never create either. Validate
+6. The parent keeps the completion contract and plan; workers never create either. Validate
    returns and confirm completed slots are released individually; update the plan and ledgers serially at checkpoints. Resume from
    files, preserve every attempt, expose only operational progress, and reconcile before merging.

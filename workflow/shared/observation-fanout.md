@@ -37,9 +37,9 @@ never serial work in the parent context and never an all-tools default agent:
   assignment, with completed slots refilled individually using the host's own sub-agent tools
   (spawn, wait, and explicit close when offered; otherwise verified automatic release on native
   terminal completion; a CSV batch
-  fan-out tool when the host offers one that can run the kit's restricted agents). The one parent
-  stage goal supplies persistence and the native stage plan records progress; sub-agents supply
-  parallelism. See `workflow/shared/execution-control.md`.
+  fan-out tool when the host offers one that can run the kit's restricted agents). The parent
+  keeps the stage plan and completion contract; sub-agents supply parallelism.
+  See `workflow/shared/execution-control.md`.
 - **Either host**: the kit's controllers (`scripts/unit_fanout.py`, `scripts/research_fanout.py`)
   fix the manifest on disk, say what is pending, validate returns, bound attempts, and merge — the
   same scientific files whichever host ran the assignments. Resume evidence is the files under the run directory, so
@@ -99,8 +99,10 @@ scientific assignment content. A successful response contains only its own
 assignment identity and paths. After the canonical return exists, it runs
 `python scripts/fanout_dispatch.py finish --ticket <ticket-path>`; coding submit
 may already have recorded this return. These helper-mediated writes are narrowly
-permitted, never permission to read or edit the scheduler registry. A failed or
-refused start ends that worker without reading, coding, fetching, or retrying.
+permitted, never permission to read or edit the scheduler registry. Correct an
+invocation error only when affirmative evidence shows the helper did not run.
+Refused admission or uncertain execution returns to the parent for reconciliation,
+without reading, coding, or fetching. Preserve every failed invocation.
 Controller-only discovery and verification agents do not start scientific tickets.
 The parent performs full controller integrity checks at dispatch-session and validation
 boundaries. Each worker guard rehashes the ticket's common manifest, seal, specification,
@@ -269,6 +271,16 @@ mid-write; relaunched identically, it did the same thing again.
 
 ## Research fan-outs
 
+Within the authorized research objective and resources, the parent chooses the
+decomposition and follows evidence with additional searches, analyses, or checks.
+Freeze each dispatched brief so its work is reproducible; that does not freeze
+the whole investigation. Preserve prior returns and use new versioned assignments
+for follow-up work. Do not rerun a completed judgment merely to obtain a preferred
+answer, expose independent reviewers to one another's findings, or change a frozen
+measurement instrument without its required amendment. Research workers may
+reason, critique, and recommend within their brief; researcher-owned decisions
+remain with the researcher.
+
 A research fan-out is a directory under the stage's run directory (for example
 `project/sources/preemption/<run_id>/fanout/queries_w1/`; one directory per wave or kind), laid out
 and sealed by `scripts/research_fanout.py`:
@@ -386,12 +398,11 @@ Codex runs the fan-out as the kit's custom sub-agents (`.codex/agents/`), spawne
 parent session with the host's own sub-agent tools; the parent never processes assignments in its
 own context and never launches a general-purpose or `default` sub-agent for kit work.
 
-1. The parent uses an authorized goal covering the canonical stage's completion contract and native
-   plan under `workflow/shared/execution-control.md`, including its equivalent-goal and
-   foreground-fallback rules. If goal activation is available but no covering goal is active, return to the
-   stage handoff and give `/goal <goal_condition>`; do not create a narrower fan-out goal. The
-   stage goal covers all assignments, serial validation, merge, and final verification. Workers never
-   create goals or plans.
+1. The parent owns the stage's completion contract and plan under
+   `workflow/shared/execution-control.md`, using a covering authorized goal when
+   present and foreground execution otherwise. Do not create a narrower fan-out
+   goal. Workers never create goals or plans. The parent completes serial
+   validation, merge, and final verification after collecting the workers.
 2. For a policy-enabled run, open a session with
    `python scripts/fanout_dispatch.py open-session --run-dir <run-dir> --kind coding|research
    --owner <native-session-id> --host codex --capacity <available-worker-slots>` and the recorded
@@ -421,10 +432,12 @@ own context and never launches a general-purpose or `default` sub-agent for kit 
    (recorded throttling may still reduce the next target). The helper checks actual eligible
    backlog, clean reconciliation count, capacity, and cooldown; the next session uses its stored target. Reconcile native evidence with `--host-evidence`
    when needed: a JSON list of objects containing `ticket_id`, `status` (`completed`,
-   `never_started`, or `unknown`), and `evidence_sha256`. `never_started` requires positive exact
-   evidence and no accepted or started record; it is never inferred from a missing return.
-   Use `--stop-admissions` when a native call fails or has an ambiguous outcome. Correct rejected
-   calls and reconcile stops under `operational-recovery.md`; do not allocate scientific retries
+   `never_started`, `startup_failed`, or `unknown`), and `evidence_sha256`.
+   `never_started` requires positive nonacceptance evidence. `startup_failed` requires
+   affirmative native termination evidence before admission or scientific-input access,
+   with no start marker or return; it preserves the accepted launch. Neither is inferred
+   from missing files. Follow `operational-recovery.md` to recover within existing authority;
+   stop admissions while execution status is unresolved. Do not allocate scientific retries
    in the scheduler. If open reports `mode: legacy`, keep the run's original bounded-wave route
    unless the researcher explicitly adopts a reviewed migration. Each coding worker uses the
    controller's `submit`, never direct return-path writes. Never reuse a context for another unit.

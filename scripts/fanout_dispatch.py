@@ -27,7 +27,8 @@ DEFAULT_TARGET = 6
 DEFAULT_MAXIMUM = 12
 HASH = re.compile(r"[0-9a-f]{64}\Z")
 ACTIVE_STATES = {"intent", "acknowledged", "started"}
-FINAL_STATES = {"reconciled", "never_started"}
+UNEXECUTED_STATES = {"never_started", "startup_failed"}
+FINAL_STATES = {"reconciled", *UNEXECUTED_STATES}
 
 
 class DispatchError(ValueError):
@@ -396,13 +397,14 @@ def _ticket_view(row):
 
 def _session_view(db, session, *, include_tickets=True):
     rows = db.execute("SELECT * FROM tickets WHERE session_id=? ORDER BY position", (session["id"],)).fetchall()
-    counts = {name: sum(row["state"] == name for row in rows) for name in {"planned", *ACTIVE_STATES, "returned", "reconciled", "never_started", "unknown"}}
+    counts = {name: sum(row["state"] == name for row in rows) for name in {"planned", *ACTIVE_STATES, "returned", *FINAL_STATES, "unknown"}}
     active = sum(counts[state] for state in ACTIVE_STATES)
     result = {"mode": "continuous", "schema_version": VERSION, "session_id": session["id"],
               "owner": session["owner"], "state": session["state"], "target": session["target"],
               "maximum": session["maximum"], "queued": counts["planned"], "active": active,
               "unknown": counts["unknown"], "returned": counts["returned"],
               "reconciled": counts["reconciled"], "never_started": counts["never_started"],
+              "startup_failed": counts["startup_failed"],
               "admission_stopped": session["state"] != "active", "can_close": all(row["state"] in FINAL_STATES for row in rows),
               "payload_values_included": False}
     result["metrics"] = _metrics(db, session)
@@ -457,8 +459,8 @@ def open_session(run_dir, *, kind, owner=None, host, capacity=DEFAULT_TARGET, co
         for position, item in enumerate(selected):
             assignment_id, attempt = item["assignment_id"], int(item["attempt"])
             previous = db.execute("SELECT state FROM tickets WHERE assignment_id=? AND attempt=?", (assignment_id, attempt)).fetchall()
-            require(all(row[0] == "never_started" for row in previous), "attempt_already_reserved")
-            require(all(state == "never_started" for state in historical_attempts.get((assignment_id, attempt), [])), "attempt_already_reserved")
+            require(all(row[0] in UNEXECUTED_STATES for row in previous), "attempt_already_reserved")
+            require(all(state in UNEXECUTED_STATES for state in historical_attempts.get((assignment_id, attempt), [])), "attempt_already_reserved")
             ticket_id = uuid.uuid4().hex
             ticket_path = _directory(run_dir) / "tickets" / session_id / (ticket_id + ".json")
             value = {"schema_version": VERSION, "run_dir": str(run_dir), "session_id": session_id,
@@ -712,7 +714,13 @@ def inspect(run_dir):
 
 
 def reconcile(run_dir, owner, *, outcomes=None, throttled=False, stop_admissions=False, retry_after_seconds=None):
-    """Parent-only reconciliation; host receipt hashes are references, not inferred facts."""
+    """Parent-only reconciliation; host receipt hashes are references, not inferred facts.
+
+    startup_failed requires affirmative native evidence that the worker terminated
+    without successful admission or scientific-input access. The parent
+    verifies that evidence; absence of a marker or return alone is insufficient.
+    An accepted launch remains in history and does not become never_started.
+    """
     outcomes = [] if outcomes is None else outcomes
     require(isinstance(outcomes, list), "invalid_host_evidence")
     require(retry_after_seconds is None or throttled and type(retry_after_seconds) is int and retry_after_seconds >= 0,
@@ -727,7 +735,7 @@ def reconcile(run_dir, owner, *, outcomes=None, throttled=False, stop_admissions
         evidence = {}
         for item in outcomes:
             require(isinstance(item, dict) and set(item) == {"ticket_id", "status", "evidence_sha256"}, "invalid_host_evidence")
-            require(item["ticket_id"] in known and item["ticket_id"] not in evidence and item["status"] in {"completed", "never_started", "unknown"}
+            require(item["ticket_id"] in known and item["ticket_id"] not in evidence and item["status"] in {"completed", *UNEXECUTED_STATES, "unknown"}
                     and isinstance(item["evidence_sha256"], str) and HASH.fullmatch(item["evidence_sha256"]), "invalid_host_evidence")
             evidence[item["ticket_id"]] = item
         clean = True
@@ -738,6 +746,19 @@ def reconcile(run_dir, owner, *, outcomes=None, throttled=False, stop_admissions
             require(_digest(row["path"]) == row["sha256"], "dispatch_ticket_changed")
             started_path = _marker_path(run_dir, row["id"], "started")
             host = evidence.get(row["id"])
+            if host and host["status"] == "startup_failed":
+                require(row["state"] in {"planned", "intent", "acknowledged", "unknown"}
+                        and not started_path.exists() and not Path(value["return_path"]).exists(),
+                        "startup_failure_conflicts_with_execution")
+                for event in db.execute("SELECT event FROM events"):
+                    event = json.loads(event[0])
+                    require(not (event.get("ticket_id") == row["id"] and event["kind"] == "worker_started"),
+                            "startup_failure_conflicts_with_execution")
+                db.execute("UPDATE tickets SET state='startup_failed',evidence=? WHERE id=?",
+                           (host["evidence_sha256"], row["id"]))
+                _event(db, "native_startup_failure_verified", ticket_id=row["id"], evidence_sha256=host["evidence_sha256"])
+                clean = False
+                continue
             if host and host["status"] == "never_started":
                 require(row["state"] in {"planned", "intent", "unknown"} and not started_path.exists()
                         and not Path(value["return_path"]).exists(), "accepted_attempt_cannot_be_unstarted")

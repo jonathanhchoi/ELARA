@@ -117,11 +117,11 @@ Investigate conflicts; a declined specific change remains binding. Preserve exis
    Stage 00's adoption path, then run it; otherwise stop.
 4. Create or reconcile the host-native stage plan before work and update it at every phase
    boundary as required; {tracker}
-5. Honor the mode handoff. For `long_running: true`, resume a goal covering the same
-   authorized work, even if worded differently; otherwise give `/goal <goal_condition>`
-   when goal activation is available. Use the documented foreground fallback if it is
-   unavailable; never replace an unrelated active goal.
-   Otherwise work low-touch under `workflow/shared/guardrails.md` section 11.
+5. Honor the read-only planning and approval boundaries, using the shared conversational
+   fallback if native planning or question controls are unavailable. For `long_running: true`,
+   reuse a covering authorized goal when present; otherwise continue foreground execution
+   with the same completion contract and durable checkpoints. Never require goal activation
+   or replace an unrelated active goal. Work low-touch under `workflow/shared/guardrails.md` section 11.
 6. Do not cross the stage's human gate; update state and append the run ledger only as the canonical stage directs.
    Summarize plainly and follow the usage mode (`usage` in `project/PROJECT_STATE.md`): continue into
    the next stage in `pipeline` mode unless a stop condition holds, or offer the menu in `specific tools` mode.
@@ -241,13 +241,14 @@ software. Help, tour, menu-only, and status need no check.
    read the canonical file named by `current_stage`, verify its prerequisites (imported
    artifacts and researcher-asserted approvals recorded at adoption satisfy them), and follow
    it. Create or reconcile the native stage plan before work.
-   For interrupted Stage 11 work, read `workflow/shared/operational-recovery.md`,
+   For interrupted work in any stage, read `workflow/shared/operational-recovery.md`,
    verify `run_checkpoint` when present, and reconcile current disk evidence.
    Never equate a live verifier with active coding or repeat an unchanged failure.
 {tracker}
-   For `long_running: true`, resume an equivalent goal covering the authorized work.
-   Otherwise give `/goal <goal_condition>` when activation is available; use the
-   foreground fallback when unavailable. Never replace an unrelated active goal.
+   For `long_running: true`, reuse a covering authorized goal when present; otherwise
+   continue foreground execution with the same completion contract and durable checkpoints.
+   Never require goal activation or replace an unrelated active goal. Use the shared
+   conversational fallback for unavailable planning and question controls.
 7. When a stage ends with no gate or input pending, reconcile the native plan, summarize
    plainly what was produced and
    what comes next, then in `pipeline` mode continue into the next stage in this session
@@ -271,10 +272,10 @@ def observation_skill_text(*, claude: bool) -> str:
     else:
         route = (
             "   the kit's `elr_worker` custom sub-agents (`.codex/agents/`), spawned by name in non-forked contexts, one per\n"
-            "   pending assignment in a bounded rolling pool under an equivalent authorized goal. Close\n"
+            "   pending assignment in a bounded rolling pool under the stage completion contract. Close\n"
             "   terminal handles when supported; otherwise verify automatic slot release and available\n"
             "   active-worker capacity before each fresh spawn. Never reuse a terminal worker context.\n"
-            "   Use the documented foreground fallback if goals are unavailable; never code units in your own context."
+            "   Use foreground execution without a covering authorized goal; never code units in your own context."
         )
     return f'''---
 name: "{OBSERVATION_SKILL}"
@@ -304,7 +305,7 @@ recorded software; do not repeat update checks per worker, batch, or retry.
 5. Run the fan-out through the host's orchestrator as the shared contract directs — never one
    hand-launched worker at a time and never an all-tools agent. On this host that means
 {route}
-6. The parent keeps the one stage goal and native plan; workers never create either. Validate
+6. The parent keeps the completion contract and plan; workers never create either. Validate
    returns and confirm completed slots are released individually; update the plan and ledgers serially at checkpoints. Resume from
    files, preserve every attempt, expose only operational progress, and reconcile before merging.
 '''

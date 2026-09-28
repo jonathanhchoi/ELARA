@@ -33,14 +33,11 @@ The researcher decides whether a recurring unsupported or ambiguous pattern reve
 
 ## Mode handoff
 
-Apply the equivalent-goal and host-unavailability fallback rules in
-`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
-
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. This is a long-running audit stage: the `goal_condition` recorded
-in the settings at the top of this file must be covered by the active goal before
-execution begins. If no covering goal is active and the host exposes goals, provide `/goal <goal_condition>` and stop. Do not run the audit in Plan
-Mode. The parent keeps the goal and plan current while the host orchestrator
+in the settings at the top of this file is the completion contract. Use a covering authorized goal when present;
+otherwise continue foreground execution with durable checkpoints. Do not run the audit in Plan
+Mode. The parent keeps the completion contract and plan current while the host orchestrator
 runs audit units under `workflow/shared/observation-fanout.md`: Codex spawns
 `elr_worker` sub-agents in a bounded rolling pool; Claude Code launches the saved
 `elr-observation-fanout` workflow until nothing is pending. If the orchestrator

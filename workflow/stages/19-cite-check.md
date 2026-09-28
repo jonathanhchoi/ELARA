@@ -33,20 +33,15 @@ The researcher decides which unavailable sources to supply, the governing citati
 
 ## Mode handoff
 
-Apply the equivalent-goal and host-unavailability fallback rules in
-`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
-
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. This is a long-running audit stage: the `goal_condition` recorded
-in the settings at the top of this file must be covered by the active goal before
-execution begins. If no covering goal is active and the host exposes goals, provide `/goal <goal_condition>` and stop. Do not use Plan Mode for the
-audit. The parent keeps the goal and plan current while claim-citation pairs run
+in the settings at the top of this file is the completion contract. Use a covering authorized goal when present;
+otherwise continue foreground execution with durable checkpoints. Do not use Plan Mode for the
+audit. The parent keeps the completion contract and plan current while claim-citation pairs run
 as parallel research assignments under `workflow/shared/observation-fanout.md`: one pair per
 brief, sealed by `scripts/research_fanout.py prepare`; Claude Code launches the
 saved `elr-research-fanout` workflow and Codex spawns `elr_research_worker`
-sub-agents in a bounded rolling pool. Never use hand-launched or all-tools workers. If
-goals are unavailable, record the fallback and use normal approved execution
-with the same completion condition and durable checkpoints.
+sub-agents in a bounded rolling pool. Never use hand-launched or all-tools workers.
 
 ## Work
 

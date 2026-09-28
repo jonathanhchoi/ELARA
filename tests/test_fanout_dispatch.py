@@ -294,6 +294,117 @@ class DispatchTests(unittest.TestCase):
         self.assertNotEqual(ticket["ticket_id"], another["tickets"][0]["ticket_id"])
         self.assertEqual(ticket["attempt"], another["tickets"][0]["attempt"])
 
+    def startup_failure(self, ticket):
+        # Reproduce a worker invocation failure before the real admission helper.
+        result = subprocess.run([sys.executable, str(self.root / "missing_helper.py")],
+                                capture_output=True, text=True, check=False)
+        self.assertNotEqual(result.returncode, 0)
+        receipt = self.root / (ticket["ticket_id"] + "-native-terminal.json")
+        receipt.write_text(json.dumps({"ticket_id": ticket["ticket_id"], "native_terminal": True,
+                                      "helper_executed": False, "scientific_inputs_read": False,
+                                      "exit_code": result.returncode, "stderr": result.stderr}))
+        return {"ticket_id": ticket["ticket_id"], "status": "startup_failed",
+                "evidence_sha256": hashlib.sha256(receipt.read_bytes()).hexdigest()}
+
+    def test_accepted_startup_failure_preserves_history_and_replaces_only_unexecuted_work(self):
+        self.coding(count=2)
+        session = self.open()
+        failed, sibling = session["tickets"]
+        assignment_before = Path(failed["assignment_path"]).read_bytes()
+        record_intent(failed["ticket_path"], session["owner"])
+        acknowledge(failed["ticket_path"], session["owner"], "a" * 64)
+        outcome = self.startup_failure(failed)
+        value = reconcile(self.run, session["owner"], outcomes=[outcome])
+        self.assertEqual(value["startup_failed"], 1)
+        self.assertEqual(value["never_started"], 0)
+        self.assertFalse(value["admission_stopped"])
+        with self.assertRaisesRegex(DispatchError, "attempt_already_started"):
+            start(failed["ticket_path"])
+        sibling_evidence = self.complete(sibling)
+        sibling_before = Path(sibling["return_path"]).read_bytes()
+        reconcile(self.run, session["owner"], outcomes=[sibling_evidence])
+        close_session(self.run, session["owner"])
+        replacement = self.open()["tickets"]
+        self.assertEqual(len(replacement), 1)
+        self.assertNotEqual(replacement[0]["ticket_id"], failed["ticket_id"])
+        self.assertEqual(replacement[0]["attempt"], failed["attempt"])
+        self.assertEqual(replacement[0]["assignment_id"], failed["assignment_id"])
+        self.assertEqual(Path(failed["assignment_path"]).read_bytes(), assignment_before)
+        self.assertEqual(Path(sibling["return_path"]).read_bytes(), sibling_before)
+        with self.assertRaises(DispatchError):
+            start(failed["ticket_path"])
+        history = list((dispatch._directory(self.run) / "segments").glob("*.json"))
+        self.assertEqual(len(history), 1)
+        archived = json.loads(history[0].read_text())
+        events = [json.loads(row["event"]) for row in archived["events"]]
+        kinds = {event["kind"] for event in events if event.get("ticket_id") == failed["ticket_id"]}
+        self.assertTrue({"launch_acknowledged", "native_startup_failure_verified"} <= kinds)
+        replacement_evidence = self.complete(replacement[0])
+        final = reconcile(self.run, session["owner"], outcomes=[replacement_evidence])
+        self.assertTrue(final["can_close"])
+
+    def test_research_startup_failure_does_not_consume_a_scientific_attempt(self):
+        self.research(count=1)
+        session = self.open(kind="research", host="claude")
+        ticket = session["tickets"][0]
+        # Claude's workflow calls runWorker without a separate intent or acceptance handle.
+        self.assertEqual(session["queued"], 1)
+        reconcile(self.run, session["owner"], outcomes=[self.startup_failure(ticket)])
+        self.assertEqual(research_status(self.run)["attempt_counts"]["attempted"], 0)
+        close_session(self.run, session["owner"])
+        replacement = self.open(kind="research", host="claude")["tickets"][0]
+        self.assertEqual(replacement["attempt"], 1)
+        start(replacement["ticket_path"])
+        self.assertEqual(research_status(self.run)["attempt_counts"]["attempted"], 1)
+        research_fixtures.ResearchFanoutTests.write_return(
+            Path(replacement["return_path"]), replacement["assignment_id"], 1, complete=True)
+        finish(replacement["ticket_path"])
+        value = reconcile(self.run, session["owner"], outcomes=[{
+            "ticket_id": replacement["ticket_id"], "status": "completed", "evidence_sha256": "b" * 64}])
+        self.assertTrue(value["can_close"])
+        self.assertEqual(research_status(self.run)["attempt_counts"]["succeeded"], 1)
+
+    def test_unknown_launch_requires_affirmative_startup_evidence_before_replacement(self):
+        self.coding(count=1)
+        session = self.open()
+        ticket = session["tickets"][0]
+        record_intent(ticket["ticket_path"], session["owner"])
+        acknowledge(ticket["ticket_path"], session["owner"], "a" * 64)
+        value = reconcile(self.run, session["owner"], stop_admissions=True)
+        self.assertEqual(value["startup_failed"], 0)
+        self.assertEqual(value["unknown"], 1)
+        with self.assertRaisesRegex(DispatchError, "dispatch_finality_unresolved"):
+            close_session(self.run, session["owner"])
+        value = reconcile(self.run, session["owner"], outcomes=[self.startup_failure(ticket)])
+        self.assertTrue(value["can_close"])
+        close_session(self.run, session["owner"])
+        self.assertEqual(self.open()["tickets"][0]["attempt"], 1)
+
+    def test_startup_replacement_rejects_execution_even_if_start_marker_is_lost(self):
+        self.coding(count=1)
+        session = self.open()
+        ticket = session["tickets"][0]
+        start(ticket["ticket_path"])
+        outcome = {"ticket_id": ticket["ticket_id"], "status": "startup_failed", "evidence_sha256": "b" * 64}
+        with self.assertRaisesRegex(DispatchError, "startup_failure_conflicts_with_execution"):
+            reconcile(self.run, session["owner"], outcomes=[outcome])
+        reconcile(self.run, session["owner"], stop_admissions=True)
+        dispatch._marker_path(self.run, ticket["ticket_id"], "started").unlink()
+        with self.assertRaisesRegex(DispatchError, "startup_failure_conflicts_with_execution"):
+            reconcile(self.run, session["owner"], outcomes=[outcome])
+
+    def test_startup_replacement_rejects_existing_return(self):
+        self.coding(count=1)
+        session = self.open()
+        ticket = session["tickets"][0]
+        record_intent(ticket["ticket_path"], session["owner"])
+        acknowledge(ticket["ticket_path"], session["owner"], "a" * 64)
+        outcome = self.startup_failure(ticket)
+        Path(ticket["return_path"]).write_text('{"partial": true}')
+        with self.assertRaisesRegex(DispatchError, "startup_failure_conflicts_with_execution"):
+            reconcile(self.run, session["owner"], outcomes=[outcome])
+        self.assertEqual(Path(ticket["return_path"]).read_text(), '{"partial": true}')
+
     def test_partial_reconciliation_is_not_failure_and_growth_needs_explicit_checkpoint(self):
         self.coding(count=30)
         session = self.open(limit=6)
