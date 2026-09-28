@@ -1,8 +1,9 @@
 # ELARA: Empirical Legal Analysis with Research Agents
 
-ELARA is the companion package for *ELARA: A Framework for Empirical Legal
-Research with AI Agents* by Jonathan H. Choi. It turns Claude Code or Codex into
-a research assistant for empirical legal work. The assistant can help you move
+ELARA is the companion package for
+[*ELARA: A Framework for Empirical Legal Research with AI Agents*](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7349078)
+by Jonathan H. Choi. It turns Claude Code or Codex into a research assistant for
+empirical legal work. The assistant can help you move
 from a research question to a verified replication package. Optional tools can
 also integrate results into a draft, check citations, and assist with revisions.
 
