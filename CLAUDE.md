@@ -16,11 +16,13 @@ just installed by `scripts/bootstrap.py`), `project/BOOTSTRAP.md` says what to
 do now.
 
 For every nontrivial stage or utility, follow
-`workflow/shared/execution-control.md`: use `TaskCreate` for a four-to-seven-item
+`workflow/shared/execution-control.md`: use `TaskCreate` for a short
 native stage plan, `TaskUpdate` at every phase or fan-out checkpoint, and
 `TaskList` on resume and before the final report. Keep exactly one task in
 progress and reconcile the task list from project state and ledgers, never the
-other way around.
+other way around. Use the shared conversational fallback when native planning
+or question controls are unavailable; preserve the read-only phase and obtain
+the same researcher decisions.
 
 Stage metadata cannot change Claude Code's permission mode automatically. Map
 the canonical `interaction_profile` as follows:
@@ -57,16 +59,13 @@ the canonical `interaction_profile` as follows:
   `workflow/shared/guardrails.md` §11 holds, and always for Stages 18 and 20,
   whose plan is the manuscript-edit gate.
 
-For every stage marked `long_running: true`, inspect `/goal` status before its
-first execution write. Reuse a goal covering the stage's authorized work and
-completion evidence regardless of wording. If none is active and goals are
-available, give the `/goal <goal_condition>` handoff; never replace or clear an
-unrelated goal. The parent keeps the completion contract and task list current while saved workflows run
-fan-outs. Surface verification results and exact counts in checkpoint and final
-turns because Claude's goal evaluator sees the conversation, not project files.
-If goals are unavailable or disabled, record the fallback and use the same task
-plan and durable disk checkpoints. Request new goals per stage rather than per
-worker; preserve a broader user-requested goal that already covers the stage.
+For every stage marked `long_running: true`, keep its `goal_condition` as the
+completion contract. Reuse an authorized covering goal when present; otherwise
+continue in the foreground with the same plan and durable disk checkpoints.
+Do not stop to request goal activation or replace an unrelated active goal.
+The parent remains responsible through worker returns and serial verification.
+Surface verified counts and evidence at checkpoints and completion; the host
+goal, when used, does not replace the research record.
 
 Claude permission modes control tool access; they never waive a workflow gate or
 data-authorization requirement. Nor do they add stops: outside the gates and

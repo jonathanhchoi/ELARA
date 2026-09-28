@@ -21,11 +21,11 @@ Investigate conflicts; a declined specific change remains binding. Preserve exis
    Stage 00's adoption path, then run it; otherwise stop.
 4. Create or reconcile the host-native stage plan before work and update it at every phase
    boundary as required; On Claude Code use `TaskCreate`, `TaskUpdate`, and `TaskList`.
-5. Honor the mode handoff. For `long_running: true`, resume a goal covering the same
-   authorized work, even if worded differently; otherwise give `/goal <goal_condition>`
-   when goal activation is available. Use the documented foreground fallback if it is
-   unavailable; never replace an unrelated active goal.
-   Otherwise work low-touch under `workflow/shared/guardrails.md` section 11.
+5. Honor the read-only planning and approval boundaries, using the shared conversational
+   fallback if native planning or question controls are unavailable. For `long_running: true`,
+   reuse a covering authorized goal when present; otherwise continue foreground execution
+   with the same completion contract and durable checkpoints. Never require goal activation
+   or replace an unrelated active goal. Work low-touch under `workflow/shared/guardrails.md` section 11.
 6. Do not cross the stage's human gate; update state and append the run ledger only as the canonical stage directs.
    Summarize plainly and follow the usage mode (`usage` in `project/PROJECT_STATE.md`): continue into
    the next stage in `pipeline` mode unless a stop condition holds, or offer the menu in `specific tools` mode.

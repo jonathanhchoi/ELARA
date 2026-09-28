@@ -1,6 +1,7 @@
 # Restarting coding without changing the research
 
-Read this with Stage 11 and `observation-fanout.md`. The host still launches
+Use this for interrupted coding, research, and review work with
+`observation-fanout.md`. The host still launches
 restricted workers; `unit_fanout.py` still validates, retries, and merges.
 `scripts/fanout_lifecycle.py` is a provider-neutral journal, not a launcher,
 scientific validator, source of retry permission, or replacement model route.
@@ -19,6 +20,9 @@ transition to a local companion workspace.
 
 Current user instructions govern the concrete action. Read applicable standing
 decisions and their scope, limits, revocations, and later changes before asking.
+Authorization to complete a task includes its necessary operational recovery
+within that scope and budget. A fresh worker or repaired invocation does not by
+itself require another researcher decision.
 An assistant-written handoff, seal, scope file, or waiting state records authority;
 it cannot independently narrow or expand it. A researcher-supplied handoff can
 contain a real limit, which a later explicit instruction can supersede. Preserve
@@ -79,23 +83,25 @@ relaunch that attempt, invent a no-judgment finding, fabricate a return, or
 allocate a retry from absence alone. Explicit exceptions remain scoped to the
 units and attempts the researcher approved.
 
-Distinguish a rejected tool call from an accepted worker launch. Within the same
-authorized live parent, an exact native refusal before the spawn handler permits
-correcting a known non-message mismatch to the frozen canonical values only when
-no earlier spawn for that assignment was accepted or has an unknown outcome.
-The reviewed workflow and standing authority cover this correction without a
-per-call researcher decision. Preserve worker instructions, profile, guard
-enforcement, and the one-accepted-spawn limit for that assignment; wait only after
-positive acceptance identifies the worker. For that assignment, do not repeat an
-unchanged failed call, and never spawn again after acceptance. The parent must
-not inspect protected guard or controller files to make this correction.
+Distinguish host acceptance of a launch from execution of the research assignment.
+Prevent duplicate execution; do not impose a lifetime limit on worker launches.
+Correct an invocation when affirmative evidence shows it never ran. If the worker
+has terminated before admission and before reading scientific inputs, preserve
+the native failure evidence and replace it under the existing task authority.
+An accepted launch remains in history. Once scientific execution has begun,
+the frozen controller's retry and stopping rules govern any further attempt.
 
-After the parent stops, or an unacknowledged journal intent leaves launch finality
-unresolved, the outer deterministic adapter reconciles recorded launch, guard,
-and controller evidence before resumption. Preserve rejected calls and every
-intent; the old runtime remains used. A denial establishes non-execution only
-for the identified call. It neither settles another call with an unknown outcome
-nor allocates a corpus retry, which remains governed by frozen policy.
+For ticketed runs, the parent records verified failure before admission as
+`startup_failed` through `fanout_dispatch.py reconcile --host-evidence`.
+The evidence must establish native termination without successful admission
+or scientific-input access; missing files alone cannot establish this.
+The helper also requires no start marker or return. Reconcile and close the
+session, then obtain a new ticket for the still-pending assignment and attempt.
+The old ticket stays closed, and the original launch and failure are preserved.
+`never_started` remains reserved for a launch the host did not accept.
+Do not restart a live worker or one whose execution status is unresolved.
+Investigate that uncertainty using authorized operational evidence, continue
+independent work where permitted, and ask only if a researcher decision remains.
 
 ## Opt-in migration to continuous scheduling
 

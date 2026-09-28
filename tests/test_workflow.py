@@ -348,14 +348,14 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIn("do not write", body.lower(), path)
                 self.assertIn("approval", body.lower(), path)
 
-    def test_native_plan_and_goal_control_is_stage_scoped(self) -> None:
+    def test_native_plan_and_optional_goals_preserve_stage_completion_contracts(self) -> None:
         control_path = ROOT / "workflow" / "shared" / "execution-control.md"
         self.assertTrue(control_path.is_file())
         control = control_path.read_text(encoding="utf-8")
         for heading in (
             "## One stage, one native plan",
             "## Plan profiles and Plan Mode",
-            "## Long-running stages use one goal",
+            "## Long-running stages keep a completion contract",
             "## Codex adapter",
             "## Claude Code adapter",
         ):
@@ -367,9 +367,6 @@ class WorkflowContractTests(unittest.TestCase):
             "`TaskCreate`",
             "`TaskUpdate`",
             "`TaskList`",
-            "When requesting a new goal, use one per stage",
-            "Existing equivalent user goals remain valid.",
-            "wording need not match verbatim.",
             "foreground fallback",
         ):
             self.assertIn(needle, control, needle)
@@ -383,8 +380,7 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertTrue(condition.startswith("Run Stage "), path)
                 self.assertIn(meta["stage_id"][:2], condition, path)
                 self.assertIn("section 11", condition, path)
-                self.assertIn("<goal_condition>", body, path)
-                self.assertIn("/goal", body, path)
+                self.assertNotIn("provide `/goal <goal_condition>` and stop", body, path)
                 conditions.append(condition)
             else:
                 self.assertIsNone(condition, path)
@@ -401,8 +397,7 @@ class WorkflowContractTests(unittest.TestCase):
         for tool in ("`TaskCreate`", "`TaskUpdate`", "`TaskList`"):
             self.assertIn(tool, claude_wrapper)
         for wrapper in (codex_wrapper, claude_wrapper):
-            self.assertIn("`/goal <goal_condition>`", wrapper)
-            self.assertIn("never replace an unrelated active goal", wrapper)
+            self.assertNotIn("give `/goal <goal_condition>`", wrapper)
 
         from doctor import DISCOVERY_SURFACES
 
@@ -411,17 +406,13 @@ class WorkflowContractTests(unittest.TestCase):
             encoding="utf-8"
         )
         flat_observation = " ".join(observation.split())
-        self.assertIn("do not create a narrower fan-out goal", flat_observation)
+        self.assertIn("do not create a narrower fan-out goal", flat_observation.lower())
         self.assertIn("Workers never create goals or plans", flat_observation)
 
         guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("`/goal <goal_condition>`", guardrails)
-        flat_guardrails = " ".join(guardrails.split())
-        self.assertIn("an unrelated active goal conflicts", flat_guardrails)
-        self.assertIn("never require verbatim reactivation of equivalent work", flat_guardrails)
-        self.assertIn("foreground fallback and durable checkpoints", flat_guardrails)
+        self.assertNotIn("`/goal <goal_condition>`", guardrails)
         # The README stays a quick-start document; PIPELINE.md is the public
         # reference for how plans and goals run.
         pipeline_text = (ROOT / "PIPELINE.md").read_text(encoding="utf-8")
@@ -459,7 +450,6 @@ class WorkflowContractTests(unittest.TestCase):
 
         stage_four = " ".join(stages["04-methods-design"][1].split())
         for needle in (
-            "Always enter the host's read-only Plan Mode",
             "one to three plain-language questions per round",
             '"go with the recommendations"',
             '"don\'t know"',
@@ -652,7 +642,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("`usage` (optional)", contract)
         self.assertNotIn("## Usage mode", contract, "usage mode lives in the front matter, not the state body")
         guardrails = (ROOT / "workflow" / "shared" / "guardrails.md").read_text(encoding="utf-8")
-        self.assertIn("agreement to continue", guardrails)
+        self.assertIn("agreement to continue", " ".join(guardrails.lower().split()))
         self.assertIn("project/BOOTSTRAP.md", guardrails)
 
     def test_stage_wrappers_allow_explicitly_chosen_stages(self) -> None:

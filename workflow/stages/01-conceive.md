@@ -39,9 +39,6 @@ Pause after presenting the profile if any material inference is disputed. At the
 
 ## Mode handoff
 
-Apply the equivalent-goal and host-unavailability fallback rules in
-`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
-
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. Use the two targeted Plan-Mode interviews in
 `workflow/shared/execution-control.md`, not one continuous planning session.
@@ -55,15 +52,14 @@ browse-download files while this interview is active.
 
 After the researcher accepts that proposal, leave Plan Mode and continue into
 execution in the same session. Apply the shared goal rules: reuse an existing
-goal covering this stage's work and evidence, request `/goal <goal_condition>` only when
-needed and available, and use foreground execution with durable checkpoints
-when goal features are unavailable. Run the landmark, brainstorming, screening,
+goal covering this stage's work and evidence when present, and otherwise
+continue foreground execution with durable checkpoints. Run the landmark, brainstorming, screening,
 and verification work under that completion contract. After the verified shortlist exists,
 re-enter Plan Mode and use the same question control to compare, redirect, or
 combine candidates. An express selection tied to the exact report is the
 `project-selection` decision; accepting a generic host plan, the goal, or a mode
 change is not. If a redirection needs new research, leave Plan Mode, create and
-verify a new report version under the same goal, and return to the shortlist
+verify a new report version under the same completion contract, and return to the shortlist
 interview.
 
 ## Work
@@ -90,7 +86,7 @@ The active outputs are researcher_profile_vNNN.md, landmark_survey_vNNN.md, and 
 - Confirm that every cited work is in the manifest, verified and unverified labels are honest, and every reported URL was opened during the run.
 - Confirm that the shortlist includes result-direction payoffs, an obtainable candidate corpus, observable variables, and explicit researcher-only decisions.
 - Confirm that the report calls its novelty findings provisional and reserves the exhaustive selected-project review for Stage 02.
-- Confirm that both targeted Plan-Mode interviews used the host's structured question control, wrote nothing while active, and preserved every answer, recommendation, redirection, and explicit deferral in the resulting record.
+- Confirm that both targeted interviews followed the shared read-only interview contract, using structured questions or the conversational fallback, and preserved every answer, recommendation, redirection, and explicit deferral in the resulting record.
 - Reconcile report counts with the source and search logs and disclose all files changed.
 
 ## State transition

@@ -45,7 +45,7 @@ The agent may expose ambiguity and propose alternatives, but must not settle doc
 ## Mode handoff
 
 Follow `workflow/shared/execution-control.md` and create the native stage plan
-before work. Always enter the host's read-only Plan Mode before creating a
+before work. Begin the shared read-only interview before creating a
 codebook, schema, prompt, example, or list of units eligible for coding. Inspect
 the active design, actual metadata, authorized representative documents, and
 prior decisions. Use `request_user_input` on Codex or `AskUserQuestion` on
@@ -97,7 +97,7 @@ The codebook, machine-readable output rules, complete list of coding units, prom
 - Confirm that substantive observations cannot validate without one approved evidence path, justification, label, provenance, and status fields.
 - Confirm uncertainty and each failure type are distinguishable and no pathway silently drops a unit.
 - Confirm the fresh-review ambiguities are resolved in a new version or listed as outstanding researcher inputs.
-- Confirm that every material open definition, boundary, attribution rule, and denominator choice was put to the researcher through the host's Plan-Mode question control, and that every answer or explicit deferral is traceable to the linked package.
+- Confirm that every material open definition, boundary, attribution rule, and denominator choice was put to the researcher through the shared read-only interview, using structured questions or the conversational fallback, and that every answer or explicit deferral is traceable to the linked package.
 
 ## State transition
 

@@ -1,9 +1,9 @@
 # Shared research guardrails
 
-These rules apply to every canonical stage and every native wrapper. A stage may
-add stricter requirements but may not relax these. When a stage, wrapper, or chat
-instruction conflicts with this file, stop and surface the conflict unless the
-researcher explicitly changes the kit's governing instructions.
+These rules apply to every canonical stage and native wrapper. Interpret them
+with the researcher's current instructions and recorded decisions. Resolve
+apparent conflicts before asking; only an unresolved researcher decision under
+section 11 requires an interruption.
 
 ## 1. Workspace and authority
 
@@ -18,11 +18,13 @@ researcher explicitly changes the kit's governing instructions.
   `workflow/shared/researcher-support.md`. Less experience calls for more help
   understanding the work, not weaker validation or delegated scientific judgment.
   Use existing decision discussions; do not add competence tests or approval gates.
-- Never infer approval from silence, a prior general instruction, a host
-  application's permission mode, or a successful tool call. Stop at every gate
-  named by the current stage. The researcher's agreement to continue to the
-  next stage, or their choice of the whole pipeline at Stage 00, is not approval
-  of any gate inside it; each gate is asked separately when it is reached.
+- Apply existing authorization to its actual scope, including necessary
+  delegation, verification, follow-up investigation, and operational recovery.
+  Reconcile current instructions and recorded decisions before asking again.
+  Silence, a host permission mode, and a successful tool call do not approve a
+  research gate. At each gate, ask only for decisions not already supplied for
+  the exact work and versions concerned; general permission to continue does
+  not approve an unseen artifact or a different scientific choice.
   Between gates, work without interrupting the researcher: §11 lists the only
   reasons to stop, and everything else proceeds on a recorded provisional
   default that the researcher confirms or changes at the next gate.
@@ -155,11 +157,10 @@ researcher explicitly changes the kit's governing instructions.
   failed.
 - For long work, checkpoint exact state and counts after recoverable units so a
   fresh session can resume without chat history or duplication.
-- Follow `workflow/shared/execution-control.md`: keep the host's native stage
-  plan aligned with these durable checkpoints, and run every stage marked
-  `long_running: true` under an authorized goal covering its `goal_condition`,
-  or use the documented host-unavailability fallback. A native plan or goal is
-  never a provenance record.
+- Follow `workflow/shared/execution-control.md`: keep the stage plan aligned
+  with these durable checkpoints and work toward the stage's completion
+  condition, with an authorized goal when one is active or in the foreground
+  otherwise. A native plan or goal is never a provenance record.
 
 ## 7. Parallel work and shared files
 
@@ -291,19 +292,21 @@ idea through the revision queue and amendment process like any other change.
 
 ## 11. Autonomy: when to ask, when to proceed
 
-For Stage 11 infrastructure interruptions, apply
+For infrastructure interruptions in any stage, apply
 `workflow/shared/operational-recovery.md`. Existing scoped recovery authority
 permits reviewed, tested implementation repairs; do not repeatedly ask the same
 approval. This does not authorize scientific changes, assumed retry eligibility,
 or bypassing a stop. Preserve the incident and verify the failed operation before
 resumption. Identical unsuccessful operations without new evidence are not progress.
 
-ELARA is low-touch by default. The researcher decides at gates; between gates
-the assistant works, and it interrupts the researcher only for a real gating
-issue. This section is the complete list of reasons to stop; nothing else is.
+ELARA is low-touch by default. Carry the authorized task through to completion,
+using judgment to choose and adapt the approach within its scope and resources.
+The researcher decides material scientific questions; the assistant handles
+execution. The following are the reasons to request a researcher decision.
 
 - **Stop and ask only when one of these holds:**
-  1. a hard gate named by the current stage is reached (`awaiting_approval`);
+  1. a hard gate named by the current stage has an unresolved decision
+     (`awaiting_approval`);
   2. the stage needs a fact, file, credential, or action that only the researcher
      can supply — a license or institutional text, an IRB or ethics status, human
      coders' returned files, an external registration identifier
@@ -336,12 +339,7 @@ issue. This section is the complete list of reasons to stop; nothing else is.
      typed failure row, or a stop onto the recorded failure route); an
      instruction outside them routes as a change or deviation, never as a
      mid-run fix.
-  7. a long stage has no active goal covering its authorized work and the host
-     exposes goal activation, or an unrelated active goal conflicts. Give the
-     `/goal <goal_condition>` handoff once; never require verbatim reactivation
-     of equivalent work. When the feature is unavailable, use the documented
-     foreground fallback and durable checkpoints.
-  8. an update conflict under `kit-updates.md` requires a genuine researcher
+  7. an update conflict under `kit-updates.md` requires a genuine researcher
      choice after autonomous investigation, or the researcher expressly limited
      updates. Compatible verified updates proceed automatically. A failed GitHub
      check permits freshly authenticated installed bytes; an incomplete or
@@ -397,7 +395,9 @@ issue. This section is the complete list of reasons to stop; nothing else is.
   cross a later artifact gate. Other stages enter Plan Mode, stop, and hand off
   only when a stop condition above holds. Stages 18 and 20 are the exception by
   design: their plan is the `manuscript-edit-permission` gate. A long-running
-  execution phase also performs the one-time goal handoff in item 7.
+  execution phase uses the same completion contract and durable checkpoints
+  with or without a host goal. Plan Mode and question controls use the shared
+  fallback when unavailable; their absence is not a researcher decision.
 - **Between stages** in `pipeline` mode, when a stage ends with no gate or
   input pending, summarize in a few lines what was produced and where, then
   continue into the next stage in the same session — unless a stop condition

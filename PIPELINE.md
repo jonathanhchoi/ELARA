@@ -47,8 +47,8 @@ their software unless a reviewed operational migration is already authorized.
 4. It creates or updates the host's stage plan so that the plan agrees with the
    project files, then follows the mode handoff; metadata cannot change an
    application's mode automatically.
-5. A long stage resumes a goal covering its authorized work and evidence, or
-   follows the goal-activation and foreground-fallback rules in
+5. A long stage reuses an authorized covering goal when present, or continues
+   in the foreground with durable checkpoints under
    `workflow/shared/execution-control.md`. Execution receives a unique run ID, writes only
    declared versioned paths under `project/`, appends to the ledgers, and
    verifies every declared result.
@@ -226,17 +226,19 @@ version.
 | `plan_then_execute` | Put the decision-complete read-only plan first in the native tracker, then continue into execution in the same session. Stages 01, 04, 05, 07, 08, 09, and 17 use Plan Mode and the host's question interface at their declared decision boundaries; the Stage 01 and 09 interviews are partial, and the Stage 07 interview follows the independent critiques. Other stages enter Plan Mode and stop only when a `workflow/shared/guardrails.md` §11 condition holds (Stages 18 and 20 always stop because their plan is the manuscript-edit gate). A long execution phase follows the shared equivalent-goal and foreground-fallback rules. |
 
 Plan phases do not alter state, ledgers, or research files. A mode or permission
-setting never waives a human gate, data restriction, or version rule.
+setting never waives a human gate, data restriction, or version rule. Use native
+Plan Mode and question controls when available; otherwise conduct the same
+read-only decision phase in conversation under `workflow/shared/execution-control.md`.
 
-Every substantive stage and utility uses the host's native tracker: Codex uses
+Every substantive stage and utility keeps a short plan. When available, Codex uses
 `update_plan`; Claude Code uses `TaskCreate`, `TaskUpdate`, and `TaskList`. The
 tracker is rebuilt from the files on resume and is not part of the research
 record. Every stage marked `long_running: true` has a completion condition that
 the validator checks. An existing goal covering the authorized work and evidence
-is sufficient regardless of wording. If no covering goal exists, follow the
-activation rules; unavailable goal features use foreground execution with durable
-checkpoints. Never replace an unrelated active goal. Request new goals per stage;
-preserve broader user-requested goals that already cover it. Stages 01–03, 07–08, 10–12, 14–16, and 19 are
+is sufficient regardless of wording. Without one, continue authorized foreground
+execution with durable checkpoints, even when the host offers goals. Goal activation
+is optional, not a gate; never replace an unrelated active goal or a researcher pause.
+Stages 01–03, 07–08, 10–12, 14–16, and 19 are
 long-running. See `workflow/shared/execution-control.md`.
 
 ## Numbered stages
@@ -630,8 +632,10 @@ kit's, which are shared, and which were the researcher's before the kit arrived.
 See `workflow/shared/artifact-contract.md` for exact naming and invalidation
 rules.
 
-Version 2.12.0 makes local processing and verified copy-back automatic for cloud
-project homes. The coding agent selects inputs, checkpoints, and recovery; the
-small storage helper binds the active root and verifies file operations. The
-researcher keeps opening the original folder. Existing history requires a
-verified transition, and pending copies never require rerunning research.
+Version 2.13.0 carries task authorization through delegation, investigation, and
+routine recovery. Verified startup failures can be replaced without consuming a
+scientific attempt or erasing the original launch. Host goals are optional, and
+read-only interviews can use conversation when native controls are unavailable.
+Scientific gates, frozen instruments, independent contexts, and researcher limits
+remain in force. Existing runs retain their recorded software until a verified
+operational transition covered by the researcher's authority.

@@ -39,17 +39,14 @@ The agent may recommend a disposition but must not approve novelty or silently r
 
 ## Mode handoff
 
-Apply the equivalent-goal and host-unavailability fallback rules in
-`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
-
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. This is a long-running execution stage: the `goal_condition`
-recorded in the settings at the top of this file must be covered by the active goal before
-execution begins. If no covering goal is active and the host exposes goals, provide `/goal <goal_condition>` and stop. Do not run the review in Plan
+recorded in the settings at the top of this file is the completion contract. Use a covering authorized goal when present;
+otherwise continue foreground execution with durable checkpoints. Do not run the review in Plan
 Mode. In Codex, run every search, author, citation-chain, and retrieval wave as
 the kit's `elr_research_worker` sub-agents. In Claude Code, run those waves as
 the saved `elr-research-fanout` workflow, which the assistant launches itself.
-Both routes follow `workflow/shared/observation-fanout.md`; the stage goal stays
+Both routes follow `workflow/shared/observation-fanout.md`; the completion contract stays
 with the parent through wave validation and final reconciliation.
 
 ## Work

@@ -52,13 +52,14 @@ software. Help, tour, menu-only, and status need no check.
    read the canonical file named by `current_stage`, verify its prerequisites (imported
    artifacts and researcher-asserted approvals recorded at adoption satisfy them), and follow
    it. Create or reconcile the native stage plan before work.
-   For interrupted Stage 11 work, read `workflow/shared/operational-recovery.md`,
+   For interrupted work in any stage, read `workflow/shared/operational-recovery.md`,
    verify `run_checkpoint` when present, and reconcile current disk evidence.
    Never equate a live verifier with active coding or repeat an unchanged failure.
    On Codex use `update_plan`, with exactly one item `in_progress`; on resume reconcile it from disk.
-   For `long_running: true`, resume an equivalent goal covering the authorized work.
-   Otherwise give `/goal <goal_condition>` when activation is available; use the
-   foreground fallback when unavailable. Never replace an unrelated active goal.
+   For `long_running: true`, reuse a covering authorized goal when present; otherwise
+   continue foreground execution with the same completion contract and durable checkpoints.
+   Never require goal activation or replace an unrelated active goal. Use the shared
+   conversational fallback for unavailable planning and question controls.
 7. When a stage ends with no gate or input pending, reconcile the native plan, summarize
    plainly what was produced and
    what comes next, then in `pipeline` mode continue into the next stage in this session

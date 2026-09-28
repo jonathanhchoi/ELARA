@@ -34,15 +34,12 @@ The researcher alone decides whether to change the unit space, accept a substitu
 
 ## Mode handoff
 
-Apply the equivalent-goal and host-unavailability fallback rules in
-`workflow/shared/execution-control.md`; neither requires verbatim reactivation.
-
 Follow `workflow/shared/execution-control.md` and create the native stage plan
 before work. This is a long-running execution stage: the `goal_condition`
-recorded in the settings at the top of this file must be covered by the active goal before
-execution begins. If no covering goal is active and the host exposes goals, provide `/goal <goal_condition>` and stop. Do not execute acquisition in
+recorded in the settings at the top of this file is the completion contract. Use a covering authorized goal when present;
+otherwise continue foreground execution with durable checkpoints. Do not execute acquisition in
 Plan Mode. Keep the native plan and durable ledger checkpoints aligned while
-acquiring the frozen unit space. If goals are unavailable, record the fallback
+acquiring the frozen unit space. Without a covering authorized goal, record the fallback
 and use normal approved execution with the same condition and checkpoints.
 
 ## Work
