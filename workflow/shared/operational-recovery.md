@@ -21,8 +21,9 @@ transition to a local companion workspace.
 Current user instructions govern the concrete action. Read applicable standing
 decisions and their scope, limits, revocations, and later changes before asking.
 Authorization to complete a task includes its necessary operational recovery
-within that scope and budget. A fresh worker or repaired invocation does not by
-itself require another researcher decision.
+within that scope and budget, including the engineering allowance below. A
+fresh worker or repaired invocation does not by itself require another
+researcher decision.
 An assistant-written handoff, seal, scope file, or waiting state records authority;
 it cannot independently narrow or expand it. A researcher-supplied handoff can
 contain a real limit, which a later explicit instruction can supersede. Preserve
@@ -102,6 +103,43 @@ The old ticket stays closed, and the original launch and failure are preserved.
 Do not restart a live worker or one whose execution status is unresolved.
 Investigate that uncertainty using authorized operational evidence, continue
 independent work where permitted, and ask only if a researcher decision remains.
+
+## Bound repair work
+
+Recovery authority covers necessary repair within a finite allowance, not
+open-ended kit development. Engineering means setup, orchestration,
+infrastructure diagnosis, controller or adapter changes, tests and reviews of
+those changes, migrations, repeated manual bookkeeping, and export
+troubleshooting, including such work done while workers run. Coding, required
+mechanical checks, independent evidence audits, human validation, and analysis
+are scientific work; a review of controller code is not an evidence audit.
+
+Unless the researcher recorded other limits, each stage carries an engineering
+allowance of 120 minutes for Stage 08 and for the first fan-out on a host or
+model route that no accepted pilot exercised, and 60 minutes otherwise. The
+allowance spans every session, agent, run, and operational version working
+toward that stage's completion. Only a researcher-approved new scientific
+version starts a new allowance, and only an explicit researcher extension adds
+to it. Each infrastructure incident gets at most two repair candidates and
+about 40 minutes of that allowance. A candidate includes its diagnosis, change,
+and the tests and reviews this contract requires; repeated symptoms of one
+cause are one incident. A review finding may justify the next candidate, never
+a review of the review. These are dated operational defaults, not measured
+optima.
+
+Measure the allowance as wall-clock time spent on engineering, counting
+overlapping intervals once. Record minutes used, candidates used, and
+engineering agents launched in the `engineering` line of each `RUN_LEDGER.md`
+event, and carry them through every handoff. Where engineering cost is
+observable, count it against the existing spending ceiling; unknown usage stays
+unknown. Before a candidate would exceed either limit, stop affected admission,
+let live workers finish under their time boxes, continue unaffected authorized
+work, and ask once under `guardrails.md` §11 condition 4. State what is paused
+and why, the verified usable results, the diagnosed cause and confidence, the
+smallest remedy with its estimated time, and the choices: a finite extension,
+an already-authorized fallback, or stopping. Record that as the one outstanding
+input and do not ask again without new evidence. An exhausted allowance never
+waives a required check, gate, or audit.
 
 ## Opt-in migration to continuous scheduling
 
@@ -290,8 +328,9 @@ coding. Older block totals must not replace newer partial-wave counts. Controlle
 terminal returns and accepted predictions differ when downstream checks fail.
 
 Two identical incident fingerprints without new reconciled progress require a
-different diagnosis or a precise blocker, not an identical relaunch. This is not
-a token/time ceiling or permission to terminate a live worker. Preserve each
+different diagnosis or a precise blocker, not an identical relaunch. This rule
+works alongside the engineering allowance above; neither permits terminating a
+live worker. Preserve each
 failure and name what new evidence or repair makes another operation useful.
 
 On a researcher-requested pause, checkpoint, mark the operation paused, disable
