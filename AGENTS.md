@@ -106,10 +106,11 @@ Status, help, and menu-only requests remain read-only and need no check.
 
 For interruptions and handoffs in any stage, follow
 `workflow/shared/operational-recovery.md`: classify infrastructure failures
-separately from failed units, use existing scoped recovery authority, and verify
-the actual failed operation before calling a restart ready. Process liveness is
-not coding progress. Preserve a current checkpoint; never loop on the same
-failure without new evidence or an independently reviewed repair.
+separately from failed units, use existing scoped recovery authority within the
+recorded engineering allowance, and verify the actual failed operation before
+calling a restart ready. Process liveness is not coding progress. Preserve a
+current checkpoint; never loop on the same failure without new evidence or an
+independently reviewed repair.
 
 During a research run, edit only paths under the active `project/` that the
 current stage declares, plus the operational storage outputs declared in

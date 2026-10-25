@@ -144,11 +144,16 @@ section 11 requires an interruption.
   that cadence where practical; when a host operation cannot yield, update
   immediately before it starts and after it returns. Each update states the
   exact completed and total counts where a denominator exists, elapsed time,
-  remaining work, failures or retries affecting the schedule, and a revised ETA
-  range with its basis. Use measured wall-clock throughput once available,
-  recompute rather than repeat a stale estimate, and explain material slowdowns
-  or stalls. For open-ended work, estimate the next bounded milestone and say
-  why a final ETA is not yet defensible.
+  remaining work, failures or retries affecting the schedule, engineering
+  minutes used of the allowance in `operational-recovery.md` once any are spent,
+  and a revised ETA range with its basis. Use measured wall-clock throughput
+  once available, recompute rather than repeat a stale estimate, and explain
+  material slowdowns. During parallel unit work, when verified output has not
+  increased for the larger of 30 minutes and twice the unit time box, say so
+  and name the cause: slow scientific work, an external wait, a researcher
+  decision, or an infrastructure fault, which is an incident under
+  `operational-recovery.md`. For open-ended work, estimate the next bounded
+  milestone and say why a final ETA is not yet defensible.
 - Progress messages are informational. They do not stop execution, ask for
   approval, expose blinded or interim substantive outcomes, or add a reason to
   interrupt under §11.
@@ -316,9 +321,9 @@ execution. The following are the reasons to request a researcher decision.
      must be fixed before results are seen (an analysis choice the
      preregistration left open, in Stage 14);
   4. the next step would spend beyond the budget or limits recorded in the
-     charter, or would spend materially (a model-call fan-out, a paid API or
-     database, a run of hours) when no budget was recorded — state the projected
-     cost and ask once;
+     charter or the engineering allowance in `operational-recovery.md`, or would
+     spend materially (a model-call fan-out, a paid API or database, a run of
+     hours) when no budget was recorded — state the projected cost and ask once;
   5. the next step is outward-facing or irreversible outside the project folder
      (an external registration or submission, sending, publishing, deleting);
   6. the researcher asked to be consulted more often — a checkpoint preference

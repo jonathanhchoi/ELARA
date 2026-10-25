@@ -639,3 +639,11 @@ read-only interviews can use conversation when native controls are unavailable.
 Scientific gates, frozen instruments, independent contexts, and researcher limits
 remain in force. Existing runs retain their recorded software until a verified
 operational transition covered by the researcher's authority.
+
+Version 2.14.0 bounds setup and repair. Each stage carries a finite engineering
+allowance (120 minutes for the pilot or a first route, 60 otherwise, unless the
+researcher records other limits) and each incident at most two repair
+candidates. Consumed time carries across sessions and runs in the run ledger's
+`engineering` line. Progress updates show the allowance used and name stalls.
+At exhaustion the assistant stops affected work and asks once, under the
+existing budget stop. Required checks, gates, and audits never relax.

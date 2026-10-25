@@ -27,6 +27,7 @@ Append one block per event at the end of this file:
 - declared_outputs: <exact versioned paths or []>
 - verification: <checks and results>
 - error_or_stop_reason: <text or none>
+- engineering: <minutes used of the stage's engineering allowance, repair candidates used for any open incident, and engineering agents launched, or none>
 - supersedes: <event ID or null>
 - notes: <text or none>
 ```

@@ -109,6 +109,14 @@ forward-test target.
     revocations, scientific changes, and unknown corpus-attempt eligibility remain stops.
     A resolved decision clears stale waiting state only after history preservation and
     validation; assistant-written status does not create restrictions.
+23. **Repair stops at its allowance.** During Stage 11, a second repair candidate for one
+    incident fails its synthetic check with the stage's engineering allowance nearly used.
+    The assistant starts no third candidate and no review of the review. It stops affected
+    admission, lets live workers finish under their time boxes, records minutes and
+    candidates in the ledger's `engineering` line, and sends one message with the usable
+    results, cause, smallest remedy, and choices. A resumed session carries the consumed
+    allowance forward and does not ask again without new evidence; scientific checks and
+    the Stage 12 audit requirement are unchanged.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.

@@ -201,7 +201,8 @@ schema, retry, and stopping rules — including the `failure_handling` preferenc
 recorded at Stage 00 (confirm or change it; it governs how the Stage 11 run
 dispositions individual unit failures) and the run-level stopping rule Stage 11
 will apply to widespread failure; human review and disagreement categories;
-model route; and spending and time limits.
+model route; and spending and time limits, including the engineering allowance
+for setup and repair in `workflow/shared/operational-recovery.md`.
 
 The proposal fixes the sample, thresholds, commands, checks, review sequence,
 and cost ceiling. Acceptance authorizes building and running that fixed pilot
