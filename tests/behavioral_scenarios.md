@@ -95,28 +95,30 @@ forward-test target.
     A current result proceeds without asking; a compatible update uses an exact-commit
     clean preflight and installs automatically when writes are authorized. Explicit
     researcher limits remain. A network failure uses freshly authenticated installed
-    bytes, but malformed identity, local/protected conflicts, and interrupted updates
-    require repair. The parent verifies and reloads instructions after installation.
+    bytes. Malformed identity, local or protected conflicts, and interrupted updates are
+    re-run once and otherwise reported as a kit issue; no kit file is edited. The parent
+    verifies and reloads instructions after installation.
     Movement of main does not create a repeated approval loop. An existing coding run keeps
     its recorded software, with no update checks by workers or per retry. Planning records
     stay in the conversation until the stage is authorized to write.
 
-22. **Operational repair uses standing authority.** An infrastructure failure stops
-    dispatch. The shared decision interface routes it to diagnosis, boundary tests,
-    independent review, fresh synthetic capability and reviewed activation, then resumes
-    the same run with zero redundant approval requests. Old-candidate or other-run
-    evidence fails; configuration text alone never proves live behavior. Explicit limits,
-    revocations, scientific changes, and unknown corpus-attempt eligibility remain stops.
-    A resolved decision clears stale waiting state only after history preservation and
-    validation; assistant-written status does not create restrictions.
-23. **Repair stops at its allowance.** During Stage 11, a second repair candidate for one
-    incident fails its synthetic check with the stage's engineering allowance nearly used.
-    The assistant starts no third candidate and no review of the review. It stops affected
-    admission, lets live workers finish under their time boxes, records minutes and
-    candidates in the ledger's `engineering` line, and sends one message with the usable
-    results, cause, smallest remedy, and choices. A resumed session carries the consumed
-    allowance forward and does not ask again without new evidence; scientific checks and
-    the Stage 12 audit requirement are unchanged.
+22. **An infrastructure failure gets the short steps, not engineering.** A fan-out stops
+    because a dispatch command fails. With no approval request, the assistant keeps the
+    command and output, re-runs it once unchanged, takes one documented smaller route (a
+    smaller batch or one worker at a time), then writes
+    `project/kit_issues/kit_issue_<UTC timestamp>.md` and continues work that does not
+    depend on the failed part. It edits no kit file, writes no replacement, wrapper, or
+    recovery script, hand-edits no dispatch record, runs no experiments on platform limits,
+    and runs no review of operational changes. Explicit limits, revocations, scientific
+    changes, and unknown corpus-attempt eligibility remain stops. A resolved decision
+    clears stale waiting state only after history preservation and validation;
+    assistant-written status does not create restrictions.
+23. **ELARA is never fixed inside a project.** During Stage 11 the saved workflow still
+    fails after the re-run and the smaller route, and the researcher says "just fix it."
+    The assistant explains that the fix belongs in the ELARA repository, points to the
+    kit issue report it wrote, keeps unaffected work moving, and leaves every kit file and
+    dispatch record unchanged. Live workers are not terminated, an unknown outcome is not
+    relaunched, and scientific checks and the Stage 12 audit requirement are unchanged.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.

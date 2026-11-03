@@ -14,13 +14,13 @@ as upstream. Maintaining ELARA itself is not a research-stage invocation.
   new recovery runs of completed stages. Recheck after a long pause before a
   run begins. Routing, status, help, and menu-only requests stay read-only.
 - Existing runs resume under their recorded software, without checks per
-  batch or retry. Independently reviewed migration under existing scoped
-  authority follows `operational-recovery.md`; updates never silently migrate
-  frozen research execution.
+  batch or retry. A migration the researcher chooses follows
+  `operational-recovery.md`; updates never silently migrate frozen research
+  execution.
 - Only the parent checks. Restricted workers never contact GitHub or update
   the kit. No research material is sent with the check.
 
-## Check, repair or update, verify
+## Check, update, verify
 
 1. Run the read-only `python scripts/check_update.py --stage <canonical-stage>
    --json`. `ready: true` / exit 0 establishes usable installation evidence,
@@ -42,7 +42,7 @@ as upstream. Maintaining ELARA itself is not a research-stage invocation.
    state, or execute the stage. On leaving Plan Mode, install and verify the
    update, reread its instructions, and reconcile the plan before execution.
    This limited planning exception does not claim `ready: true` or require a
-   separate update approval. Unverified or conflicted bytes require investigation.
+   separate update approval. Unverified or conflicted bytes follow step 4.
 
 3. If GitHub is unavailable, continue with `status: verified_installed` only
    when the checker freshly verifies a completed installation's exact commit
@@ -53,14 +53,14 @@ as upstream. Maintaining ELARA itself is not a research-stage invocation.
    identity or restore service first. A transient outage is not a permission
    problem and does not justify recreating monitoring.
 
-4. Missing/modified files, protected conflicts, unknown baselines, or unfinished
-   installations enter autonomous repair. Preview with `bootstrap.py --update
-   --ref <full-commit> --dry-run --json`, inspect the conflict, and preserve
-   every researcher file and run binding. Ask only if resolving it requires a
-   genuine researcher choice after existing instructions have been reconciled.
-   A declined specific change remains binding, but do not invent a general
-   approval requirement from a recoverable conflict. Never adopt modified bytes
-   as a clean baseline or remove protection merely to get a passing check.
+4. Missing or modified files, protected conflicts, unknown baselines, or an
+   unfinished installation are not repaired by hand. Follow "When something
+   breaks" in `operational-recovery.md`: re-run the same check or update command
+   once, and if it is still not ready, write the kit issue report, preserve
+   every researcher file and run binding, and tell the researcher what the new
+   stage is waiting on. A declined specific change remains binding. Never edit
+   kit files, adopt modified bytes as a clean baseline, or remove protection to
+   get a passing check.
 
 5. Require `ready: true`, successful bootstrap/doctor verification, and no
    `project/ELARA_UPDATE_PENDING.json`. The installer preserves project state,
@@ -73,8 +73,8 @@ as upstream. Maintaining ELARA itself is not a research-stage invocation.
 
 6. The checked exact commit governs this stage entry. Do not loop indefinitely
    because main advanced during installation or require a second approval.
-   The next new stage gets a fresh check. If an installation fails, inspect its
-   durable evidence rather than repeat the same operation without a repair.
+   The next new stage gets a fresh check. If an installation fails, follow
+   step 4.
 
 ## Records and interrupted installations
 
@@ -82,8 +82,9 @@ as upstream. Maintaining ELARA itself is not a research-stage invocation.
 installation status, file ownership, and baseline hashes separately from the
 project's historical `workflow_version`. Before changing files, an update writes
 `project/ELARA_UPDATE_PENDING.json` and removes it only after verification.
-An interruption leaves that marker; inspect and complete the exact update,
-never clear the marker just to advance or claim a partial installation current.
+An interruption leaves that marker; re-run the exact update once under step 4,
+and never clear the marker just to advance or claim a partial installation
+current.
 
 Keep check output in the conversation during read-only planning. Once writing
 is authorized, archive it as `kit_update_check.json` in the new run directory

@@ -16,10 +16,13 @@ applies to every stage and overrides convenient but lossy file-writing habits.
   in the local root for selections, versioned snapshots, and attempt receipts.
   These operational records allow retries without changing a closed run.
   Historical records under `project/runs/<run_id>/storage/` remain unchanged.
-  It also permits verified copies to the authorized cloud export folder. These
-  narrow operational outputs cannot change stage inputs or research results.
+  It also permits verified copies to the authorized cloud export folder, and
+  in any stage, `project/kit_issues/kit_issue_<UTC timestamp>.md` reports
+  written under `operational-recovery.md` "When something breaks". These narrow
+  operational outputs cannot change stage inputs or research results.
 - Canonical prompts, wrappers, scripts, tests, and repository instructions are
-  kit infrastructure. Research stages read them but do not alter them.
+  kit infrastructure. Research stages read them but never alter, copy and
+  modify, or work around them.
 - `project/PROJECT_STATE.md` is the only mutable routing pointer.
 - `project/DECISIONS.md`, `project/RUN_LEDGER.md`, and
   `project/DEVIATIONS.md` are append-only records. Correct a record by appending a
@@ -196,8 +199,9 @@ types:
 `waiting_for_user` and `awaiting_approval` must identify a concrete unresolved
 input. Before asking again, reconcile current instructions and prior decisions,
 preserve the outgoing state, and clear only requests actually resolved.
-Infrastructure repair uses `paused` while operational work continues; only an
-unresolved researcher decision uses `waiting_for_user`.
+A part set aside under "When something breaks" uses `paused` while unaffected
+work continues; only an unresolved researcher decision, or a kit issue that
+leaves nothing else to do, uses `waiting_for_user`.
 
 The body below the front matter is prose for humans; the front matter alone
 routes.

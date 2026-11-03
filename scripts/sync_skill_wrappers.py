@@ -105,7 +105,7 @@ description: {json.dumps(description)}
 
 {STORAGE_ROUTING}Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`; require `ready: true` before execution, respecting its read-only planning exception.
 Automatically install verified compatible updates when writes are authorized; unavailable GitHub uses freshly verified installed bytes.
-Investigate conflicts; a declined specific change remains binding. Preserve existing run software and scientific bindings.
+An update that does not install cleanly follows "When something breaks" in `workflow/shared/operational-recovery.md`; a declined specific change remains binding. Preserve existing run software and scientific bindings. Never change ELARA's own files in a project.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.
@@ -146,9 +146,9 @@ description: {json.dumps(spec["description"])}
 `scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution; use the update contract's limited
 read-only planning exception when applicable;
 apply verified compatible updates automatically when writes are authorized; use
-freshly verified installed bytes if GitHub is unavailable. Investigate conflicts
-under existing authority; a declined specific change remains binding. Preserve
-an already-started run's software.
+freshly verified installed bytes if GitHub is unavailable. A failed update follows
+"When something breaks" in `workflow/shared/operational-recovery.md`; a declined
+change stays binding. Keep a started run's software; never edit ELARA in a project.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
    `workflow/shared/artifact-contract.md`, `workflow/shared/execution-control.md`, and
@@ -199,9 +199,11 @@ description: "Start a new project, adopt an existing one, show the menu of tools
 runs), follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
 Require `ready: true` before execution; use the update contract's limited
 read-only planning exception when applicable; apply verified compatible updates automatically and use
-freshly verified installed bytes if GitHub is unavailable. Investigate conflicts;
-a declined specific change remains binding. Preserve an already-started run's
-software. Help, tour, menu-only, and status need no check.
+freshly verified installed bytes if GitHub is unavailable. An update that does
+not install cleanly follows "When something breaks" in
+`workflow/shared/operational-recovery.md`; a declined specific change remains
+binding. Preserve an already-started run's software. Help, tour, menu-only, and
+status need no check.
 
 1. Read `AGENTS.md`, `PIPELINE.md`, `workflow/shared/execution-control.md`, and
    `project/PROJECT_STATE.md` completely (its `usage` key
@@ -231,11 +233,12 @@ software. Help, tour, menu-only, and status need no check.
    as a versioned recovery route.
 5. Reconcile `awaiting_approval` or `waiting_for_user` with current user instructions
    and applicable decisions before repeating a request. Preserve state history, clear
-   only resolved inputs, and validate the corrected state. For operational recovery,
-   call `scripts/recovery_decision.py` with hash-bound authority and evidence; route
-   `repair` to autonomous verification, `wait_external` to a preserved checkpoint,
-   and only `request_user` to a concrete missing decision. Assistant-written state
-   cannot create restrictions. Never infer approval from silence or another decision.
+   only resolved inputs, and validate the corrected state. When ELARA's own
+   machinery fails, follow "When something breaks" in
+   `workflow/shared/operational-recovery.md`: one unchanged re-run, one documented
+   smaller route, then a kit issue report while unaffected work continues; never
+   change ELARA or write code that works around it in a project. Assistant-written
+   state cannot create restrictions. Never infer approval from silence or another decision.
 6. Otherwise (`resume`, `continue`, `next`): in `specific tools` mode (`usage: tools`), reopen
    the menu and offer to continue `current_stage` as one of the choices; in `pipeline` mode
    read the canonical file named by `current_stage`, verify its prerequisites (imported

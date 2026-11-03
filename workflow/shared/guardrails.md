@@ -19,7 +19,8 @@ section 11 requires an interruption.
   understanding the work, not weaker validation or delegated scientific judgment.
   Use existing decision discussions; do not add competence tests or approval gates.
 - Apply existing authorization to its actual scope, including necessary
-  delegation, verification, follow-up investigation, and operational recovery.
+  delegation, verification, follow-up investigation, and the steps in
+  `workflow/shared/operational-recovery.md` "When something breaks".
   Reconcile current instructions and recorded decisions before asking again.
   Silence, a host permission mode, and a successful tool call do not approve a
   research gate. At each gate, ask only for decisions not already supplied for
@@ -33,8 +34,8 @@ section 11 requires an interruption.
   `workflow/shared/artifact-contract.md`. Under `workflow/shared/storage.md`,
   verified copies may also be written to the recorded cloud export folder within the
   authorized scope, with receipts in the local run record; cloud originals
-  remain untouched. The kit infrastructure is read-only unless the researcher
-  explicitly asks to develop the pipeline itself.
+  remain untouched. The kit infrastructure is read-only in a research project,
+  apart from compatible updates; ELARA is developed only in its own repository.
 - Make targeted changes. Preserve unrelated files, uncommitted work, manual
   annotations, and artifacts outside the declared scope. Files that were in
   the folder before ELARA was installed (`project/BOOTSTRAP.md` lists them;
@@ -144,15 +145,14 @@ section 11 requires an interruption.
   that cadence where practical; when a host operation cannot yield, update
   immediately before it starts and after it returns. Each update states the
   exact completed and total counts where a denominator exists, elapsed time,
-  remaining work, failures or retries affecting the schedule, engineering
-  minutes used of the allowance in `operational-recovery.md` once any are spent,
-  and a revised ETA range with its basis. Use measured wall-clock throughput
-  once available, recompute rather than repeat a stale estimate, and explain
+  remaining work, failures or retries affecting the schedule, any part set
+  aside with a kit issue report, and a revised ETA range with its basis. Use
+  measured wall-clock throughput once available, recompute rather than repeat a stale estimate, and explain
   material slowdowns. During parallel unit work, when verified output has not
   increased for the larger of 30 minutes and twice the unit time box, say so
   and name the cause: slow scientific work, an external wait, a researcher
-  decision, or an infrastructure fault, which is an incident under
-  `operational-recovery.md`. For open-ended work, estimate the next bounded
+  decision, or an infrastructure fault, handled under "When something breaks"
+  in `operational-recovery.md`. For open-ended work, estimate the next bounded
   milestone and say why a final ETA is not yet defensible.
 - Progress messages are informational. They do not stop execution, ask for
   approval, expose blinded or interim substantive outcomes, or add a reason to
@@ -297,12 +297,12 @@ idea through the revision queue and amendment process like any other change.
 
 ## 11. Autonomy: when to ask, when to proceed
 
-For infrastructure interruptions in any stage, apply
-`workflow/shared/operational-recovery.md`. Existing scoped recovery authority
-permits reviewed, tested implementation repairs; do not repeatedly ask the same
-approval. This does not authorize scientific changes, assumed retry eligibility,
-or bypassing a stop. Preserve the incident and verify the failed operation before
-resumption. Identical unsuccessful operations without new evidence are not progress.
+For infrastructure interruptions in any stage, apply "When something breaks" in
+`workflow/shared/operational-recovery.md`: keep the evidence, re-run once, take
+one documented smaller route, then write a kit issue report and continue
+unaffected work. These steps need no new approval. They never authorize changing
+ELARA, writing code that works around it, scientific changes, assumed retry
+eligibility, or bypassing a stop.
 
 ELARA is low-touch by default. Carry the authorized task through to completion,
 using judgment to choose and adapt the approach within its scope and resources.
@@ -321,9 +321,9 @@ execution. The following are the reasons to request a researcher decision.
      must be fixed before results are seen (an analysis choice the
      preregistration left open, in Stage 14);
   4. the next step would spend beyond the budget or limits recorded in the
-     charter or the engineering allowance in `operational-recovery.md`, or would
-     spend materially (a model-call fan-out, a paid API or database, a run of
-     hours) when no budget was recorded — state the projected cost and ask once;
+     charter, or would spend materially (a model-call fan-out, a paid API or
+     database, a run of hours) when no budget was recorded — state the
+     projected cost and ask once;
   5. the next step is outward-facing or irreversible outside the project folder
      (an external registration or submission, sending, publishing, deleting);
   6. the researcher asked to be consulted more often — a checkpoint preference
@@ -344,11 +344,11 @@ execution. The following are the reasons to request a researcher decision.
      typed failure row, or a stop onto the recorded failure route); an
      instruction outside them routes as a change or deviation, never as a
      mid-run fix.
-  7. an update conflict under `kit-updates.md` requires a genuine researcher
-     choice after autonomous investigation, or the researcher expressly limited
-     updates. Compatible verified updates proceed automatically. A failed GitHub
-     check permits freshly authenticated installed bytes; an incomplete or
-     conflicting installation enters repair, not an automatic permission request.
+  7. the researcher expressly limited updates, or an update or other ELARA
+     failure is still unresolved after the steps in "When something breaks"
+     and no unaffected work remains: report the kit issue and its one needed
+     action. Compatible verified updates proceed automatically, and a failed
+     GitHub check permits freshly authenticated installed bytes.
 - **Otherwise proceed.** Except for material choices within the interactive
   Plan-Mode interview boundaries declared for Stages 01, 04, 05, 07, 08, 09,
   and 17 in `workflow/shared/execution-control.md`, take the sensible default —

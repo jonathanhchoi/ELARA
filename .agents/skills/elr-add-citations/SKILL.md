@@ -10,9 +10,9 @@ Before starting this utility, follow `workflow/shared/kit-updates.md` and run
 `scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution; use the update contract's limited
 read-only planning exception when applicable;
 apply verified compatible updates automatically when writes are authorized; use
-freshly verified installed bytes if GitHub is unavailable. Investigate conflicts
-under existing authority; a declined specific change remains binding. Preserve
-an already-started run's software.
+freshly verified installed bytes if GitHub is unavailable. A failed update follows
+"When something breaks" in `workflow/shared/operational-recovery.md`; a declined
+change stays binding. Keep a started run's software; never edit ELARA in a project.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
    `workflow/shared/artifact-contract.md`, `workflow/shared/execution-control.md`, and
