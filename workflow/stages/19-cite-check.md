@@ -5,7 +5,7 @@ paper_steps: ["6"]
 core: false
 interaction_profile: "execute"
 long_running: true
-goal_condition: "Run Stage 19 exactly as specified until every manuscript claim-citation pair has a verified or expressly unverified disposition based on the actual retrieved source, exact counts and evidence archives reconcile, all declared audit artifacts pass review, and PROJECT_STATE.md is ready for Stage 20, or until a source only the researcher can supply or another ELARA section 11 stop condition is recorded and surfaced; report findings without editing the manuscript."
+goal_condition: "Run Stage 19 exactly as specified until `python scripts/stage_check.py --stage 19-cite-check` reports `done: true`; report findings without editing the manuscript."
 prerequisites: ["18-integrate-manuscript"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/manuscript_vNNN/", "project/artifacts/manuscript_change_log_vNNN.md", "project/artifacts/manuscript_consistency_report_vNNN.md", "project/artifacts/replication_package_vNNN/", "researcher-supplied bibliography, source files, and authorized database access where applicable"]
 declared_outputs: ["project/artifacts/citation_audit_vNNN.jsonl", "project/artifacts/citation_audit_report_vNNN.md", "project/sources/cite_check/<run_id>/source_manifest.csv", "project/sources/cite_check/<run_id>/search_log.csv", "project/sources/cite_check/<run_id>/retrieved/", "project/sources/cite_check/<run_id>/fanout/ (briefs, sealed manifest, launch record, worker returns; when pairs are audited in parallel)", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]

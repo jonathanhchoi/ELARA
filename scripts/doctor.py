@@ -87,6 +87,7 @@ DISCOVERY_SURFACES = (
     "scripts/unit_fanout.py",
     "scripts/research_fanout.py",
     "scripts/coding_run.py",
+    "scripts/stage_check.py",
     "workflow/templates/coding_run_settings.md",
     "workflow/templates/interpretive_audit_result.schema.json",
     "scripts/build_preemption_review.py",

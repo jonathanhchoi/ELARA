@@ -1983,6 +1983,19 @@ def close(run_dir: Path, *, version: str | None = None, artifacts_dir: Path | No
 
     for name, path in targets.items():
         _write_exclusive(path, texts[name])
+    # A clean run still has an (empty) failure-decision log and a closing checkpoint.
+    (run_dir / "failure_decisions.jsonl").touch(exist_ok=True)
+    checks_dir = run_dir / "checks"
+    checks_dir.mkdir(exist_ok=True)
+    number = len(list(checks_dir.glob("check_*.json"))) + 1
+    closing = {
+        "checked_utc": _now(),
+        "closing": True,
+        "slots": state["runner"]["slots_expected"],
+        "gaps": len(state["runner"]["gaps"]),
+        "final_status_counts": dict(sorted(final_counts.items())),
+    }
+    _write_exclusive(checks_dir / f"check_{number:03d}.json", json.dumps(closing, indent=2, sort_keys=True) + "\n")
     receipt = {
         "run_id": run_id,
         "stage": stage,

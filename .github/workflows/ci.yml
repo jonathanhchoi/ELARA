@@ -3,8 +3,17 @@
 name: CI
 
 on:
+  # Pull requests run once on their own event; branch pushes are not run twice.
+  # macOS runners are scarce, and duplicate runs left required macOS jobs queued
+  # until GitHub cancelled them with no step run (PRs 62 and 63).
   push:
+    branches: [main]
   pull_request:
+
+# A newer commit on the same pull request (or main) cancels the older run.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

@@ -64,7 +64,9 @@ Status, help, and menu-only requests remain read-only and need no check.
    Stages 01, 04, 05, 07, 08, 09, and 17 hold decision interviews at their
    declared boundaries; Stages 18 and 20 obtain manuscript-edit permission.
    Preserve each interview's read-only scope and stated execution effect.
-   A stage's `goal_condition` defines completion with or without a host goal.
+   A stage's `goal_condition` defines completion with or without a host goal:
+   the stage ends when `python scripts/stage_check.py --stage <stage-id>`
+   reports `done: true`.
    Reuse a covering authorized goal when present; otherwise keep working in
    the foreground with durable checkpoints. Never require goal activation to
    continue authorized work or replace an unrelated goal.
@@ -278,9 +280,10 @@ shared, and which are the researcher's, so a folder both use (for example
   `workflow/shared/guardrails.md` §6, never with vague or stale estimates.
 - Keep the host-native plan synchronized with the run: update it at phase and
   run checkpoints and before the completion report. For a long stage, report
-  the exact verification evidence and counts in the conversation so the goal
-  evaluator can judge the front-matter condition. Neither surface replaces the
-  ledger or state.
+  exact counts at checkpoints and end with the output of `scripts/stage_check.py`
+  so the goal evaluator can judge the front-matter condition. Neither surface
+  replaces the ledger or state. Run only the fresh reviews a stage names, once
+  each (`workflow/shared/fresh-review.md`).
 - When parallelizing, assign one observation, coding unit, search, retrieval,
   comment, or other bounded unit per subagent. A coding unit may contain one
   document or several related documents; do not assume that document boundaries

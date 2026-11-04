@@ -222,6 +222,11 @@ def validate_stage(
             errors.append(f"{path}: long_running stages require a nonempty goal_condition")
         elif not condition.startswith("Run Stage "):
             errors.append(f"{path}: goal_condition must begin with 'Run Stage '")
+        elif f"`python scripts/stage_check.py --stage {stage_id}` reports `done: true`" not in condition:
+            errors.append(
+                f"{path}: goal_condition must end the stage when "
+                f"`python scripts/stage_check.py --stage {stage_id}` reports `done: true`"
+            )
     elif meta["goal_condition"] is not None:
         errors.append(f"{path}: bounded stages must set goal_condition to null")
 
@@ -266,8 +271,11 @@ def validate_artifact_chain(loaded: list) -> list[str]:
                     f"{path}: required input {item!r} is not a declared output of any earlier stage"
                 )
         outputs = meta.get("declared_outputs")
+        # "path (condition)" declares a conditional output; the path is what is produced.
         produced.update(
-            item for item in (outputs if isinstance(outputs, list) else []) if isinstance(item, str)
+            item.split(" (", 1)[0].strip()
+            for item in (outputs if isinstance(outputs, list) else [])
+            if isinstance(item, str)
         )
     return errors
 

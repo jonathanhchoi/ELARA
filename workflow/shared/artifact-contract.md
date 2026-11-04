@@ -30,7 +30,11 @@ applies to every stage and overrides convenient but lossy file-writing habits.
 - A stage may write only paths listed in its `declared_outputs` and the storage
   outputs explicitly declared above. Incidental logs,
   caches, prompts, and raw responses must be covered by a declared run directory
-  or declared output path.
+  or declared output path. A declared output written `path (condition)` is
+  produced only under that condition; `(after the <gate> gate)` means it is
+  written once the researcher decides that gate. `scripts/stage_check.py`
+  requires every other declared output, and those conditional ones once their
+  gate is approved.
 
 ## 2. Run identity
 

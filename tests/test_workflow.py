@@ -33,6 +33,14 @@ class WorkflowContractTests(unittest.TestCase):
         )
         self.assertIn("\npermissions:\n  contents: read\n", workflow)
 
+    def test_ci_runs_once_per_pull_request_commit(self) -> None:
+        # Branch pushes and pull_request events both ran the full matrix, doubling
+        # demand for scarce macOS runners; required macOS jobs then sat queued
+        # until GitHub cancelled them. Branch pushes run only on main.
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        self.assertIn("  push:\n    branches: [main]\n  pull_request:\n", workflow)
+        self.assertIn("cancel-in-progress: true", workflow)
+
     def test_codex_policy_replacement_uses_one_trailing_policy_block(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             config = Path(tmp) / "openai.yaml"
@@ -379,7 +387,8 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIsInstance(condition, str, path)
                 self.assertTrue(condition.startswith("Run Stage "), path)
                 self.assertIn(meta["stage_id"][:2], condition, path)
-                self.assertIn("section 11", condition, path)
+                # Section 11 stops end the stage through stage_check's `stopped` result.
+                self.assertIn(f"scripts/stage_check.py --stage {meta['stage_id']}", condition, path)
                 self.assertNotIn("provide `/goal <goal_condition>` and stop", body, path)
                 conditions.append(condition)
             else:
@@ -590,7 +599,8 @@ class WorkflowContractTests(unittest.TestCase):
             "project/artifacts/imported_vNNN/",
             "project/PUBLICATION_PROFILE_vNNN.md",
         ):
-            self.assertIn(output, meta["declared_outputs"], output)
+            # Conditional outputs are written "path (condition)".
+            self.assertIn(output, [item.split(" (", 1)[0] for item in meta["declared_outputs"]], output)
         # Adoption cannot silently launder these facts.
         self.assertIn("not preregistered", lowered)
         self.assertIn("not kept separate", lowered)

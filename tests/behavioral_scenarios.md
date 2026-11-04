@@ -138,6 +138,14 @@ forward-test target.
     assistant writes no driver, validator, merge, or review-sheet script, and the fresh
     review covers the settings file only. Stage 11 later reuses the same settings file
     unchanged with the full unit list.
+26. **"Done" is a command, and reviews are not repeated.** At the end of Stage 11 a host
+    goal is active. The assistant runs `stage_check.py --stage 11-scale-up`, which lists one
+    output recorded on disk but not yet active; it activates that verified file, runs the
+    check again, and ends the turn with the `done: true` output. The goal evaluator still
+    asks for more proof that quotes were checked; the assistant points to the check output
+    once and stops, adding no evidence-gathering or review. At Stage 08 the fresh settings
+    review finds one wrong quotation rule; the fix is a new settings version and a new
+    pilot run, confirmed by `coding_run.py check`, and nobody reviews the fix or the review.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.

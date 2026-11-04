@@ -62,8 +62,10 @@ completion contract. Reuse an authorized covering goal when present; otherwise
 continue in the foreground with the same plan and durable disk checkpoints.
 Do not stop to request goal activation or replace an unrelated active goal.
 The parent remains responsible through worker returns and serial verification.
-Surface verified counts and evidence at checkpoints and completion; the host
-goal, when used, does not replace the research record.
+Surface verified counts at checkpoints and end the stage with the output of
+`python scripts/stage_check.py --stage <stage-id>`; if the goal evaluator
+disagrees, fix only what the check lists. The host goal, when used, does not
+replace the research record.
 
 Claude permission modes control tool access; they never waive a workflow gate or
 data-authorization requirement. Nor do they add stops: outside the gates and

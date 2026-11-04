@@ -5,7 +5,7 @@ paper_steps: ["1"]
 core: true
 interaction_profile: "plan_then_execute"
 long_running: true
-goal_condition: "Run Stage 01 exactly as specified until every declared conception artifact and its sources have passed the stage verification and PROJECT_STATE.md records the project-selection gate, or until an ELARA section 11 stop condition is recorded and surfaced; do not select a project or cross the gate for the researcher."
+goal_condition: "Run Stage 01 exactly as specified until `python scripts/stage_check.py --stage 01-conceive` reports `done: true`; do not select a project or cross the gate for the researcher."
 prerequisites: ["00-initialize"]
 required_inputs: ["project/PROJECT_STATE.md", "project/PROJECT_CHARTER_vNNN.md", "project/INPUT_INVENTORY_vNNN.csv", "project/inputs/"]
 declared_outputs: ["project/artifacts/researcher_profile_vNNN.md", "project/artifacts/landmark_survey_vNNN.md", "project/artifacts/conception_report_vNNN.md", "project/sources/conception/<run_id>/source_manifest.csv", "project/sources/conception/<run_id>/search_log.csv", "project/sources/conception/<run_id>/retrieved/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
