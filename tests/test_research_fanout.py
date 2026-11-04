@@ -114,32 +114,23 @@ class ResearchFanoutTests(unittest.TestCase):
             by_id["q02"].write_text(
                 json.dumps({"assignment_id": "wrong", "attempt": 1, "complete": True}), encoding="utf-8"
             )
-            second = status(fanout, include_pending=True, record_launch=True)
-            self.assertEqual(second["complete"], 1)
-            self.assertEqual(second["incomplete"], 1)
-            self.assertEqual(second["invalid"], 1)
-            self.assertEqual(second["pending"], 0)
-            self.assertEqual(second["launches_recorded"], 0)
-            self.assertEqual(second["invalid_returns"][0]["assignment_id"], "q02")
-            record_disposition(
-                fanout,
-                assignment_id="q01",
-                attempt=1,
-                terminal="failed",
-                reason="worker stopped with an incomplete return",
-            )
-            record_disposition(
-                fanout,
-                assignment_id="q02",
-                attempt=1,
-                terminal="unusable",
-                reason="assignment identity failed operational validation",
-            )
-            retry_status = status(fanout, include_pending=True, record_launch=True)
+            # Read-only status: the unfinished attempts are outstanding, nothing is recorded.
+            observed = status(fanout)
+            self.assertEqual((observed["complete"], observed["incomplete"], observed["invalid"]), (1, 1, 1))
+            self.assertEqual(observed["attempt_counts"]["outstanding"], 2)
+            self.assertEqual(observed["invalid_returns"][0]["assignment_id"], "q02")
+            # The next discovery relaunches both with their next attempt; no disposition is needed
+            # and the batch never waits on the unfinished attempts.
+            retry_status = status(fanout, record_launch=True)
+            self.assertEqual(retry_status["launches_recorded"], 2)
             self.assertEqual(
                 sorted(item["assignment_id"] for item in retry_status["pending_assignments"]), ["q01", "q02"]
             )
             self.assertEqual({item["attempt"] for item in retry_status["pending_assignments"]}, {2})
+            self.assertEqual(
+                retry_status["attempt_counts"],
+                {"attempted": 5, "succeeded": 1, "failed": 2, "unusable": 0, "outstanding": 2},
+            )
             self.assertTrue(
                 all(
                     Path(item["return_path"]) != by_id[item["assignment_id"]]
@@ -222,11 +213,11 @@ class ResearchFanoutTests(unittest.TestCase):
                     reason="duplicate",
                 )
 
-    def test_failed_missing_attempt_rejects_a_late_return(self) -> None:
+    def test_a_late_return_never_stops_the_fanout(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            fanout = self.make_fanout(Path(tmp), count=1, max_attempts=2)
+            fanout = self.make_fanout(Path(tmp), count=1, max_attempts=3)
             prepare(fanout)
-            first = status(fanout, include_pending=True, record_launch=True)["pending_assignments"][0]
+            first = status(fanout, record_launch=True)["pending_assignments"][0]
             first_path = Path(first["return_path"])
             record_disposition(
                 fanout,
@@ -236,8 +227,19 @@ class ResearchFanoutTests(unittest.TestCase):
                 reason="worker exited before writing a return",
             )
             self.write_return(first_path, "q00", 1, complete=True)
-            with self.assertRaisesRegex(FanoutError, "appeared after its missing attempt was disposed"):
-                status(fanout)
+            report = status(fanout, include_returns=True)
+            self.assertEqual(report["changed_after_disposition"], [{"assignment_id": "q00", "attempt": 1}])
+            self.assertEqual(report["complete"], 0)
+            # The first valid return wins: attempt 2 is launched; if attempt 3 also completes
+            # later, attempt 2 remains the result.
+            second = status(fanout, record_launch=True)["pending_assignments"][0]
+            self.assertEqual(second["attempt"], 2)
+            self.write_return(Path(second["return_path"]), "q00", 2, complete=True)
+            final = status(fanout, include_returns=True)
+            self.assertEqual(final["complete"], 1)
+            self.assertEqual(final["used_returns"], [
+                {"assignment_id": "q00", "attempt": 2, "return_path": second["return_path"]},
+            ])
 
     def test_status_fails_closed_on_manifest_brief_or_spec_drift(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -11,30 +11,26 @@ const sources = new Map()
 
 function item(index) {
   return {
-    ticket_id: `ticket-${index}`, ticket_path: `/fixture/tickets/${index}.json`,
-    assignment_id: `assignment-${index}`, unit_id: `unit-${index}`, attempt: 1,
-    assignment_path: `/fixture/assignments/${index}.json`,
+    assignment_id: `assignment-${index}`, unit_id: `unit-${index}`, attempt: 1, launches: 1,
+    assignment_path: `/fixture/assignments/${index}.json`, draft_path: `/fixture/drafts/${index}.json`,
     brief_path: `/fixture/briefs/${index}.md`, return_path: `/fixture/returns/${index}.json`,
   }
 }
 
-async function host(kind, { count = 18, target = 6, mode = 'continuous', args = {}, discovery = {}, verification = {}, nativeExtraStrings = false } = {}) {
+async function host(kind, { count = 18, args = {}, discovery = {}, verification = {}, nativeExtraStrings = false,
+  discoveryError = null, workerError = null } = {}) {
   const file = `.claude/workflows/elr-${kind === 'coding' ? 'observation' : 'research'}-fanout.js`
   if (!sources.has(file)) sources.set(file, readFile(path.join(root, file), 'utf8'))
   const source = (await sources.get(file)).replace('export const meta =', 'const meta =')
   const items = Array.from({ length: count }, (_, index) => item(index))
   const discovered = {
-    mode, target, owner: args.owner ?? 'native-session-fixture', state: 'active', reused_session: false, tickets: items, assignments: items.map(row => row.assignment_path),
-    pending_assignments: items, expected: count, complete: 0, exhausted: 0, time_box_minutes: 5,
+    expected: count, terminal: 0, complete: 0, exhausted: 0, pending: count, time_box_minutes: 5,
+    launches_recorded: count, closed_after_launches: [], pending_assignments: items,
     ...discovery,
   }
-  const config = {
-    ...(kind === 'coding' ? { run_dir: '/fixture' } : { fanout_dir: '/fixture' }),
-    ...(mode === 'continuous' ? { owner: 'native-session-fixture', capacity: Math.max(6, target) } : {}),
-    ...args,
-  }
+  const config = { ...(kind === 'coding' ? { run_dir: '/fixture' } : { fanout_dir: '/fixture' }), ...args }
   const calls = [], logs = [], starts = [], finishes = [], waiting = new Map()
-  let active = 0, peak = 0, done = false, outcome, failure, verifyPrompt
+  let active = 0, peak = 0, done = false, outcome, failure, discoverPrompt, verifyPrompt
   // The installed native StructuredOutput tool can stringify undeclared extra properties.
   // Control fields must therefore be explicitly typed rather than relying on additionalProperties.
   const structured = (value, schema) => {
@@ -49,8 +45,13 @@ async function host(kind, { count = 18, target = 6, mode = 'continuous', args = 
     calls.push({ prompt, options })
     assert.ok(calls.length <= 1000, 'workflow exceeded its total agent budget')
     if (options.phase !== 'Workers') {
-      assert.equal(active, 0, 'controller verification overlapped unfinished workers')
-      if (options.label === 'discover-pending') return structured(discovered, options.schema)
+      assert.equal(active, 0, 'a controller step overlapped unfinished workers')
+      assert.equal(options.agentType, 'elr-worker')
+      if (options.label === 'discover-pending') {
+        discoverPrompt = prompt
+        if (discoveryError) throw new Error(discoveryError)
+        return structured(discovered, options.schema)
+      }
       verifyPrompt = prompt
       const status = kind === 'coding'
         ? { expected: count, terminal: finishes.length, invalid: 0, pending: count - finishes.length }
@@ -58,24 +59,12 @@ async function host(kind, { count = 18, target = 6, mode = 'continuous', args = 
             invalid: 0, exhausted: 0, pending: count - finishes.length,
             attempt_counts: { attempted: starts.length, succeeded: finishes.length, failed: 0,
               unusable: 0, outstanding: count - finishes.length } }
-      if (mode === 'continuous') {
-        const canClose = !prompt.includes('--stop-admissions')
-        status.dispatch = { reconciliation: { can_close: canClose }, close: canClose ? { state: 'closed' } : null }
-        const evidence = JSON.parse(prompt.split("<<'ELARA_HOST_EVIDENCE'\n")[1].split('\nELARA_HOST_EVIDENCE')[0])
-        for (const row of evidence) {
-          const index = Number(row.ticket_id.replace('ticket-', ''))
-          assert.ok(finishes.includes(index), 'host declared completion before worker returned')
-          assert.equal(row.status, 'completed')
-          assert.match(row.evidence_sha256, /^[a-f0-9]{64}$/)
-        }
-        assert.deepEqual(evidence.map(row => Number(row.ticket_id.replace('ticket-', ''))),
-          evidence.map(row => Number(row.ticket_id.replace('ticket-', ''))).sort((a, b) => a - b))
-      }
-      return structured({ ...status, ...verification }, options.schema)
+      return verification === null ? null : structured({ ...status, ...verification }, options.schema)
     }
-    const index = mode === 'continuous' || kind === 'research'
-      ? Number(options.label.replace('assignment-', '')) : Number(options.label.replace('.json', ''))
-    assert.ok(!waiting.has(index) && !starts.includes(index), 'assignment dispatched more than once')
+    assert.equal(options.agentType, kind === 'coding' ? 'elr-worker' : 'elr-research-worker')
+    if (workerError) throw new Error(workerError)
+    const index = Number(options.label.replace('assignment-', ''))
+    assert.ok(!waiting.has(index) && !starts.includes(index), 'assignment launched more than once')
     starts.push(index)
     active += 1
     peak = Math.max(peak, active)
@@ -100,21 +89,23 @@ async function host(kind, { count = 18, target = 6, mode = 'continuous', args = 
     .then(value => { outcome = value; done = true }, error => { failure = error; done = true })
   await flush()
   const receipt = index => kind === 'coding'
-    ? { assignment_id: items[index].assignment_id, unit_id: `unit-${index}`, status: 'succeeded',
-        output_path: items[index].return_path, sha256: 'a'.repeat(64) }
-    : { assignment_id: items[index].assignment_id, attempt: 1, output_path: items[index].return_path,
-        complete: true, summary: 'one completed assignment', sha256: 'a'.repeat(64) }
+    ? { assignment_id: `assignment-${index}`, unit_id: `unit-${index}`, status: 'succeeded',
+        output_path: `/fixture/returns/${index}.json`, sha256: 'a'.repeat(64) }
+    : { assignment_id: `assignment-${index}`, attempt: 1, output_path: `/fixture/returns/${index}.json`,
+        complete: true, summary: 'one completed assignment' }
   return {
     calls, logs, starts, finishes, waiting, config,
     get peak() { return peak }, get done() { return done }, get result() { return outcome },
-    get failure() { return failure }, get verifyPrompt() { return verifyPrompt },
+    get failure() { return failure }, get discoverPrompt() { return discoverPrompt },
+    get verifyPrompt() { return verifyPrompt },
+    workerPrompts: () => calls.filter(call => call.options.phase === 'Workers').map(call => call.prompt),
     async finish(index, replacement) {
       assert.ok(waiting.has(index), `worker ${index} was not running`)
       waiting.get(index).resolve(replacement === undefined ? receipt(index) : replacement)
       await flush()
     },
-    async reject(index) {
-      waiting.get(index).reject(new Error('SECRET_SUBSTANTIVE_LABEL_IN_PROVIDER_ERROR 429 Retry-After: 60'))
+    async reject(index, message = 'SECRET_SUBSTANTIVE_LABEL_IN_PROVIDER_ERROR 429 Retry-After: 60') {
+      waiting.get(index).reject(new Error(message))
       await flush()
     },
     async drain() {
@@ -137,7 +128,9 @@ async function test(name, run) {
 }
 
 for (const kind of ['coding', 'research']) {
-  await test(`${kind}: rolling queue refills before the slow first worker`, async () => {
+  const controllerScript = kind === 'coding' ? 'unit_fanout.py' : 'research_fanout.py'
+
+  await test(`${kind}: rolling pool refills before the slow first worker`, async () => {
     const h = await host(kind)
     assert.deepEqual(h.starts, [0, 1, 2, 3, 4, 5])
     await h.finish(1)
@@ -145,61 +138,51 @@ for (const kind of ['coding', 'research']) {
     assert.ok(h.starts.includes(6), 'seventh worker waited for the first wave')
     const result = await h.drain()
     assert.equal(h.peak, 6)
-    assert.deepEqual(h.starts, Array.from({ length: 18 }, (_, i) => i))
+    assert.deepEqual([...h.starts].sort((a, b) => a - b), Array.from({ length: 18 }, (_, i) => i))
     assert.equal(h.calls.length, 20)
-    assert.equal(result.admission_stopped, false)
+    assert.equal(result.verified, true)
+    assert.deepEqual(result.no_receipt, [])
+    assert.match(h.discoverPrompt, new RegExp(`${controllerScript.replace('.', '\\.')} status .*--record-launch --limit 998`))
+    assert.match(h.verifyPrompt, new RegExp(`${controllerScript.replace('.', '\\.')} status`))
+    assert.doesNotMatch(h.verifyPrompt, /--record-launch/)
+    for (const prompt of h.workerPrompts()) {
+      assert.doesNotMatch(prompt, /fanout_dispatch|ticket|observation-fanout\.md/)
+      assert.ok(prompt.length < 1200, 'worker prompt is not short')
+      if (kind === 'coding') {
+        assert.match(prompt, /--input '\/fixture\/drafts\/\d+\.json'/)
+        assert.match(prompt, /Write tool/)
+      } else {
+        assert.match(prompt, /This is attempt 1\./)
+        assert.match(prompt, /\/fixture\/returns\/\d+\.json/)
+      }
+    }
     if (kind === 'research') {
-      assert.deepEqual(result.returned.map(row => row.assignment_id), h.starts.map(i => `assignment-${i}`))
+      assert.deepEqual(result.returned.map(row => row.assignment_id).sort(), h.starts.map(i => `assignment-${i}`).sort())
     }
-    for (const { prompt } of h.calls.filter(call => call.options.phase === 'Workers')) {
-      assert.ok(prompt.startsWith('Your FIRST operation'))
-      assert.match(prompt, /fanout_dispatch\.py start --ticket/)
-      assert.match(prompt, /fanout_dispatch\.py finish --ticket/)
-    }
-    assert.match(h.verifyPrompt, /fanout_dispatch\.py reconcile/)
-    assert.match(h.verifyPrompt, /can_close true/)
-    assert.match(h.verifyPrompt, /fanout_dispatch\.py close-session/)
   })
 
-  for (const [label, target, args] of [
-    ['fixed', 2, { concurrency: 2, capacity: 8 }],
-    ['adaptive checkpoint', 8, { capacity: 8 }],
-    ['lower host capacity', 3, { capacity: 3 }],
+  for (const [label, args, expected] of [
+    ['fixed concurrency', { concurrency: 2 }, 2],
+    ['concurrency above the runtime ceiling', { concurrency: 40 }, 16],
   ]) {
-    await test(`${kind}: ${label} bound`, async () => {
-      const h = await host(kind, { target, args })
+    await test(`${kind}: ${label}`, async () => {
+      const h = await host(kind, { args })
       await h.drain()
-      assert.equal(h.peak, target)
-      assert.match(h.calls[0].prompt, new RegExp(`--capacity ${args.capacity}`))
-      if (args.concurrency) assert.match(h.calls[0].prompt, /--concurrency 2/)
+      assert.equal(h.peak, expected)
     })
   }
 
-  await test(`${kind}: legacy waves retain their barrier and old arguments`, async () => {
-    const h = await host(kind, { mode: 'legacy', args: { concurrency: 6 } })
-    await h.finish(1)
-    assert.equal(h.starts.length, 6)
-    for (const index of [2, 3, 4, 5]) await h.finish(index)
-    assert.equal(h.starts.length, 6)
-    await h.finish(0)
-    assert.equal(h.starts.length, 12)
-    await h.drain()
-    assert.doesNotMatch(h.calls.find(call => call.options.phase === 'Workers').prompt, /start --ticket/)
-    assert.doesNotMatch(h.verifyPrompt, /fanout_dispatch\.py reconcile/)
-  })
-
   for (const errorMode of ['null', 'rejected', 'mismatched']) {
-    await test(`${kind}: ${errorMode} worker stops admission and keeps evidence private`, async () => {
+    await test(`${kind}: a ${errorMode} worker never stops the batch and keeps evidence private`, async () => {
       const h = await host(kind)
       if (errorMode === 'rejected') await h.reject(1)
       else await h.finish(1, errorMode === 'null' ? null : { assignment_id: 'wrong' })
-      assert.equal(h.starts.length, 6)
+      assert.ok(h.starts.includes(6), 'the free slot was not refilled')
       const result = await h.drain()
-      assert.equal(result.admission_stopped, true)
-      assert.equal(h.starts.length, 6)
-      assert.match(h.verifyPrompt, /--stop-admissions/)
-      assert.doesNotMatch(h.verifyPrompt, /--throttled|--retry-after-seconds/)
+      assert.equal(h.starts.length, 18)
+      assert.deepEqual(result.no_receipt, ['assignment-1'])
       assert.ok(h.logs.every(line => !line.includes('SECRET_SUBSTANTIVE_LABEL')))
+      assert.ok(JSON.stringify(result).indexOf('SECRET_SUBSTANTIVE_LABEL') === -1)
     })
   }
 
@@ -207,107 +190,105 @@ for (const kind of ['coding', 'research']) {
     const empty = await host(kind, { count: 0 })
     await empty.drain()
     assert.equal(empty.starts.length, 0)
+    assert.equal(empty.calls.length, 2)
     const max = await host(kind, { count: 998, args: { limit: 2000 } })
     await max.drain()
     assert.equal(max.calls.length, 1000)
-    assert.match(max.calls[0].prompt, /--limit 998/)
+    assert.match(max.discoverPrompt, /--limit 998/)
   })
 
-  for (const [label, config] of [
-    ['missing owner', { args: { owner: null } }],
-    ['malformed owner', { args: { owner: { incorrect: true } } }],
-    ['mismatched owner', { discovery: { owner: 'another-owner' } }],
-    ['reopened session', { discovery: { reused_session: true } }],
-    ['paused session', { discovery: { state: 'paused' } }],
-    ['oversized discovery', { count: 999 }],
-    ['target exceeds capacity', { target: 7, args: { capacity: 6 } }],
-    ['target exceeds explicit concurrency', { target: 7, args: { concurrency: 6, capacity: 8 } }],
-    ['duplicate ticket', { count: 2, discovery: { tickets: [item(0), item(0)] } }],
-    ['duplicate assignment', { count: 2, discovery: { tickets: [item(0), { ...item(0), ticket_id: 'different-ticket' }] } }],
+  for (const [label, config, pattern] of [
+    ['controller error', { discovery: { error: 'ERROR: run manifest does not match run_seal.json' } }, /did not list the pending assignments.*run_seal/],
+    ['missing listing', { discovery: { pending_assignments: undefined } }, /did not list the pending assignments/],
+    ['malformed item', { count: 1, discovery: { pending_assignments: [{ assignment_id: 'x' }] } }, /malformed/],
+    ['oversized listing', { count: 999 }, /more assignments than the limit/],
+    ['missing worker type at discovery', { discoveryError: "Agent type 'elr-worker' not found" }, /restart the app there once/],
   ]) {
-    await test(`${kind}: ${label} fails before worker launch`, async () => {
+    await test(`${kind}: ${label} fails before any worker launch`, async () => {
       const h = await host(kind, config)
       assert.ok(h.done)
-      assert.ok(h.failure)
+      assert.match(String(h.failure), pattern)
       assert.equal(h.starts.length, 0)
     })
   }
 
+  await test(`${kind}: a missing worker type stops launching and gives the restart instruction`, async () => {
+    const h = await host(kind, { workerError: `Agent type '${kind === 'coding' ? 'elr-worker' : 'elr-research-worker'}' not found` })
+    await flush()
+    assert.ok(h.done)
+    assert.match(String(h.failure), /restart the app there once/)
+    assert.ok(h.calls.filter(call => call.options.phase === 'Workers').length <= 6)
+  })
+
+  await test(`${kind}: a duplicated listing launches the assignment once`, async () => {
+    const h = await host(kind, { count: 2, discovery: { pending_assignments: [item(0), item(0), item(1)] } })
+    await h.drain()
+    assert.deepEqual([...h.starts].sort(), [0, 1])
+  })
+
   await test(`${kind}: native extra-property stringification preserves typed control fields`, async () => {
-    const h = await host(kind, { count: 3, target: 2, nativeExtraStrings: true })
-    assert.equal((await h.drain()).admission_stopped, false)
+    const h = await host(kind, { count: 3, args: { concurrency: 2 }, nativeExtraStrings: true })
+    const result = await h.drain()
     assert.equal(h.starts.length, 3)
     assert.equal(h.peak, 2)
+    assert.equal(result.verified, true)
   })
 
-  await test(`${kind}: structured discovery failure surfaces safely before batch validation`, async () => {
-    const h = await host(kind, { discovery: {
-      mode: 'failed', status: 'discovery_failure', error: 'dispatch_failed_closed', tickets: undefined,
-      note: 'SECRET_SUBSTANTIVE_LABEL',
-    } })
-    assert.ok(h.done)
-    assert.match(String(h.failure), /Dispatch discovery failed closed/)
-    assert.doesNotMatch(String(h.failure), /oversized|SECRET_SUBSTANTIVE_LABEL/)
-    assert.equal(h.starts.length, 0)
-  })
-
-  await test(`${kind}: missing final dispatch evidence cannot report success`, async () => {
-    const h = await host(kind, { count: 1, verification: { dispatch: null } })
-    await assert.rejects(h.drain(), /Dispatch finality was not verified/)
-  })
-
-  await test(`${kind}: failed close cannot report a closed session`, async () => {
-    const h = await host(kind, { count: 1, verification: {
-      dispatch: { reconciliation: { can_close: true }, close: { error: 'dispatch_failed_closed' } },
-    } })
-    await assert.rejects(h.drain(), /Dispatch finality was not verified/)
-  })
-
-  await test(`${kind}: authorized migration resume reaches the first open-session call`, async () => {
-    const h = await host(kind, { count: 1, args: {
-      resume_request: '/fixture/resume-request.json', request_root: '/fixture/project',
+  await test(`${kind}: arguments of earlier versions are accepted and ignored`, async () => {
+    const h = await host(kind, { count: 2, args: {
+      owner: 'native-session', capacity: 8, resume_request: '/fixture/request.json',
+      request_root: '/fixture/project', fixture: true, include_exhausted: true,
     } })
     await h.drain()
-    assert.match(h.calls[0].prompt, /--request '\/fixture\/resume-request\.json'/)
-    assert.match(h.calls[0].prompt, /--request-root '\/fixture\/project'/)
-    assert.doesNotMatch(h.verifyPrompt, /--request /)
+    for (const call of h.calls) assert.doesNotMatch(call.prompt, /--owner|--capacity|--request|--include-exhausted/)
+  })
+
+  await test(`${kind}: an unavailable final status is reported, not thrown`, async () => {
+    const h = await host(kind, { count: 2, verification: null })
+    const result = await h.drain()
+    assert.equal(result.verified, false)
   })
 }
 
-await test('coding: canonical worker_error remains a terminal unit failure', async () => {
+await test('coding: already_submitted and worker_error receipts count as receipts', async () => {
   const h = await host('coding')
   await h.finish(1, { assignment_id: 'assignment-1', unit_id: 'unit-1', status: 'worker_error',
     output_path: '/fixture/returns/1.json', sha256: 'b'.repeat(64) })
-  assert.ok(h.starts.includes(6))
-  assert.equal((await h.drain()).admission_stopped, false)
+  await h.finish(2, { assignment_id: 'assignment-2', unit_id: 'unit-2', status: 'already_submitted',
+    output_path: '/fixture/returns/2.json', sha256: 'c'.repeat(64) })
+  const result = await h.drain()
+  assert.deepEqual(result.no_receipt, [])
+  assert.equal(result.receipts, 18)
 })
 
-await test('research: incomplete return stops admissions for reconciliation without retry', async () => {
+await test('coding: block and limit reach the controller', async () => {
+  const h = await host('coding', { count: 2, args: { block: 3, limit: 50 } })
+  await h.drain()
+  assert.match(h.discoverPrompt, /--record-launch --limit 50 --block 3/)
+})
+
+await test('research: an incomplete return never stops the batch', async () => {
   const h = await host('research')
   await h.finish(1, { assignment_id: 'assignment-1', attempt: 1, output_path: '/fixture/returns/1.json',
     complete: false, summary: 'incomplete' })
-  assert.equal((await h.drain()).admission_stopped, true)
-  assert.equal(h.starts.filter(index => index === 1).length, 1)
-})
-
-await test('research: a source access gap is not provider throttle evidence', async () => {
-  const h = await host('research')
-  await h.finish(1, { assignment_id: 'assignment-1', attempt: 1, output_path: '/fixture/returns/1.json',
-    complete: true, summary: 'one source returned HTTP 429 Retry-After: 60; access gap recorded', sha256: 'a'.repeat(64) })
   assert.ok(h.starts.includes(6))
-  assert.equal((await h.drain()).admission_stopped, false)
-  assert.doesNotMatch(h.verifyPrompt, /--throttled|--retry-after-seconds/)
+  const result = await h.drain()
+  assert.equal(h.starts.length, 18)
+  assert.equal(result.returned.find(row => row.assignment_id === 'assignment-1').complete, false)
 })
 
 await test('saved arguments preserve model/effort and shell literals', async () => {
   const weirdPath = "/fixture's/$(never-execute)`literal"
-  const h = await host('research', { count: 1, args: {
-    fanout_dir: weirdPath, owner: "session's-owner", model: 'fixture-model', effort: 'high',
-  } })
+  const h = await host('research', { count: 1, args: { fanout_dir: weirdPath, model: 'fixture-model', effort: 'high' } })
   await h.drain()
-  assert.ok(h.calls[0].prompt.includes("'/fixture'\\''s/$(never-execute)`literal'"))
-  assert.equal(h.calls.find(call => call.options.phase === 'Workers').options.model, 'fixture-model')
-  assert.equal(h.calls.find(call => call.options.phase === 'Workers').options.effort, 'high')
+  assert.ok(h.discoverPrompt.includes("'/fixture'\\''s/$(never-execute)`literal'"))
+  const worker = h.calls.find(call => call.options.phase === 'Workers')
+  assert.equal(worker.options.model, 'fixture-model')
+  assert.equal(worker.options.effort, 'high')
+  assert.equal(h.calls[0].options.model, undefined)
+  const coding = await host('coding', { count: 1, args: { run_dir: weirdPath } })
+  await coding.drain()
+  assert.ok(coding.workerPrompts()[0].includes("--run-dir '/fixture'\\''s/$(never-execute)`literal'"))
 })
 
 process.stdout.write(`${passed} saved-workflow execution checks passed\n`)

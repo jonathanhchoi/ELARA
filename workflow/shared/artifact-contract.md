@@ -189,11 +189,8 @@ types:
 - `run_checkpoint` (optional, schema 1.4): unchanged payload-free checkpoint
   reference with `path` and `sha256`. If repeated in `active_artifacts`, both
   references must agree. Never add a competing top-level continuation pointer.
-- `recovery_decision` (optional, schema 1.5): `request` and `result`, each a
-  repository-relative `path`/`sha256` reference for `recovery_decision.py`.
-  The validator recomputes the decision, verifies its run identity, and checks
-  routing and unresolved inputs. Hashes and matching assertions alone do not
-  prove the underlying authority or research findings; retain their sources.
+- `recovery_decision` (schema 1.5, before 2.16.0): accepted in older state
+  files and no longer interpreted; do not write it.
 
 `ready`, `running`, and `complete` must not retain unresolved user requests;
 `waiting_for_user` and `awaiting_approval` must identify a concrete unresolved
@@ -307,7 +304,7 @@ State schema 1.4 adds optional `run_checkpoint`: null, or an inline object with
 `path` and `sha256` naming an immutable, payload-free local checkpoint. Old state
 files remain valid. Verify it on resume; a `running` state cannot point to a
 paused/stopped checkpoint. The checkpoint records evidence, not permission to
-dispatch. Follow `operational-recovery.md` for reconciliation and migration.
+launch workers. Follow `operational-recovery.md` for restarts.
 
 Stage 16 must package or reference every active artifact needed to reproduce each
 reported number: frozen prompts, raw outputs where sharing is authorized,

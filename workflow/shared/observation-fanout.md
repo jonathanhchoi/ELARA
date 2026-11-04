@@ -51,95 +51,50 @@ never serial work in the parent context and never an all-tools default agent:
   `waiting_for_user` and ask the researcher to enable sub-agents — a host setting only they can
   change — or, where the accepted pilot fixed an API route as the instrument, run that route.
 
-## Scheduling policy and admission
+## Launching, relaunching, and concurrency
 
-Newly prepared coding, audit, research, critique, retrieval, and review runs use
-`scripts/fanout_dispatch.py` for operational scheduling records while the host
-still launches every restricted worker. Keep the policy outside the frozen
-scientific assignments. Runs without a recorded policy use their original
-scheduler; installing an update does not migrate a run or authorize a resume.
+The files in the run directory are the whole record. An assignment is pending
+until its return exists. The launcher's discovery call (`status --record-launch`
+on either controller) lists the pending assignments and records one launch for
+each; the saved workflows make that call, and a Codex parent makes it before
+spawning. Nothing else registers, admits, or reconciles workers.
 
-The default starts with at most six workers. At each passing batch checkpoint,
-the stage parent may increase the target by one for the next dispatch session when
-eligible backlog remains and at least the session target number of workers have
-cleanly reconciled, up to twelve. It must explicitly record the passed
-scientific, evidence, budget, and stop-rule checks before requesting that increase.
-Worker completion, a workflow verifier, reconciliation, or closing a session does
-not establish a passing scientific checkpoint or grow the target. Respect lower host capacity, researcher limits, frozen
-instrument limits, and shared service limits. A positive explicit `concurrency`
-is a fixed ceiling and disables automatic increases; provider throttling may still
-reduce the effective target below that ceiling. Verify available worker
-slots after reserving capacity for the parent and controller agents; do not infer
-capacity from a product name or advertised maximum. Hold the target fixed within
-a session. Confirmed provider throttle/backoff evidence halves the effective target (rounded down, minimum
-one) for the next session, wait through two passing checkpoints before further
-growth, and honor the service's retry delay. Do not use labels,
-outcome frequencies, or substantive findings to choose concurrency.
+- **The first valid return wins.** A coding return is created once by
+  `unit_fanout.py submit`; a later submission for the same assignment (from a
+  duplicate or late worker) is discarded and reported as `already_submitted`.
+  Each research launch gets its own attempt and return path, and the
+  lowest-numbered complete attempt the parent has not marked unusable is the
+  result. A duplicate launch therefore costs time but never changes or
+  overwrites a recorded result, and no outcome is ever chosen among.
+- **One failed worker never stops the batch.** A worker that crashes, times
+  out, or returns no receipt leaves its assignment pending; the other workers
+  continue. Run the workflow again for what is still pending. A coding
+  assignment launched twice without a return is closed by the controller with a
+  typed `worker_error` return, which the frozen retry rule then handles like any
+  other failure. A research assignment is offered again with its next sealed
+  attempt and becomes `exhausted` after `max_attempts` launches.
+- **Concurrency.** The saved workflows run six workers at a time by default,
+  refilling each slot as soon as it frees; `concurrency` sets another fixed
+  number (the Claude Code runtime caps it at 16). Use fewer when the host,
+  the researcher, the frozen instrument, or a provider limit requires it. Never
+  use labels, outcome frequencies, or findings to choose concurrency.
+- **Bounds that still apply.** Approved batch sizes (`block`, `limit`),
+  research rounds, retry eligibility, cost ceilings, and researcher-selected
+  checkpoints bound each launch; do not start the next batch early. Run one
+  launcher at a time per run directory, and never relaunch while that
+  directory's workers are still running. Validate returns and make shared writes
+  serially.
 
-Refill a completed slot promptly while other workers continue. Approved batch
-sizes, research rounds, retry eligibility, cost ceilings, and researcher-selected
-checkpoints still bound admission; do not dispatch the next batch early. Validate
-returns and make shared writes serially. A checkpoint that requires a stop stops
-refill immediately; reconcile the live workers under the existing time-box and
-recovery rules. Unknown worker finality, a failed admission operation, or ambiguous
-ownership never counts as a free slot or permission to launch the unit again.
-
-Before admitting work, the parent opens an owned dispatch session with the exact
-run directory, kind, available capacity, and any accepted block/limit. The helper
-reserves ordered, assignment-specific tickets, not worker launches. On Codex,
-the parent records native launch intent before spawning and acknowledgement only
-after the host accepts an identifiable worker. Claude's saved workflow exposes a
-completed agent result rather than a native acceptance handle: preserve the planned
-ticket, use its worker start receipt as evidence of actual execution, and record
-completed native evidence only after the awaited result. Do not manufacture an
-acknowledgement or a never-started disposition from missing workflow output.
-Each fresh worker must run
-`python scripts/fanout_dispatch.py start --ticket <ticket-path>` before reading
-scientific assignment content. A successful response contains only its own
-assignment identity and paths. After the canonical return exists, it runs
-`python scripts/fanout_dispatch.py finish --ticket <ticket-path>`; coding submit
-may already have recorded this return. These helper-mediated writes are narrowly
-permitted, never permission to read or edit the scheduler registry. Correct an
-invocation error only when affirmative evidence shows the helper did not run.
-Refused admission or uncertain execution returns to the parent for reconciliation,
-without reading, coding, or fetching. Preserve every failed invocation.
-Controller-only discovery and verification agents do not start scientific tickets.
-The parent performs full controller integrity checks at dispatch-session and validation
-boundaries. Each worker guard rehashes the ticket's common manifest, seal, specification,
-and frozen-input bindings plus its own assignment or brief; it does not scan sibling
-assignments and returns while holding the admission lock. Closed sessions move into
-immutable hashed segments whose history is authenticated before a later session opens;
-the active admission record must not replay the entire corpus on every worker call.
-
-Each ticket, observed intent or acknowledgement, start, return, validation, and
-checkpoint must reconcile from disk; unavailable native evidence remains explicitly
-unobservable. Use native evidence for the exact ticket when a worker
-stops without a return; a host completion alone proves neither a valid return nor
-retry eligibility. Preserve all unknown attempts and pause affected admission.
-An explicitly paused existing run may adopt this policy only through reviewed,
-opt-in migration under `operational-recovery.md`, never by replacing its seals.
-
-
-When the parent has confirmed provider throttling, record it through
-`python scripts/fanout_dispatch.py reconcile --run-dir <run-dir> --owner <owner>
---throttled --retry-after-seconds <observed-seconds>`, together with any exact native
-completion evidence. Preserve the provider evidence that supplied the delay. The
-helper blocks new session admission, launch intents, and worker starts until the
-latest recorded deadline has passed. If the provider gives no verifiable wait,
-omit `--retry-after-seconds`: admission stays blocked for an unknown backoff, with
-no guessed restart time. After verifying provider availability from new native
-evidence, the parent may run `python scripts/fanout_dispatch.py resolve-backoff
---run-dir <run-dir> --owner <owner> --evidence-sha256 <availability-evidence-hash>`.
-This never shortens a still-active known Retry-After deadline or resolves an
-unknown worker's finality. Existing workers may finish and preserve their returns;
-the parent retains the existing checkpoint, ownership, and resume rules.
+Runs prepared by earlier versions keep working: their `dispatch_policy.json`
+and `batch_checks/dispatch/` records are left in place as history and are no
+longer read.
 
 ## Freeze before fan-out
 
 1. Freeze and hash the unit roster, codebook, task instructions, schema, source representation,
    model and effort, retry policy, terminal statuses, batch size, cost ceiling, and run code.
    Revalidate the specification, every frozen input, and every generated assignment before each
-   status check, dispatch session, merge, or analysis; any drift stops the run.
+   status check, launch, merge, or analysis; any drift stops the run.
 2. Build an immutable assignment manifest with one row or JSON object per attempt. Each entry
    names a unique `assignment_id`, stable `unit_id`, assignment kind, attempt number, exact frozen
    input hashes, and one unique worker-return path. A coding unit may contain one document or
@@ -165,11 +120,13 @@ requires them. A shared filesystem is not statistical independence; workers must
 read sibling assignments, worker returns, aggregates, or ledgers, and this residual limitation must
 be reported when the platform cannot enforce filesystem isolation.
 
-A coding or audit worker must not write its return path directly. It constructs one return envelope in memory and
-sends that JSON on standard input to `python scripts/unit_fanout.py submit --run-dir <run-dir>
---assignment-id <assignment-id>`. The controller revalidates the sealed manifest, assignment hash,
-IDs, schema, and unique path before creating the file, refuses every overwrite, and emits only an
-operational receipt. The envelope must preserve the assignment and unit IDs, attempt number,
+A coding or audit worker must not write its return path directly. It writes one return envelope
+to the draft path its launcher names (`<run-dir>/drafts/<assignment-id>.json`) and runs `python
+scripts/unit_fanout.py submit --run-dir <run-dir> --assignment-id <assignment-id> --input
+<draft-path>`. A draft file has no size limit; passing the envelope on the command line or
+through a shell heredoc can exceed the Windows command-length limit. The controller revalidates
+the sealed manifest, assignment hash, IDs, schema, and unique path before creating the return,
+never overwrites one, removes the submitted draft, and emits only an operational receipt. The envelope must preserve the assignment and unit IDs, attempt number,
 terminal status, structured result or typed error, and observable provenance. The worker returns
 only that short operational receipt to the orchestrator, never the substantive label. Workers never
 merge data, update shared ledgers, edit code, change state, retry themselves, or decide that a failed
@@ -195,8 +152,8 @@ mid-write; relaunched identically, it did the same thing again.
    `.codex/agents/elr-worker.toml` (`elr_worker`) and `.codex/agents/elr-research-worker.toml`
    (`elr_research_worker`) (`developer_instructions`, `sandbox_mode`, no MCP servers). `elr-worker`
    / `elr_worker` (coding/audit, and the controller `status` steps of the workflows): read the
-   assignment and source, run the controller's `submit`; no web, no writes to the run directory
-   beyond the submit controller and its assigned dispatch start/finish helper. `elr-research-worker` / `elr_research_worker` (search, retrieval,
+   assignment and source, write its one draft, run the controller's `submit`; no web, no other
+   writes. `elr-research-worker` / `elr_research_worker` (search, retrieval,
    critique, review): web fetch and search plus read/write of its own return path. Neither can reach
    an interactive surface — the host's in-app browser, computer use, desktop or other MCP tools,
    sub-agent spawning, user prompts, task or scheduling tools. The saved workflows set these
@@ -227,28 +184,26 @@ mid-write; relaunched identically, it did the same thing again.
    time box for the kit, so the box is enforced by the worker's own bounded calls and by the
    parent's watch: a worker still running well past its box is stopped from the host's run view
    (`/workflows` on Claude Code; the agent thread controls on Codex) or by the assistant. An
-   authorized time box remains binding unless the researcher changes it. Preserve the timeout,
-   handle state, and original assignment and attempt; reconcile finality and retry eligibility
-   under the frozen controller before another launch. An absent return or elapsed time alone
-   never creates a new attempt. Keep affected dispatch stopped while finality or retry eligibility
-   is unresolved, following `operational-recovery.md`.
+   authorized time box remains binding unless the researcher changes it. Once a worker has
+   stopped without a return, the next launcher run relaunches its assignment under the rules
+   in "Launching, relaunching, and concurrency"; a worker that is still running is never
+   relaunched.
 4. **Crash-resume from disk.** Every fan-out lives under the run directory — never in the
    assistant's session scratchpad, which changes with the session: the sealed manifest (one row per
    assignment: id, kind, brief or assignment file, unique return path), the briefs or assignments,
    the workers' returns (written incrementally by research workers, `"complete": false` until the
-   end; created once by the controller for coding workers), and the append-only launch record.
-   The controllers derive what is pending from those files alone, so a run interrupted by a host
-   or session crash resumes only after reconciling tickets, native handles, and returns from disk.
-   Attempts are bounded: the coding controller allows the linked retry its policy names
-   (`unit_fanout.py retry`); the research controller records each launch and stops offering an
-   assignment after `max_attempts` (default 3), reporting it as `exhausted`; `--include-exhausted`
-   adds diagnostics but never reuses an immutable return path. Additional authorized work starts a
-   new explicitly versioned fan-out wave, and every exhausted assignment is surfaced in the stage's
-   limitations, never silently dropped.
-5. **Bounded concurrency and checkpoints.** Follow the recorded scheduling policy above.
-   On either host, refill individual completed slots within the accepted batch or research round;
-   use the session's fixed target and lower effective capacity. Legacy runs retain their recorded
-   scheduler until explicitly migrated. The parent validates returns from files, merges serially,
+   end; created once by the controller for coding workers), and the append-only launch record
+   (`launches.jsonl` for coding, `attempts.jsonl` for research). The controllers derive what is
+   pending from those files alone, so a run interrupted by a host or session crash resumes by
+   running the same launcher again. Attempts are bounded: the coding controller allows the
+   linked retry its policy names (`unit_fanout.py retry`); the research controller records each
+   launch and stops offering an assignment after `max_attempts` (default 3), reporting it as
+   `exhausted`; `--include-exhausted` adds diagnostics but never reuses an immutable return path.
+   Additional authorized work starts a new explicitly versioned fan-out wave, and every exhausted
+   assignment is surfaced in the stage's limitations, never silently dropped.
+5. **Bounded concurrency and checkpoints.** On either host, refill individual completed slots
+   within the accepted batch or research round, at the fixed concurrency. The parent validates
+   returns from files, merges serially,
    and appends a ledger checkpoint with exact counts. During Stage 11, disposition of each failed,
    invalid, or exhausted unit follows `workflow/stages/11-scale-up.md` and `guardrails.md` §11:
    decide under frozen rules and append to `failure_decisions.jsonl` when the preference is absent
@@ -256,17 +211,15 @@ mid-write; relaunched identically, it did the same thing again.
    live assignments, and present the pending failures. Only the parent appends that log, serially.
    Writes to manifests, merged aggregates, ledgers, and state are atomic (temporary file, then
    replace). At validation checkpoints scan for unexpected writes, including the repository root
-   and working directory. Assigned returns, controller-created attempt files, and the helper-owned
-   dispatch records are expected; arbitrary worker scratch files are not. Record each containment
-   finding with its path and disposition, remove or quarantine it, and stop admission if it repeats.
+   and working directory. Assigned returns, drafts, controller-created attempt files, and launch
+   records are expected; arbitrary worker scratch files are not. Record each containment finding
+   with its path and disposition, remove or quarantine it, and stop launching if it repeats.
    Tool restrictions do not by themselves bound every shell write. At launch and checkpoints,
    report exact terminal, active, and outstanding counts, elapsed time, retries, and an ETA range.
-   Before measured throughput exists, use a range based on assignment durations, the recorded
-   worker target, and checkpoint overhead. Thereafter use observed completed-assignment throughput
-   and remaining work, including required batch drains. Record the helper's start-to-return registration metrics and refill delay when observable.
-   Average registered workers and reconciled attempts per minute are operational estimates,
-   not measurements of active model inference, token throughput, or native process liveness. Send an operational update about every five minutes where the host
-   permits. Never expose interim labels or outcome distributions.
+   Before measured throughput exists, use a range based on assignment durations, the concurrency,
+   and checkpoint overhead. Thereafter use observed completed-assignment throughput and remaining
+   work, including required batch drains. Send an operational update about every five minutes
+   where the host permits. Never expose interim labels or outcome distributions.
 
 ## Research fan-outs
 
@@ -294,7 +247,7 @@ manifest.csv       the same attempt rows as CSV (for audit and parent tooling, n
 seal.json          hash of manifest.json; `status` fails closed on drift
 returns/<id>__attempt-NNN.json
                    the worker's return: {"assignment_id", "attempt", "complete": true|false, ...}
-attempts.jsonl     append-only launch rows; ticketed runs record only actual worker starts
+attempts.jsonl     append-only launch rows, one per launch, written by `status --record-launch`
 dispositions.jsonl append-only parent records for failed or stage-schema-unusable attempts
 ```
 
@@ -307,27 +260,26 @@ above — never other workers' findings, running tallies, or the verdict the sta
 The worker's return is a JSON object with `assignment_id`, `attempt`, `complete`, and the stage's
 `result` fields, plus `access_gaps` and timestamps. The controller validates assignment identity,
 attempt identity, and operational completion; the stage validates the rest when it merges.
-`status --include-pending` lists eligible attempts and their paths without recording a launch.
-For a policy-enabled run, reserve through the dispatch helper and record each research launch
-only when that worker passes its start guard. The legacy `--record-launch` route remains for
-unmigrated runs. `status` alone reports assignment states (`expected`, `complete`,
-`incomplete`, `missing`, `invalid`, `exhausted`, and `pending`) plus an attempt-level reconciliation
-of `attempted`, `succeeded`, `failed`, `unusable`, and `outstanding`. Keep those denominators
-distinct in the run ledger.
+`status --include-pending` lists the next attempt for each pending assignment without recording a
+launch; `status --record-launch` is the launcher's call and records one launch per listed
+assignment. `status` alone reports assignment states (`expected`, `complete`, `incomplete`,
+`missing`, `invalid`, `exhausted`, and `pending`) plus an attempt-level reconciliation of
+`attempted`, `succeeded`, `failed`, `unusable`, and `outstanding`. Keep those denominators
+distinct in the run ledger. An attempt that never completed and was superseded by a later launch
+counts as `failed`; its file is kept. A disposed return that changes afterward is listed under
+`changed_after_disposition`; the disposition stands and the change is recorded as a limitation.
 
 When a return says `complete: true` but fails the brief's stage-specific schema, the parent does not
 edit, move, or overwrite it. It records the terminal attempt with `python
 scripts/research_fanout.py record-disposition --fanout-dir <dir> --assignment-id <id> --attempt
-<number> --terminal unusable --reason <exact validation failure>`, then runs `status
---include-pending` to inspect the next controller-authorized sealed attempt. Reserve it through
-the dispatch helper for policy-enabled runs; a status listing is not a launch. Use terminal `failed` for
-a launched worker or route that failed without a usable result. Once all sealed attempts are used,
-the assignment stays exhausted; start a new explicitly versioned fan-out wave if the research design
-authorizes more work. `--include-exhausted` reports diagnostic details but never reopens or reuses a
-return path. The controller does not offer the next path while the latest launch is missing,
-incomplete, or invalid but undisposed, because that worker may still be writing; the parent must
-record the exact terminal reason first. The parent, never a worker, validates and merges successful
-returns deterministically in assignment and attempt order and appends the ledger checkpoint.
+<number> --terminal unusable --reason <exact validation failure>`; the next launcher run then
+offers the next sealed attempt. Use terminal `failed` to record why a launched worker or route
+failed without a usable result. Once all sealed attempts are used, the assignment stays exhausted;
+start a new explicitly versioned fan-out wave if the research design authorizes more work.
+`--include-exhausted` reports diagnostic details but never reopens or reuses a return path. The
+parent, never a worker, validates and merges successful returns deterministically in assignment
+order, using the return `status --include-returns` names for each complete assignment, and
+appends the ledger checkpoint.
 
 ## Parent-only browser fallback for Stage 02
 
@@ -388,10 +340,7 @@ search packet contains every source that remains unresolved after the protocol.
 ## Codex adapter
 
 For interruption handling and cross-session checkpoints, also read
-`workflow/shared/operational-recovery.md`. The lifecycle journal is an optional,
-explicitly adopted addition, never a replacement for the frozen controller or
-host-native restricted-worker route. Do not infer launch eligibility from a
-missing return or replay an unacknowledged launch without resolving finality.
+`workflow/shared/operational-recovery.md`.
 
 Codex runs the fan-out as the kit's custom sub-agents (`.codex/agents/`), spawned by name by the
 parent session with the host's own sub-agent tools; the parent never processes assignments in its
@@ -402,54 +351,24 @@ own context and never launches a general-purpose or `default` sub-agent for kit 
    present and foreground execution otherwise. Do not create a narrower fan-out
    goal. Workers never create goals or plans. The parent completes serial
    validation, merge, and final verification after collecting the workers.
-2. For a policy-enabled run, open a session with
-   `python scripts/fanout_dispatch.py open-session --run-dir <run-dir> --kind coding|research
-   --owner <native-session-id> --host codex --capacity <available-worker-slots>` and the recorded
-   optional `--concurrency`, `--block`, or `--limit`. Dispatch only the returned reserved tickets,
-   in order, up to the target. Before each spawn, run `intent --ticket <ticket-path> --owner <owner>`;
-   after positive host acceptance, run `ack --ticket <ticket-path> --owner <owner>
-   --evidence-sha256 <native-acknowledgement-hash>` through the same helper. Give a fresh
-   `elr_worker` or `elr_research_worker` a non-forked context (explicit `fork_turns: "none"`
-   where supported, or the verified native equivalent), only its own start command and frozen
-   settings, then its one assignment or brief through the successful receipt. Never embed scientific content ahead
-   of the start guard. Wait only on acknowledged handles. When the native runtime confirms a
-   worker is terminal, close its handle if the host offers an explicit close operation. If the
-   host has no close operation, accept automatic slot release only after verifying that its
-   capacity limit counts active workers and terminal completion releases that capacity. A
-   terminal thread may remain available for follow-up without occupying an active slot; never
-   use that thread for another assignment. Reconcile the exact ticket and canonical return
-   serially, confirm the runtime has capacity for a fresh worker, then refill without waiting
-   for unrelated workers. Missing close tooling alone is not a route failure; unknown native
-   finality or unverified capacity still stops admission. Record the host's release behavior
-   with the runtime capability evidence.
-   Run `reconcile --run-dir <run-dir> --owner <owner>` and `close-session` using the same run
-   and owner. After all required stage validation, evidence, budget, and stop-rule checks pass,
-   the stage parent explicitly records the checkpoint decision with
-   `python scripts/fanout_dispatch.py checkpoint --run-dir <run-dir> --owner <owner> --passed`.
-   This requires a closed session; completion receipts and workflow verification alone never
-   authorize adaptive growth. Without `--passed`, checkpoint snapshots operational state only
-   (recorded throttling may still reduce the next target). The helper checks actual eligible
-   backlog, clean reconciliation count, capacity, and cooldown; the next session uses its stored target. Reconcile native evidence with `--host-evidence`
-   when needed: a JSON list of objects containing `ticket_id`, `status` (`completed`,
-   `never_started`, `startup_failed`, or `unknown`), and `evidence_sha256`.
-   `never_started` requires positive nonacceptance evidence. `startup_failed` requires
-   affirmative native termination evidence before admission or scientific-input access,
-   with no start marker or return; it preserves the accepted launch. Neither is inferred
-   from missing files. Follow `operational-recovery.md` to recover within existing authority;
-   stop admissions while execution status is unresolved. Do not allocate scientific retries
-   in the scheduler. If open reports `mode: legacy`, keep the run's original bounded-wave route
-   unless the researcher explicitly adopts a reviewed migration. Each coding worker uses the
-   controller's `submit`, never direct return-path writes. Never reuse a context for another unit.
+2. Get the batch with the controller's launcher call — `python scripts/unit_fanout.py status
+   --run-dir <run-dir> --record-launch` (with any approved `--limit` or `--block`) or `python
+   scripts/research_fanout.py status --fanout-dir <dir> --record-launch` (with any approved
+   `--limit`) — and spawn exactly the listed `pending_assignments`, in order, as a rolling pool
+   at the chosen concurrency. Give each fresh `elr_worker` or `elr_research_worker` a non-forked
+   context (explicit `fork_turns: "none"` where supported, or the verified native equivalent)
+   and only its own assignment path, draft path, and run directory (coding) or brief, attempt,
+   return path, and time box (research). When the native runtime reports a worker finished,
+   close its handle if the host offers a close operation, and refill the slot without waiting
+   for unrelated workers. Never reuse a context for another unit. A worker that fails leaves its
+   assignment pending; the others continue. When the batch is done, run `status` again and
+   report the counts; run the launcher call again for what is still pending.
 3. A CSV batch fan-out tool (the host reads a CSV, spawns one worker per row, and collects results
-   — `spawn_agents_on_csv` in Codex as of 2026-08) may run coding assignments from the coding controller's
-   active assignment rows only when its workers can be given the kit's restricted agent, or when the
-   parent has confirmed for that turn that the sandbox denies network and no MCP or browser tools are
-   configured, and records that in the run manifest. Never dispatch a research `manifest.csv`
-   wholesale: it includes sealed but unused retry slots. Research workers receive only the current
-   `pending_assignments` returned by `research_fanout.py status`; otherwise spawn the named agents
-   directly. For policy-enabled runs, a CSV route must preserve ticket start guards, individual
-   completion/reconciliation, the recorded concurrency policy, and native launch evidence; if it
-   cannot, use direct restricted-worker spawning.
+   — `spawn_agents_on_csv` in Codex as of 2026-08) may run the listed `pending_assignments` only
+   when its workers can be given the kit's restricted agent, or when the parent has confirmed for
+   that turn that the sandbox denies network and no MCP or browser tools are configured, and
+   records that in the run manifest. Never dispatch a research `manifest.csv` wholesale: it
+   includes sealed but unused retry slots.
 4. Discover the session's actual sub-agent capacity and whether the kit's custom agents are loaded;
    do not assume a portable default. The manifest and ledger, not conversation memory, determine
    what remains; every worker return path stays under the run directory.
@@ -469,35 +388,25 @@ pipeline or of the stage is the opt-in for that. No permission mode change is ne
 containing spaces.
 
 - **Coding and audit units**: `elr-observation-fanout` with `{ "run_dir": "<run-dir>" }` (optional
-  `block`, `limit`, `concurrency`, `model`, `effort`; `fixture: true` only for an explicit kit validation
-  fixture). One discovery agent runs the controller's `status`, then one `elr-worker` per pending
-  assignment submits through the controller, then an operational verifier runs `status` again.
-  `/elr-code-observations` validates the handoff first when the researcher invokes it explicitly.
+  `block`, `limit`, `concurrency`, `model`, `effort`). One controller agent runs the launcher call,
+  then one `elr-worker` per pending assignment writes its draft and submits it through the
+  controller, then a controller agent runs `status` again. `/elr-code-observations` validates the
+  handoff first when the researcher invokes it explicitly.
 - **Research units**: `elr-research-fanout` with `{ "fanout_dir": "<prepared-fan-out-directory>" }`
-  (optional fixed `concurrency`, `limit`, `include_exhausted`, `model`, `effort`). A discovery
-  agent opens the session and fresh `elr-research-worker` instances run ticketed assignments
-  in a rolling pool. Record a research launch when its worker actually starts, never by marking
-  the entire pending list launched in advance. The verifier reconciles and closes the operational
-  session; the stage parent separately approves the scientific checkpoint. A legacy
-  run retains its prior workflow path.
-- Policy-enabled workflows require a stable native-session `owner`; pass verified available
-  worker `capacity` after controller/parent reserve, including values below six. If omitted,
-  capacity defaults conservatively to six. The recorded target is fixed within that batch/session;
-  optional `concurrency` sets a fixed ceiling; recorded provider backoff can lower the effective target. Preserve `block`, `limit`, model, and effort
-  constraints. Each invocation admits at most 998 workers, reserving two of the runtime's 1,000
-  agent calls for discovery and verification. Continue remaining work in a reconciled later
-  session without crossing an approved batch or research-round boundary. Existing workflow
-  arguments still work for legacy runs without a scheduling policy.
-  For the first invocation of an explicitly migrated paused run, the parent also supplies
-  `resume_request` and `request_root`: paths to the reviewed `resume_dispatch` decision request
-  and its project root. The workflow passes them to that same discovery `open-session` call.
-  Do not pre-open a session and then ask a workflow to replay its tickets; an existing session
-  returns no new tickets and requires reconciliation instead.
-- Claude's saved workflow does not expose structured provider-throttle or Retry-After evidence.
-  A null result or host exception stops admission and preserves the uncertainty; it never becomes
-  a rate-limit diagnosis by parsing raw error text. A research site's HTTP 429 is an access gap,
-  not evidence that the model provider has throttled the worker pool. The parent must obtain
-  actual native provider evidence before recording a provider backoff or changing its duration.
+  (optional `concurrency`, `limit`, `model`, `effort`). One controller agent runs the launcher
+  call, fresh `elr-research-worker` instances run the listed attempts in a rolling pool, and a
+  controller agent runs `status` again.
+- Each invocation launches at most 998 workers, reserving two of the runtime's 1,000 agent calls
+  for the controller steps; run it again for the rest without crossing an approved batch or
+  research-round boundary. The workflow returns the final counts plus `no_receipt`, the
+  assignments whose workers returned nothing usable; they stay pending on disk. Arguments of
+  earlier versions (`owner`, `capacity`, `resume_request`, `request_root`, `include_exhausted`,
+  `fixture`) are accepted and ignored.
+- A null result or host exception from one worker is recorded in `no_receipt` and never stops the
+  others; it is not a rate-limit diagnosis. A research site's HTTP 429 is an access gap, not
+  evidence that the model provider has throttled the worker pool. If the provider itself is
+  refusing work, that is an external wait under "When something breaks" in
+  `operational-recovery.md`: lower `concurrency` once, then wait.
 - Every agent runs as the kit's restricted `agentType`, so the tool surface is enforced by the
   platform. Workflow agents run with the researcher's tool allowlist: the first `python
   scripts/unit_fanout.py …` or `research_fanout.py …` command and the first web fetch may prompt
@@ -514,8 +423,8 @@ containing spaces.
   workflow's model for every worker: record it in the run manifest as capability drift.
 - Only when workflows are unavailable (disabled, or a host older than 2.1.154) may the assistant
   launch workers directly with the Agent tool, one assignment per call, `subagent_type`
-  `elr-worker` or `elr-research-worker`, under the same manifest, scheduling policy, and controllers — and it
-  records that route in the run manifest.
+  `elr-worker` or `elr-research-worker`, under the same manifest, launcher call, and controllers —
+  and it records that route in the run manifest.
 
 ## Serial validation and resumption
 
@@ -534,8 +443,8 @@ assignment to return to aggregate.
 ## Provenance and limits
 
 Record the platform, route, requested and reported model when observable, effort and sampling
-settings or `unobservable`, host version, dispatch/start/completion timestamps, scheduling policy,
-actual concurrency, checkpoint identity, prompt and input hashes,
+settings or `unobservable`, host version, launch and completion timestamps, concurrency,
+checkpoint identity, prompt and input hashes,
 request IDs, usage, latency, errors, retries, skill/contract hash, and repository revision. Never
 claim that a subagent run is the same wire request as an API call: host system instructions, tool
 definitions, context, sampling controls, and model snapshots may differ. Validate end-to-end route

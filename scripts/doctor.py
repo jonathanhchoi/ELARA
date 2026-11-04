@@ -63,7 +63,6 @@ DISCOVERY_SURFACES = (
     "requirements.txt",
     "scripts/bootstrap.py",
     "scripts/storage.py",
-    "scripts/fanout_dispatch.py",
     "scripts/model_readiness.py",
     "workflow/shared/model-readiness.md",
     "workflow/shared/guardrails.md",

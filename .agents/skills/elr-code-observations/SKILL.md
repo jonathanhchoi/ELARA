@@ -19,18 +19,17 @@ recorded software; do not repeat update checks per worker, batch, or retry.
 3. Validate the immutable assignment manifest and its canonical visible-prompt and response-schema
    hashes before spawning anything. Give each fresh worker exactly one assignment and one unique
    return path; workers never edit shared files.
-4. For a new or explicitly migrated run, require the assigned dispatch ticket start command before
-   any assignment read, and its finish command after submission. Controller-only discovery and
-   verification steps do not start scientific assignments. Require workers to send their return
-   envelope through `python scripts/unit_fanout.py submit`;
-   they do not write the worker-return path directly or expose substantive labels in receipts.
+4. Each worker writes its return envelope to the draft path it is given and submits it with
+   `python scripts/unit_fanout.py submit --input <draft-path>`; workers do not write the
+   worker-return path directly or expose substantive labels in receipts. One failed worker never
+   stops the others; run the launcher again for whatever is still pending.
 5. Run the fan-out through the host's orchestrator as the shared contract directs — never one
    hand-launched worker at a time and never an all-tools agent. On this host that means
    the kit's `elr_worker` custom sub-agents (`.codex/agents/`), spawned by name in non-forked contexts, one per
-   pending assignment in a bounded rolling pool under the stage completion contract. Close
-   terminal handles when supported; otherwise verify automatic slot release and available
-   active-worker capacity before each fresh spawn. Never reuse a terminal worker context.
+   assignment listed by `python scripts/unit_fanout.py status --run-dir <run-dir> --record-launch`,
+   in a bounded rolling pool under the stage completion contract. Close terminal handles when
+   supported and refill each freed slot. Never reuse a terminal worker context.
    Use foreground execution without a covering authorized goal; never code units in your own context.
 6. The parent keeps the completion contract and plan; workers never create either. Validate
-   returns and confirm completed slots are released individually; update the plan and ledgers serially at checkpoints. Resume from
-   files, preserve every attempt, expose only operational progress, and reconcile before merging.
+   returns and update the plan and ledgers serially at checkpoints. Resume from files, preserve
+   every attempt, expose only operational progress, and reconcile before merging.

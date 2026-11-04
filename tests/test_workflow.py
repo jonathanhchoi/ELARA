@@ -1002,14 +1002,16 @@ class WorkflowContractTests(unittest.TestCase):
         # Write-scope containment: tool restrictions bound what a worker may
         # invoke, not where a shell may write (field test, 2026-08-27: a
         # worker left a stray file at the repository root). The definitions
-        # forbid file creation and the fan-out contract requires the parent's
-        # post-wave stray-write scan.
+        # allow only the one named draft file and the fan-out contract requires
+        # the parent's post-wave stray-write scan.
         for relative in (
             ".claude/agents/elr-worker.md",
             ".codex/agents/elr-worker.toml",
         ):
             worker = (ROOT / relative).read_text(encoding="utf-8")
-            self.assertIn("Create no file anywhere", worker, relative)
+            self.assertIn("Create no other file anywhere", worker, relative)
+            self.assertIn("--input <draft-path>", " ".join(worker.split()), relative)
+            self.assertNotIn("fanout_dispatch", worker, relative)
         self.assertIn(
             "creates no other file anywhere",
             (ROOT / ".claude/agents/elr-research-worker.md").read_text(encoding="utf-8"),

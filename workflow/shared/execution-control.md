@@ -306,7 +306,7 @@ record. Workers never create goals or change the parent's goal.
 For paused or interrupted Stage 11 work, follow
 `workflow/shared/operational-recovery.md`. Verify the recorded `run_checkpoint`
 when present, reconcile it against current disk evidence, and replace stale
-active pointers before dispatch. Do not report a live verifier as live coding.
+active pointers before launching workers. Do not report a live verifier as live coding.
 An explicitly paused task must not continue an earlier production goal.
 
 Before returning control, reconcile the native plan against disk and report:
