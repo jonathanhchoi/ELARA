@@ -1242,8 +1242,9 @@ def next_steps(summary):
         "Before starting any new stage or tool, follow workflow/shared/kit-updates.md and run "
         "scripts/check_update.py for that stage. Apply verified compatible updates automatically "
         "when writes are authorized, verify the exact commit, and reread updated instructions. "
-        "When GitHub is unavailable use freshly authenticated installed bytes. Investigate conflicts "
-        "autonomously; ask only for unresolved researcher choices and honor explicit update limits. "
+        "When GitHub is unavailable use freshly authenticated installed bytes. An update that does "
+        "not install cleanly is re-run once and otherwise reported under 'When something breaks' in "
+        "workflow/shared/operational-recovery.md; never edit ELARA's files. Honor explicit update limits. "
         "Resume an existing run under its recorded software; do not reinitialize an existing project."
     )
     steps.append(

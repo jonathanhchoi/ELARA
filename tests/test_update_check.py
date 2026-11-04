@@ -136,7 +136,7 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual((self.target / "scripts/example.py").read_text(), "new code")
         self.assertFalse((self.target / bootstrap.UPDATE_PENDING_RELATIVE).exists())
 
-    def test_automatic_update_conflict_preserves_files_and_routes_to_repair(self):
+    def test_automatic_update_conflict_preserves_files_and_routes_to_report(self):
         self.install()
         (self.source / "scripts/example.py").write_text("new code")
         original = (self.target / "scripts/example.py").read_bytes()
@@ -145,7 +145,7 @@ class UpdateTests(unittest.TestCase):
         before = snapshot(self.target)
         result = self.prepare()
         self.assertFalse(result["ready"])
-        self.assertEqual(result["next_action"], "repair")
+        self.assertEqual(result["next_action"], "report")
         self.assertEqual(snapshot(self.target), before)
 
     def test_modified_missing_and_incomplete_inventory_never_pass(self):

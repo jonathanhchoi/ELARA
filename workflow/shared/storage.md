@@ -57,8 +57,9 @@ python <clean-kit>/scripts/storage.py setup --root <project-home> --kit <clean-k
 
 Use a verified clean kit download or clone, never a mixed installed project as
 the source. Reuse its exact installed commit under `kit-updates.md`. An interrupted
-setup preserves its local files; inspect and finish that installation before
-binding it. Do not delete or replace an unrecognized local folder.
+setup preserves its local files; re-run the same setup command once before
+binding, and follow "When something breaks" in `operational-recovery.md` if it
+still fails. Do not delete or replace an unrecognized local folder.
 
 For existing history, setup returns `needs_transition`. The agent inspects it,
 preserves a checkpoint, and carries forward state, ledgers, approved files,
@@ -92,7 +93,7 @@ project/inputs/source_v001.txt` verifies a copy and records provenance.
 Existing adoption paths under `project/artifacts/imported_vNNN/` remain valid
 with equivalent copy verification. Changed originals become new imports, never
 automatic replacements of frozen inputs. Handle large collections in bounded
-portions. The assistant downloads readable bytes as needed and diagnoses missing
+portions. The assistant downloads readable bytes as needed and reports missing
 placeholders or space; it handles routine copying itself.
 
 At a useful checkpoint, the parent reconciles results and selects a consistent
@@ -124,7 +125,8 @@ materials, earlier exports, or the only verified local copy.
 
 At checkpoints and writable resumes, the parent automatically runs
 `python scripts/storage.py retry --root <home-or-local-root>` to attempt pending
-exports once, then diagnoses remaining problems. A failed export preserves
+exports once; a problem that remains follows "When something breaks" in
+`operational-recovery.md` and never delays research work. A failed export preserves
 local successes; retry the copy, not model assignments. Continue authorized local
 work when capacity and the copying/retention policy allow it. If destination
 bytes conflict, preserve them and use `publish --name <new-folder-name>` after

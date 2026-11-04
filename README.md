@@ -447,9 +447,21 @@ Git, a GitHub account, or terminal knowledge. Explicit limits you set still appl
 
 If GitHub is unavailable, the assistant verifies the installed files and continues
 when their exact identity is established, checking again at the next new stage.
-It investigates conflicts and asks only for choices that need your judgment.
-An existing run resumes with its recorded software; reviewed operational repairs
-may proceed under your existing authorization while preserving frozen controls.
+An update that does not install cleanly is tried once more and otherwise
+reported to you; the assistant never repairs ELARA by hand. An existing run
+resumes with its recorded software.
+
+## When something in ELARA breaks
+
+If ELARA's own machinery fails during your project (a command, the parallel
+sub-agents, a copy to your cloud folder, or an update), the assistant keeps the
+error, tries the same step once more, tries one documented smaller route, and
+then stops that part. It writes a short report under `project/kit_issues/` that
+you can send to the ELARA maintainer through
+[GitHub issues](https://github.com/jonathanhchoi/ELARA/issues), and it carries
+on with any work that does not depend on the failed part. It does not rewrite
+ELARA or build workarounds inside your project: fixes are made once in ELARA
+itself and reach every project through the normal update.
 
 Updates preserve your files, project records, and approved research methods.
 The installer previews conflicts and verifies the result. It will not call a

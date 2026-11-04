@@ -35,10 +35,17 @@ Before any new stage or optional tool, including Stage 00, automatic transitions
 and new recovery runs, the parent follows `workflow/shared/kit-updates.md` and
 runs `scripts/check_update.py`. It checks the exact installed commit against
 GitHub `main`, installs verified compatible updates automatically, and uses
-freshly authenticated installed bytes if GitHub is unavailable. Conflicts enter
-autonomous investigation; only a real missing researcher decision requires an
-input request. Help, status, and menu remain available. Existing runs retain
-their software unless a reviewed operational migration is already authorized.
+freshly authenticated installed bytes if GitHub is unavailable. An update that
+does not install cleanly is re-run once and otherwise reported, never repaired
+by hand. Help, status, and menu remain available. Existing runs retain their
+software unless the researcher chose a documented migration.
+
+When ELARA's own machinery fails in any stage, the assistant keeps the
+evidence, re-runs the failed command once, tries one documented smaller route,
+and then writes a kit issue report under `project/kit_issues/` and continues
+with unaffected work. A research session never changes ELARA or writes code
+that works around it; ELARA is fixed in its own repository and reaches projects
+by update. See `workflow/shared/operational-recovery.md`.
 
 1. `$elr` in Codex or `/elr` in Claude reads `project/PROJECT_STATE.md`.
 2. It reads the current authoritative stage instructions and the shared workflow contracts.
@@ -647,3 +654,13 @@ candidates. Consumed time carries across sessions and runs in the run ledger's
 `engineering` line. Progress updates show the allowance used and name stalls.
 At exhaustion the assistant stops affected work and asks once, under the
 existing budget stop. Required checks, gates, and audits never relax.
+
+Version 2.15.0 replaces that allowance. Research sessions never change ELARA or
+write code that works around it. When ELARA's own machinery fails, the
+assistant keeps the evidence, re-runs the failed command once, tries one
+documented smaller route, and then writes a kit issue report under
+`project/kit_issues/` and continues with unaffected work. Fixes are made in the
+ELARA repository and arrive by update. The run ledger's `engineering` line
+becomes an `incidents` line. Existing ledgers are unchanged, and no
+project-state schema change is required. Scientific gates, frozen instruments,
+worker restrictions, and audits are unchanged.

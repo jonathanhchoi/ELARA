@@ -2,7 +2,9 @@
 
 Exit 0 means verified usable installed bytes; 2 means an update is available,
 3 means no usable installation could be verified, and 4 means installation
-evidence needs repair. --auto-update installs an exact, conflict-free update.
+evidence is incomplete or conflicting. That is never repaired by hand: re-run
+once, then report it under workflow/shared/operational-recovery.md.
+--auto-update installs an exact, conflict-free update.
 Neither mode authorizes research or changes frozen run bindings.
 """
 
@@ -90,7 +92,7 @@ def check(root: Path, stage: str) -> dict:
             result["problems"] = ["Name an existing canonical stage or utility."]
             return result
         if (root / bootstrap.UPDATE_PENDING_RELATIVE).exists():
-            result["problems"] = ["An update is unfinished. Verify or complete it before starting a new stage."]
+            result["problems"] = ["An update is unfinished. Re-run the same update once; if it does not finish, report it under 'When something breaks' in workflow/shared/operational-recovery.md."]
             return result
         manifest, problems = installation_evidence(root)
         result["installed_commit"] = (manifest or {}).get("installed_commit")
@@ -144,7 +146,7 @@ def check(root: Path, stage: str) -> dict:
         result.update(status="unavailable", problems=[str(exc)])
     except (ValueError, OSError, TypeError, KeyError):
         result.update(status="unverified", problems=[
-            "Installation evidence is incomplete, invalid, or inaccessible. Inspect it before updating; the new stage remains paused."
+            "Installation evidence is incomplete, invalid, or inaccessible. The new stage remains paused; re-run once, then report it under 'When something breaks' in workflow/shared/operational-recovery.md."
         ])
     return result
 
@@ -171,14 +173,14 @@ def prepare(root: Path, stage: str) -> dict:
         if (not report["ok"] or not report["installation_complete"] or problems
                 or (manifest or {}).get("installed_commit") != target
                 or (root / bootstrap.UPDATE_PENDING_RELATIVE).exists()):
-            result.update(status="conflict", ready=False, next_action="repair",
+            result.update(status="conflict", ready=False, next_action="report",
                           problems=problems or ["Update verification did not finish."])
             return result
         result.update(status="updated", ready=True, installed_commit=target,
                       installed_version=manifest["kit_version"], next_action="reload_instructions")
     except (bootstrap.BootstrapError, OSError, ValueError, TypeError, KeyError):
-        result.update(status="conflict", ready=False, next_action="repair",
-                      problems=["Inspect the protected installation and complete or repair the exact update; no researcher decision is implied."])
+        result.update(status="conflict", ready=False, next_action="report",
+                      problems=["The update did not finish. Re-run this command once; if it fails again, write a kit issue report under 'When something breaks' in workflow/shared/operational-recovery.md. Do not edit ELARA's files."])
     return result
 
 

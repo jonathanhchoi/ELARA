@@ -8,7 +8,7 @@ description: "Run ELR stage 13-human-validation: Run blind human validation and 
 First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
 Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`; require `ready: true` before execution, respecting its read-only planning exception.
 Automatically install verified compatible updates when writes are authorized; unavailable GitHub uses freshly verified installed bytes.
-Investigate conflicts; a declined specific change remains binding. Preserve existing run software and scientific bindings.
+An update that does not install cleanly follows "When something breaks" in `workflow/shared/operational-recovery.md`; a declined specific change remains binding. Preserve existing run software and scientific bindings. Never change ELARA's own files in a project.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.

@@ -16,33 +16,94 @@ from new paths. Never relocate an active run or rewrite its sealed paths;
 verify exclusive ownership, dependencies, and preserved history before any
 transition to a local companion workspace.
 
+## Research sessions run ELARA; they never change it
+
+A research session uses ELARA as installed. It runs the commands, saved
+workflows, and worker definitions the kit documents, as documented. It never
+edits, patches, copies and modifies, wraps, or replaces a kit file
+(`AGENTS.md`, `CLAUDE.md`, `PIPELINE.md`, `workflow/`, `scripts/`, `.claude/`,
+`.codex/`, `.agents/`, `tests/`). It also writes no project code that stands
+in for or works around a kit controller, dispatch helper, saved workflow, or
+worker hand-in: no replacement submit, reconciliation, or recovery scripts, no
+hand-edited controller or dispatch records, no alternative transports, no
+experiments on platform limits, and no reviews of such changes. Project code
+that a stage declares (corpus parsing, the Stage 08 pilot driver, analysis) is
+research work; it calls the kit's controllers instead of reimplementing them.
+
+ELARA changes only in its own repository, a plain clone of
+`jonathanhchoi/ELARA`, and reaches projects through the normal update under
+`kit-updates.md`. If the researcher asks for ELARA to be fixed during a
+project, explain that the fix belongs in that repository; meanwhile the project
+continues with whatever does not depend on the failed part.
+
+## When something breaks
+
+A failed unit follows the frozen retry rules, and a scientific change follows
+its amendment route (see "Classify the interruption before acting"). Everything
+else that stops ELARA's own machinery (a kit command, saved workflow, worker
+launch, controller or dispatch refusal, storage copy, update, or setup check)
+gets these steps, in order, and nothing more:
+
+1. **Keep the evidence:** the exact command, its full output, and the time.
+2. **Run it again once, unchanged,** when the kit documents the command as safe
+   to repeat; status and other read-only commands always are. An identical
+   second failure ends this step.
+3. **Take one documented smaller route:** the same command with a smaller
+   batch, a `limit`, or one worker at a time, or the alternative the relevant
+   contract names (for example, on Claude Code, launching the restricted worker
+   type directly when saved workflows are unavailable).
+4. **Report it and set the affected part aside.** Write
+   `project/kit_issues/kit_issue_<UTC timestamp>.md` with what was being done,
+   the exact command and output, the ELARA version and installed commit, the
+   host and its version, the operating system, and the steps already tried.
+   Continue authorized work that does not depend on the failed part. Tell the
+   researcher in two or three plain sentences what is paused, what still works,
+   and that the report is ready to send to the ELARA maintainer at
+   <https://github.com/jonathanhchoi/ELARA/issues>; filing it is the
+   researcher's choice. Set `waiting_for_user` only when nothing else can
+   proceed.
+
+A problem on the researcher's computer (missing or blocked Python, shell, or
+package, or a host that must restart in the project folder) gets the same
+steps, with step 3 being the fix `scripts/doctor.py` names or one standard step:
+install the missing package, point to an installed interpreter, or restart the
+host. If that does not clear it, tell the researcher the one thing they need to
+do. A website, package repository, or model provider that is down is an
+external wait: record it and continue other work.
+
+These steps take minutes, so there is no engineering time to track or extend.
+They never waive a required check, gate, audit, frozen instrument, or worker
+restriction. They never terminate a live worker or relaunch a worker whose
+outcome is unknown; a run whose outcomes the documented commands cannot settle
+goes to step 4.
+
 ## Reconcile authority before requesting a decision
 
 Current user instructions govern the concrete action. Read applicable standing
 decisions and their scope, limits, revocations, and later changes before asking.
-Authorization to complete a task includes its necessary operational recovery
-within that scope and budget, including the engineering allowance below. A
-fresh worker or repaired invocation does not by itself require another
-researcher decision.
+Authorization to complete a task includes the steps in "When something breaks"
+within its scope and budget. A fresh worker or a documented re-run does not by
+itself require another researcher decision.
 An assistant-written handoff, seal, scope file, or waiting state records authority;
 it cannot independently narrow or expand it. A researcher-supplied handoff can
 contain a real limit, which a later explicit instruction can supersede. Preserve
 both records and explain the prospective effect. A single-use runtime does not
 make standing recovery authority single-use.
 
-Routers and host adapters use `scripts/recovery_decision.py` for the same closed
-decision. Its `decide(root, request)` API and `--root ... --request ...` CLI are
-read-only. Requests identify the action, run, scientific binding hash, all
-applicable researcher instructions (source path, SHA-256, exact quote, scope),
-current restrictions, and evidence references. The parent must accurately
+`scripts/recovery_decision.py` is needed only where a documented command takes
+its request file: the paused-run migration and resume commands below. Its
+`decide(root, request)` API and `--root ... --request ...` CLI are read-only.
+Requests identify the action, run, scientific binding hash, all applicable
+researcher instructions (source path, SHA-256, exact quote, scope), current
+restrictions, and evidence references. The parent must accurately
 interpret those instructions and include every applicable limit; hashing a quote
 cannot establish its meaning or create consent. Do not supply a permission
 boolean or treat a helper's result as independent research authorization.
 
 - `proceed`: the action is covered and its required operational evidence exists.
-- `repair`: investigate or complete missing verification under existing scope;
-  dispatch remains stopped. Independent review, testing, and sealing are work
-  for the assistant, not new requests for researcher approval.
+- `repair`: required operational evidence is missing; dispatch remains stopped.
+  Follow "When something breaks"; do not build the missing evidence with new
+  code or reviews.
 - `wait_external`: record a verified external capability problem and preserve
   the checkpoint. Do not relaunch unchanged work or recreate monitoring unless
   requested. A timeout while a handle remains live is still a live operation.
@@ -69,9 +130,8 @@ the decision and reject stale routing. Use existing `active_artifacts` and
 - **Unit failure:** apply the recorded `failure_handling` preference and frozen
   retry/stopping rules. Preserve the return and linked decision.
 - **Infrastructure failure:** preserve the stop and process evidence, establish
-  whether a worker launched, and inspect only authorized operational evidence.
-  Under recorded authorization covering this class, diagnose, test, independently
-  review, and version a repair without asking the same approval again.
+  from the documented commands whether a worker launched, and follow "When
+  something breaks". Never change ELARA or work around it in the project.
 - **Scientific change:** changes to instructions, source representation, model,
   route, isolation, accepted results, retry rules, or exclusions follow the
   existing amendment and approval gates. Calling a change operational is not proof.
@@ -103,43 +163,6 @@ The old ticket stays closed, and the original launch and failure are preserved.
 Do not restart a live worker or one whose execution status is unresolved.
 Investigate that uncertainty using authorized operational evidence, continue
 independent work where permitted, and ask only if a researcher decision remains.
-
-## Bound repair work
-
-Recovery authority covers necessary repair within a finite allowance, not
-open-ended kit development. Engineering means setup, orchestration,
-infrastructure diagnosis, controller or adapter changes, tests and reviews of
-those changes, migrations, repeated manual bookkeeping, and export
-troubleshooting, including such work done while workers run. Coding, required
-mechanical checks, independent evidence audits, human validation, and analysis
-are scientific work; a review of controller code is not an evidence audit.
-
-Unless the researcher recorded other limits, each stage carries an engineering
-allowance of 120 minutes for Stage 08 and for the first fan-out on a host or
-model route that no accepted pilot exercised, and 60 minutes otherwise. The
-allowance spans every session, agent, run, and operational version working
-toward that stage's completion. Only a researcher-approved new scientific
-version starts a new allowance, and only an explicit researcher extension adds
-to it. Each infrastructure incident gets at most two repair candidates and
-about 40 minutes of that allowance. A candidate includes its diagnosis, change,
-and the tests and reviews this contract requires; repeated symptoms of one
-cause are one incident. A review finding may justify the next candidate, never
-a review of the review. These are dated operational defaults, not measured
-optima.
-
-Measure the allowance as wall-clock time spent on engineering, counting
-overlapping intervals once. Record minutes used, candidates used, and
-engineering agents launched in the `engineering` line of each `RUN_LEDGER.md`
-event, and carry them through every handoff. Where engineering cost is
-observable, count it against the existing spending ceiling; unknown usage stays
-unknown. Before a candidate would exceed either limit, stop affected admission,
-let live workers finish under their time boxes, continue unaffected authorized
-work, and ask once under `guardrails.md` §11 condition 4. State what is paused
-and why, the verified usable results, the diagnosed cause and confidence, the
-smallest remedy with its estimated time, and the choices: a finite extension,
-an already-authorized fallback, or stopping. Record that as the one outstanding
-input and do not ask again without new evidence. An exhausted allowance never
-waives a required check, gate, or audit.
 
 ## Opt-in migration to continuous scheduling
 
@@ -203,17 +226,14 @@ Resolving backoff never waives an outstanding attempt, ownership, or researcher 
 
 ## One stable implementation, durable evidence
 
-Use one versioned runtime with explicit configuration and compatibility adapters.
-Do not generate another recursively inherited wrapper, launch namespace, or
-historical exception table for each recoverable incident. Preserve old code as
-evidence, not as a requirement to recursively execute all old versions. If an
-old run sealed implementation bytes, record independently reviewed operational
-migration before changing the entrypoint. Existing scoped researcher authority
-can cover that migration after scientific bindings and preserved history are
-verified; do not ask again merely because the implementation changed. Never
-weaken the old seal, discard history, or change corpus retry eligibility.
+A run executes under the ELARA version recorded when it began, or under a
+documented migration the researcher chose. A research session never writes a
+replacement runtime, wrapper, adapter, launch namespace, or exception table.
+Preserve old code as evidence. Never weaken an old seal, discard history, or
+change corpus retry eligibility.
 
-For a new or explicitly migrated run, the host adapter uses `Journal` as follows:
+The kit's host adapters (kit code, not project code) use `Journal` for a new or
+explicitly migrated run as follows:
 
 1. Initialize a bounded-segment journal with scientific and operational binding hashes,
    concurrency, and attempt limits. Record the exact adapter version separately.
@@ -259,79 +279,21 @@ After quiescence, use `checkpoint --directory <run>/batch_checks/lifecycle/<segm
 A fresh session verifies that anchor, reconstructs current controller facts, and
 resolves discrepancies before dispatch.
 
-## Verify the failing boundary and report actual progress
+## Restart and report actual progress
 
-A restart dry-run must exercise the operation that failed, not only the older
-checks before it. It must not stage state, create retries, or start workers.
-Test an interrupted wave and a fresh process using the real controller with a
-synthetic host. A separate synthetic restricted-worker round-trip establishes
-live capability; offline checks alone cannot establish model access.
-Capability and production must exercise the same command-construction and hook
-transport implementation with their authorized configuration differences made
-explicit. Check the actual downstream arguments and installed host's event
-contract. A configuration key appearing in a file proves neither acceptance nor
-enforcement. A startup warning alone is not a failed permission gate. Review the
-diagnostic assumptions alongside the repair and keep those observations separate.
-
-Bind each worker and helper interpreter explicitly to the reviewed, tested runtime
-configuration and record its executable in the manifest. Before launch, reject any
-setup-selected interpreter that differs from that binding and repair the mismatch
-under existing authority. If setup uses `sys.executable`, verify its value instead of
-silently inheriting the setup environment's default. Exercise the required read,
-write, or submit operation with the bound interpreter in the actual restricted
-worker or helper context. Successful setup, printed arguments, or the presence of
-an operating-system application alias do not establish readiness in that context.
-Preserve failed-boundary evidence; a failed read alone does not prove that an
-interpreter alias caused it.
-
-For an isolated Codex invocation, inspect its effective working root, active
-configuration layers, and loaded agent and hook sources. `--ignore-user-config`
-omits the user configuration file while retaining the authentication location
-([official CLI reference](https://learn.chatgpt.com/docs/developer-commands#codex-exec)).
-Project configuration and hooks load only for a trusted project; review of an
-individual hook's definition is separate from loading its source
-([configuration](https://learn.chatgpt.com/docs/config-file/config-advanced#project-config-files-codexconfigtoml),
-[hooks](https://learn.chatgpt.com/docs/hooks#review-and-trust-hooks)).
-Omitting user settings may therefore explain lost role or hook discovery when
-those settings supplied the required configuration or project trust. Treat this
-as a diagnostic inference to test, not a proven cause of every host failure.
-Under existing scoped authority, prefer supported invocation-only corrections
-for the approved workspace and reviewed hook definitions; do not persist broad
-trust changes or weaken the approved restrictions. A hook-trust option does not
-establish that a project source loaded. For the corrected synthetic check, use a
-fresh, single-use runtime through the actual command construction. Retain earlier
-failure evidence and verify the required named role and lifecycle events before
-resuming dispatch.
-
-On Windows, configuration isolation can also omit native sandbox settings.
-Verify the effective backend and explicitly bind the invocation to one supported
-by the installed host, preserving the approved filesystem and network restrictions
-and approval policy. In Codex 0.149.1, an unmatched command is forbidden under
-`Never` when the Windows backend is `Disabled` and managed filesystem restrictions
-exclude full-disk write access ([exec-policy check, lines 730–766](https://github.com/openai/codex/blob/ff29a44391deccde0aba0f8390337d7f3c319ea4/codex-rs/core/src/exec_policy.rs#L730-L766),
-[restriction predicate, lines 817–824](https://github.com/openai/codex/blob/ff29a44391deccde0aba0f8390337d7f3c319ea4/codex-rs/core/src/exec_policy.rs#L817-L824)).
-Distinguish an evidenced native policy rejection from a researcher refusal;
-diagnose and repair within existing scope. Do not enable approval prompts, bypass
-the sandbox, or broaden access merely to force a probe through. Configuration text
-and a matching source branch do not establish readiness: complete the existing
-fresh synthetic round-trip through the actual restricted worker operation.
-
-`VerificationTransaction` reuses expensive proof computation in one process only
-while every bound file still hashes identically. It rechecks bytes, not just
-timestamps, and never persists a bypass or carries trust to another wave. Apply
-it to one startup transaction rather than repeating the same proof through each
-wrapper. Required frozen checks remain in force.
+A restart is ready when the documented command that failed, run again, gets past
+the point where it failed; `scripts/doctor.py` covers setup. Do not build
+separate proof, synthetic harnesses, or reviews to establish readiness. Notes on
+past host failures for ELARA's maintainers are in `.github/CONTRIBUTING.md`; a
+research session does not act on them.
 
 Report verification phase, acknowledged launches, latest reconciled unit counts,
 and stop reason separately. An alive process or high CPU use is not evidence of
 coding. Older block totals must not replace newer partial-wave counts. Controller
 terminal returns and accepted predictions differ when downstream checks fail.
 
-Two identical incident fingerprints without new reconciled progress require a
-different diagnosis or a precise blocker, not an identical relaunch. This rule
-works alongside the engineering allowance above; neither permits terminating a
-live worker. Preserve each
-failure and name what new evidence or repair makes another operation useful.
+Never repeat an unchanged failing operation beyond the single re-run in "When
+something breaks", and never terminate a live worker. Preserve each failure.
 
 On a researcher-requested pause, checkpoint, mark the operation paused, disable
 only authorized project schedulers, and keep the restart pointer current. Do not
@@ -344,7 +306,9 @@ preserves its recorded software. `--require-clean` refuses known conflicts befor
 installation. `project/ELARA_UPDATE_PENDING.json` identifies an update that has
 not completed verification. Never clear it or relabel a partial installation as
 current to permit a new stage. `installed_commit` is separate from the requested
-source version; the checker verifies the recorded installed files as well.
+source version; the checker verifies the recorded installed files as well. An
+update that does not finish cleanly is handled under "When something breaks";
+never repair an installation by hand.
 
 `bootstrap.py --update --dry-run --json` previews conflicts. The install manifest
 records baseline SHA-256 hashes. Modified kit-owned files and differing files

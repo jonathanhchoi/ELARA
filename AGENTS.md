@@ -18,9 +18,10 @@ runs. Require `ready: true` before execution; the update contract permits a
 read-only plan on verified installed bytes while an update is deferred.
 Automatically install verified compatible updates
 when writes are authorized; if GitHub is unavailable, use freshly authenticated
-installed bytes and retry at the next stage boundary. Investigate conflicts
-autonomously. Ask only for a genuine unresolved researcher choice. Existing runs
-resume under their recorded software and scoped operational migration authority.
+installed bytes and retry at the next stage boundary. An update that does not
+install cleanly follows "When something breaks" in
+`workflow/shared/operational-recovery.md`. Existing runs resume under their
+recorded software and scoped operational migration authority.
 Status, help, and menu-only requests remain read-only and need no check.
 
 1. Read `project/PROJECT_STATE.md` before doing research work.
@@ -44,9 +45,9 @@ Status, help, and menu-only requests remain read-only and need no check.
    state-recovery issue; never erase history by reinitializing. Before repeating
    `awaiting_approval` or `waiting_for_user`, reconcile current user instructions
    and recorded decisions with the concrete action. Resolve stale requests and
-   validate the routing state. For operational recovery, use the shared decision
-   interface in `scripts/recovery_decision.py`; only `request_user` requires a
-   new decision. If state says `failed`, use the current stage's `failure_routes`.
+   validate the routing state. For an operational failure, follow "When
+   something breaks" in `workflow/shared/operational-recovery.md`. If state says
+   `failed`, use the current stage's `failure_routes`.
 5. In an adopted project, artifacts imported at Stage 00 and pinned in
    `active_artifacts` satisfy a stage's required inputs, and approvals recorded
    with basis `researcher-asserted` satisfy its gate prerequisites. Verify what
@@ -85,9 +86,11 @@ Status, help, and menu-only requests remain read-only and need no check.
    gate decisions after reconciling current instructions and recorded approvals. Neither usage mode relaxes a gate, an authorization requirement,
    or audit separation.
 9. Be low-touch. Carry authorized work through to completion, including its
-   delegation, verification, follow-up investigation, and routine recovery. Use
-   judgment within the agreed scope and resources. Interrupt only for an
-   unresolved researcher decision under `workflow/shared/guardrails.md` §11.
+   delegation, verification, and follow-up investigation. Use judgment within
+   the agreed scope and resources. Interrupt only for an unresolved researcher
+   decision under `workflow/shared/guardrails.md` §11. Being low-touch never
+   means fixing ELARA: when its machinery fails, take the short steps in
+   `workflow/shared/operational-recovery.md` and then report.
    Every other choice takes the sensible default, is recorded as a provisional
    `assistant-default` decision, and is presented at the next gate for the
    researcher to keep or change. During the Stage 11 coding run, individual
@@ -106,26 +109,28 @@ Status, help, and menu-only requests remain read-only and need no check.
 
 For interruptions and handoffs in any stage, follow
 `workflow/shared/operational-recovery.md`: classify infrastructure failures
-separately from failed units, use existing scoped recovery authority within the
-recorded engineering allowance, and verify the actual failed operation before
-calling a restart ready. Process liveness is not coding progress. Preserve a
-current checkpoint; never loop on the same failure without new evidence or an
-independently reviewed repair.
+separately from failed units, and when ELARA's own machinery fails, take its
+"When something breaks" steps: keep the evidence, re-run once, try one
+documented smaller route, then write a kit issue report and continue
+unaffected work. A research session never changes ELARA or writes code that
+works around it; ELARA is fixed in its own repository and arrives by update.
+Process liveness is not coding progress. Preserve a current checkpoint.
 
 During a research run, edit only paths under the active `project/` that the
-current stage declares, plus the operational storage outputs declared in
-`workflow/shared/artifact-contract.md`. `workflow/shared/storage.md` permits
-verified copies to the recorded cloud export folder within the authorized scope, with receipts
-in the local run record. This does not authorize editing cloud originals.
+current stage declares, plus the operational outputs (storage records and kit
+issue reports) declared in `workflow/shared/artifact-contract.md`.
+`workflow/shared/storage.md` permits verified copies to the recorded cloud
+export folder within the authorized scope, with receipts in the local run record. This does not authorize editing cloud originals.
 Repository-local Git change tracking approved at Stage 00 may also write to the
 local `.git/`. Do not modify the kit's own files — `AGENTS.md`, `CLAUDE.md`,
 `PIPELINE.md`, the kit README (`ELARA_README.md` in a project folder;
 `README.md` in a plain clone of the kit), `workflow/`, `.agents/`, `.claude/`,
-`.codex/`, `scripts/`, and `tests/` — unless the researcher explicitly asks to
-develop the kit itself or the compatible update is covered under
-`workflow/shared/kit-updates.md`. That update permission never changes frozen
-research files or approvals. Files that were in this folder before ELARA was
-installed are the researcher's: never move, rename, edit, or delete them;
+`.codex/`, `scripts/`, and `tests/`. The only writes to them in a project are
+compatible updates under `workflow/shared/kit-updates.md`, and that permission
+never changes frozen research files or approvals. Developing ELARA happens only
+in a plain clone of the kit (where its README is `README.md`), never in a
+research project, even when the researcher asks for a fix there. Files that
+were in this folder before ELARA was installed are the researcher's: never move, rename, edit, or delete them;
 import copies. `project/BOOTSTRAP.md` lists them, and
 `project/ELARA_MANIFEST.json` records which files are the kit's, which are
 shared, and which are the researcher's, so a folder both use (for example
