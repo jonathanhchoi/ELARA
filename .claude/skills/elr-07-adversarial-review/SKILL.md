@@ -7,9 +7,9 @@ disable-model-invocation: true
 # Run elr-07-adversarial-review
 
 First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
-Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`; require `ready: true` before execution, respecting its read-only planning exception.
-Automatically install verified compatible updates when writes are authorized; unavailable GitHub uses freshly verified installed bytes.
-An update that does not install cleanly follows "When something breaks" in `workflow/shared/operational-recovery.md`; a declined specific change remains binding. Preserve existing run software and scientific bindings. Never change ELARA's own files in a project.
+Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`; require `ready: true` before execution.
+A conflict-free update installs automatically when writes are authorized; otherwise the stage runs on the installed version and the researcher hears the notice once. A declined update stays declined.
+Only an update interrupted part-way waits, under "When something breaks" in `workflow/shared/operational-recovery.md`. Preserve existing run software and scientific bindings. Never change ELARA's own files in a project.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.

@@ -30,6 +30,44 @@ to work here. A fix reaches projects through the normal stage-start update.
   instruments, worker isolation and restrictions, quote anchoring, immutable raw
   outputs, exact denominators, blinding, preregistration, and audit separation.
 
+## Keep the research-facing rules small
+
+- `workflow/shared/` may hold at most 60 KiB (61,440 bytes) in all;
+  `tests/test_workflow.py` fails CI past that. A new rule replaces or removes an
+  existing one. A fix should remove a failure or add a fallback, not add a new
+  verification step.
+- `AGENTS.md` (always loaded on both hosts) states the core rules; the shared
+  files add only the detail it lacks, and a stage-specific procedure belongs in
+  its stage file. Methods references that are not rules, such as the
+  measurement-error guide, live in `workflow/guides/`.
+- Incident history and host internals belong here, not in the shared rules.
+
+## Incidents behind current rules
+
+These were moved out of the shared rules in 2.19.0; the rules keep only what to
+do.
+
+- **Workers run only as restricted types.** On 2026-08-17 a background search
+  worker launched as an all-tools default agent met a 403 bot wall on SSRN,
+  opened the page in the Claude desktop app's in-app browser, and the app's GPU
+  process crashed eight seconds later, killing every session and worker and
+  corrupting a file mid-write. Relaunched identically, it did the same again.
+- **Challenge-evidenced hosts never open in the in-app pane.** Parent fallback
+  attempts on 2026-08-26 and 2026-08-30 crashed the desktop app about one
+  second after a challenge page rendered: the interstitial's GPU probe (a
+  WebGPU `requestAdapter()` call) killed the GPU process faster than any tool
+  round trip could close the tab, so avoidance is the only defense.
+- **Workers hand in a draft file.** Passing the return envelope on the command
+  line or through a heredoc exceeded Windows' 32,000-character limit (2.16.0).
+- **Exports are deliverables plus one zip per run, at stage ends.** Before
+  2.19.0 the agent exported loose files at batch checkpoints: one project made
+  162 exports holding 138,067 files (57 exports in one day), single exports
+  reached 9,000–12,000 files, and each copy to Drive took 20–35 minutes.
+- **Updates never block a stage.** A conflicted update used to stop every new
+  stage until someone repaired the installation, which invited hand repair of
+  kit files inside projects. Since 2.19.0 the stage runs on the installed
+  version; only an update interrupted part-way waits.
+
 ## Checks before a pull request
 
 ```text

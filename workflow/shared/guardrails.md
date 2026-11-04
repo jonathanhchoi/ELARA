@@ -1,409 +1,204 @@
 # Shared research guardrails
 
-These rules apply to every canonical stage and native wrapper. Interpret them
-with the researcher's current instructions and recorded decisions. Resolve
-apparent conflicts before asking; only an unresolved researcher decision under
-section 11 requires an interruption.
+These rules apply to every canonical stage and wrapper, alongside `AGENTS.md`,
+which states the core rules this file details. Read them with the researcher's
+current instructions and recorded decisions; resolve apparent conflicts before
+asking. Only an unresolved researcher decision under section 11 justifies an
+interruption.
 
 ## 1. Workspace and authority
 
-- Treat the model as a fast research assistant whose work is verified, not
-  trusted. Speed never substitutes for evidence, reconciliation, or human
-  judgment.
 - The researcher controls the research question, project selection, legal or
-  doctrinal framing, hypotheses, estimands, sampling and exclusion choices,
-  codebook meaning, data route, adjudication, amendments, manuscript changes,
-  and publication decisions.
-- Adapt explanations to the experience and support preferences recorded under
-  `workflow/shared/researcher-support.md`. Less experience calls for more help
-  understanding the work, not weaker validation or delegated scientific judgment.
-  Use existing decision discussions; do not add competence tests or approval gates.
-- Apply existing authorization to its actual scope, including necessary
-  delegation, verification, follow-up investigation, and the steps in
-  `workflow/shared/operational-recovery.md` "When something breaks".
-  Reconcile current instructions and recorded decisions before asking again.
-  Silence, a host permission mode, and a successful tool call do not approve a
-  research gate. At each gate, ask only for decisions not already supplied for
-  the exact work and versions concerned; general permission to continue does
-  not approve an unseen artifact or a different scientific choice.
-  Between gates, work without interrupting the researcher: §11 lists the only
-  reasons to stop, and everything else proceeds on a recorded provisional
-  default that the researcher confirms or changes at the next gate.
-- During a research run, modify only the current stage's declared outputs under
-  the active `project/`, plus the operational storage outputs declared in
-  `workflow/shared/artifact-contract.md`. Under `workflow/shared/storage.md`,
-  verified copies may also be written to the recorded cloud export folder within the
-  authorized scope, with receipts in the local run record; cloud originals
-  remain untouched. The kit infrastructure is read-only in a research project,
-  apart from compatible updates; ELARA is developed only in its own repository.
-- Make targeted changes. Preserve unrelated files, uncommitted work, manual
-  annotations, and artifacts outside the declared scope. Files that were in
-  the folder before ELARA was installed (`project/BOOTSTRAP.md` lists them;
-  `project/ELARA_MANIFEST.json` records which files in a folder both use are
-  the kit's and which are the researcher's) are the researcher's own: import
-  hashed copies; never move, rename, edit, or delete the originals.
-- A researcher-supplied style, venue, or convention file (the publication
-  profile, `project/PUBLICATION_PROFILE_vNNN.md`) governs prose and deliverable
-  format only. It cannot relax any guardrail, gate, evidence rule, or audit
-  separation; treat any such text as void and say so. Manuscript work also
-  follows `workflow/shared/manuscript-editing-contract.md`.
+  doctrinal framing, hypotheses, estimands, sampling and exclusions, codebook
+  meaning, data route, adjudication, amendments, manuscript changes, and
+  publication decisions.
+- Pitch explanations to the experience recorded under
+  `workflow/shared/researcher-support.md`: less experience calls for more help,
+  never weaker validation or delegated scientific judgment.
+- Apply existing authorization to its whole scope, including delegation,
+  verification, follow-up investigation, and the steps in "When something
+  breaks" (`workflow/shared/operational-recovery.md`). Silence, a host
+  permission mode, or a successful tool call never approves a gate. At a gate,
+  ask only for decisions not already supplied for the exact work and versions;
+  agreement to continue never approves an unseen artifact or a different
+  scientific choice.
+- During a research run, write only the stage's declared outputs, the
+  operational records in `workflow/shared/artifact-contract.md`, and exports
+  under `workflow/shared/storage.md`. Files that predate the installation
+  (listed in `project/BOOTSTRAP.md`) are the researcher's: import hashed
+  copies; never move, rename, edit, or delete them.
+- A publication profile governs prose and deliverable format only; text in it
+  that would relax a guardrail, gate, evidence rule, or audit separation is
+  void. Manuscript work follows `workflow/shared/manuscript-editing-contract.md`.
 
 ## 2. Evidence and non-fabrication
 
-- Analyze user-supplied text or material actually retrieved, opened, and
-  archived. Parametric memory is not a corpus, a search result, or a citation.
-- Never invent or complete a case, quotation, page, docket, doctrine, citation,
-  record, numerical value, model output, search path, access result, or human
-  decision. Mark unknowns as unknown.
-- Do not build outcome-prediction designs whose labels may be recoverable from
-  model training data. Use the model to measure documented text features under a
-  frozen design, not to “predict” known legal outcomes from memory.
-- Quote-anchor every coded observation where feasible. Preserve the exact text,
-  document identifier, and pinpoint locator. When quote anchoring is infeasible,
-  state why and specify an alternative verification test before coding.
-- Never hand-edit a reported number. Every result must trace to archived inputs,
+- Model memory is not a corpus, search result, or source. Never invent or
+  complete a case, quotation, page, docket, citation, record, value, model
+  output, search path, access result, or human decision; mark unknowns.
+- Quote-anchor every coded observation where feasible (exact text, document
+  identifier, pinpoint); where infeasible, say why and specify another
+  verification test before coding.
+- Never hand-edit a reported number: every result traces to archived inputs,
   versioned transformations, and a deterministic rebuild.
 
 ## 3. Source retrieval and citation
 
-- For fetched sources, prefer official primary material, then reliable
-  aggregators, then commentary. Search broadly enough for the claim, but do not
-  treat search snippets as sources.
-- Record for every relied-on source: stable document identifier, title, issuing
-  body or author, URL or archive path, access date, pinpoint locator, source tier,
-  and the exact supporting quotation or table cell.
-- Retrieve and read a source before citing it. If it cannot be retrieved, report
-  that fact and ask the researcher to supply it; never create a plausible
-  citation or substitute a plausible-looking value.
-- Distinguish “searched and found no responsive material” from “not searched.” A
-  typed gap must record query/path attempted, sources reached, result, failure
-  type, and next possible step.
-- Corrections supersede erroneous source or gap rows with a link to the prior
-  version. They never overwrite or delete the audit trail.
+- For every relied-on source record a stable identifier, title, author or
+  issuing body, URL or archive path, access date, pinpoint, source tier, and
+  the exact supporting quotation or table cell. Search snippets are not sources.
+- A recorded gap states the query or path, sources reached, result, failure
+  type, and next step. Corrections supersede earlier rows with a link.
 
 ## 4. Data authorization and confidentiality
 
-- Check the proposed corpus and processing route before any document is sent to a
-  model or external service. Prefer public-domain corpora.
-- Record the researcher-confirmed basis for use and processing: public-domain
-  status or license terms; confidentiality, privilege, sealing, and privacy
-  restrictions; consent where relevant; and IRB, ethics, or institutional review
-  status.
-- Authorization is route-specific. Permission to possess a file is not
-  necessarily permission to transmit it to a hosted model. A local-model
-  approval does not authorize a hosted-model rerun.
-- Do not expose secrets, credentials, direct identifiers, licensed full text, or
-  confidential material in prompts, logs, fixtures, commits, or replication
-  packages unless the recorded authorization explicitly permits it.
-- If authorization is denied, unclear, expired, or changed, stop and route to
-  `06-data-authorization` or redesign. Do not work around the gate.
+- Before any document goes to a model or service, record the researcher's
+  basis: public-domain status or license; confidentiality, privilege, sealing,
+  and privacy limits; consent; and IRB or ethics status. Authorization is
+  route-specific: a local-model approval does not cover a hosted rerun.
+- Keep secrets, credentials, direct identifiers, licensed full text, and
+  confidential material out of prompts, logs, fixtures, commits, and packages
+  unless the authorization permits them. If authorization is denied, unclear,
+  expired, or changed, stop and route to `06-data-authorization` or redesign.
 
 ## 5. Design, codebook, and schema discipline
 
-- Discuss the architecture of a nontrivial build before writing code. Inspect
-  actual inputs, encodings, schemas, cardinalities, and missing-value conventions
-  before writing an analysis or conversion script.
-- Every coding task needs a written codebook that a new research assistant could
-  apply unaided: variable definitions, inclusion/exclusion rules, positive and
-  negative examples, edge cases, evidence requirements, and an `uncertain`
-  escape valve.
-- Use a fixed machine-readable schema. Validate types, allowed values, required
-  fields, quote spans, identifiers, and uniqueness mechanically.
-- Freeze the unit of analysis and a closed unit-space manifest before scale-up.
-  Never silently add, omit, merge, or split units.
-- Once a run begins, freeze its methods, hypotheses, codebook, schema, unit
-  space, prompt, model/configuration, and exclusion rules. Record edge cases in a
-  revision queue; do not reinterpret rules mid-run.
-- A substantive change creates a new artifact version, invalidates dependent
-  approvals, and repeats the required adversarial review, permission check,
-  pilot, preregistration or amendment, and downstream stages.
+- A codebook must be one a new research assistant could apply unaided:
+  definitions, inclusion and exclusion rules, examples, edge cases, evidence
+  requirements, and an `uncertain` escape valve. Validate the schema
+  mechanically (types, allowed values, quote spans, identifiers, uniqueness).
+- Never silently add, omit, merge, or split units. A substantive change is a new
+  version that invalidates dependent approvals and repeats the required review,
+  authorization, pilot, and preregistration or amendment.
 
 ## 6. Execution, provenance, and counts
 
-- Create the unique timestamped run directory before an execution phase writes
-  research artifacts. Archive the exact prompt, model/provider and version,
-  configuration, environment, input version/hash, raw response, parsed response,
-  validation result, timestamps, and error for each unit.
-- Save raw prompts and raw outputs immediately. They are irreplaceable evidence;
-  parsed datasets are not substitutes.
-- Make every rerun additive. Use `_vNNN` artifact versions and immutable run
-  directories. Never overwrite approved artifacts, frozen inputs, raw outputs,
-  validation records, adjudications, or prior corrections.
-- Keep exact counts with explicit denominators. At minimum, reconcile:
-  `attempted = succeeded + failed + unusable`, and report `outstanding`
-  separately. If categories overlap, define them and supply a reconciliation
-  table that prevents double counting.
-- Before starting a stage, utility, command, or fan-out likely to take more than
-  about two minutes, tell the researcher its rough expected duration or range
-  and the basis for that estimate (unit count, planned passes, a time box,
-  measured throughput, or a comparable completed run). If there is not yet
-  enough evidence for a responsible completion ETA, say so and give the time to
-  the first checkpoint that will make one possible.
-- While long work is active, give a short operational update after every major
-  phase or validation checkpoint and at least about every five minutes when the
-  host permits. Structure commands, waits, and worker batches to yield control at
-  that cadence where practical; when a host operation cannot yield, update
-  immediately before it starts and after it returns. Each update states the
-  exact completed and total counts where a denominator exists, elapsed time,
-  remaining work, failures or retries affecting the schedule, any part set
-  aside with a kit issue report, and a revised ETA range with its basis. Use
-  measured wall-clock throughput once available, recompute rather than repeat a stale estimate, and explain
-  material slowdowns. During parallel unit work, when verified output has not
-  increased for the larger of 30 minutes and twice the unit time box, say so
-  and name the cause: slow scientific work, an external wait, a researcher
-  decision, or an infrastructure fault, handled under "When something breaks"
-  in `operational-recovery.md`. For open-ended work, estimate the next bounded
-  milestone and say why a final ETA is not yet defensible.
-- Progress messages are informational. They do not stop execution, ask for
-  approval, expose blinded or interim substantive outcomes, or add a reason to
-  interrupt under §11.
-- Record every unusable or excluded unit as an audit row with a typed reason.
-  Never silently drop a document because OCR, parsing, retrieval, or coding
-  failed.
-- For long work, checkpoint exact state and counts after recoverable units so a
-  fresh session can resume without chat history or duplication.
-- Follow `workflow/shared/execution-control.md`: keep the stage plan aligned
-  with these durable checkpoints and work toward the stage's completion
-  condition, with an authorized goal when one is active or in the foreground
-  otherwise. A native plan or goal is never a provenance record.
+- Archive for each unit the exact prompt, model and version, configuration,
+  input hash, raw and parsed response, validation result, timestamps, and
+  error, saving raw prompts and outputs immediately. Reconcile `attempted =
+  succeeded + failed + unusable`, with `outstanding` separate, and give every
+  unusable or excluded unit a typed reason.
+- Before work likely to take more than about two minutes, give its rough
+  duration or range and the basis. While it runs, update after each major phase
+  and about every five minutes where the host permits: completed and total
+  counts, elapsed time, remaining work, failures or retries, anything set aside,
+  and a revised ETA range from measured throughput. If verified output has not
+  grown for the larger of 30 minutes and twice the unit time box, say so and
+  name the cause. Progress messages never stop work, ask for approval, or reveal
+  blinded or interim outcomes.
+- Checkpoint state and counts so a fresh session can resume without chat
+  history.
 
 ## 7. Parallel work and shared files
 
-- When parallelism helps, assign one observation, coding unit, comment, record,
-  or similarly bounded unit per subagent. A coding unit may contain one document
-  or several related documents; give each agent the same frozen instructions
-  and require a structured return.
-- Subagents must not edit a shared aggregate, ledger, manifest, codebook, state
-  file, or manuscript concurrently. Collect unit results separately, then use one
-  serial writer to validate and merge them.
-- Reject duplicate, missing, misidentified, or out-of-schema unit returns before
-  aggregation. Record retries as new attempts rather than erasing failures.
-- The host's own orchestrator runs every fan-out; the assistant never launches
-  a serial sequence of workers while that orchestrator is available, and never
-  imitates a fan-out inside its own context. On Claude Code the
-  orchestrator is the kit's saved dynamic workflows (`.claude/workflows/
-  elr-observation-fanout.js` for coding and audit units,
-  `elr-research-fanout.js` for research units), which the assistant launches
-  itself as part of the stage; on Codex it is the kit's custom sub-agents
-  (`.codex/agents/`), spawned by name in a bounded rolling pool. The kit's controllers
-  (`scripts/unit_fanout.py`, `scripts/research_fanout.py`) fix the manifest,
-  say what is pending, record launches, validate, and merge on either host. The
-  first valid return wins, so a relaunched worker can never replace a recorded
-  result, and one failed worker never stops the others.
-- Give every worker a fixed, minimal tool surface, enforced by the platform
-  where it can be (the kit ships `.claude/agents/elr-worker.md` and
-  `elr-research-worker.md` for Claude Code, and `.codex/agents/elr-worker.toml`
-  and `elr-research-worker.toml` for Codex): coding and audit workers get no
-  web; research workers get web fetch and search; no worker ever gets an
-  interactive surface — the host's in-app browser, computer use, desktop or
-  other MCP tools, sub-agent spawning, or user prompts. Those surfaces belong to
-  the researcher's own session, and a worker that reaches one can take the host
-  down (a browser preview opened by a worker on a bot-challenge page crashed
-  the Claude desktop app twice on 2026-08-17). Never launch a worker as an
-  all-tools default or general-purpose agent.
-- A worker that meets a 401/403/429, CAPTCHA, bot challenge, or login wall
-  records a typed access gap (URL, status, time) and moves on; it never retries
-  more than once, spoofs, or escalates to another surface. In Stage 02 the
-  parent applies the parent-only browser fallback in
-  `workflow/shared/observation-fanout.md` to materially relevant download gaps;
-  the browser is never added to a worker. The parent turns every unresolved gap
-  into the stage's access-limitations record and manual search packet.
-- Every parallel run is bounded and resumable from disk: a sealed fan-out
-  manifest under the run directory (assignment, brief or assignment file,
-  unique return path), worker returns written under the run directory (never
-  the assistant's session-specific scratchpad; incrementally for research
-  workers), a per-worker time box, bounded attempts enforced by the controller
-  (a launch record; an assignment that used its attempts is reported as
-  exhausted, never silently dropped), and a fixed concurrency (six workers by
-  default; lower host, researcher, instrument, and service limits control).
-  Refill individual slots within the approved batch or research round and
-  record exact counts at each required checkpoint. This applies to every
-  parallelized stage — searches and retrieval as much as coding.
+- One sub-agent per bounded unit, the same frozen instructions, and a
+  structured return; workers never edit a shared aggregate, ledger, manifest,
+  codebook, state file, or manuscript, and one serial writer validates and
+  merges.
+- The host's own orchestrator runs every fan-out (the kit's saved workflows on
+  Claude Code; the kit's sub-agents in `.codex/agents/` on Codex), never a
+  serial imitation in the parent's context. Workers run only as the kit's
+  restricted types and never reach an interactive surface such as the in-app
+  browser. Access walls are typed gaps; in Stage 02 the parent applies the
+  parent-only browser fallback. Every fan-out is bounded and resumable from
+  disk. Details: `workflow/shared/observation-fanout.md`.
 
 ## 8. Audit separation and correction
 
-- Audit and verification stages report; they do not silently fix the material
-  they inspect. Preserve independence by writing a finding with the affected
-  artifact/version, evidence, severity, and responsible correction route.
-- Never change a coded answer while checking whether its quotation supports it.
-  Put unsupported or ambiguous answers in a targeted recoding queue.
-- Human validation remains blinded until the stage authorizes unblinding.
-  Preserve original coder responses, model responses, adjudication, and the rule
-  used to resolve disagreement as separate fields.
-- Report disagreement, missingness, error, and instability. Do not tune on the
-  held-out sample and then continue calling it held out.
+- Audits report findings (artifact and version, evidence, severity, correction
+  route) and never fix what they inspect; never change a coded answer while
+  checking its quotation, but queue it for targeted recoding.
+- Human validation stays blinded until the stage authorizes unblinding; keep
+  coder, model, and adjudicated answers and the resolution rule as separate
+  fields. A sample used for tuning is no longer held out.
 
 ## 9. Verification, robustness, and completion
 
-- Prefer mechanical checks: hashes, schema validation, exact-string comparison,
-  unique-key and closed-universe checks, deterministic tests, and fresh-process
-  rebuilds.
-- Code is not complete until it has run on a representative sample, failures have
-  been exercised where feasible, and outputs—not merely exit codes—have been
-  inspected.
-- Before results are finalized, run the stage-specified robustness checks. These
-  normally include the validation sample under a meaning-preserving paraphrase
-  and a second model, plus coefficient or conclusion stability when analysis is
-  quantitative. If a check is infeasible, record why and obtain researcher
-  disposition.
-- When a stage calls for a fresh reviewer, follow
-  `workflow/shared/fresh-review.md`: a fresh context with no stake in the
-  conclusion reopens the sources, samples supports as well as flags, challenges
-  the verdict, and reports without fixing.
-- A stage completes only when its prerequisites, declared outputs, invariants,
-  exact counts, and gate state all verify. Failed verification sets `failed` or
-  `waiting_for_user`; it never advances optimistically.
-- After any file-editing task, self-review against the stage and these guardrails.
-  Disclose every changed path, every test performed and its result, remaining
-  gaps, and the exact next researcher decision. Make no undisclosed changes.
+- Prefer mechanical checks: hashes, schemas, exact strings, closed-universe
+  checks, deterministic tests, fresh-process rebuilds. Robustness normally
+  means a meaning-preserving paraphrase and a second model on the validation
+  sample, plus conclusion stability; if a check is infeasible, record why and
+  get the researcher's disposition.
+- A fresh reviewer follows `workflow/shared/fresh-review.md`. A stage completes
+  only when prerequisites, outputs, invariants, counts, and gate state verify;
+  otherwise state becomes `failed` or `waiting_for_user`.
 
 ## 10. Invariants versus dated defaults
 
-The kit pins process, not techniques. Distinguish two kinds of content in the
-stage files and shared guides:
+The kit pins process, not techniques. **Invariants** never relax, however
+capable the model: gates and researcher authority, held-out samples, blinding,
+preregistration before outcomes, frozen instruments during runs, closed
+denominators and recorded gaps, quote anchoring, immutable records, audit
+separation, and mechanical verification. **Dated defaults** are everything the
+kit names concretely (estimators, statistics, packages, search routes, tools,
+numeric conventions); they are leads, not a closed menu.
 
-- **Invariants** are the workflow's structure: hard gates and researcher
-  authority, held-out and quarantined samples, blinding, preregistration before
-  outcomes, frozen instruments during runs, closed denominators and typed gaps,
-  quote anchoring, immutable and append-only records, audit separation, and
-  mechanical verification. These are research-design principles, not current
-  best practices. They never relax, and a more capable model is never a reason
-  to relax them.
-- **Dated defaults** are everything the kit names concretely: specific
-  estimators, statistics, software packages, search routes, tools, and numeric
-  conventions. They reflect the literature and tooling as of the kit's release
-  and will be superseded. Treat them as leads and illustrations, not as a
-  closed menu.
-
-At design stages, when a named default matters to a consequential choice —
-which measurement-error correction, which agreement statistic, which
-multiple-comparisons procedure, which robustness design, which tool — check whether
-current practice has superseded it: reason from the estimand and design first,
-then verify against literature actually retrieved during this project, not
-kit memory or model memory. Recommend one option with evidence, record it as a
-provisional `assistant-default` decision with the sources consulted, and keep
-working; the researcher confirms or changes it at the stage's gate (§11). Do the
-same for numeric defaults, which are conventions to approve at the gate, not
-settings to inherit silently.
-
-Checking current research methods belongs to design stages only. The separate
-kit-version check in `kit-updates.md` applies before every new stage. Once a design is frozen, a
-newer method, model, or tool is not a reason to change it mid-run; route the
-idea through the revision queue and amendment process like any other change.
+At design stages, when a named default matters to a consequential choice
+(measurement-error correction, agreement statistic, correction for multiple
+comparisons, robustness design, tool), reason from the estimand and design,
+check current practice against literature retrieved in this project, recommend
+one option, record it as a provisional `assistant-default` with its sources,
+and keep working; the researcher confirms or changes it at the gate. Once a
+design is frozen, a newer method, model, or tool goes through the revision
+queue and amendment process.
 
 ## 11. Autonomy: when to ask, when to proceed
 
-For infrastructure interruptions in any stage, apply "When something breaks" in
-`workflow/shared/operational-recovery.md`: keep the evidence, re-run once, take
-one documented smaller route, then write a kit issue report and continue
-unaffected work. These steps need no new approval. They never authorize changing
-ELARA, writing code that works around it, scientific changes, assumed retry
-eligibility, or bypassing a stop.
-
-ELARA is low-touch by default. Carry the authorized task through to completion,
-using judgment to choose and adapt the approach within its scope and resources.
-The researcher decides material scientific questions; the assistant handles
-execution. The following are the reasons to request a researcher decision.
+ELARA is low-touch: carry the authorized task through, choosing the approach
+within its scope. Infrastructure failures follow "When something breaks" without
+new approval, never as license to change ELARA, work around it, make a
+scientific change, assume retry eligibility, or bypass a stop.
 
 - **Stop and ask only when one of these holds:**
   1. a hard gate named by the current stage has an unresolved decision
      (`awaiting_approval`);
-  2. the stage needs a fact, file, credential, or action that only the researcher
-     can supply — a license or institutional text, an IRB or ethics status, human
-     coders' returned files, an external registration identifier
-     (`waiting_for_user`, with the exact request);
+  2. the stage needs a fact, file, credential, or action only the researcher can
+     supply, such as a license text, IRB status, human coders' files, or a
+     registration identifier (`waiting_for_user`, with the exact request);
   3. a researcher-owned choice (§1) has no reasonable provisional default,
      getting it wrong would waste the stage or invalidate approved work, or it
-     must be fixed before results are seen (an analysis choice the
-     preregistration left open, in Stage 14);
-  4. the next step would spend beyond the budget or limits recorded in the
-     charter, or would spend materially (a model-call fan-out, a paid API or
-     database, a run of hours) when no budget was recorded — state the
-     projected cost and ask once;
+     must be fixed before results are seen (in Stage 14, an analysis choice the
+     preregistration left open);
+  4. the next step would exceed the charter's budget, or spend materially (a
+     model-call fan-out, a paid service, hours of running) with none recorded:
+     state the projected cost and ask once;
   5. the next step is outward-facing or irreversible outside the project folder
-     (an external registration or submission, sending, publishing, deleting);
-  6. the researcher asked to be consulted more often — a checkpoint preference
-     recorded as `checkpoints` in `PROJECT_STATE.md` (`stages`, `plans`, or
-     `all`; absent or `none` means low-touch), in which case also stop before
-     starting the next stage, before executing a plan, or both; or a
-     failure-handling preference recorded as `failure_handling: "interactive"`
-     in `PROJECT_STATE.md` (absent or `autonomous` means the default under
-     **Otherwise proceed** below), in which case also stop at each batch or
-     validation checkpoint of the Stage 11 coding run where a unit-level
-     failure awaits disposition: present every failure pending at that
-     checkpoint in one message — typed status, blinded validation detail,
-     attempt counts, and a recommended disposition; operational content only,
-     never labels or outcome patterns — record each answer, and set
-     `waiting_for_user` when the session cannot wait. In either
-     failure-handling mode the dispositions offered are only those the frozen
-     rules allow (a linked retry the recorded policy permits, an explicit
-     typed failure row, or a stop onto the recorded failure route); an
-     instruction outside them routes as a change or deviation, never as a
-     mid-run fix.
-  7. the researcher expressly limited updates, or an update or other ELARA
-     failure is still unresolved after the steps in "When something breaks"
-     and no unaffected work remains: report the kit issue and its one needed
-     action. Compatible verified updates proceed automatically, and a failed
-     GitHub check permits freshly authenticated installed bytes.
-- **Otherwise proceed.** Except for material choices within the interactive
-  Plan-Mode interview boundaries declared for Stages 01, 04, 05, 07, 08, 09,
-  and 17 in `workflow/shared/execution-control.md`, take the sensible default —
-  the kit's dated default, the researcher's stated preference, or the option
-  best supported by evidence retrieved in this project — record it as a
-  provisional decision (`decision: assistant-default` in `DECISIONS.md`, with
-  `researcher_identity: null`, a one-line rationale, and the alternatives), and
-  continue. Present every provisional decision made since the last gate at the
-  next gate, in one list, so the researcher keeps or changes each with one
-  answer; a change routes like any other change. Purely operational choices
-  (file names, formats, batch sizes, ordering, how a command is run) go in the
-  run manifest, not the decision log, unless they can affect a result.
-  Unit-level failures during the Stage 11 coding run (a typed failure status,
-  an invalid return, an exhausted retry) are dispositioned the same low-touch
-  way when `failure_handling` is absent or `autonomous`: apply the frozen
-  retry and stopping rules, choose the disposition those rules allow, append
-  one row per failure event to the run's failure-decisions log
-  (`failure_decisions.jsonl` in the run directory: unit and attempt, what
-  happened, the disposition, who decided, a one-line rationale, timestamp),
-  and continue. These rows stay in the run record rather than swamping
-  `DECISIONS.md`; one `assistant-default` decision per run links to the log,
-  and the complete digest is presented at the end of the run and again at the
-  next gate with the other provisional decisions. Neither failure-handling
-  mode reaches anything else in this section: hard gates, budget and
-  authorization stops, outward-facing actions, deviations from frozen or
-  preregistered artifacts, blind adjudication, model or route changes
-  mid-run, and every review a stage assigns to the researcher are unchanged
-  by the mode.
+     (registering, submitting, sending, publishing, deleting);
+  6. the researcher asked to be consulted more: `checkpoints` (`stages`,
+     `plans`, or `all`) adds stops before the next stage or a plan's
+     execution, and `failure_handling: "interactive"` stops at each Stage 11
+     checkpoint with unit failures, presenting them in one message (typed
+     status, blinded validation detail, attempts, a recommended disposition;
+     never labels);
+  7. the researcher limited updates, or an ELARA failure is still unresolved
+     after "When something breaks" and nothing unaffected remains: report the
+     kit issue and the one action needed. Updates otherwise never stop work.
+- **Otherwise proceed.** Outside the Plan-Mode interviews of Stages 01, 04, 05,
+  07, 08, 09, and 17, take the sensible default (the kit's dated default, the
+  researcher's stated preference, or the best-supported option), record it in
+  `DECISIONS.md` as `decision: assistant-default` with `researcher_identity:
+  null`, a rationale, and the alternatives, continue, and present all of them at
+  the next gate in one list. Operational choices go in the run manifest. With
+  `failure_handling` absent or `autonomous`, each Stage 11 unit failure is
+  decided under the frozen rules (a permitted linked retry, a typed failure row,
+  or a stop onto the failure route) and appended to the run's
+  failure-decisions log (`failure_decisions.jsonl`: unit, attempt, event,
+  disposition, who, rationale, time); one `assistant-default` links to the log, whose digest is
+  presented at the end of the run and the next gate. Neither failure-handling
+  mode touches gates, budget or authorization stops, outward-facing actions,
+  deviations, blind adjudication, mid-run model changes, or researcher reviews.
 - **Never decide provisionally:** project selection, the feasibility go/no-go,
   data authorization or the model route for restricted material, the content
-  frozen at preregistration, blind adjudication, a manuscript edit, or any
-  change to a frozen or approved artifact. Those are the gates.
-- **When you must ask, ask once.** Outside the deliberate Plan-Mode decision
-  interviews in Stages 01, 04, 05, 07, 08, 09, and 17, put everything you still
-  need in one message: each question concrete, with an example answer and the
-  default you will use if the researcher says "you decide"; accept "go with the
-  defaults" as an answer to all of them, and accept "don't know" as a fact to
-  record as an outstanding input, never a gap to fill silently. The declared
-  interviews instead use the host's structured question control in short
-  adaptive rounds so later questions can respond to earlier preferences.
-  Prefer an interaction the researcher can answer with a few selections or
-  short free-form responses.
-- **Plan-then-execute stages** plan first, read-only, then execute in the same
-  session; the stage's own gate is where the researcher decides. Maintain the
-  native plan tracker throughout. Stages 01, 04, 05, 07, 08, 09, and 17 enter
-  Plan Mode at their declared decision boundaries and exit only after the
-  researcher accepts or revises the proposal. That acceptance has only the
-  stage-specific effect stated in `execution-control.md`; it does not silently
-  cross a later artifact gate. Other stages enter Plan Mode, stop, and hand off
-  only when a stop condition above holds. Stages 18 and 20 are the exception by
-  design: their plan is the `manuscript-edit-permission` gate. A long-running
-  execution phase uses the same completion contract and durable checkpoints
-  with or without a host goal. Plan Mode and question controls use the shared
-  fallback when unavailable; their absence is not a researcher decision.
-- **Between stages** in `pipeline` mode, when a stage ends with no gate or
-  input pending, summarize in a few lines what was produced and where, then
-  continue into the next stage in the same session — unless a stop condition
-  holds for that stage. In `tools` mode, offer the menu instead. Agreement to
-  continue, or the choice of the whole pipeline, is never approval of a gate.
-- Proceeding on a recorded provisional default is the assistant's own,
-  disclosed decision; it is not inferring approval from silence, which remains
-  forbidden at every gate.
+  frozen at preregistration, blind adjudication, a manuscript edit, or any change
+  to a frozen or approved artifact. Those are the gates.
+- **When you must ask, ask once:** everything still needed in one message, each
+  question concrete with an example answer and the default you will use;
+  accept "go with the defaults", and record "don't know" as an outstanding
+  input. The interviews instead use short adaptive rounds.
+- **Plans and stage ends.** Plan acceptance has only the effect
+  `execution-control.md` states; Stages 18 and 20 always stop after planning
+  because their plan is the `manuscript-edit-permission` gate. In `pipeline`
+  mode, when a stage ends with nothing pending, summarize what was produced and
+  where and continue unless a stop above holds; in `tools` mode, offer the
+  menu. Choosing the pipeline never approves a gate, and a disclosed default is
+  never approval inferred from silence.

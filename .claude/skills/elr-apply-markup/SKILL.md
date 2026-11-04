@@ -8,12 +8,12 @@ disable-model-invocation: true
 
 First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
 Before starting this utility, follow `workflow/shared/kit-updates.md` and run
-`scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution; use the update contract's limited
-read-only planning exception when applicable;
-apply verified compatible updates automatically when writes are authorized; use
-freshly verified installed bytes if GitHub is unavailable. A failed update follows
-"When something breaks" in `workflow/shared/operational-recovery.md`; a declined
-change stays binding. Keep a started run's software; never edit ELARA in a project.
+`scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution.
+A conflict-free update installs automatically when writes are authorized; otherwise
+the utility runs on the installed version and the researcher hears the notice once;
+a declined update stays declined. Only an update interrupted part-way waits, under "When something breaks" in
+`workflow/shared/operational-recovery.md`. Keep a started run's software; never
+edit ELARA in a project.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
    `workflow/shared/artifact-contract.md`, `workflow/shared/execution-control.md`, and

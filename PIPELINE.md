@@ -34,11 +34,13 @@ steps. A stage's `paper_steps` field records the crosswalk above.
 Before any new stage or optional tool, including Stage 00, automatic transitions,
 and new recovery runs, the parent follows `workflow/shared/kit-updates.md` and
 runs `scripts/check_update.py`. It checks the exact installed commit against
-GitHub `main`, installs verified compatible updates automatically, and uses
-freshly authenticated installed bytes if GitHub is unavailable. An update that
-does not install cleanly is re-run once and otherwise reported, never repaired
-by hand. Help, status, and menu remain available. Existing runs retain their
-software unless the researcher chose a documented migration.
+GitHub `main` and installs an update automatically when its preview is
+conflict-free. Updates never hold up research: when one would conflict, GitHub
+is unavailable, or ELARA's files in the project differ, the stage runs on the
+installed version and the researcher is told once. Only an update interrupted
+part-way waits; it is re-run once and otherwise reported, never repaired by
+hand. Help, status, and menu remain available. Existing runs retain their
+software.
 
 When ELARA's own machinery fails in any stage, the assistant keeps the
 evidence, re-runs the failed command once, tries one documented smaller route,
@@ -575,7 +577,8 @@ so existing projects need no migration.
 
 Version 2.11.0 supports cloud source materials and shared results alongside a
 persistent local workspace for active processing. Stage 00 records the locations
-and copying policy; batch and stage checkpoints export verified snapshots.
+and copying policy. Since 2.19.0, each stage's end exports its deliverables and
+one zip per finished run (`scripts/storage.py export`).
 Existing prepared runs retain their paths and history. The storage contract is
 `workflow/shared/storage.md`; no project-state schema change is required.
 
@@ -721,3 +724,20 @@ the fresh reviews its stage names, once each; fixes are confirmed by re-running
 the failing check, never by a further review. `scripts/coding_run.py close`
 also writes the run's (possibly empty) failure-decision log and a closing
 checkpoint. Gates, verification sections, and audits are unchanged.
+
+Version 2.19.0 lightens exports, updates, and the shared rules. `python
+scripts/storage.py export --root <home> --label <stage-id>` runs at the end of
+each stage and at a handoff, not at batch checkpoints: it copies the
+deliverables as files (state, the append-only logs, kit issue reports, and
+every active output) and each run not yet exported as one zip, instead of
+thousands of loose run files; earlier exports still retry and count as sent.
+Updates install only when their preview is conflict-free; a conflicting update,
+an unreachable GitHub, or changed kit files no longer stop a stage, which runs
+on the installed version with a one-time notice, and `--auto-update` resumes an
+update interrupted part-way, the one case that still waits. The shared rules in
+`workflow/shared/` shrank from about 158 KB to under 60 KiB, with no change to
+gates, frozen instruments, worker isolation, quote anchoring, raw-output
+archiving, recorded gaps, counts, blinding, preregistration, or audit
+separation; maintainer history moved to `.github/CONTRIBUTING.md`, the
+measurement-error guide moved to `workflow/guides/`, and CI fails if the shared
+rules grow past 60 KiB.

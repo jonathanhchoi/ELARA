@@ -441,15 +441,17 @@ unavailable or malformed.
 
 Before starting each new stage or optional tool, the assistant checks the latest
 commit on this repository's `main` branch. If your installation is current, it
-continues. Otherwise, it explains and automatically installs a verified compatible
-update, preserving your files and approved research controls. You do not need
-Git, a GitHub account, or terminal knowledge. Explicit limits you set still apply.
+continues. Otherwise, it explains and automatically installs the update when it
+installs cleanly, preserving your files and approved research controls. You do
+not need Git, a GitHub account, or terminal knowledge. Explicit limits you set
+still apply.
 
-If GitHub is unavailable, the assistant verifies the installed files and continues
-when their exact identity is established, checking again at the next new stage.
-An update that does not install cleanly is tried once more and otherwise
-reported to you; the assistant never repairs ELARA by hand. An existing run
-resumes with its recorded software.
+Updates never hold up your research. If an update would conflict with files in
+your project, GitHub is unavailable, or ELARA's own files in your project have
+changed, the assistant tells you once and carries on with the version already
+installed, checking again at the next stage. Only an update interrupted part-way
+waits: it is tried once more and otherwise reported to you. The assistant never
+repairs ELARA by hand, and an existing run resumes with its recorded software.
 
 ## When something in ELARA breaks
 

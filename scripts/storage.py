@@ -11,10 +11,12 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import uuid
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,6 +24,12 @@ from pathlib import Path
 BINDING = "project/ELARA_STORAGE.json"
 OPERATIONS = "project/storage"
 EXPORTS = "ELARA_Results"
+# A stage-end export carries the deliverables as files and each run as one zip,
+# never thousands of loose run files (2.19.0).
+RECORDS = ("project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md")
+SKIPPED_PARTS = {".git", ".venv", "__pycache__", "node_modules", EXPORTS}
+LOOSE_FILE_LIMIT = 200
+FOLDER_AS_FILES_LIMIT = 50
 
 
 def stamp() -> str:
@@ -210,37 +218,208 @@ def stage(root: Path, source: Path, relative: str) -> dict:
     return row
 
 
-def snapshot(root: Path, selection: dict, label: str) -> dict:
-    value, working = managed(root)
-    paths = selection["files"]
-    if not isinstance(paths, list) or not paths:
-        raise ValueError("Select a nonempty list of unique relative file paths")
-    paths = [Path(path).as_posix() for path in paths]
+def _skipped(relative: str) -> bool:
+    """Storage records, earlier exports, Git metadata, and disposable environments."""
+    parts = Path(relative).parts
+    return (relative == BINDING or relative == OPERATIONS or relative.startswith(OPERATIONS + "/")
+            or any(part in SKIPPED_PARTS for part in parts) or Path(relative).name.endswith(".partial"))
+
+
+def _relative_list(values, kind: str) -> list[str]:
+    if not isinstance(values, list):
+        raise ValueError("List the " + kind + " as relative paths")
+    paths = [Path(value).as_posix() for value in values]
     if len(set(paths)) != len(paths):
-        raise ValueError("Select a nonempty list of unique relative file paths")
+        raise ValueError("Each of the " + kind + " may be listed once")
+    return paths
+
+
+def _files_under(working: Path, relative: str) -> list[str]:
+    folder = inside(working, relative)
+    found = []
+    for path in sorted(folder.rglob("*")):
+        name = path.relative_to(working).as_posix()
+        if path.is_file() and not _skipped(name):
+            inside(working, name)
+            found.append(name)
+    return found
+
+
+def _active_paths(working: Path) -> tuple[dict, list[str]]:
+    from workflow_lib import parse_frontmatter
+
+    state, _ = parse_frontmatter(inside(working, "project/PROJECT_STATE.md"))
+    active = state.get("active_artifacts") or {}
+    paths = []
+    for value in (active.values() if isinstance(active, dict) else []):
+        path = value.get("path") if isinstance(value, dict) else value
+        if isinstance(path, str) and path.strip():
+            paths.append(path.replace("\\", "/").strip().rstrip("/"))
+    return state, list(dict.fromkeys(paths))
+
+
+def _already_exported(working: Path) -> tuple[dict[str, set], set]:
+    """Folders in a completed export, by (file count, bytes); older loose rows by (path, size)."""
+    archived: dict[str, set] = {}
+    loose: set = set()
+    for manifest_path in sorted(inside(working, OPERATIONS + "/exports").glob("*/manifest.json")):
+        receipts = sorted((manifest_path.parent / "receipts").glob("*.json"))
+        if not receipts or read_json(receipts[-1]).get("status") != "copied_to_sync_folder":
+            continue
+        manifest = read_json(manifest_path)
+        for row in manifest.get("archives", []):
+            archived.setdefault(row["path"], set()).add((row["file_count"], row["total_size"]))
+        for row in manifest.get("files", []):
+            loose.add((row["path"], row["size"]))
+    return archived, loose
+
+
+def default_selection(root: Path) -> dict:
+    """What a stage-end export carries: the deliverables as files, each run as one archive.
+
+    Deliverables are the project records, kit issue reports, and every active
+    output. Researcher originals and their input copies stay where they are.
+    A run already in a completed export, unchanged, is not sent again; a run
+    still being written is left out with that reason.
+    """
+    _, working = managed(root)
+    state, active = _active_paths(working)
+    deliverables = [name for name in RECORDS if inside(working, name).is_file()]
+    if inside(working, "project/kit_issues").is_dir():
+        deliverables += _files_under(working, "project/kit_issues")
+    archives, omissions = [], []
+    for relative in active:
+        try:
+            path = inside(working, relative)
+        except ValueError:
+            omissions.append({"path": relative, "reason": "active output path is outside the project"})
+            continue
+        if relative.startswith("project/inputs/") or relative.startswith("project/artifacts/imported_"):
+            omissions.append({"path": relative, "reason": "input copy; the original stays where the researcher keeps it"})
+        elif _skipped(relative):
+            continue
+        elif path.is_file():
+            deliverables.append(relative)
+        elif path.is_dir() and relative.startswith("project/runs/"):
+            continue  # a run's own archive carries it
+        elif path.is_dir():
+            files = _files_under(working, relative)
+            if len(files) > FOLDER_AS_FILES_LIMIT:
+                archives.append(relative)
+            else:
+                deliverables += files
+        else:
+            omissions.append({"path": relative, "reason": "active output not found"})
+    runs = inside(working, "project/runs")
+    live = state.get("last_run_id") if state.get("status") == "running" else None
+    archived, loose = _already_exported(working)
+    for run in (sorted(p for p in runs.iterdir() if p.is_dir()) if runs.is_dir() else []):
+        relative = run.relative_to(working).as_posix()
+        if run.name == live:
+            omissions.append({"path": relative, "reason": "run still in progress; exported when it ends"})
+            continue
+        sizes = [(name, inside(working, name).stat().st_size) for name in _files_under(working, relative)]
+        if not sizes:
+            continue
+        if ((len(sizes), sum(size for _, size in sizes)) in archived.get(relative, set())
+                or all(row in loose for row in sizes)):
+            continue
+        archives.append(relative)
+    return {"deliverables": list(dict.fromkeys(deliverables)), "archives": list(dict.fromkeys(archives)),
+            "omissions": omissions}
+
+
+def _write_archive(working: Path, relative: str, destination: Path) -> dict:
+    """One reproducible zip of a folder; member hashes come from the bytes written."""
+    files = _files_under(working, relative)
+    if not files:
+        raise ValueError("Nothing to archive in " + relative)
+    before = {name: inside(working, name).stat() for name in files}
+    capacity(destination.parent, sum(stat.st_size for stat in before.values()))
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    partial = destination.with_name("." + destination.name + "." + uuid.uuid4().hex + ".partial")
+    parent = Path(relative).parent
+    members = []
+    try:
+        with zipfile.ZipFile(partial, "x", zipfile.ZIP_DEFLATED, allowZip64=True) as archive:
+            for name in files:
+                info = zipfile.ZipInfo(Path(name).relative_to(parent).as_posix(), date_time=(1980, 1, 1, 0, 0, 0))
+                info.compress_type = zipfile.ZIP_DEFLATED
+                info.external_attr = 0o644 << 16
+                value = hashlib.sha256()
+                with inside(working, name).open("rb") as incoming, archive.open(info, "w", force_zip64=True) as outgoing:
+                    for block in iter(lambda: incoming.read(1024 * 1024), b""):
+                        value.update(block)
+                        outgoing.write(block)
+                members.append({"path": name, "size": before[name].st_size, "sha256": value.hexdigest()})
+        for name in files:
+            now = inside(working, name).stat()
+            if (now.st_size, now.st_mtime_ns) != (before[name].st_size, before[name].st_mtime_ns):
+                raise ValueError("Files changed while " + relative + " was archived; stop their writers and try again")
+        with zipfile.ZipFile(partial) as archive:
+            if archive.testzip() is not None:
+                raise ValueError("Archive verification failed: " + relative)
+        partial.rename(destination)
+    finally:
+        partial.unlink(missing_ok=True)
+    return {"path": relative, "archive": "archives/" + relative + ".zip", "size": destination.stat().st_size,
+            "sha256": digest(destination), "file_count": len(members),
+            "total_size": sum(row["size"] for row in members), "members": members}
+
+
+def _export_id(label: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")[:40].strip("-") or "export"
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + slug + "-" + uuid.uuid4().hex[:6]
+
+
+def snapshot(root: Path, selection: dict | None, label: str) -> dict:
+    """Freeze a local copy: deliverable files as they are, each listed folder as one zip."""
+    value, working = managed(root)
+    selection = default_selection(root) if selection is None else selection
+    if (not isinstance(selection, dict) or "files" in selection
+            or set(selection) - {"deliverables", "archives", "omissions"}):
+        raise ValueError('A selection lists "deliverables" (files copied as they are) and "archives" '
+                         '(folders, normally one per finished run, each copied as one zip)')
+    deliverables = _relative_list(selection.get("deliverables", []), "deliverables")
+    archives = _relative_list(selection.get("archives", []), "archives")
+    if not deliverables and not archives:
+        raise ValueError("Select at least one deliverable or archive")
+    if len(deliverables) > LOOSE_FILE_LIMIT:
+        raise ValueError("More than " + str(LOOSE_FILE_LIMIT) + " loose files; list their folders under archives")
     rows = []
-    for relative in paths:
+    for relative in deliverables:
         source = inside(working, relative)
-        parts = Path(relative).parts
-        if (source.resolve().is_relative_to(inside(working, OPERATIONS).resolve())
-                or relative.replace("\\", "/") == BINDING
-                or any(p in (".git", ".venv", "__pycache__", EXPORTS) for p in parts)):
-            raise ValueError("Exclude storage records, previous exports, and disposable files: " + relative)
-        rows.append({"path": Path(relative).as_posix(), "size": source.stat().st_size, "sha256": digest(source)})
+        if _skipped(relative) or not source.is_file():
+            raise ValueError("A deliverable must be a project file, not a storage record, export, or disposable file: " + relative)
+        rows.append({"path": relative, "size": source.stat().st_size, "sha256": digest(source)})
+    for relative in archives:
+        if _skipped(relative) or not inside(working, relative).is_dir():
+            raise ValueError("An archive must be a project folder, not a storage record or export: " + relative)
     capacity(working, sum(row["size"] for row in rows))
-    identity = stamp() + "-" + uuid.uuid4().hex[:8]
+    identity = _export_id(label)
     directory = inside(working, OPERATIONS + "/exports/" + identity)
     for row in rows:
-        copy_verified(inside(working, row["path"]), inside(directory, "files/" + row["path"]), row["sha256"])
-    # Verify the whole selected checkpoint remained stable, not just each file's copy.
+        copy_verified(inside(working, row["path"]), inside(directory, "deliverables/" + row["path"]), row["sha256"])
+    # Verify the selected deliverables stayed stable as a set, not just each file's copy.
     for row in rows:
         if digest(inside(working, row["path"])) != row["sha256"]:
             raise ValueError("Selected files changed during the snapshot; stop their writers and try again")
-    manifest = {"schema_version": "1.0", "snapshot_id": identity, "project_id": value["project_id"],
-                "working_root": str(working), "label": label, "files": rows,
-                "omissions": selection.get("omissions", [])}
+    archived = [_write_archive(working, relative, inside(directory, "archives/" + relative + ".zip"))
+                for relative in archives]
+    manifest = {"schema_version": "2.0", "snapshot_id": identity, "project_id": value["project_id"],
+                "working_root": str(working), "label": label, "deliverables": rows,
+                "archives": archived, "omissions": selection.get("omissions", [])}
     write_new(directory / "manifest.json", manifest)
-    return {"snapshot_id": identity, "snapshot": str(directory), "status": "pending"}
+    return {"snapshot_id": identity, "snapshot": str(directory), "status": "pending",
+            "deliverables": len(rows), "archives": len(archived)}
+
+
+def _payload(manifest: dict) -> list[tuple[str, int, str]]:
+    """(path inside the export, size, sha256) for every copied file, in either format."""
+    if manifest.get("schema_version") == "2.0":
+        return ([("deliverables/" + row["path"], row["size"], row["sha256"]) for row in manifest["deliverables"]]
+                + [(row["archive"], row["size"], row["sha256"]) for row in manifest["archives"]])
+    return [("files/" + row["path"], row["size"], row["sha256"]) for row in manifest["files"]]
 
 
 def publish(root: Path, identity: str, name: str | None = None) -> dict:
@@ -261,16 +440,17 @@ def publish(root: Path, identity: str, name: str | None = None) -> dict:
         if read_json(inside(home, BINDING)) != {k: value[k] for k in ("schema_version", "project_id", "project_home", "working_root")}:
             raise ValueError("Project home differs; reconcile before exporting")
         destination = inside(home, EXPORTS + "/" + export_name)
-        for row in manifest["files"]:
-            source = inside(directory, "files/" + row["path"])
-            if source.stat().st_size != row["size"] or digest(source) != row["sha256"]:
-                raise ValueError("Local snapshot verification failed: " + row["path"])
-            copy_verified(source, inside(destination, "files/" + row["path"]), row["sha256"])
+        payload = _payload(manifest)
+        for relative, size, expected in payload:
+            source = inside(directory, relative)
+            if source.stat().st_size != size or digest(source) != expected:
+                raise ValueError("Local snapshot verification failed: " + relative)
+            copy_verified(source, inside(destination, relative), expected)
         copy_verified(directory / "manifest.json", destination / "manifest.json")
         # Re-read destination bytes before publishing the final completion record.
-        for row in manifest["files"]:
-            if digest(inside(destination, "files/" + row["path"])) != row["sha256"]:
-                raise ValueError("Destination verification failed: " + row["path"])
+        for relative, _, expected in payload:
+            if digest(inside(destination, relative)) != expected:
+                raise ValueError("Destination verification failed: " + relative)
         complete = {"snapshot_id": identity, "manifest_sha256": digest(directory / "manifest.json"),
                     "status": "copied_to_sync_folder", "upload_confirmed": False}
         marker = destination / "COMPLETE.json"
@@ -286,6 +466,14 @@ def publish(root: Path, identity: str, name: str | None = None) -> dict:
     return receipt
 
 
+def export(root: Path, label: str, selection: dict | None = None) -> dict:
+    """The stage-end export: snapshot the default (or a given) selection, then publish it."""
+    if status(root)["status"] != "managed":
+        return {"status": "not_needed", "reason": "the project home is also the working folder"}
+    snap = snapshot(root, selection, label)
+    return {**publish(root, snap["snapshot_id"]), "deliverables": snap["deliverables"], "archives": snap["archives"]}
+
+
 def retry(root: Path) -> list[dict]:
     _, working = managed(root)
     results = []
@@ -299,7 +487,7 @@ def retry(root: Path) -> list[dict]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("command", choices=("status", "setup", "bind", "stage", "snapshot", "publish", "retry"))
+    parser.add_argument("command", choices=("status", "setup", "bind", "stage", "export", "snapshot", "publish", "retry"))
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--kit", type=Path)
     parser.add_argument("--working-root", type=Path)
@@ -307,7 +495,7 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--source", type=Path)
     parser.add_argument("--into")
-    parser.add_argument("--selection", type=Path, help='JSON object: {"files": [relative files], "omissions": [...]}')
+    parser.add_argument("--selection", type=Path, help='optional JSON object: {"deliverables": [files], "archives": [folders], "omissions": [...]}')
     parser.add_argument("--label")
     parser.add_argument("--snapshot")
     parser.add_argument("--name", help="new destination name if an earlier export conflicts")
@@ -323,8 +511,10 @@ def main() -> int:
             result = bind(args.root, args.working_root)
         elif args.command == "stage" and args.source and args.into:
             result = stage(args.root, args.source, args.into)
-        elif args.command == "snapshot" and args.selection and args.label:
-            result = snapshot(args.root, read_json(args.selection), args.label)
+        elif args.command == "export" and args.label:
+            result = export(args.root, args.label, read_json(args.selection) if args.selection else None)
+        elif args.command == "snapshot" and args.label:
+            result = snapshot(args.root, read_json(args.selection) if args.selection else None, args.label)
         elif args.command == "publish" and args.snapshot:
             result = publish(args.root, args.snapshot, args.name)
         elif args.command == "retry":
@@ -333,7 +523,7 @@ def main() -> int:
             raise ValueError("Missing arguments for " + args.command)
         print(json.dumps(result, indent=2))
         pending = any(r.get("status") == "pending" for r in result) if isinstance(result, list) else result.get("status") == "pending"
-        return 1 if pending and args.command in ("publish", "retry") else 0
+        return 1 if pending and args.command in ("export", "publish", "retry") else 0
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as exc:
         print(json.dumps({"status": "needs_recovery", "error": str(exc)}))
         return 1

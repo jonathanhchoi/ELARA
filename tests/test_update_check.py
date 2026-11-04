@@ -92,24 +92,33 @@ class UpdateTests(unittest.TestCase):
         self.assertFalse(result["upstream_checked"])
         self.assertEqual(result["retry_at"], "next_stage_boundary")
         self.assertEqual(snapshot(self.target), before)
+        self.assertTrue(result["installation_verified"])
+        self.assertIn("GitHub could not be reached", result["notice"])
         (self.target / "scripts/example.py").write_text("changed after previous success")
         with patch.object(bootstrap, "github_commit", side_effect=bootstrap.BootstrapError("unavailable")):
-            self.assertFalse(check_update.check(self.target, STAGE)["ready"])
+            changed = check_update.check(self.target, STAGE)
+        # The earlier success is not reused: the change is found and recorded, and the stage runs on it.
+        self.assertEqual((changed["status"], changed["installation_verified"]), ("installed_modified", False))
+        self.assertTrue(changed["ready"])
 
-    def test_network_failure_does_not_trust_legacy_label_or_incomplete_installation(self):
+    def test_network_failure_never_trusts_a_legacy_label_and_an_unfinished_update_waits(self):
         self.install()
         path = self.target / bootstrap.MANIFEST_RELATIVE
         manifest = json.loads(path.read_text())
         manifest.pop("installed_commit")
         path.write_text(json.dumps(manifest))
         with patch.object(bootstrap, "github_commit", side_effect=bootstrap.BootstrapError("unavailable")):
-            self.assertFalse(check_update.check(self.target, STAGE)["ready"])
+            result = check_update.check(self.target, STAGE)
+        self.assertEqual((result["status"], result["installation_verified"], result["ready"]), ("unverified", False, True))
+        self.assertIn("no recorded identity", result["notice"])
         self.install()
         (self.target / bootstrap.UPDATE_PENDING_RELATIVE).write_text("{}")
         with patch.object(bootstrap, "github_commit", side_effect=bootstrap.BootstrapError("unavailable")):
-            self.assertFalse(check_update.check(self.target, STAGE)["ready"])
+            result = check_update.check(self.target, STAGE)
+        self.assertEqual((result["status"], result["ready"], result["next_action"]),
+                         ("unfinished_update", False, "rerun_update"))
 
-    def prepare(self):
+    def prepare(self, expect_install=True):
         info = {"kind": "download", "commit": NEW, "verified_commit": NEW,
                 "location": "https://github.com/" + bootstrap.REPOSITORY, "ref": NEW}
         with patch.object(bootstrap, "github_commit", return_value={"commit": NEW, "subject": "new", "url": "https://github.com/example"}), \
@@ -117,6 +126,9 @@ class UpdateTests(unittest.TestCase):
                 patch.object(bootstrap, "ensure_dependency", return_value={"status": "present"}), \
                 patch.object(bootstrap, "run_doctor", return_value={"ok": True, "failures": [], "warnings": []}):
             result = check_update.prepare(self.target, STAGE)
+            if not expect_install:
+                resolve.assert_not_called()
+                return result
             self.assertEqual(resolve.call_args.args[0].ref, NEW)
             self.assertTrue(resolve.call_args.args[0].require_clean)
             self.assertFalse(resolve.call_args.args[0].skip_doctor)
@@ -136,7 +148,7 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual((self.target / "scripts/example.py").read_text(), "new code")
         self.assertFalse((self.target / bootstrap.UPDATE_PENDING_RELATIVE).exists())
 
-    def test_automatic_update_conflict_preserves_files_and_routes_to_report(self):
+    def test_automatic_update_conflict_installs_nothing_and_the_stage_continues(self):
         self.install()
         (self.source / "scripts/example.py").write_text("new code")
         original = (self.target / "scripts/example.py").read_bytes()
@@ -144,24 +156,35 @@ class UpdateTests(unittest.TestCase):
             "schema_version": "1.0", "bindings": {"scripts/example.py": hashlib.sha256(original).hexdigest()}}))
         before = snapshot(self.target)
         result = self.prepare()
-        self.assertFalse(result["ready"])
-        self.assertEqual(result["next_action"], "report")
+        self.assertTrue(result["ready"], result)
+        self.assertEqual((result["status"], result["next_action"]), ("update_deferred", "continue"))
+        self.assertEqual(result["installed_commit"], OLD)
+        self.assertTrue(result["installation_verified"])
+        self.assertIn("could not be installed cleanly", result["notice"])
         self.assertEqual(snapshot(self.target), before)
 
-    def test_modified_missing_and_incomplete_inventory_never_pass(self):
+    def test_modified_missing_and_incomplete_inventory_are_recorded_and_never_updated_over(self):
         self.install()
+        (self.source / "scripts/example.py").write_text("new code")
         path = self.target / "scripts/example.py"
         original = path.read_bytes()
         path.write_text("local correction")
-        self.assertEqual(self.check()["status"], "conflict")
+        result = self.check(NEW)
+        self.assertEqual((result["status"], result["installation_verified"], result["ready"]),
+                         ("installed_modified", False, True))
+        self.assertIn("Modified or missing ELARA file: scripts/example.py", result["problems"])
+        before = snapshot(self.target)
+        self.assertEqual(self.prepare(expect_install=False)["status"], "installed_modified")
+        self.assertEqual(snapshot(self.target), before)
         path.unlink()
-        self.assertEqual(self.check()["status"], "conflict")
+        self.assertEqual(self.check()["status"], "installed_modified")
         path.write_bytes(original)
         manifest_path = self.target / bootstrap.MANIFEST_RELATIVE
         manifest = json.loads(manifest_path.read_text())
         manifest["installed_hashes"].pop("scripts/example.py")
         manifest_path.write_text(json.dumps(manifest))
-        self.assertFalse(self.check()["ready"])
+        result = self.check()
+        self.assertEqual((result["status"], result["installation_verified"]), ("unverified", False))
 
     def test_approved_exact_update_and_second_live_check(self):
         self.install()
@@ -215,9 +238,33 @@ class UpdateTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 self.install(NEW, update=True, strict=True)
         self.assertTrue((self.target / bootstrap.UPDATE_PENDING_RELATIVE).exists())
-        self.assertFalse(self.check(NEW)["ready"])
+        self.assertEqual(self.check(NEW)["status"], "unfinished_update")
         self.assertTrue(self.install(NEW, update=True, strict=True)["ok"])
         self.assertTrue(self.check(NEW)["ready"])
+
+    def test_an_unresolved_workspace_is_not_treated_as_run_as_installed(self):
+        self.install()
+        (self.target / "project/ELARA_STORAGE.json").write_text(json.dumps({"schema_version": "9"}))
+        result = self.check()
+        self.assertEqual((result["status"], result["ready"]), ("storage_unresolved", False))
+
+    def test_automatic_update_interrupted_part_way_is_the_one_case_that_waits(self):
+        self.install()
+        (self.source / "scripts/example.py").write_text("new")
+        real_install = bootstrap.install
+
+        def interrupted(source, target, update, **kwargs):
+            if not kwargs.get("dry_run"):
+                (Path(target) / "scripts/example.py").write_text("new")
+                raise OSError("simulated interrupted write")
+            return real_install(source, target, update, **kwargs)
+
+        with patch.object(bootstrap, "install", side_effect=interrupted):
+            result = self.prepare()
+        self.assertEqual((result["status"], result["ready"], result["next_action"]),
+                         ("unfinished_update", False, "rerun_update"))
+        self.assertTrue((self.target / bootstrap.UPDATE_PENDING_RELATIVE).exists())
+        self.assertEqual(self.prepare()["status"], "updated")
 
     def test_removed_upstream_file_requires_review(self):
         self.install()
@@ -261,12 +308,18 @@ class UpdateTests(unittest.TestCase):
         with patch.object(bootstrap, "download_kit", return_value=(self.source, {"verified_commit": NEW})):
             self.assertEqual(self.check(NEW)["status"], "update_available")
 
-    def test_malformed_or_escaping_manifest_fails_closed(self):
+    def test_malformed_or_escaping_manifest_is_never_verified_or_installed_over(self):
         self.install()
+        (self.source / "scripts/example.py").write_text("new code")
         path = self.target / bootstrap.MANIFEST_RELATIVE
         for record in ([], {"kit_paths": ["../outside"]}, {"kit_paths": [1]}, {"kit_paths": "bad"}):
-            path.write_text(json.dumps(record))
-            self.assertFalse(self.check()["ready"])
+            with self.subTest(record=record):
+                path.write_text(json.dumps(record))
+                result = self.check(NEW)
+                self.assertEqual((result["status"], result["installation_verified"]), ("unverified", False))
+                before = snapshot(self.target)
+                self.assertEqual(self.prepare(expect_install=False)["status"], "unverified")
+                self.assertEqual(snapshot(self.target), before)
 
     def test_failed_setup_keeps_update_pending(self):
         self.install()

@@ -102,7 +102,7 @@ outcomes.
 ## Measurement-error correction and sensitivity analyses
 
 TODO-PREREG the prespecified correction per estimand (see
-`workflow/shared/measurement-error-correction-guide.md`), the validation
+`workflow/guides/measurement-error-correction-guide.md`), the validation
 quantities it consumes, and the planned sensitivity analyses.
 
 ## Missingness, correction for multiple comparisons, robustness, attrition, and stopping rules

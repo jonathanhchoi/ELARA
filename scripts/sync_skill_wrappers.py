@@ -103,9 +103,9 @@ description: {json.dumps(description)}
 
 # Run {name}
 
-{STORAGE_ROUTING}Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`; require `ready: true` before execution, respecting its read-only planning exception.
-Automatically install verified compatible updates when writes are authorized; unavailable GitHub uses freshly verified installed bytes.
-An update that does not install cleanly follows "When something breaks" in `workflow/shared/operational-recovery.md`; a declined specific change remains binding. Preserve existing run software and scientific bindings. Never change ELARA's own files in a project.
+{STORAGE_ROUTING}Before a new run, follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`; require `ready: true` before execution.
+A conflict-free update installs automatically when writes are authorized; otherwise the stage runs on the installed version and the researcher hears the notice once. A declined update stays declined.
+Only an update interrupted part-way waits, under "When something breaks" in `workflow/shared/operational-recovery.md`. Preserve existing run software and scientific bindings. Never change ELARA's own files in a project.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, and the guardrails, artifact-contract, and
    execution-control files under `workflow/shared/` completely.
@@ -145,12 +145,12 @@ description: {json.dumps(spec["description"])}
 # Run {name}
 
 {STORAGE_ROUTING}Before starting this utility, follow `workflow/shared/kit-updates.md` and run
-`scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution; use the update contract's limited
-read-only planning exception when applicable;
-apply verified compatible updates automatically when writes are authorized; use
-freshly verified installed bytes if GitHub is unavailable. A failed update follows
-"When something breaks" in `workflow/shared/operational-recovery.md`; a declined
-change stays binding. Keep a started run's software; never edit ELARA in a project.
+`scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution.
+A conflict-free update installs automatically when writes are authorized; otherwise
+the utility runs on the installed version and the researcher hears the notice once;
+a declined update stays declined. Only an update interrupted part-way waits, under "When something breaks" in
+`workflow/shared/operational-recovery.md`. Keep a started run's software; never
+edit ELARA in a project.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
    `workflow/shared/artifact-contract.md`, `workflow/shared/execution-control.md`, and
@@ -199,13 +199,12 @@ description: "Start a new project, adopt an existing one, show the menu of tools
 
 {STORAGE_ROUTING}Before any new stage or tool starts (including automatic transitions and recovery
 runs), follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
-Require `ready: true` before execution; use the update contract's limited
-read-only planning exception when applicable; apply verified compatible updates automatically and use
-freshly verified installed bytes if GitHub is unavailable. An update that does
-not install cleanly follows "When something breaks" in
-`workflow/shared/operational-recovery.md`; a declined specific change remains
-binding. Preserve an already-started run's software. Help, tour, menu-only, and
-status need no check.
+Require `ready: true` before execution. A conflict-free update installs
+automatically when writes are authorized; otherwise the stage runs on the
+installed version and the researcher hears the notice once; a declined update
+stays declined. Only an update interrupted part-way waits, under "When something
+breaks" in `workflow/shared/operational-recovery.md`. Preserve an already-started
+run's software. Help, tour, menu-only, and status need no check.
 
 1. Read `AGENTS.md`, `PIPELINE.md`, `workflow/shared/execution-control.md`, and
    `project/PROJECT_STATE.md` completely (its `usage` key
@@ -290,9 +289,9 @@ description: "Run empirical legal research coding or audit assignments in parall
 # Code observations with isolated subagents
 
 {STORAGE_ROUTING}The parent must satisfy `workflow/shared/kit-updates.md` with `scripts/check_update.py` and `ready: true` before a new stage run begins.
-Use compatible automatic updates and verified installed fallback; a declined
-specific change remains binding. Within an existing run, preserve the
-recorded software; do not repeat update checks per worker, batch, or retry.
+Updates never hold up research, and a declined update stays declined. Within an existing run,
+preserve the recorded software; do not repeat update checks per worker, batch,
+or retry.
 
 1. Read `AGENTS.md`, `project/PROJECT_STATE.md`,
    `workflow/shared/execution-control.md`, and
