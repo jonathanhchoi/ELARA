@@ -5,7 +5,7 @@ paper_steps: ["4"]
 core: true
 interaction_profile: "execute"
 long_running: true
-goal_condition: "Run Stage 12 exactly as specified until every active coded observation has one independent audit disposition and the audit counts reconcile; if the recoding queue is nonempty, preserve it and record the failure route without correcting codes, otherwise pass verification and make PROJECT_STATE.md ready for Stage 13; also stop when any ELARA section 11 condition is recorded and surfaced."
+goal_condition: "Run Stage 12 exactly as specified until `python scripts/stage_check.py --stage 12-interpretive-verification` reports `done: true`; never correct codes inside the audit."
 prerequisites: ["11-scale-up"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/codebook_vNNN.md", "project/artifacts/coding_schema_vNNN.json", "project/corpus/corpus_vNNN/", "project/artifacts/corpus_manifest_vNNN.csv", "project/artifacts/coding_dataset_vNNN.jsonl", "project/artifacts/coding_ledger_vNNN.csv", "project/artifacts/schema_validation_vNNN.csv", "project/artifacts/quote_verification_vNNN.csv", "project/runs/<run_id>/worker_returns/"]
 declared_outputs: ["project/artifacts/audit_settings_vNNN.json", "project/artifacts/interpretive_audit_vNNN.jsonl", "project/artifacts/interpretive_audit_coverage_vNNN.csv", "project/artifacts/interpretive_recoding_queue_vNNN.csv", "project/artifacts/interpretive_verification_report_vNNN.md", "project/runs/<run_id>/run_settings.json", "project/runs/<run_id>/assignments/", "project/runs/<run_id>/worker_returns/", "project/runs/<run_id>/checks/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]

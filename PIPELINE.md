@@ -705,3 +705,19 @@ settings and any project code, not the kit's runner. Project code that remains
 (corpus parsing, analysis) lives in one folder whose commit each run records.
 Runs started earlier keep their recorded software and files. Gates, frozen
 instruments, worker isolation, blinding, and audits are unchanged.
+
+Version 2.18.0 makes "done" a command. `scripts/stage_check.py --stage <stage>`
+reads the stage's declared outputs, the project state, the stage's latest run,
+and the run ledger, and reports `done: true` when the stage is complete (or
+awaiting its gate) with every required output present and recorded as active,
+or is on a recorded failure route, or is stopped for a researcher decision;
+otherwise it lists exactly what is missing. Every long-running stage's
+completion condition is now that command plus the stage's limit on what the
+assistant may decide, so a host goal evaluator has one thing to verify, and a
+rejected completion is answered by fixing what the check lists, not by more
+evidence or another review. Outputs that exist only under a condition are
+marked `path (condition)` in the stage settings. Each stage run gets exactly
+the fresh reviews its stage names, once each; fixes are confirmed by re-running
+the failing check, never by a further review. `scripts/coding_run.py close`
+also writes the run's (possibly empty) failure-decision log and a closing
+checkpoint. Gates, verification sections, and audits are unchanged.

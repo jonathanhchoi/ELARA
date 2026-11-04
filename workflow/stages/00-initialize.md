@@ -8,7 +8,7 @@ long_running: false
 goal_condition: null
 prerequisites: []
 required_inputs: ["repository root", "researcher instructions", "project/inputs/", "project/inputs/existing/ (adoption path only: the researcher's existing project materials)", "project/BOOTSTRAP.md (if present: the installer's report, listing pre-existing materials and the Python interpreter to use)"]
-declared_outputs: ["project/PROJECT_STATE.md", "project/PROJECT_CHARTER_vNNN.md", "project/ACCESS_MODEL_SNAPSHOT_vNNN.md", "project/model_readiness_evidence_vNNN.json", "project/INPUT_INVENTORY_vNNN.csv", "project/PUBLICATION_PROFILE_vNNN.md", "project/artifacts/adoption_map_vNNN.md", "project/artifacts/imported_vNNN/", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md", "project/runs/<run_id>/run_manifest.json"]
+declared_outputs: ["project/PROJECT_STATE.md", "project/PROJECT_CHARTER_vNNN.md", "project/ACCESS_MODEL_SNAPSHOT_vNNN.md", "project/model_readiness_evidence_vNNN.json", "project/INPUT_INVENTORY_vNNN.csv", "project/PUBLICATION_PROFILE_vNNN.md (when the interview learned the venue and audience)", "project/artifacts/adoption_map_vNNN.md (adoption path only)", "project/artifacts/imported_vNNN/ (adoption path only)", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md", "project/runs/<run_id>/run_manifest.json"]
 human_gate: "project-charter-approval"
 next_stage: "01-conceive"
 failure_routes: ["00-initialize"]

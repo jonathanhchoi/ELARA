@@ -8,7 +8,7 @@ long_running: false
 goal_condition: null
 prerequisites: ["08-pilot"]
 required_inputs: ["project/PROJECT_STATE.md", "project/artifacts/design_freeze_vNNN.md", "project/artifacts/data_authorization_record_vNNN.md", "project/artifacts/pilot_acceptance_vNNN.md", "active methods, hypotheses, estimands, sampling plan, codebook, schema, unit space, and prompt"]
-declared_outputs: ["project/artifacts/frozen_artifact_manifest_vNNN.csv", "project/artifacts/preregistration_vNNN.md", "project/artifacts/preregistration_vNNN.pdf", "project/artifacts/preregistration_record_vNNN.md", "project/artifacts/amendment_policy_vNNN.md", "project/code/frozen_analysis_vNNN/", "project/runs/<run_id>/rendered_pages/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
+declared_outputs: ["project/artifacts/frozen_artifact_manifest_vNNN.csv", "project/artifacts/preregistration_vNNN.md", "project/artifacts/preregistration_vNNN.pdf", "project/artifacts/preregistration_record_vNNN.md (after the preregistration-confirmation gate)", "project/artifacts/amendment_policy_vNNN.md", "project/code/frozen_analysis_vNNN/", "project/runs/<run_id>/rendered_pages/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]
 human_gate: "preregistration-confirmation"
 next_stage: "10-corpus-acquisition"
 failure_routes: ["04-methods-design", "05-codebook-and-schema", "06-data-authorization", "07-adversarial-review", "08-pilot", "09-freeze-and-preregister"]

@@ -25,8 +25,10 @@ An update that does not install cleanly follows "When something breaks" in `work
 5. Honor the read-only planning and approval boundaries, using the shared conversational
    fallback if native planning or question controls are unavailable. For `long_running: true`,
    reuse a covering authorized goal when present; otherwise continue foreground execution
-   with the same completion contract and durable checkpoints. Never require goal activation
-   or replace an unrelated active goal. Work low-touch under `workflow/shared/guardrails.md` section 11.
+   with the same completion contract and durable checkpoints. The stage ends when
+   `python scripts/stage_check.py --stage <stage-id>` reports `done: true`; end with its output.
+   Never require goal activation or replace an unrelated active goal. Work low-touch under
+   `workflow/shared/guardrails.md` section 11.
 6. Do not cross the stage's human gate; update state and append the run ledger only as the canonical stage directs.
    Summarize plainly and follow the usage mode (`usage` in `project/PROJECT_STATE.md`): continue into
    the next stage in `pipeline` mode unless a stop condition holds, or offer the menu in `specific tools` mode.

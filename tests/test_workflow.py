@@ -379,7 +379,8 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIsInstance(condition, str, path)
                 self.assertTrue(condition.startswith("Run Stage "), path)
                 self.assertIn(meta["stage_id"][:2], condition, path)
-                self.assertIn("section 11", condition, path)
+                # Section 11 stops end the stage through stage_check's `stopped` result.
+                self.assertIn(f"scripts/stage_check.py --stage {meta['stage_id']}", condition, path)
                 self.assertNotIn("provide `/goal <goal_condition>` and stop", body, path)
                 conditions.append(condition)
             else:
@@ -590,7 +591,8 @@ class WorkflowContractTests(unittest.TestCase):
             "project/artifacts/imported_vNNN/",
             "project/PUBLICATION_PROFILE_vNNN.md",
         ):
-            self.assertIn(output, meta["declared_outputs"], output)
+            # Conditional outputs are written "path (condition)".
+            self.assertIn(output, [item.split(" (", 1)[0] for item in meta["declared_outputs"]], output)
         # Adoption cannot silently launder these facts.
         self.assertIn("not preregistered", lowered)
         self.assertIn("not kept separate", lowered)

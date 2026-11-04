@@ -243,8 +243,22 @@ Mode.
 
 Every canonical stage with `long_running: true` has a nonempty
 `goal_condition` in front matter. That condition is the exact, testable contract
-for one stage. It states the work, the evidence that proves success, the scope
-that must not change, and the gate or failure condition that ends the run.
+for one stage: the stage ends when `python scripts/stage_check.py --stage
+<stage-id>` reports `done: true`, and the condition names what the assistant
+must not decide or change on the way. The check reads only the project's files.
+It is done when state has moved past the stage with every required output
+present and recorded as active (and the stage's gate approved), when the stage
+awaits its gate with every required output present and active, when the stage
+is on a recorded failure route, or when it is stopped for a researcher decision
+(`waiting_for_user`). Otherwise it lists exactly what is missing, not yet
+active, or inconsistent. The stage's own Verification section is how the
+outputs earn activation; the check confirms the result, not the reasoning.
+
+End every long stage's final turn with the check's output. When a host goal
+evaluator does not accept completion, run the check again and fix only what it
+lists. Do not answer an evaluator with more evidence-gathering, a further
+review, or a restated report; if the check reports `done: true` and the
+evaluator still disagrees, say so once in plain language and stop.
 
 Host goals are optional persistence support. Reuse an authorized goal covering
 the same work; wording need not match verbatim. Create or activate one only when
@@ -295,8 +309,8 @@ record. Workers never create goals or change the parent's goal.
   contract regardless of wording. Check it with `/goal`, use the documented
   foreground fallback without a covering goal, never replace an unrelated active goal, and remember that its
   evaluator can see only evidence surfaced in the conversation. Therefore every
-  checkpoint and final turn states the verification result and exact counts,
-  not merely "done."
+  checkpoint states exact counts, and the final turn shows the output of
+  `python scripts/stage_check.py --stage <stage-id>`, not merely "done."
 - During a Claude fan-out, the parent retains the plan and any active goal while
   the saved `elr-observation-fanout` or `elr-research-fanout` workflow runs the
   restricted workers under `workflow/shared/observation-fanout.md`.

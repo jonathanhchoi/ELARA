@@ -5,7 +5,7 @@ paper_steps: ["1"]
 core: true
 interaction_profile: "execute"
 long_running: true
-goal_condition: "Run Stage 02 exactly as specified until the exhaustive search ledger reconciles, every relied-on source is retrieved and verified, all declared artifacts pass validation, and PROJECT_STATE.md records the preemption-disposition gate, or until an ELARA section 11 stop condition is recorded and surfaced; do not decide the gate for the researcher."
+goal_condition: "Run Stage 02 exactly as specified until `python scripts/stage_check.py --stage 02-preemption-review` reports `done: true`; do not decide the gate for the researcher."
 prerequisites: ["00-initialize"]
 required_inputs: ["project/PROJECT_STATE.md", "project/PROJECT_CHARTER_vNNN.md", "selected project decision", "project/artifacts/conception_report_vNNN.md or researcher-supplied project memorandum"]
 declared_outputs: ["project/artifacts/preemption_review_vNNN.pdf", "project/artifacts/preemption_review_vNNN.tex", "project/artifacts/preemption_review_vNNN.docx (only when explicitly requested)", "project/sources/preemption/<run_id>/source_manifest.csv", "project/sources/preemption/<run_id>/search_log.csv", "project/sources/preemption/<run_id>/claim_evidence.csv", "project/sources/preemption/<run_id>/retrieved/", "project/sources/preemption/<run_id>/fanout/<wave>/ (query matrix, spec.json, briefs, sealed manifest, launch record, worker returns, merged candidates)", "project/runs/<run_id>/preemption_review_source.md", "project/runs/<run_id>/rendered_preemption_review/", "project/runs/<run_id>/run_manifest.json", "project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDGER.md", "project/DEVIATIONS.md"]

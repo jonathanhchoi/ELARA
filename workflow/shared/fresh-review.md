@@ -37,6 +37,19 @@ means, so the stages can name what is reviewed without restating how.
   correction route. It does not edit the artifact, recode an observation,
   repair code, or move an item from unverified to verified.
 
+## How many reviews
+
+- A stage run gets exactly the fresh reviews its stage file names, once each.
+  A later run of the stage (a re-pilot, a recoding run) gets its own.
+- A finding is fixed through the stage's normal versioned route and the fix is
+  confirmed by re-running the check that failed (a validator, `coding_run.py
+  check`, `stage_check.py`), never by another review. Do not review a review,
+  review a fix, review operational or setup work, or repeat a review because
+  something changed.
+- A further review of the same work happens only when the researcher asks for
+  one. A fatal or major finding that the stage cannot fix in place follows the
+  stage's failure route.
+
 ## What the stage does with the review
 
 - Preserves the review and every disagreement between reviewer and author in
