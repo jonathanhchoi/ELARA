@@ -127,6 +127,17 @@ forward-test target.
     A unit whose second launch also returns nothing is closed by the controller as
     `worker_error` and goes to the frozen retry rule. No dispatch record, ticket, or
     reconciliation step is involved, and the researcher is not asked anything.
+25. **The pilot needs settings, not a driver.** At Stage 08 the accepted plan uses
+    line-numbered opinions, quotations cited by line, two independent codings per unit, and
+    a blinded review sheet. The assistant writes `coding_run_settings_v001.json`, runs
+    `coding_run.py prepare --dry-run`, inspects two assignments, prepares the run, and then
+    alternates the launch that `next` names with `check --apply` until it says `close`. One
+    quotation is not found on its cited lines; `check --apply` issues the one linked retry
+    and logs the decision. `close`, `review --blind`, and `compare` produce the ledger,
+    compliance file, review sheet with its separate key, and disagreement table. The
+    assistant writes no driver, validator, merge, or review-sheet script, and the fresh
+    review covers the settings file only. Stage 11 later reuses the same settings file
+    unchanged with the full unit list.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.

@@ -305,6 +305,14 @@ On either host the kit's controllers (`scripts/unit_fanout.py`,
 `scripts/research_fanout.py`) fix the assignment list on disk, say what is still
 pending, validate returns, bound attempts, and merge — so interrupted parallel
 work resumes in a later session from the files, and no unit is silently dropped.
+The pilot, the full coding run, the interpretive audit, and the robustness
+checks (Stages 08, 11, 12, and 15) go through one kit-owned runner,
+`scripts/coding_run.py`, configured by a settings file: it draws samples, builds
+what each worker sees of its source, prepares the run, checks every return and
+quotation, applies the frozen retry rule, writes the stage's dataset, ledger,
+and check files, and produces the researcher's review sheet and the agreement
+tables. The project writes settings, not code
+(`workflow/templates/coding_run_settings.md`).
 In the Stage 11 full coding run, each failed or unusable unit also gets a
 recorded judgment — made by the assistant under the frozen rules and reported
 in one complete list at the end (the default), or put to the researcher at the
@@ -680,3 +688,20 @@ workers at a time unless given `concurrency`, and ignore the old `owner`,
 place and are no longer read; `recovery_decision` in older state files is
 accepted and ignored. Retry rules, attempt limits, worker restrictions, quote
 anchoring, blinding, and audits are unchanged.
+
+Version 2.17.0 ships the pilot and coding pipeline with the kit. Stages 08, 11,
+12, and 15 run through `scripts/coding_run.py` and a versioned settings file
+(`coding_run_settings_vNNN.json`, `audit_settings_vNNN.json`,
+`robustness_settings_vNNN.json`) instead of a driver, validators, and close-out
+scripts written for each project. The runner covers reproducible sampling;
+full, line-numbered, or excerpt views of each source; one assignment per unit,
+condition, and replicate; quotation checks under the frozen normalization and
+locator rule; the retry rule and the failure-decision log; the run-level
+stopping rule; the stage's dataset, ledger, and check files with a reconciling
+receipt; blinded review sheets; and agreement, disagreement, and paired
+comparison tables. Stage 11 reuses the settings file the pilot accepted, byte
+for byte, and Stage 09 freezes it. The Stage 08 fresh review covers the
+settings and any project code, not the kit's runner. Project code that remains
+(corpus parsing, analysis) lives in one folder whose commit each run records.
+Runs started earlier keep their recorded software and files. Gates, frozen
+instruments, worker isolation, blinding, and audits are unchanged.

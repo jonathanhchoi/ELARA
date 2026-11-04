@@ -267,15 +267,15 @@ def observation_skill_text(*, claude: bool) -> str:
     if claude:
         route = (
             "   the saved `elr-observation-fanout` workflow (`.claude/workflows/`), which you launch\n"
-            "   yourself with the Workflow tool (`name` plus `{ \"run_dir\": ... }`) and relaunch until\n"
-            "   nothing is pending; every agent in it is the restricted `elr-worker` type. If dynamic\n"
+            "   yourself with the Workflow tool (`name` plus the `args` that `python scripts/coding_run.py\n"
+            "   check` prints); every agent in it is the restricted `elr-worker` type. If dynamic\n"
             "   workflows are unavailable, launch `elr-worker` directly, one assignment per call, and\n"
             "   record that route."
         )
     else:
         route = (
             "   the kit's `elr_worker` custom sub-agents (`.codex/agents/`), spawned by name in non-forked contexts, one per\n"
-            "   assignment listed by `python scripts/unit_fanout.py status --run-dir <run-dir> --record-launch`,\n"
+            "   assignment listed by the `discover` command that `python scripts/coding_run.py check` prints,\n"
             "   in a bounded rolling pool under the stage completion contract. Close terminal handles when\n"
             "   supported and refill each freed slot. Never reuse a terminal worker context.\n"
             "   Use foreground execution without a covering authorized goal; never code units in your own context."
@@ -297,9 +297,9 @@ recorded software; do not repeat update checks per worker, batch, or retry.
    `workflow/shared/observation-fanout.md` completely.
 2. Read the active canonical file under `workflow/stages/`; this skill implements its
    per-unit execution contract and never changes stage gates or frozen instruments.
-3. Validate the immutable assignment manifest and its canonical visible-prompt and response-schema
-   hashes before spawning anything. Give each fresh worker exactly one assignment and one unique
-   return path; workers never edit shared files.
+3. Prepare, check, and close the run with `python scripts/coding_run.py` and the stage's settings
+   (`workflow/templates/coding_run_settings.md`), never a driver: launch the block its `next` step
+   names, then `check --apply`. One assignment and return path per worker; no shared edits.
 4. Each worker writes its return envelope to the draft path it is given and submits it with
    `python scripts/unit_fanout.py submit --input <draft-path>`; workers do not write the
    worker-return path directly or expose substantive labels in receipts. One failed worker never

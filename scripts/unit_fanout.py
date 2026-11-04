@@ -73,6 +73,7 @@ FORBIDDEN_RETURN_NAMES = {
     "launches.jsonl",
     "coding_dataset.jsonl",
 }
+PREPARED_BY_RUNNER = {"run_spec.json", "run_settings.json", "sources", "kit_update_check.json"}
 SEAL_ABSENT = "absent_legacy_run"
 SEAL_VERIFIED = "verified"
 
@@ -213,10 +214,17 @@ def _validate_result(schema_path: Path, result: Any) -> list[str]:
 
 
 def prepare(spec_path: Path, run_dir: Path) -> dict[str, Any]:
-    """Freeze a run directory and seal its manifest."""
+    """Freeze a run directory and seal its manifest.
+
+    The directory must be empty apart from the files ``scripts/coding_run.py``
+    writes before calling this (``PREPARED_BY_RUNNER``) and the stage-start
+    ``kit_update_check.json``.
+    """
     spec_path = spec_path.resolve()
     run_dir = run_dir.resolve()
-    if run_dir.exists() and any(run_dir.iterdir()):
+    if run_dir.exists() and any(
+        child.name not in PREPARED_BY_RUNNER for child in run_dir.iterdir()
+    ):
         raise FanoutError(f"run directory is not empty: {run_dir}")
 
     spec = load_json(spec_path)
