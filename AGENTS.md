@@ -290,6 +290,10 @@ shared, and which are the researcher's, so a folder both use (for example
   hand-launched workers one at a time, never an all-tools agent, never a serial
   imitation in the parent's context — while workers get fresh contexts and
   unique return paths and shared ledgers and aggregates are edited serially.
+  Pilot, coding, audit, and robustness runs (Stages 08, 11, 12, and 15) are
+  prepared, checked, and closed by `scripts/coding_run.py` from a settings
+  file (`workflow/templates/coding_run_settings.md`); write settings, never a
+  driver, validator, or merge script for them.
 - Make only requested, stage-declared changes. Preserve unrelated and uncommitted
   work.
 - Audit stages report findings; they do not silently repair the work audited.

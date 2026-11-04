@@ -403,7 +403,7 @@ scripts/build_skeleton_draft.py Build and validate Stage 17 Word, LaTeX, or Mark
 .codex/agents/                  Codex restricted worker sub-agents
 project/                        Blank project state, inputs, logs, and outputs
 scripts/bootstrap.py            Safe installer and setup check
-scripts/                        Validators and the two parallel-work controllers
+scripts/                        Validators, the two parallel-work controllers, and the coding runner
 tests/                          Maintenance tests and public fixtures
 ```
 

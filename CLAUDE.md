@@ -40,8 +40,9 @@ the canonical `interaction_profile` as follows:
   saved dynamic workflows, which you launch yourself as part of the stage:
   `elr-observation-fanout` (`{ "run_dir": ... }`) for coding and audit units,
   `elr-research-fanout` (`{ "fanout_dir": ... }`) for research units, both under
-  `workflow/shared/observation-fanout.md`. They run six workers at a time unless you pass
-  `concurrency`; one failed worker never stops the others, and running the workflow again
+  `workflow/shared/observation-fanout.md`. For coding and audit runs, `python
+  scripts/coding_run.py check` prints the exact `args` for the next launch. They run six workers
+  at a time unless you pass `concurrency`; one failed worker never stops the others, and running the workflow again
   picks up whatever is still pending. Do not launch workers one at a time with the Agent tool while
   workflows are available, and do not process the units serially in your own context.
 - `plan_then_execute`: put the read-only plan phase first in the task list. For

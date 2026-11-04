@@ -26,8 +26,10 @@ in for or works around a kit controller, saved workflow, or worker hand-in: no
 replacement submit, reconciliation, or recovery scripts, no hand-edited
 controller or launch records, no alternative transports, no
 experiments on platform limits, and no reviews of such changes. Project code
-that a stage declares (corpus parsing, the Stage 08 pilot driver, analysis) is
+that a stage declares (corpus parsing, analysis) is
 research work; it calls the kit's controllers instead of reimplementing them.
+Pilot, coding, audit, and robustness runs need no project code: they go through
+`scripts/coding_run.py` with a settings file.
 
 ELARA changes only in its own repository, a plain clone of
 `jonathanhchoi/ELARA`, and reaches projects through the normal update under

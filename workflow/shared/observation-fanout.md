@@ -11,7 +11,9 @@ retrievals. Two kinds of fan-out share it:
 
 - **Coding and audit fan-outs** (Stage 11 is the primary use; Stages 08, 12, and 15 reuse it for
   pilots, interpretive audits, and robustness conditions): one frozen coding or audit unit per
-  worker, controlled by `scripts/unit_fanout.py`. Stage 14 consumes the merged data and does not
+  worker, prepared, checked, and closed by `scripts/coding_run.py` from the stage's settings file
+  (`workflow/templates/coding_run_settings.md`) and controlled by `scripts/unit_fanout.py`. The
+  project writes settings, not a driver; `coding_run.py check` names the next block to launch. Stage 14 consumes the merged data and does not
   use this contract for ordinary deterministic statistical analysis.
 - **Research fan-outs** (Stage 02 query, author, citation-chain, and retrieval waves; Stage 07
   independent critics; Stage 19 claim-citation pairs; add-citations retrieval; fresh reviews under
@@ -92,7 +94,7 @@ longer read.
 ## Freeze before fan-out
 
 1. Freeze and hash the unit roster, codebook, task instructions, schema, source representation,
-   model and effort, retry policy, terminal statuses, batch size, cost ceiling, and run code.
+   model and effort, retry policy, terminal statuses, batch size, cost ceiling, and run settings.
    Revalidate the specification, every frozen input, and every generated assignment before each
    status check, launch, merge, or analysis; any drift stops the run.
 2. Build an immutable assignment manifest with one row or JSON object per attempt. Each entry
