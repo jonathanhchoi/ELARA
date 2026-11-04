@@ -8,13 +8,12 @@ description: "Start a new project, adopt an existing one, show the menu of tools
 First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
 Before any new stage or tool starts (including automatic transitions and recovery
 runs), follow `workflow/shared/kit-updates.md` and run `scripts/check_update.py`.
-Require `ready: true` before execution; use the update contract's limited
-read-only planning exception when applicable; apply verified compatible updates automatically and use
-freshly verified installed bytes if GitHub is unavailable. An update that does
-not install cleanly follows "When something breaks" in
-`workflow/shared/operational-recovery.md`; a declined specific change remains
-binding. Preserve an already-started run's software. Help, tour, menu-only, and
-status need no check.
+Require `ready: true` before execution. A conflict-free update installs
+automatically when writes are authorized; otherwise the stage runs on the
+installed version and the researcher hears the notice once; a declined update
+stays declined. Only an update interrupted part-way waits, under "When something
+breaks" in `workflow/shared/operational-recovery.md`. Preserve an already-started
+run's software. Help, tour, menu-only, and status need no check.
 
 1. Read `AGENTS.md`, `PIPELINE.md`, `workflow/shared/execution-control.md`, and
    `project/PROJECT_STATE.md` completely (its `usage` key

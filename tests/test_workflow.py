@@ -33,6 +33,16 @@ class WorkflowContractTests(unittest.TestCase):
         )
         self.assertIn("\npermissions:\n  contents: read\n", workflow)
 
+    def test_shared_rules_stay_within_their_size_budget(self) -> None:
+        # 2.19.0 cut workflow/shared/ from about 158 KB to under 60 KiB. A fix
+        # replaces or removes a rule instead of adding one (.github/CONTRIBUTING.md).
+        sizes = {
+            path.name: len(path.read_bytes().replace(b"\r\n", b"\n"))
+            for path in (ROOT / "workflow" / "shared").glob("*.md")
+        }
+        total = sum(sizes.values())
+        self.assertLessEqual(total, 60 * 1024, f"workflow/shared/ holds {total} bytes: {sizes}")
+
     def test_ci_runs_once_per_pull_request_commit(self) -> None:
         # Branch pushes and pull_request events both ran the full matrix, doubling
         # demand for scarce macOS runners; required macOS jobs then sat queued

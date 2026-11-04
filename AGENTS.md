@@ -14,23 +14,23 @@ verified copy-back automatically. Status and planning remain read-only.
 Before starting any new stage or optional tool, follow
 `workflow/shared/kit-updates.md` and run `scripts/check_update.py` for that stage.
 This includes direct requests, Stage 00, automatic transitions, and new recovery
-runs. Require `ready: true` before execution; the update contract permits a
-read-only plan on verified installed bytes while an update is deferred.
-Automatically install verified compatible updates
-when writes are authorized; if GitHub is unavailable, use freshly authenticated
-installed bytes and retry at the next stage boundary. An update that does not
-install cleanly follows "When something breaks" in
+runs. Require `ready: true` before execution. Install an update automatically
+when its preview is conflict-free and writes are authorized. Updates never hold
+up research: when one would conflict, GitHub is unavailable, or ELARA's files
+here differ, the check is still ready, the stage runs on the installed version,
+and the researcher hears its notice once. Only an update interrupted part-way
+waits, and is re-run once under "When something breaks" in
 `workflow/shared/operational-recovery.md`. Existing runs resume under their
-recorded software and scoped operational migration authority.
+recorded software.
 Status, help, and menu-only requests remain read-only and need no check.
 
 1. Read `project/PROJECT_STATE.md` before doing research work.
 2. Read `workflow/shared/guardrails.md` and
    `workflow/shared/artifact-contract.md`, then
    `workflow/shared/execution-control.md` and `workflow/shared/storage.md`.
-   Use the resolved local working root for active processing, automatically
-   publish verified checkpoints and retry pending exports within scope, and
-   check these locations again on resume. Storage decisions belong to the agent
+   Use the resolved local working root for active processing, export each
+   stage's results at its end (`scripts/storage.py export`) and retry pending
+   exports, and check these locations again on resume. Storage decisions belong to the agent
    within the researcher's instructions; the helper verifies file operations.
 3. Read the canonical file in `workflow/stages/` named by `current_stage`.
    Canonical stage files control prerequisites, inputs, outputs, gates, failure

@@ -1,98 +1,44 @@
 # Check ELARA before starting new work
 
-Before each new stage or optional tool, the parent checks the installed ELARA
-against `jonathanhchoi/ELARA` on GitHub, branch `main`. Latest means the exact
-commit observed at that boundary. Never use the research project's Git remote
-as upstream. Maintaining ELARA itself is not a research-stage invocation.
+Before each new stage or optional tool (including Stage 00, automatic
+transitions, and new recovery runs), the parent checks the installed kit against
+`jonathanhchoi/ELARA` on GitHub, branch `main`, after resolving storage under
+`storage.md`. Never use the research project's own Git remote. Existing runs
+resume under their recorded software with no check per batch or retry. Routing,
+status, help, and menu requests stay read-only. Only the parent checks; workers
+never contact GitHub, and no research material is sent.
 
-## When to check
+Updates never hold up research:
 
-- Resolve the active root under `storage.md` first. Check/update that kit; also
-  refresh the project home's entry instructions with the protected installer
-  when they differ. Each copy needs its own verified installation evidence.
-- Check before Stage 00, selected stages or tools, automatic transitions, and
-  new recovery runs of completed stages. Recheck after a long pause before a
-  run begins. Routing, status, help, and menu-only requests stay read-only.
-- Existing runs resume under their recorded software, without checks per
-  batch or retry. A migration the researcher chooses follows
-  `operational-recovery.md`; updates never silently migrate frozen research
-  execution.
-- Only the parent checks. Restricted workers never contact GitHub or update
-  the kit. No research material is sent with the check.
+1. Run `python scripts/check_update.py --stage <stage-id> --json`. `ready: true`
+   means the stage may start.
+2. On `update_available`, when writes are authorized, explain the change in a
+   line and run the same command with `--auto-update`. It installs that exact
+   commit only when the installer's preview shows no conflicts, verifies it,
+   and returns `updated`; then reread `AGENTS.md`, this file, and the stage.
+   During Plan Mode, plan on the installed instructions and install on leaving
+   Plan Mode. Honor any explicit researcher limit on updating; a declined
+   update stays declined.
+3. When an update would conflict (`update_deferred`), GitHub cannot be reached
+   (`verified_installed`, or `unverified` without a recorded identity), or
+   ELARA's own files here differ from their installed record
+   (`installed_modified`), the result is still `ready: true`: run the stage on
+   the installed version, pass its `notice` to the researcher once in plain
+   words, and do not repeat it at later stages unless it changes. Never edit
+   kit files, adopt changed bytes as a clean baseline, or remove protection to
+   force an update.
+4. The one case that waits is `unfinished_update`: an installation stopped
+   part-way and left `project/ELARA_UPDATE_PENDING.json`. Run `--auto-update`
+   once (it resumes the recorded commit); if it still does not finish, follow
+   "When something breaks" in `operational-recovery.md`. Never clear the
+   marker by hand. (`storage_unresolved` is a workspace to recover under
+   `storage.md` first.)
 
-## Check, update, verify
-
-1. Run the read-only `python scripts/check_update.py --stage <canonical-stage>
-   --json`. `ready: true` / exit 0 establishes usable installation evidence,
-   subject to research prerequisites. The checker hashes installed files every
-   time; a release label or previous successful check is insufficient.
-
-2. Under the default automatic-update policy, an available compatible update
-   needs no repeated approval. Explain the change briefly and run
-   `python scripts/check_update.py --stage <canonical-stage> --auto-update
-   --json` when writes are authorized. This checks again, downloads its
-   exact commit, uses the protected installer's clean preflight, installs only
-   that target, and verifies the result. Compatibility means a conflict-free
-   ownership/protection preview and successful installation checks, not merely
-   a larger version number. Honor explicit researcher limits on updating.
-   During Plan Mode use the read-only check; defer installation until execution.
-   When it reports `update_available` with a verified `installed_commit`, the
-   assistant may conduct the read-only plan using those installed instructions.
-   Record the pending update in the plan; do not allocate a run, write project
-   state, or execute the stage. On leaving Plan Mode, install and verify the
-   update, reread its instructions, and reconcile the plan before execution.
-   This limited planning exception does not claim `ready: true` or require a
-   separate update approval. Unverified or conflicted bytes follow step 4.
-
-3. If GitHub is unavailable, continue with `status: verified_installed` only
-   when the checker freshly verifies a completed installation's exact commit
-   and full recorded file inventory, or a clean official Git checkout. Record
-   that upstream currency was not checked and retry at the next stage boundary.
-   Never call this result current on GitHub. A ZIP or legacy label without
-   authenticated installed bytes cannot use the fallback; obtain its source
-   identity or restore service first. A transient outage is not a permission
-   problem and does not justify recreating monitoring.
-
-4. Missing or modified files, protected conflicts, unknown baselines, or an
-   unfinished installation are not repaired by hand. Follow "When something
-   breaks" in `operational-recovery.md`: re-run the same check or update command
-   once, and if it is still not ready, write the kit issue report, preserve
-   every researcher file and run binding, and tell the researcher what the new
-   stage is waiting on. A declined specific change remains binding. Never edit
-   kit files, adopt modified bytes as a clean baseline, or remove protection to
-   get a passing check.
-
-5. Require `ready: true`, successful bootstrap/doctor verification, and no
-   `project/ELARA_UPDATE_PENDING.json`. The installer preserves project state,
-   logs, models, prompts, codebooks, schemas, and protected execution files.
-   Files removed upstream are retained as conflicts until reviewed. Rerun the
-   workflow validator and wrapper check, complete the nonblocking model-readiness
-   advisory, and reread updated `AGENTS.md`, this contract, and the canonical
-   stage. Reload host definitions when required, preserving the pending stage.
-   A successful installation does not authorize a scientific amendment.
-
-6. The checked exact commit governs this stage entry. Do not loop indefinitely
-   because main advanced during installation or require a second approval.
-   The next new stage gets a fresh check. If an installation fails, follow
-   step 4.
-
-## Records and interrupted installations
-
-`project/ELARA_MANIFEST.json` records source identity, installed commit, complete
-installation status, file ownership, and baseline hashes separately from the
-project's historical `workflow_version`. Before changing files, an update writes
-`project/ELARA_UPDATE_PENDING.json` and removes it only after verification.
-An interruption leaves that marker; re-run the exact update once under step 4,
-and never clear the marker just to advance or claim a partial installation
-current.
-
-Keep check output in the conversation during read-only planning. Once writing
-is authorized, archive it as `kit_update_check.json` in the new run directory
-and reference it in the run manifest. Record the actual policy/authority and
-exact target commit for an update, including whether installed fallback was
-used. Do not allocate a run or alter state merely to record a Plan Mode check.
-
-This is an executable prerequisite invoked by the parent, not an operating-system
-lock. Compatible automatic updates and verified installed fallback are defaults;
-an explicit researcher restriction overrides them. Neither default changes
-scientific approvals or corpus retry eligibility.
+Once writes are authorized, archive the check output as `kit_update_check.json`
+in the new run directory and reference it in the run manifest; it records the
+ELARA commit the run used. Do not allocate a run merely to record a Plan Mode
+check. Before an update while a run is still open, record the kit
+files that run depends on in `project/ELARA_PROTECTED_PATHS.json`
+(`schema_version: "1.0"`, `bindings` mapping paths to approved SHA-256 hashes);
+the installer then defers the update instead of replacing them. A successful
+installation never changes a frozen research file or approval.

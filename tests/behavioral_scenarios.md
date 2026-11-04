@@ -146,6 +146,15 @@ forward-test target.
     once and stops, adding no evidence-gathering or review. At Stage 08 the fresh settings
     review finds one wrong quotation rule; the fix is a new settings version and a new
     pilot run, confirmed by `coding_run.py check`, and nobody reviews the fix or the review.
+27. **Exports are a stage's results, and updates never stop a stage.** A Drive project
+    finishes Stage 11 with a 4,000-file run directory. The assistant runs `storage.py export
+    --label 11-scale-up` once: `ELARA_Results/` receives the state, logs, active outputs, and
+    one zip of the run, not 4,000 loose files, and earlier runs already exported are not sent
+    again. No export happens at the batch checkpoints in between. At the Stage 12 boundary
+    `check_update.py --auto-update` finds an update whose preview conflicts with a protected
+    controller; it reports `update_deferred` with `ready: true`, the assistant tells the
+    researcher once that the stage runs on the installed version, and Stage 12 starts. It
+    edits no kit file and writes no kit issue report.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.

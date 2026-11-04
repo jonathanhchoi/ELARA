@@ -6,7 +6,7 @@ correction fits the data. It never authorizes Stage 14 to substitute a method:
 if the approved correction is unsupported by the observed validation design,
 Stage 14 stops and reports the incompatibility.
 
-Read it under guardrails section 10. Sections 1, 3, and 4 are durable
+Read it under `workflow/shared/guardrails.md` section 10. Sections 1, 3, and 4 are durable
 requirements. Section 5 is a **dated menu** — a snapshot of the methods
 literature as of this kit's release — and the methods literature for
 LLM-assisted measurement is moving quickly. Do not treat the menu as the

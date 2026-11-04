@@ -1234,17 +1234,18 @@ def next_steps(summary):
             "Before reading state or starting any stage, follow workflow/shared/storage.md and "
             "resolve scripts/storage.py status. The active working root is " + storage["working_root"]
             + ". Read the project-home BOOTSTRAP.md for original materials and instructions. "
-            "Run commands and workers at the active root, and automatically copy verified "
-            "results back to ELARA_Results here at useful checkpoints. Do not ask the researcher "
-            "to move folders or manage copying."
+            "Run commands and workers at the active root, and at the end of each stage copy the "
+            "deliverables and one zip per finished run back to ELARA_Results here with "
+            "scripts/storage.py export. Do not ask the researcher to move folders or manage copying."
         )
     steps.append(
         "Before starting any new stage or tool, follow workflow/shared/kit-updates.md and run "
-        "scripts/check_update.py for that stage. Apply verified compatible updates automatically "
-        "when writes are authorized, verify the exact commit, and reread updated instructions. "
-        "When GitHub is unavailable use freshly authenticated installed bytes. An update that does "
-        "not install cleanly is re-run once and otherwise reported under 'When something breaks' in "
-        "workflow/shared/operational-recovery.md; never edit ELARA's files. Honor explicit update limits. "
+        "scripts/check_update.py for that stage. Install an update automatically when its preview is "
+        "conflict-free and writes are authorized, then reread the updated instructions. When an update "
+        "would conflict, GitHub is unavailable, or ELARA's files here differ, continue on the installed "
+        "version and tell the researcher once. Only an update interrupted part-way waits: re-run it once "
+        "and otherwise report it under 'When something breaks' in workflow/shared/operational-recovery.md; "
+        "never edit ELARA's files. Honor explicit update limits. "
         "Resume an existing run under its recorded software; do not reinitialize an existing project."
     )
     steps.append(
@@ -1658,7 +1659,7 @@ def print_human(summary):
     print("  jsonschema:  " + status + (" via " + dependency["how"] if dependency.get("how") else ""))
     print("  Use for ELARA scripts: " + str(summary["python_for_kit"]))
     if (summary.get("storage") or {}).get("status") == "managed":
-        print("  Storage:     local processing configured; verified results return to ELARA_Results here.")
+        print("  Storage:     local processing configured; each stage's results return to ELARA_Results here.")
     hosts = summary["hosts"]
     print("  Assistant:   " + (", ".join(hosts["running_inside"]) or "not detected from the environment"))
     for warning in summary.get("warnings") or []:

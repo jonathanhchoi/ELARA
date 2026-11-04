@@ -6,10 +6,11 @@ read those files but write only their declared outputs here, plus verified
 exports to an authorized cloud destination under `workflow/shared/storage.md`.
 
 Keep opening your original project folder to resume. For cloud projects, ELARA
-handles local processing and copies verified results to `ELARA_Results/` there
-at checkpoints. Your source materials stay where they are. ELARA records the
-active local folder so later sessions continue the same project; saved cloud
-snapshots are archival copies, not separate running projects.
+handles local processing and, at the end of each stage, copies the results to
+`ELARA_Results/` there: your deliverables as ordinary files and each finished
+run as one zip. Your source materials stay where they are. ELARA records the
+active local folder so later sessions continue the same project; the exported
+copies are archives, not separate running projects.
 
 ## Start
 
