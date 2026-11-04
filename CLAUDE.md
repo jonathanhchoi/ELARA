@@ -40,12 +40,9 @@ the canonical `interaction_profile` as follows:
   saved dynamic workflows, which you launch yourself as part of the stage:
   `elr-observation-fanout` (`{ "run_dir": ... }`) for coding and audit units,
   `elr-research-fanout` (`{ "fanout_dir": ... }`) for research units, both under
-  `workflow/shared/observation-fanout.md`. For policy-enabled runs also supply a stable
-  native-session `owner` and verified available-worker `capacity`; explicit `concurrency`
-  stays fixed, otherwise the recorded target controls the rolling pool. Legacy runs keep
-  their original scheduler. For the first invocation after reviewed paused-run migration,
-  pass the parent's `resume_request` and `request_root` through the workflow; do not
-  pre-open and replay an existing session. Do not launch workers one at a time with the Agent tool while
+  `workflow/shared/observation-fanout.md`. They run six workers at a time unless you pass
+  `concurrency`; one failed worker never stops the others, and running the workflow again
+  picks up whatever is still pending. Do not launch workers one at a time with the Agent tool while
   workflows are available, and do not process the units serially in your own context.
 - `plan_then_execute`: put the read-only plan phase first in the task list. For
   Stages 01, 04, 05, 07, 08, 09, and 17, enter Plan Mode at every decision

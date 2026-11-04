@@ -209,7 +209,7 @@ class DoctorTests(unittest.TestCase):
             self.assertTrue(any("mcp__*" in failure for failure in failures), failures)
             coding = root / ".claude" / "agents" / "elr-worker.md"
             text = coding.read_text(encoding="utf-8")
-            coding.write_text(text.replace("tools: Read, Bash, Glob, Grep", "tools: Read, Bash, WebFetch"), encoding="utf-8")
+            coding.write_text(text.replace("tools: Read, Write, Bash, Glob, Grep", "tools: Read, Bash, WebFetch"), encoding="utf-8")
             failures = _worker_agent_failures(root)
             self.assertTrue(any("grants web tools" in failure for failure in failures), failures)
             coding.unlink()

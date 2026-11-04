@@ -13,9 +13,15 @@ Contract invariants:
   ``absent_legacy_run``).
 - Blinding: status output is operational only, and validator error strings are
   sanitized so label values never leak.
-- Strict submission: ``submit`` validates a worker envelope before creating its
-  assigned return path and refuses every overwrite. Workers do not need to edit
-  the shared run directory directly.
+- Strict submission: ``submit`` validates a worker envelope (read from a draft file
+  with ``--input``, or from standard input) before creating its assigned return path.
+  The first valid return wins: a later submission for the same assignment is
+  discarded and reported as ``already_submitted``, never written over the first.
+- Launches: ``status --record-launch`` lists pending assignments and records each
+  listed launch in ``launches.jsonl``. An assignment launched ``MAX_LAUNCHES`` (2)
+  times without a return is closed with a controller-written ``worker_error``
+  return, so the frozen retry rule decides what happens next and the batch never
+  waits on it.
 - Retry policy: ``retry`` issues the one linked second attempt (at most
   ``MAX_ATTEMPTS`` = 2 attempts per slot) and archives the superseded return for audit.
 - Section 10 reconciliation: ``merge`` writes a ``merge_receipt.json`` so merged counts and
@@ -32,6 +38,7 @@ import re
 import sys
 import tempfile
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +47,9 @@ CONTRACT_VERSION = "1.0"
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$")
 ATTEMPT_SUFFIX = re.compile(r"^(?P<base>.+?)-attempt(?P<number>\d{3,})$")
 MAX_ATTEMPTS = 2
+MAX_LAUNCHES = 2
 MAX_SUBMISSION_BYTES = 10 * 1024 * 1024
+ALREADY_SUBMITTED = "already_submitted"
 SUCCESS_STATUS = "succeeded"
 FAILURE_STATUSES = {
     "schema_failed",
@@ -61,6 +70,7 @@ FORBIDDEN_RETURN_NAMES = {
     "run_seal.json",
     "merge_receipt.json",
     "unit_ledger.jsonl",
+    "launches.jsonl",
     "coding_dataset.jsonl",
 }
 SEAL_ABSENT = "absent_legacy_run"
@@ -356,11 +366,6 @@ def prepare(spec_path: Path, run_dir: Path) -> dict[str, Any]:
     )
     # Seal last: the manifest hash is frozen before any model call.
     _write_seal(run_dir)
-    # Scheduling is operational metadata, separate from the frozen scientific
-    # manifest. Older runs acquire no policy merely by being read or resumed.
-    from fanout_dispatch import initialize_policy
-
-    initialize_policy(run_dir, concurrency=concurrency)
     return manifest
 
 
@@ -464,15 +469,27 @@ def validate_return(assignment: dict[str, Any], returned: Any) -> list[str]:
     return errors
 
 
+def _already_submitted(assignment: dict[str, Any], return_path: Path) -> dict[str, Any]:
+    """Receipt for a submission discarded because the assignment already has a return."""
+    return {
+        "assignment_id": assignment["assignment_id"],
+        "unit_id": assignment["unit_id"],
+        "status": ALREADY_SUBMITTED,
+        "output_path": str(return_path),
+        "sha256": sha256_file(return_path),
+    }
+
+
 def submit(
     run_dir: Path, assignment_id: str, returned: Any
 ) -> dict[str, Any]:
     """Validate and create one worker return without ever overwriting a file.
 
     The active sealed manifest, frozen assignment hash, schema, identifiers, and
-    unique return path are checked before bytes are written. The create-exclusive
-    file operation is intentionally fail-closed: simultaneous or repeated
-    submissions for the same assignment cannot replace the first return.
+    unique return path are checked before bytes are written. The first valid return
+    wins: when the return already exists (a duplicate launch, or a controller
+    ``worker_error`` record), the candidate is discarded unread and the receipt says
+    ``already_submitted``.
     """
     run_dir = run_dir.resolve()
     assignment_id = _safe_identifier(assignment_id, "assignment_id")
@@ -485,12 +502,6 @@ def submit(
             f"assignment_id is not in the active manifest: {assignment_id}"
         )
     row = matches[0]
-    from fanout_dispatch import assert_submission_allowed, finish_assignment
-
-    try:
-        assert_submission_allowed(run_dir, assignment_id, row["attempt"])
-    except ValueError as exc:
-        raise FanoutError(str(exc)) from exc
     assignment = load_json(Path(row["assignment_path"]))
     return_path = Path(row["return_path"]).resolve()
     assignment_return_path = Path(assignment["allowed_write_path"]).resolve()
@@ -502,7 +513,7 @@ def submit(
     if return_path.name in FORBIDDEN_RETURN_NAMES:
         raise FanoutError(f"unsafe worker return path: {return_path}")
     if return_path.exists():
-        raise FanoutError(f"refusing to overwrite worker return: {return_path}")
+        return _already_submitted(assignment, return_path)
 
     errors = validate_return(assignment, returned)
     if errors:
@@ -519,8 +530,9 @@ def submit(
             handle.write(text)
             handle.flush()
             os.fsync(handle.fileno())
-    except FileExistsError as exc:
-        raise FanoutError(f"refusing to overwrite worker return: {return_path}") from exc
+    except FileExistsError:
+        # Another launch of the same assignment submitted first; its return stands.
+        return _already_submitted(assignment, return_path)
 
     # Re-read through the same parser so a reported receipt is evidence that the
     # on-disk return, not merely the in-memory candidate, is valid JSON.
@@ -531,12 +543,6 @@ def submit(
             "persisted worker return failed post-write validation: "
             + "; ".join(persisted_errors)
         )
-    # A persisted canonical return remains authoritative if interruption occurs
-    # before this operational marker; parent reconciliation can recover it.
-    try:
-        finish_assignment(run_dir, assignment_id, assignment["attempt"])
-    except ValueError as exc:
-        raise FanoutError(str(exc)) from exc
     return {
         "assignment_id": assignment["assignment_id"],
         "unit_id": assignment["unit_id"],
@@ -570,16 +576,100 @@ def _read_submission_input(source: str) -> Any:
         raise FanoutError(f"worker submission from {label} is not valid UTF-8 JSON") from exc
 
 
-def status(run_dir: Path, *, include_pending: bool = False) -> dict[str, Any]:
+def _launch_counts(run_dir: Path) -> Counter[str]:
+    """Count recorded launches per assignment; a torn or malformed line is skipped."""
+    counts: Counter[str] = Counter()
+    path = run_dir / "launches.jsonl"
+    if not path.is_file():
+        return counts
+    with path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, dict) and isinstance(row.get("assignment_id"), str):
+                counts[row["assignment_id"]] += 1
+    return counts
+
+
+def _record_launches(run_dir: Path, rows: list[dict[str, Any]]) -> None:
+    if not rows:
+        return
+    with (run_dir / "launches.jsonl").open("a", encoding="utf-8", newline="\n") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, sort_keys=True) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _close_unreturned(assignment: dict[str, Any], return_path: Path, launches: int) -> None:
+    """Record a typed worker_error for an assignment whose launches never returned.
+
+    Create-exclusive like ``submit``: if a late worker return arrives first, it wins.
+    """
+    record = {
+        "contract_version": assignment["contract_version"],
+        "assignment_id": assignment["assignment_id"],
+        "unit_id": assignment["unit_id"],
+        "attempt": assignment["attempt"],
+        "status": "worker_error",
+        "result": None,
+        "error": f"no worker return after {launches} launches",
+        "provenance": {"recorded_by": "scripts/unit_fanout.py", "launches": launches},
+    }
+    text = json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    try:
+        with return_path.open("x", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except FileExistsError:
+        pass
+
+
+def _remove_draft(run_dir: Path, source: str) -> None:
+    """Best-effort removal of a submitted draft kept under the run's drafts/ folder."""
+    if source == "-":
+        return
+    draft = Path(source)
+    if not _inside(draft, run_dir.resolve() / "drafts"):
+        return
+    try:
+        draft.unlink()
+    except OSError:
+        pass
+
+
+def status(
+    run_dir: Path,
+    *,
+    include_pending: bool = False,
+    record_launch: bool = False,
+    limit: int | None = None,
+    block: Any = None,
+) -> dict[str, Any]:
     """Report operational counts only while outcomes remain blinded.
 
     Superseded assignments (replaced by a linked retry) are excluded from the expected
     and terminal counts and reported in their own non-terminal ``superseded`` count.
+
+    ``record_launch`` (which implies ``include_pending``) is the launcher's discovery
+    call: it first closes every pending assignment already launched ``MAX_LAUNCHES``
+    times with a ``worker_error`` return, then lists at most ``limit`` pending
+    assignments (only those whose ``payload.block`` equals ``block`` when given) and
+    records one launch for each listed assignment.
     """
     run_dir = run_dir.resolve()
+    if limit is not None and (isinstance(limit, bool) or not isinstance(limit, int) or limit < 1):
+        raise FanoutError("limit must be a positive integer")
+    include_pending = include_pending or record_launch
     manifest = verify_run_integrity(run_dir)
+    launch_counts = _launch_counts(run_dir)
+    drafts_dir = run_dir / "drafts"
     counts: Counter[str] = Counter()
-    pending: list[str] = []
+    pending: list[dict[str, Any]] = []
+    closed: list[str] = []
     invalid: list[dict[str, Any]] = []
     expected_return_paths = {
         Path(row["return_path"]).resolve() for row in manifest["assignments"]
@@ -588,9 +678,25 @@ def status(run_dir: Path, *, include_pending: bool = False) -> dict[str, Any]:
         assignment_path = Path(row["assignment_path"])
         assignment = load_json(assignment_path)
         return_path = Path(row["return_path"])
+        launches = launch_counts[row["assignment_id"]]
+        if not return_path.is_file() and record_launch and launches >= MAX_LAUNCHES:
+            _close_unreturned(assignment, return_path, launches)
+            closed.append(row["assignment_id"])
         if not return_path.is_file():
             counts["pending"] += 1
-            pending.append(str(assignment_path))
+            payload = assignment.get("payload")
+            if block is None or (isinstance(payload, dict) and payload.get("block") == block):
+                pending.append(
+                    {
+                        "assignment_id": row["assignment_id"],
+                        "unit_id": row["unit_id"],
+                        "attempt": row["attempt"],
+                        "assignment_path": str(assignment_path),
+                        "return_path": str(return_path),
+                        "draft_path": str(drafts_dir / f"{row['assignment_id']}.json"),
+                        "launches": launches,
+                    }
+                )
             continue
         try:
             returned = load_json(return_path)
@@ -628,6 +734,27 @@ def status(run_dir: Path, *, include_pending: bool = False) -> dict[str, Any]:
         "invalid_returns": invalid,
     }
     if include_pending:
+        if limit is not None:
+            pending = pending[:limit]
+        if record_launch:
+            if pending:
+                drafts_dir.mkdir(exist_ok=True)
+            launched_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            _record_launches(
+                run_dir,
+                [
+                    {
+                        "assignment_id": item["assignment_id"],
+                        "attempt": item["attempt"],
+                        "launched_utc": launched_utc,
+                    }
+                    for item in pending
+                ],
+            )
+            for item in pending:
+                item["launches"] += 1
+            result["launches_recorded"] = len(pending)
+            result["closed_after_launches"] = closed
         result["pending_assignments"] = pending
     return result
 
@@ -668,12 +795,6 @@ def retry(
     terminal success is still refused.
     """
     run_dir = run_dir.resolve()
-    from fanout_dispatch import assert_drained
-
-    try:
-        assert_drained(run_dir)
-    except ValueError as exc:
-        raise FanoutError(str(exc)) from exc
     manifest = verify_run_integrity(run_dir)
     _safe_identifier(assignment_id, "assignment_id")
     active_rows = manifest["assignments"]
@@ -860,6 +981,15 @@ def main(argv: list[str] | None = None) -> int:
     status_parser = subparsers.add_parser("status")
     status_parser.add_argument("--run-dir", type=Path, required=True)
     status_parser.add_argument("--include-pending", action="store_true")
+    status_parser.add_argument(
+        "--record-launch",
+        action="store_true",
+        help="launcher discovery: list pending assignments and record one launch for each",
+    )
+    status_parser.add_argument("--limit", type=int, default=None)
+    status_parser.add_argument(
+        "--block", type=int, default=None, help="list only assignments whose payload.block matches"
+    )
 
     submit_parser = subparsers.add_parser(
         "submit", help="validate and create one assigned worker return"
@@ -869,7 +999,10 @@ def main(argv: list[str] | None = None) -> int:
     submit_parser.add_argument(
         "--input",
         default="-",
-        help="UTF-8 JSON candidate path, or - (the default) to read standard input",
+        help=(
+            "UTF-8 JSON draft path (preferred; a draft under the run's drafts/ folder is "
+            "removed after a successful submission), or - to read standard input"
+        ),
     )
 
     retry_parser = subparsers.add_parser("retry")
@@ -899,13 +1032,20 @@ def main(argv: list[str] | None = None) -> int:
                 "run_manifest": str((args.run_dir / "run_manifest.json").resolve()),
             }
         elif args.command == "status":
-            result = status(args.run_dir, include_pending=args.include_pending)
+            result = status(
+                args.run_dir,
+                include_pending=args.include_pending,
+                record_launch=args.record_launch,
+                limit=args.limit,
+                block=args.block,
+            )
         elif args.command == "submit":
             result = submit(
                 args.run_dir,
                 args.assignment_id,
                 _read_submission_input(args.input),
             )
+            _remove_draft(args.run_dir, args.input)
         elif args.command == "retry":
             result = retry(
                 args.run_dir,

@@ -292,16 +292,14 @@ coordinates fresh sub-agents and refills completed slots individually:
 | Claude Code | The kit's saved dynamic workflows, `elr-observation-fanout` (coding and audit units) and `elr-research-fanout` (research units), which the assistant launches as part of the stage; the researcher can watch them in `/workflows` | `.claude/agents/elr-worker.md`, `.claude/agents/elr-research-worker.md` |
 | Codex | The kit's custom sub-agents, spawned by name in a bounded rolling pool; the parent retains the stage plan and goal | `.codex/agents/elr-worker.toml` (`elr_worker`), `.codex/agents/elr-research-worker.toml` (`elr_research_worker`) |
 
-New runs use continuous scheduling within each approved batch or research round.
-They start with at most six workers and add one at a passing checkpoint when
-eligible work remains, up to twelve and never above the available host, research,
-or service limit. Throttling reduces the next session's target by half; an explicit
-worker limit stays fixed. Codex records native launch intent and acknowledgement;
-Claude workflows record actual worker starts and completed results without claiming
-unavailable native handles. Each worker checks its assignment-specific start ticket
-before reading sources.
-The helper owns these operational records, and validation and shared writes remain
-serial. A stopped or unknown worker is reconciled before its work can be retried.
+Six workers run at a time by default (fewer when the host, the researcher, or a
+service limit requires), and each finished slot is refilled at once within the
+approved batch or research round. The first valid return for an assignment
+wins, so a worker that is launched twice can never replace a recorded result.
+One failed worker never stops the others: its assignment stays pending, the
+next run of the workflow picks it up, and a coding unit whose workers twice
+return nothing is recorded as a failed unit and handled by the frozen retry
+rule. Validation and shared writes remain serial.
 
 On either host the kit's controllers (`scripts/unit_fanout.py`,
 `scripts/research_fanout.py`) fix the assignment list on disk, say what is still
@@ -664,3 +662,21 @@ ELARA repository and arrive by update. The run ledger's `engineering` line
 becomes an `incidents` line. Existing ledgers are unchanged, and no
 project-state schema change is required. Scientific gates, frozen instruments,
 worker restrictions, and audits are unchanged.
+
+Version 2.16.0 removes the scheduling layer added in 2.9.0 (dispatch sessions,
+tickets, owners, adaptive concurrency, provider-backoff records, opt-in
+migration, the lifecycle journal, and `recovery_decision.py`). The files in a
+run directory are the whole record: an assignment is pending until its return
+exists, the launcher's `status --record-launch` call records each launch, and
+the first valid return wins, so a duplicate or late worker can never replace a
+recorded result. One failed worker no longer stops a batch. A coding unit
+launched twice without a return is recorded as a typed `worker_error` and
+handled by the frozen retry rule; a research assignment moves to its next
+sealed attempt. Coding workers write their return to a draft file and submit it
+with `--input`, which avoids the Windows command-length limit. Worker prompts
+are short; workers no longer read the parallel-work rules. Saved workflows run six
+workers at a time unless given `concurrency`, and ignore the old `owner`,
+`capacity`, and migration arguments. Older runs' scheduling records stay in
+place and are no longer read; `recovery_decision` in older state files is
+accepted and ignored. Retry rules, attempt limits, worker restrictions, quote
+anchoring, blinding, and audits are unchanged.

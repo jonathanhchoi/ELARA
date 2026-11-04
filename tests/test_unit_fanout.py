@@ -125,8 +125,107 @@ class UnitFanoutTests(unittest.TestCase):
             self.assertNotIn("label", receipt)
             self.assertEqual(status(run)["terminal"], 1)
 
-            with self.assertRaisesRegex(FanoutError, "refusing to overwrite"):
-                submit(run, returned["assignment_id"], returned)
+            # The first valid return wins: a duplicate launch's submission is discarded.
+            first_bytes = return_path.read_bytes()
+            duplicate = dict(returned, provenance={"route": "duplicate launch"})
+            again = submit(run, returned["assignment_id"], duplicate)
+            self.assertEqual(again["status"], "already_submitted")
+            self.assertEqual(again["sha256"], receipt["sha256"])
+            self.assertEqual(return_path.read_bytes(), first_bytes)
+
+    def test_submit_cli_reads_a_draft_file_and_removes_it_after_submission(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run = root / "run"
+            manifest = prepare(self.make_spec(root, 1), run)
+            assignment_path = Path(manifest["assignments"][0]["assignment_path"])
+            returned, return_path = self.base_return(assignment_path)
+            # Far beyond the Windows 32,767-character command-line limit.
+            returned["provenance"] = {"route": "fixture", "notes": "x" * 60000}
+            draft = run / "drafts" / f"{returned['assignment_id']}.json"
+            draft.parent.mkdir()
+            draft.write_text(json.dumps(returned), encoding="utf-8")
+            command = [
+                sys.executable, str(ROOT / "scripts" / "unit_fanout.py"), "submit",
+                "--run-dir", str(run), "--assignment-id", returned["assignment_id"],
+                "--input", str(draft),
+            ]
+            completed = subprocess.run(command, text=True, capture_output=True, timeout=30, check=False)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual(json.loads(completed.stdout)["status"], "succeeded")
+            self.assertTrue(return_path.is_file())
+            self.assertFalse(draft.exists())
+
+            # A rejected draft stays in place so the worker can correct it.
+            returned["result"] = {"label": "not-a-label"}
+            draft.write_text(json.dumps(returned), encoding="utf-8")
+            run2 = root / "run2"
+            manifest2 = prepare(self.make_spec(root / "second", 1), run2)
+            assignment2 = json.loads(Path(manifest2["assignments"][0]["assignment_path"]).read_text(encoding="utf-8"))
+            returned["unit_id"] = assignment2["unit_id"]
+            draft2 = run2 / "drafts" / "candidate.json"
+            draft2.parent.mkdir()
+            draft2.write_text(json.dumps(returned), encoding="utf-8")
+            command[4], command[8] = str(run2), str(draft2)
+            rejected = subprocess.run(command, text=True, capture_output=True, timeout=30, check=False)
+            self.assertEqual(rejected.returncode, 1)
+            self.assertTrue(draft2.exists())
+
+    def test_discovery_records_launches_and_closes_an_assignment_that_never_returns(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run = root / "run"
+            manifest = prepare(self.make_spec(root, 3), run)
+            first = status(run, record_launch=True, limit=2)
+            self.assertEqual(first["launches_recorded"], 2)
+            self.assertEqual(first["pending"], 3)
+            listed = first["pending_assignments"]
+            self.assertEqual([item["assignment_id"] for item in listed], ["u0-attempt001", "u1-attempt001"])
+            self.assertTrue(all(item["launches"] == 1 for item in listed))
+            self.assertTrue((run / "drafts").is_dir())
+            self.assertEqual(Path(listed[0]["draft_path"]).parent, (run / "drafts").resolve())
+            # u0 returns; u1's worker vanished; u2 was never listed.
+            self.write_success(Path(manifest["assignments"][0]["assignment_path"]))
+            second = status(run, record_launch=True)
+            self.assertEqual(
+                [(item["assignment_id"], item["launches"]) for item in second["pending_assignments"]],
+                [("u1-attempt001", 2), ("u2-attempt001", 1)],
+            )
+            self.assertEqual(second["closed_after_launches"], [])
+            # Read-only status records nothing and closes nothing.
+            self.assertEqual(status(run, include_pending=True)["pending"], 2)
+            third = status(run, record_launch=True)
+            self.assertEqual(third["closed_after_launches"], ["u1-attempt001"])
+            self.assertEqual([item["assignment_id"] for item in third["pending_assignments"]], ["u2-attempt001"])
+            closed = json.loads(Path(manifest["assignments"][1]["return_path"]).read_text(encoding="utf-8"))
+            self.assertEqual(closed["status"], "worker_error")
+            self.assertEqual(third["terminal_status_counts"], {"succeeded": 1, "worker_error": 1})
+            # A late worker cannot replace the controller's record, and the frozen retry rule applies.
+            late, _ = self.base_return(Path(manifest["assignments"][1]["assignment_path"]))
+            self.assertEqual(submit(run, late["assignment_id"], late)["status"], "already_submitted")
+            linked = retry(run, "u1-attempt001")
+            self.assertEqual(linked["attempt"], 2)
+            # u2 has now been launched twice without returning; the linked attempt starts fresh.
+            fourth = status(run, record_launch=True)
+            self.assertEqual(fourth["closed_after_launches"], ["u2-attempt001"])
+            self.assertEqual(
+                [(item["assignment_id"], item["launches"]) for item in fourth["pending_assignments"]],
+                [("u1-attempt002", 1)],
+            )
+
+    def test_discovery_block_filter_lists_only_that_block(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            spec_path = self.make_spec(root, 4)
+            spec = json.loads(spec_path.read_text(encoding="utf-8"))
+            for index, unit in enumerate(spec["units"]):
+                unit["payload"]["block"] = 1 + index % 2
+            spec_path.write_text(json.dumps(spec), encoding="utf-8")
+            run = root / "run"
+            prepare(spec_path, run)
+            listed = status(run, record_launch=True, block=2)["pending_assignments"]
+            self.assertEqual([item["assignment_id"] for item in listed], ["u1-attempt001", "u3-attempt001"])
+            self.assertEqual(len((run / "launches.jsonl").read_text(encoding="utf-8").splitlines()), 2)
 
     def test_strict_submit_rejects_invalid_result_without_persisting_or_leaking_it(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

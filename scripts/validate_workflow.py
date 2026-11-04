@@ -10,7 +10,6 @@ import sys
 from pathlib import Path
 
 from check_docs import validate_docs
-from recovery_decision import decide, read_reference
 from sync_skill_wrappers import sync
 from workflow_lib import (
     INTERACTION_PROFILES,
@@ -351,21 +350,8 @@ def validate_state(root: Path) -> list[str]:
     artifacts = meta.get("active_artifacts")
     if isinstance(artifacts, dict) and "run_checkpoint" in artifacts and artifacts["run_checkpoint"] != checkpoint:
         errors.append(f"{path}: active run_checkpoint contradicts the routing checkpoint")
-    recovery = meta.get("recovery_decision")
-    if recovery is not None:
-        try:
-            if not isinstance(recovery, dict) or set(recovery) != {"request", "result"}:
-                raise ValueError()
-            request = json.loads(read_reference(root, recovery["request"]))
-            saved = json.loads(read_reference(root, recovery["result"]))
-            actual = decide(root, request)
-            if saved != actual or request["run_id"] != meta.get("last_run_id"):
-                raise ValueError()
-            allowed_statuses = {"ready", "running"} if actual["state_status"] == "ready" else {actual["state_status"]}
-            if meta.get("status") not in allowed_statuses or inputs != actual["outstanding_user_inputs"]:
-                errors.append(f"{path}: recovery decision contradicts routing or unresolved inputs")
-        except (OSError, ValueError, KeyError, TypeError):
-            errors.append(f"{path}: recovery_decision must bind unchanged, reproducible request and result records")
+    # `recovery_decision` (schema 1.5, before 2.16.0) is accepted and no longer interpreted:
+    # the helper that produced it was removed with the dispatch layer.
     for key in ("schema_version", "workflow_version"):
         if not isinstance(meta.get(key), str) or not meta[key]:
             errors.append(f"{path}: {key} must be a nonempty quoted string")

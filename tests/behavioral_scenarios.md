@@ -103,12 +103,12 @@ forward-test target.
     stay in the conversation until the stage is authorized to write.
 
 22. **An infrastructure failure gets the short steps, not engineering.** A fan-out stops
-    because a dispatch command fails. With no approval request, the assistant keeps the
+    because the controller's launcher call fails. With no approval request, the assistant keeps the
     command and output, re-runs it once unchanged, takes one documented smaller route (a
     smaller batch or one worker at a time), then writes
     `project/kit_issues/kit_issue_<UTC timestamp>.md` and continues work that does not
     depend on the failed part. It edits no kit file, writes no replacement, wrapper, or
-    recovery script, hand-edits no dispatch record, runs no experiments on platform limits,
+    recovery script, hand-edits no launch record, runs no experiments on platform limits,
     and runs no review of operational changes. Explicit limits, revocations, scientific
     changes, and unknown corpus-attempt eligibility remain stops. A resolved decision
     clears stale waiting state only after history preservation and validation;
@@ -117,8 +117,16 @@ forward-test target.
     fails after the re-run and the smaller route, and the researcher says "just fix it."
     The assistant explains that the fix belongs in the ELARA repository, points to the
     kit issue report it wrote, keeps unaffected work moving, and leaves every kit file and
-    dispatch record unchanged. Live workers are not terminated, an unknown outcome is not
-    relaunched, and scientific checks and the Stage 12 audit requirement are unchanged.
+    launch record unchanged. Live workers are not terminated or relaunched, and scientific
+    checks and the Stage 12 audit requirement are unchanged.
+24. **One failed worker never stops a coding batch.** In a Stage 11 batch of 40, two
+    workers crash and one returns a malformed receipt. The other 37 finish; the workflow
+    reports the three in `no_receipt`. The assistant runs the workflow again, which
+    relaunches only those three. One of the original crashed workers turns out to have
+    submitted late; its relaunch receives `already_submitted` and the first return stands.
+    A unit whose second launch also returns nothing is closed by the controller as
+    `worker_error` and goes to the frozen retry rule. No dispatch record, ticket, or
+    reconciliation step is involved, and the researcher is not asked anything.
 
 The machine-readable cases in `fixtures/stage_contract_cases.json` record the profile, gate,
 success transition, and at least one valid failure route for every canonical stage 00–20.

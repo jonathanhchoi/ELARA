@@ -33,6 +33,11 @@ Contract invariants:
 - A return counts as complete only when it is a JSON object whose ``assignment_id`` and ``attempt``
   match and whose ``complete`` field is exactly ``true``. The parent may record a stage-schema
   rejection without changing that raw file; the next attempt then receives a different path.
+- Every launch is a new attempt with its own return path, so two launches never share a file.
+  An assignment that is not complete is offered again with its next attempt; the earlier,
+  unfinished attempt is kept and counted as failed. The first valid return wins: the
+  lowest-numbered complete attempt the parent has not marked unusable is the assignment's
+  result, and any later complete attempt is kept but not used.
 - Attempts are bounded: an assignment launched ``max_attempts`` times without completing is
   reported as ``exhausted`` and never put back on the pending list. ``--include-exhausted`` adds
   diagnostics; additional work requires a new explicitly versioned fan-out wave.
@@ -189,9 +194,6 @@ def prepare(fanout_dir: Path) -> dict[str, Any]:
         for row in rows:
             writer.writerow({column: row[column] for column in MANIFEST_COLUMNS})
     atomic_json(fanout_dir / "seal.json", {"manifest_sha256": sha256_file(manifest_path)})
-    from fanout_dispatch import initialize_policy
-
-    initialize_policy(fanout_dir, concurrency=concurrency)
     return manifest
 
 
@@ -360,14 +362,17 @@ def _dispositions(fanout_dir: Path, manifest: dict[str, Any]) -> dict[tuple[str,
                 raise FanoutError(f"dispositions.jsonl line {number} has the wrong return path")
             if not isinstance(row.get("recorded_utc"), str) or not row["recorded_utc"]:
                 raise FanoutError(f"dispositions.jsonl line {number} has no timestamp")
-            recorded_hash = row.get("return_sha256")
-            if recorded_hash is not None:
-                if not return_path.is_file() or sha256_file(return_path) != recorded_hash:
-                    raise FanoutError(f"disposed return changed after disposition: {return_path}")
-            elif return_path.exists():
-                raise FanoutError(f"a return appeared after its missing attempt was disposed: {return_path}")
             dispositions[key] = row
     return dispositions
+
+
+def _changed_after_disposition(row: dict[str, Any], disposition: dict[str, Any]) -> bool:
+    """A disposition stands; a return that changed or appeared later is reported, not used."""
+    return_path = Path(row["return_path"])
+    recorded_hash = disposition.get("return_sha256")
+    if recorded_hash is None:
+        return return_path.exists()
+    return not return_path.is_file() or sha256_file(return_path) != recorded_hash
 
 
 def _classify_return(row: dict[str, Any], *, require_attempt: bool) -> tuple[str, str | None]:
@@ -395,22 +400,20 @@ def status(
     *,
     include_pending: bool = False,
     include_exhausted: bool = False,
+    include_returns: bool = False,
     record_launch: bool = False,
     limit: int | None = None,
 ) -> dict[str, Any]:
     """Report operational counts and, on request, the pending assignments to launch next.
 
-    ``record_launch`` appends a launch row for every pending assignment this call returns, so a
-    later ``status`` can bound attempts; it is meaningful only with ``include_pending``.
+    ``record_launch`` (which implies ``include_pending``) is the launcher's discovery call: it
+    appends a launch row for every pending assignment it returns. An assignment that is not
+    complete is pending with its next sealed attempt, even when an earlier attempt never
+    finished; that earlier attempt counts as failed. ``include_returns`` lists the return each
+    complete assignment uses (the lowest-numbered complete attempt not marked unusable).
     """
     fanout_dir = fanout_dir.resolve()
-    if record_launch:
-        from fanout_dispatch import assert_legacy_launch_allowed
-
-        try:
-            assert_legacy_launch_allowed(fanout_dir)
-        except ValueError as exc:
-            raise FanoutError(str(exc)) from exc
+    include_pending = include_pending or record_launch
     manifest = verify_integrity(fanout_dir)
     grouped_rows = _attempt_rows(manifest)
     launches = _launches(fanout_dir, manifest)
@@ -420,6 +423,8 @@ def status(
     pending: list[dict[str, Any]] = []
     exhausted: list[str] = []
     invalid: list[dict[str, Any]] = []
+    used_returns: list[dict[str, Any]] = []
+    changed: list[dict[str, Any]] = []
     attempt_counts: Counter[str] = Counter()
     expected_returns = {Path(row["return_path"]).resolve() for row in manifest["assignments"]}
     ordered_assignments = sorted(grouped_rows, key=lambda item: grouped_rows[item][0]["position"])
@@ -428,9 +433,8 @@ def status(
         rows = grouped_rows[assignment_id]
         row_by_attempt = {row["attempt"]: row for row in rows}
         launched = launches[assignment_id]
-        state = "missing"
-        problem = None
-        observed_invalid: list[dict[str, Any]] = []
+        observed: list[tuple[int, str, str | None]] = []
+        winner: int | None = None
         for launch in launched:
             attempt = launch["attempt"]
             row = row_by_attempt[attempt]
@@ -438,33 +442,48 @@ def status(
             if disposition is not None:
                 attempt_state = disposition["terminal"]
                 attempt_problem = disposition["reason"]
+                if _changed_after_disposition(row, disposition):
+                    changed.append({"assignment_id": assignment_id, "attempt": attempt})
             else:
                 attempt_state, attempt_problem = _classify_return(
                     row, require_attempt=manifest.get("manifest_format") == MANIFEST_FORMAT
                 )
+            observed.append((attempt, attempt_state, attempt_problem))
+            if attempt_state == "invalid":
+                invalid.append(
+                    {"assignment_id": assignment_id, "attempt": attempt, "problem": attempt_problem}
+                )
+            if attempt_state == "complete" and winner is None:
+                winner = attempt
+        latest = launched[-1]["attempt"] if launched else None
+        for attempt, attempt_state, _ in observed:
             attempt_counts["attempted"] += 1
             if attempt_state == "complete":
                 attempt_counts["succeeded"] += 1
             elif attempt_state in {"failed", "unusable"}:
                 attempt_counts[attempt_state] += 1
-            else:
+            elif attempt == latest and winner is None:
                 attempt_counts["outstanding"] += 1
-            if attempt_state == "complete":
-                state = "complete"
-                problem = None
-                break
-            state = attempt_state
-            problem = attempt_problem
-            if attempt_state == "invalid":
-                observed_invalid.append(
-                    {"assignment_id": assignment_id, "attempt": attempt, "problem": attempt_problem}
-                )
-        invalid.extend(observed_invalid)
-        counts[state] += 1
-        if state == "complete":
+            else:
+                # Superseded by a later launch (or no longer needed) without a complete return.
+                attempt_counts["failed"] += 1
+        if winner is not None:
+            counts["complete"] += 1
+            used_returns.append(
+                {
+                    "assignment_id": assignment_id,
+                    "attempt": winner,
+                    "return_path": row_by_attempt[winner]["return_path"],
+                }
+            )
             continue
+        state, problem = (observed[-1][1], observed[-1][2]) if observed else ("missing", None)
+        counts[state] += 1
         used = len(launched)
-        if used >= max_attempts:
+        next_attempt = used + 1
+        row = row_by_attempt.get(next_attempt)
+        if used >= max_attempts or row is None:
+            # A legacy manifest seals no later attempt path, so it is exhausted after one launch.
             exhausted.append(assignment_id)
             exhausted_details.append(
                 {
@@ -475,18 +494,6 @@ def status(
                 }
             )
             continue
-        if used and (assignment_id, used) not in dispositions:
-            # A launched attempt is still live until the parent accepts its complete return or
-            # records a failed/unusable disposition. Never launch a retry merely because a worker
-            # is still writing, was interrupted, or produced an operationally invalid file.
-            continue
-        next_attempt = used + 1
-        row = row_by_attempt.get(next_attempt)
-        if row is None:
-            raise FanoutError(
-                "legacy research fan-out cannot allocate an immutable retry path; "
-                "prepare a new fan-out directory"
-            )
         pending.append(
             {
                 "assignment_id": assignment_id,
@@ -494,6 +501,8 @@ def status(
                 "return_path": row["return_path"],
                 "attempts_so_far": used,
                 "attempt": next_attempt,
+                # Launching this attempt supersedes an earlier unfinished one.
+                "_supersedes_outstanding": state in {"missing", "incomplete", "invalid"} and used > 0,
             }
         )
     returns_dir = fanout_dir / "returns"
@@ -523,6 +532,7 @@ def status(
         "max_attempts": max_attempts,
         "seal": "verified",
         "invalid_returns": invalid,
+        "changed_after_disposition": changed,
         "stray_files": stray,
         "exhausted_assignments": exhausted,
         "attempt_counts": {
@@ -535,6 +545,8 @@ def status(
     }
     if include_exhausted:
         result["exhausted_attempts"] = exhausted_details
+    if include_returns:
+        result["used_returns"] = used_returns
     if include_pending:
         result["pending_assignments"] = pending
         if record_launch:
@@ -551,11 +563,15 @@ def status(
                     for item in pending
                 ],
             )
+            superseded = sum(1 for item in pending if item["_supersedes_outstanding"])
             for item in pending:
                 item["attempts_so_far"] = item["attempt"]
             result["attempt_counts"]["attempted"] += len(pending)
-            result["attempt_counts"]["outstanding"] += len(pending)
+            result["attempt_counts"]["outstanding"] += len(pending) - superseded
+            result["attempt_counts"]["failed"] += superseded
             result["launches_recorded"] = len(pending)
+        for item in pending:
+            item.pop("_supersedes_outstanding", None)
     return result
 
 
@@ -625,9 +641,14 @@ def main(argv: list[str] | None = None) -> int:
         help="include diagnostic details for assignments that used all sealed attempts",
     )
     status_parser.add_argument(
+        "--include-returns",
+        action="store_true",
+        help="list the return each complete assignment uses",
+    )
+    status_parser.add_argument(
         "--record-launch",
         action="store_true",
-        help="append a launch row for every pending assignment returned (with --include-pending)",
+        help="launcher discovery: list pending assignments and record one launch for each",
     )
     status_parser.add_argument("--limit", type=int, default=None, help="return at most this many pending assignments")
 
@@ -655,6 +676,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.fanout_dir,
                 include_pending=args.include_pending,
                 include_exhausted=args.include_exhausted,
+                include_returns=args.include_returns,
                 record_launch=args.record_launch,
                 limit=args.limit,
             )
