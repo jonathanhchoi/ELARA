@@ -33,6 +33,14 @@ class WorkflowContractTests(unittest.TestCase):
         )
         self.assertIn("\npermissions:\n  contents: read\n", workflow)
 
+    def test_ci_runs_once_per_pull_request_commit(self) -> None:
+        # Branch pushes and pull_request events both ran the full matrix, doubling
+        # demand for scarce macOS runners; required macOS jobs then sat queued
+        # until GitHub cancelled them. Branch pushes run only on main.
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        self.assertIn("  push:\n    branches: [main]\n  pull_request:\n", workflow)
+        self.assertIn("cancel-in-progress: true", workflow)
+
     def test_codex_policy_replacement_uses_one_trailing_policy_block(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             config = Path(tmp) / "openai.yaml"
