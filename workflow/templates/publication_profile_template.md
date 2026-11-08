@@ -6,9 +6,9 @@ the literal state field `active_artifacts` with the label `publication_profile`.
 To change it later, save a new version (`_v002`, ...) and record the new file as
 the version in use; never edit a version that a manuscript run has already
 recorded. Stages 18 and 20 and the
-manuscript utilities (`elr-proofread`, `elr-add-citations`, `elr-apply-markup`)
-read the current profile and record its exact version and a value used to verify
-that the file has not changed. If no profile is current, those stages ask the
+manuscript utilities (`elr-proofread`, `elr-add-citations`, `elr-apply-markup`,
+`elr-draft-article`) read the current profile and record its exact version and a
+value used to verify that the file has not changed. If no profile is current, those stages ask the
 researcher to supply one or to record a decision to proceed by matching only the
 existing draft's voice.
 

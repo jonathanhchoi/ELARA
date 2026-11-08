@@ -319,6 +319,13 @@ class SkeletonDraftBuilderTests(unittest.TestCase):
                 footnotes_xml = archive.read("word/footnotes.xml").decode("utf-8")
                 styles_xml = archive.read("word/styles.xml").decode("utf-8")
                 comments_xml = archive.read("word/comments.xml").decode("utf-8")
+                header_xml = "".join(
+                    archive.read(name).decode("utf-8")
+                    for name in archive.namelist()
+                    if name.startswith("word/header")
+                )
+            self.assertIn("Court Access", header_xml)
+            self.assertNotIn("RUNNING SHORT TITLE", header_xml.upper())
             self.assertIn("Open questions:", comments_xml)
             self.assertNotIn("Source support", comments_xml)
             self.assertNotIn("Results presented", comments_xml)

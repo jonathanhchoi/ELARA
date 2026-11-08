@@ -76,7 +76,8 @@ Next, it asks whether you want the whole pipeline or a specific tool. The whole
 pipeline proceeds in order from project selection through replication, with
 optional article-planning and publication steps at the end. The tools menu lets you go directly to
 tasks such as a preemption review, feasibility audit, methods design, codebook,
-human validation, a skeleton draft, manuscript integration, citation checking, or proofreading.
+human validation, a skeleton draft, an illustrative article draft, manuscript integration,
+citation checking, or proofreading.
 See [PIPELINE.md](PIPELINE.md) for the complete menu.
 
 In that setup conversation, say what output you want, such as a complete study,
@@ -349,9 +350,23 @@ also appear below the legend. Another peer-reviewed outlet requires a current
 check of its official instructions and either its own template or an expressly
 approved fallback; the JLA template is never applied silently. Stage 17 leaves the
 remaining prose to the author. Stage 18 only integrates results into an
-existing substantive draft. ELARA won't write the first draft or turn notes
-into a paper. The researcher retains control over the thesis, framing,
-organization, and voice.
+existing substantive draft. The researcher writes the manuscript and retains
+control over the thesis, framing, organization, and voice.
+
+If you want to see what the whole article could look like, the optional
+`elr-draft-article` tool writes an illustrative draft of a law review article
+from the project's records: an abstract, an introduction, numbered Parts, a
+conclusion, Bluebook-style footnotes, and an appendix with the technical
+details. It is written for law students, in a concise, accessible, lightly
+playful voice (your publication profile can change that), and frames the known
+results the way law review editors will find most interesting. Results still to
+come appear as highlighted placeholders; every footnote rests on a source the
+project actually retrieved, or says `[[citation needed: ...]]` for
+`elr-add-citations` to fill later. You get a Word file on the law-review
+template, with real footnotes, and a short memo on where each claim came from,
+the framing choices made, and every placeholder. The draft is labeled as
+illustrative: you rewrite it, and later versions keep numbers, cross-references,
+and transitions consistent as results arrive.
 
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map.
 
@@ -391,11 +406,13 @@ requirements.txt                Bounded Python dependencies
 workflow/stages/NN-*.md         Authoritative sequential stage instructions
 workflow/utilities/             Optional manuscript utilities
 workflow/shared/                Guardrails and contracts for files, parallel work, and manuscripts
-workflow/templates/             Report, skeleton-draft, publication-profile, and venue-aware Word templates and registry
+workflow/templates/             Report, skeleton-draft, article-draft, publication-profile, and venue-aware Word templates and registry
+workflow/guides/                Reference guides: measurement-error correction and law review article style
 scripts/latex_report.py         Render shared formatted-report LaTeX
 scripts/build_preemption_review.py  Build the formatted Stage 02 report
 scripts/build_feasibility_audit.py   Build the question-led Stage 03 report
 scripts/build_skeleton_draft.py Build and validate Stage 17 Word, LaTeX, or Markdown skeletons
+scripts/build_article_draft.py  Build and check illustrative law review drafts (Word or Markdown)
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
 .claude/agents/                 Claude restricted worker sub-agents

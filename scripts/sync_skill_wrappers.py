@@ -66,6 +66,20 @@ UTILITY_SKILLS = {
         "short_description": "Transcribe hand markup, then apply approved edits",
         "default_prompt": "Use $elr-apply-markup on the marked-up PDF under project/inputs/manuscript/markup/.",
     },
+    "elr-draft-article": {
+        "canonical": "workflow/utilities/draft-article.md",
+        "route": "workflow/stages/18-integrate-manuscript.md",
+        "description": (
+            "Write an illustrative draft of a law review article (abstract, introduction, Parts, "
+            "conclusion, Bluebook-style footnotes, and a technical appendix) from the project's "
+            "records, with placeholders for results still to come, for the researcher to rewrite. "
+            "Use when the researcher asks for a draft of the paper or to see what the article "
+            "could look like."
+        ),
+        "display_name": "ELARA Draft Article",
+        "short_description": "Write an illustrative law review draft to rewrite",
+        "default_prompt": "Use $elr-draft-article to write an illustrative draft of the article from this project's records.",
+    },
 }
 
 

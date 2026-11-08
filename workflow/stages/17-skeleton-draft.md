@@ -41,7 +41,9 @@ law review, the Journal of Legal Analysis (JLA), or another outlet. Recommend
 retrieve and check that outlet's current official instructions; use a supplied
 outlet template or obtain the researcher's express approval of a named fallback.
 Never silently apply the JLA template to another outlet. Offer **create the skeleton draft** as the recommendation and
-**skip** as the explicit alternative. State that the recommended output is a
+**skip** as the explicit alternative. A researcher who wants full article prose
+instead can run the `elr-draft-article` utility, which writes a labeled
+illustrative draft to rewrite; say so if they ask. State that the recommended output is a
 LaTeX-generated PDF unless the verified environment or researcher preference
 supports Word, Markdown, or another format. A response such as "go with your
 recommendations" may accept the stated recommendations, but silence may not.

@@ -1,0 +1,33 @@
+---
+name: "elr-draft-article"
+description: "Write an illustrative draft of a law review article (abstract, introduction, Parts, conclusion, Bluebook-style footnotes, and a technical appendix) from the project's records, with placeholders for results still to come, for the researcher to rewrite. Use when the researcher asks for a draft of the paper or to see what the article could look like."
+---
+
+# Run elr-draft-article
+
+First resolve the active root using read-only `scripts/storage.py status` under `workflow/shared/storage.md`, before state or updates.
+Before starting this utility, follow `workflow/shared/kit-updates.md` and run
+`scripts/check_update.py` for its canonical identifier. Require `ready: true` before execution.
+A conflict-free update installs automatically when writes are authorized; otherwise
+the utility runs on the installed version and the researcher hears the notice once;
+a declined update stays declined. Only an update interrupted part-way waits, under "When something breaks" in
+`workflow/shared/operational-recovery.md`. Keep a started run's software; never
+edit ELARA in a project.
+
+1. Read `AGENTS.md`, `project/PROJECT_STATE.md`, `workflow/shared/guardrails.md`,
+   `workflow/shared/artifact-contract.md`, `workflow/shared/execution-control.md`, and
+   `workflow/shared/manuscript-editing-contract.md` completely,
+   then the active publication profile pinned in `project/PROJECT_STATE.md`
+   (`project/PUBLICATION_PROFILE_vNNN.md`), if any.
+2. Read `workflow/utilities/draft-article.md` completely and follow it as the single source of
+   substantive instructions for this utility.
+3. This is an optional manuscript utility, not a pipeline stage: never change `current_stage`,
+   and append the run ledger and decisions only as the canonical file directs. If the project
+   is uninitialized (`project_slug` is null), first run Stage 00's two-question specific-tools
+   setup (`workflow/stages/00-initialize.md`, "Usage mode"), then continue.
+4. Create or reconcile the native utility plan and update it at each phase boundary.
+   On Codex use `update_plan` and keep exactly one item `in_progress`.
+5. Honor the utility's phases. Do not edit any manuscript file before the researcher grants
+   the permission the canonical file names; a skill cannot switch Plan or Goal mode by itself.
+6. Afterwards follow the route the canonical file names (`workflow/stages/18-integrate-manuscript.md`) rather than
+   treating the utility's output as final.

@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELARA Draft Article"
+  short_description: "Write an illustrative law review draft to rewrite"
+  default_prompt: "Use $elr-draft-article to write an illustrative draft of the article from this project's records."
+policy:
+  allow_implicit_invocation: false
