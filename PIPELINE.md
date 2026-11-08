@@ -11,8 +11,9 @@ routes.
 The repository holds one active project. The mandatory core ends when Stage 16
 rebuilds a verified replication package. Optional Stage 17 maps the article
 from verified project files without writing article prose. Stages 18–20 support
-a substantive manuscript first drafted by the researcher. ELARA does not draft
-the first manuscript.
+a substantive manuscript written by the researcher. The optional
+`elr-draft-article` utility can write an illustrative draft of a law review
+article for the researcher to rewrite; ELARA never treats it as the manuscript.
 
 ## Six-step crosswalk
 
@@ -185,6 +186,7 @@ what the researcher needs to bring (or point to) so that the tool can start.
 | Add citations you marked as needed | `elr-add-citations` | your draft with the passages marked |
 | Proofread | `elr-proofread` | your draft |
 | Apply your hand-marked edits from a PDF | `elr-apply-markup` | the marked-up PDF |
+| See what the whole article could look like: an illustrative law review draft, with placeholders for results still to come, for you to rewrite | `elr-draft-article` | your question and contribution, and any results so far |
 
 Materials may stay wherever they are: in `project/inputs/`, elsewhere in this
 folder (bootstrap lists what it found in `project/BOOTSTRAP.md`), or at a path
@@ -345,9 +347,22 @@ JLA figures require alt text under the legend, and all venue-aware Word figures
 embed that text accessibly. A different peer-reviewed outlet requires a current
 official-requirements check and a supplied template or an expressly approved
 fallback; JLA is never the silent default.
-Stages 18–20 and three optional utilities work on the
-researcher's manuscript under `workflow/shared/manuscript-editing-contract.md` (fixed invariants: no
-first-draft authorship, permission before edits, versioned copies, numbers only
+The optional `elr-draft-article` utility writes something Stage 17 does not: an
+illustrative draft of a law review article, with an abstract, introduction,
+numbered Parts, conclusion, Bluebook-style footnotes, and a technical appendix,
+built from the project's records and the thesis the researcher accepted. It
+follows `workflow/guides/law-review-article-style.md` and frames known results
+for law review editors; results still to come appear as highlighted
+placeholders, and every footnote rests on a retrieved, archived source or says
+`[[citation needed: ...]]`. `scripts/build_article_draft.py` renders it on the
+law-review Word template with real footnotes and checks its structure,
+citations, numbers, and cross-references, so a later version keeps its numbers,
+Part references, and footnote cross-references consistent. The author footnote
+marks it as illustrative, and it stays planning context until the researcher
+rewrites it.
+Stages 18–20 and the optional utilities work on the
+researcher's manuscript under `workflow/shared/manuscript-editing-contract.md` (fixed invariants: the
+researcher writes the manuscript, permission before edits, versioned copies, numbers only
 from results, no citations from memory, build and two review passes, complete
 change disclosure, post-edit citation audit) and the researcher's **publication
 profile** (`project/PUBLICATION_PROFILE_vNNN.md`, created from
@@ -364,6 +379,7 @@ stages and utilities, never imported into `AGENTS.md` or `CLAUDE.md`.
 | `elr-add-citations` | `workflow/utilities/add-citations.md` | Retrieves, reads, and adds only the citations the researcher marked, in the profile's citation style | audit-only Stage 19 |
 | `elr-proofread` | `workflow/utilities/proofread.md` | Reports typos, grammar, clarity, tone, style tells, internal consistency, and venue compliance; fixes only clear errors when permitted | accepted items to Stage 20 |
 | `elr-apply-markup` | `workflow/utilities/apply-markup.md` | Transcribes a hand-marked PDF into a reviewable edit list, stops, then applies exactly the approved edits | Stage 19 if citations changed |
+| `elr-draft-article` | `workflow/utilities/draft-article.md` | Writes an illustrative law review draft from the project's records, with placeholders for results still to come, and a memo on its sources, framing choices, and placeholders | the researcher rewrites it; then Stage 18 |
 
 Utilities never change `current_stage`; they append the run ledger and decisions
 and produce versioned outputs like any stage.
@@ -741,3 +757,21 @@ archiving, recorded gaps, counts, blinding, preregistration, or audit
 separation; maintainer history moved to `.github/CONTRIBUTING.md`, the
 measurement-error guide moved to `workflow/guides/`, and CI fails if the shared
 rules grow past 60 KiB.
+
+Version 2.20.0 adds the optional `elr-draft-article` utility
+(`workflow/utilities/draft-article.md`). It writes an illustrative draft of a
+law review article (abstract, introduction, numbered Parts, conclusion,
+Bluebook-style footnotes, and a technical appendix) from the project's records,
+in the voice set by `workflow/guides/law-review-article-style.md` unless the
+publication profile says otherwise, with placeholders for results still to
+come and a drafting memo. `scripts/build_article_draft.py` renders it on the
+`law_review_v1` Word template with real footnotes and a contents page, or as
+Markdown for review, and fails on missing structure, footnotes without a
+source or a citation-needed mark, *Id.* or *supra* references that point to
+the wrong source, unarchived sources, and unresolved numbers or
+cross-references. The manuscript-editing contract now permits this labeled,
+illustrative draft; the researcher still writes the manuscript, and Stages
+18–20 treat the draft as planning context until the researcher rewrites it.
+The skeleton builder's Word running header now shows the running title. No
+state field, stage order, gate, or research safeguard changes, so existing
+projects need no migration.

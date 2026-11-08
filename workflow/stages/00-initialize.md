@@ -77,7 +77,7 @@ gates without interrupting the researcher.
 
 ## Orientation (first session)
 
-Before the first question, and whenever the researcher asks for `help` or `tour`, give a short orientation (under 250 words) that covers: what ELARA does (walks one empirical legal research project from question to replication package, with optional article-planning and publication stages) and does not do (choose the question, write the first draft, or advance past a decision without the researcher); the six paper steps and how they map to the twenty-one stages; that a stage ends at a gate where the researcher decides, that silence is never approval, and that a decision is recorded verbatim; that Stages 02, 03, and 11 are long-running and the researcher can walk away and later type `resume`; the commands (`start`, `adopt`, `menu`, `resume`, `status`, `help`, `elr-17-skeleton-draft`, and the manuscript utilities `elr-proofread`, `elr-add-citations`, `elr-apply-markup`); and where the publication profile lives. Then say what will happen next in this session and roughly how long it takes.
+Before the first question, and whenever the researcher asks for `help` or `tour`, give a short orientation (under 250 words) that covers: what ELARA does (walks one empirical legal research project from question to replication package, with optional article-planning and publication stages) and does not do (choose the question, write the manuscript, or advance past a decision without the researcher; it can write an illustrative draft for the researcher to rewrite); the six paper steps and how they map to the twenty-one stages; that a stage ends at a gate where the researcher decides, that silence is never approval, and that a decision is recorded verbatim; that Stages 02, 03, and 11 are long-running and the researcher can walk away and later type `resume`; the commands (`start`, `adopt`, `menu`, `resume`, `status`, `help`, `elr-17-skeleton-draft`, and the manuscript utilities `elr-proofread`, `elr-add-citations`, `elr-apply-markup`, `elr-draft-article`); and where the publication profile lives. Then say what will happen next in this session and roughly how long it takes.
 
 ## Usage mode: the whole pipeline or specific tools
 
@@ -90,7 +90,8 @@ including which methods need explanation and whether an empirical collaborator
 will help. Combine the output question with the usage-mode question when possible;
 do not ask again if the researcher has already supplied the answer. A request for
 an entire paper means support through the optional publication stages, with the
-researcher still writing the first draft. Defer detailed claims and hypotheses to
+researcher writing the manuscript (`elr-draft-article` can supply an illustrative
+draft to rewrite). Defer detailed claims and hypotheses to
 methods design rather than adding a separate setup interview.
 
 - Whole pipeline (`usage: pipeline`): continue on the fresh path (new project) or the adoption path (existing work). At every later stage end, the router summarizes and continues into the next stage unless a stop condition in `workflow/shared/guardrails.md` §11 holds; the researcher decides at the gates.

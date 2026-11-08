@@ -842,12 +842,20 @@ def _request_field_updates(doc: Document) -> None:
 
 
 def _replace_header_placeholder(doc: Document, running_title: str) -> None:
+    # The placeholder sits in a header table cell and Word may split it across runs, so search
+    # every paragraph in the header part and rewrite the paragraph's text as a whole.
+    placeholder = "[RUNNING SHORT TITLE]"
     for section in doc.sections:
         for header in (section.header, section.first_page_header, section.even_page_header):
-            for paragraph in header.paragraphs:
-                for node in paragraph._p.iter(qn("w:t")):
-                    if node.text and "[RUNNING SHORT TITLE]" in node.text:
-                        node.text = node.text.replace("[RUNNING SHORT TITLE]", running_title)
+            for paragraph in header._element.iter(qn("w:p")):
+                nodes = list(paragraph.iter(qn("w:t")))
+                joined = "".join(node.text or "" for node in nodes)
+                if placeholder.casefold() not in joined.casefold():
+                    continue
+                start = joined.casefold().index(placeholder.casefold())
+                nodes[0].text = joined[:start] + running_title + joined[start + len(placeholder) :]
+                for node in nodes[1:]:
+                    node.text = ""
 
 
 def _add_toc_field(doc: Document) -> None:

@@ -1,22 +1,22 @@
 # Manuscript-editing contract
 
-These rules apply whenever ELARA touches a researcher's manuscript: Stage 18
-(integration), Stage 20 (revision and response), and the manuscript utilities in
-`workflow/utilities/` (`add-citations`, `proofread`, `apply-markup`). They are
+These rules apply whenever ELARA touches a researcher's manuscript: Stages 18
+and 20 and the manuscript utilities in `workflow/utilities/`. They are
 invariants under `guardrails.md` §10: a stage, utility, or publication profile
 may add requirements but never relax them. What to integrate, how to map
 comments, and when to re-audit stay in the stage or utility file.
 
 ## 1. Authorship boundary
 
-- ELARA does not write the substantive first draft, turn notes into a paper, or
-  supply an original thesis, argument, or normative claim. Stage 17 may propose
-  an article structure, verified results displays, and the minimal methods and
-  results prose needed to read them; the researcher writes the rest. Manuscript
-  stages work only on a substantive draft the researcher supplies.
-- An approved Stage 17 skeleton is planning context, not prose. Bounded
-  insertions the researcher requests in their own draft (a paragraph, caption,
-  transition, citation) are permitted but never license broadening the article.
+- The researcher writes the manuscript. Stage 17 may propose a structure,
+  verified displays, and minimal methods and results prose. The `draft-article`
+  utility may write an illustrative draft, labeled as one, from the project's
+  records and the thesis the researcher accepted, for the researcher to rewrite.
+  Manuscript stages work only on a substantive draft the researcher supplies.
+- A skeleton or illustrative draft is planning context, never the manuscript in
+  use, until the researcher rewrites it. Bounded insertions the researcher
+  requests in their own draft (a paragraph, caption, transition, citation) never
+  license broadening the article.
 
 ## 2. Permission and versioning
 

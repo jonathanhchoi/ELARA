@@ -510,7 +510,8 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("cannot relax", template_text)
         contract_text = contract.read_text(encoding="utf-8")
         self.assertIn("publication profile", contract_text.lower())
-        self.assertIn("first draft", contract_text)
+        self.assertIn("The researcher writes the manuscript", contract_text)
+        self.assertIn("illustrative draft", contract_text)
         stages = {meta["stage_id"]: body for _, meta, body in load_stages(ROOT)}
         for stage_id in ("18-integrate-manuscript", "20-revise-and-respond"):
             body = stages[stage_id]
@@ -535,7 +536,8 @@ class WorkflowContractTests(unittest.TestCase):
         from sync_skill_wrappers import UTILITY_SKILLS
 
         self.assertEqual(
-            set(UTILITY_SKILLS), {"elr-add-citations", "elr-proofread", "elr-apply-markup"}
+            set(UTILITY_SKILLS),
+            {"elr-add-citations", "elr-proofread", "elr-apply-markup", "elr-draft-article"},
         )
         for name, spec in UTILITY_SKILLS.items():
             canonical = ROOT / spec["canonical"]
@@ -553,6 +555,34 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertLess(len(wrapper_text.splitlines()), 35)
             yaml = ROOT / ".agents" / "skills" / name / "agents" / "openai.yaml"
             self.assertIn("allow_implicit_invocation: false", yaml.read_text(encoding="utf-8"))
+
+    def test_draft_article_utility_is_wired_and_bounded(self) -> None:
+        utility = (ROOT / "workflow" / "utilities" / "draft-article.md").read_text(encoding="utf-8")
+        for required in (
+            "workflow/guides/law-review-article-style.md",
+            "workflow/templates/article_draft_template.md",
+            "scripts/build_article_draft.py",
+            "workflow/shared/fresh-review.md",
+            "illustrative",
+            "[[citation needed: ...]]",
+            "{{value:key}}",
+            "never the manuscript in use",
+        ):
+            self.assertIn(required, utility, required)
+        guide = " ".join(
+            (ROOT / "workflow" / "guides" / "law-review-article-style.md").read_text(encoding="utf-8").split()
+        )
+        for requirement in (
+            "write in a concise, interesting, and accessible manner",
+            "Do not be florid or verbose; do not exaggerate.",
+            "Ensure smooth transitions as updates are made.",
+            "Bluebook-style footnotes",
+            "an appendix that contains additional technical details",
+        ):
+            self.assertIn(requirement, guide, requirement)
+        stages = {meta["stage_id"]: body for _, meta, body in load_stages(ROOT)}
+        self.assertIn("elr-draft-article", stages["18-integrate-manuscript"])
+        self.assertIn("Version 2.20.0", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
 
     def test_fresh_review_protocol_is_shared(self) -> None:
         protocol = ROOT / "workflow" / "shared" / "fresh-review.md"
@@ -655,7 +685,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("| `menu`, `tools` |", pipeline)
         for stage_id in EXPECTED_STAGE_IDS[1:]:
             self.assertIn(f"`elr-{stage_id}`", pipeline, stage_id)
-        for utility in ("elr-add-citations", "elr-proofread", "elr-apply-markup"):
+        for utility in ("elr-add-citations", "elr-proofread", "elr-apply-markup", "elr-draft-article"):
             self.assertIn(f"| `{utility}` |", pipeline, utility)
         contract = (ROOT / "workflow" / "shared" / "artifact-contract.md").read_text(encoding="utf-8")
         self.assertIn("researcher-asserted", contract)
