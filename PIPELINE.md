@@ -187,6 +187,7 @@ what the researcher needs to bring (or point to) so that the tool can start.
 | Proofread | `elr-proofread` | your draft |
 | Apply your hand-marked edits from a PDF | `elr-apply-markup` | the marked-up PDF |
 | See what the whole article could look like: an illustrative law review draft, with placeholders for results still to come, for you to rewrite | `elr-draft-article` | your question and contribution, and any results so far |
+| Bring the records into line with the methods in your `current_draft.docx` (runs by itself whenever that file changes) | `elr-reconcile-draft` | `current_draft.docx` in the project folder |
 
 Materials may stay wherever they are: in `project/inputs/`, elsewhere in this
 folder (bootstrap lists what it found in `project/BOOTSTRAP.md`), or at a path
@@ -360,6 +361,14 @@ citations, numbers, and cross-references, so a later version keeps its numbers,
 Part references, and footnote cross-references consistent. The author footnote
 marks it as illustrative, and it stays planning context until the researcher
 rewrites it.
+A researcher may also keep `current_draft.docx` in the project folder as the
+current statement of the methods they intend. `scripts/storage.py status`
+reports when it changes, and `elr-reconcile-draft` then copies it, reads what
+changed, and settles each methods statement against `DECISIONS.md` and the
+approved files before the next stage: it follows the draft where the records
+leave a choice open, asks once before replacing an unfrozen recorded choice,
+and never lets the draft change frozen or preregistered methods or the record
+of work already done.
 Stages 18–20 and the optional utilities work on the
 researcher's manuscript under `workflow/shared/manuscript-editing-contract.md` (fixed invariants: the
 researcher writes the manuscript, permission before edits, versioned copies, numbers only
@@ -380,6 +389,7 @@ stages and utilities, never imported into `AGENTS.md` or `CLAUDE.md`.
 | `elr-proofread` | `workflow/utilities/proofread.md` | Reports typos, grammar, clarity, tone, style tells, internal consistency, and venue compliance; fixes only clear errors when permitted | accepted items to Stage 20 |
 | `elr-apply-markup` | `workflow/utilities/apply-markup.md` | Transcribes a hand-marked PDF into a reviewable edit list, stops, then applies exactly the approved edits | Stage 19 if citations changed |
 | `elr-draft-article` | `workflow/utilities/draft-article.md` | Writes an illustrative law review draft from the project's records, with placeholders for results still to come, and a memo on its sources, framing choices, and placeholders | the researcher rewrites it; then Stage 18 |
+| `elr-reconcile-draft` | `workflow/utilities/reconcile-draft.md` | Copies and reads `current_draft.docx` whenever it changes, compares its methods with the records passage by passage, follows it where the records leave a choice open, and asks once about conflicts | the stage that was about to start; Stage 09 for an amendment |
 
 Utilities never change `current_stage`; they append the run ledger and decisions
 and produce versioned outputs like any stage.
@@ -775,3 +785,21 @@ illustrative draft; the researcher still writes the manuscript, and Stages
 The skeleton builder's Word running header now shows the running title. No
 state field, stage order, gate, or research safeguard changes, so existing
 projects need no migration.
+
+Version 2.21.0 makes `current_draft.docx` in the project folder a source of
+truth for methods. `scripts/storage.py status` reports a `current_draft` block
+(present, hash, the last reconciled hash, changed), and when the draft changes
+the new `elr-reconcile-draft` utility runs before the next stage:
+`scripts/current_draft.py snapshot` copies the draft into `project/inputs/`,
+extracts its text with paragraph and footnote IDs (tracked changes read as
+accepted, unresolved changes and comments listed), and lists what changed;
+the assistant writes a reconciliation table quoting each methods statement and
+its category; and `scripts/current_draft.py check` verifies the quotes,
+records, decisions, and coverage of every changed passage. The draft governs
+open methods choices at once and unfrozen recorded ones once the researcher
+confirms; it never approves a gate, changes frozen or preregistered methods,
+or overrides the record of completed work, and an analysis added after results
+were seen is exploratory. Stages 04, 05, 09, 14, and 18 and `elr-draft-article`
+read the reconciled draft. The draft is recorded in `active_artifacts` as
+`current_draft`, so existing projects need no migration; a project without the
+file behaves exactly as before.

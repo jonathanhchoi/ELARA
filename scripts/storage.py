@@ -30,6 +30,8 @@ RECORDS = ("project/PROJECT_STATE.md", "project/DECISIONS.md", "project/RUN_LEDG
 SKIPPED_PARTS = {".git", ".venv", "__pycache__", "node_modules", EXPORTS}
 LOOSE_FILE_LIMIT = 200
 FOLDER_AS_FILES_LIMIT = 50
+# The researcher's working draft in the project home, consulted for intended methods (2.21.0).
+DRAFT_NAME = "current_draft.docx"
 
 
 def stamp() -> str:
@@ -129,6 +131,49 @@ def status(root: Path) -> dict:
     if not inside(working, "project/PROJECT_STATE.md").is_file():
         raise ValueError("Recorded local project state is missing; recover it without reinitializing")
     return {**value, "status": "managed", "exports_root": str(inside(home, EXPORTS))}
+
+
+def current_draft(root: Path) -> dict:
+    """Read only: report the researcher's current_draft.docx in the project home.
+
+    ``changed`` is true when the file exists and its SHA-256 differs from the copy ELARA last
+    reconciled (``active_artifacts.current_draft`` in the working root's state); the
+    draft-reconciliation utility then runs before the next stage. A file that cannot be read
+    is reported, never raised, so status keeps working while the file syncs or is open.
+    """
+    from workflow_lib import parse_frontmatter
+
+    root = root.resolve()
+    record = status(root)
+    working = Path(record["working_root"])
+    home = Path(record["project_home"]) if record["status"] == "managed" else root
+    result: dict = {"present": False, "changed": False, "reconciled_sha256": None}
+    try:
+        state, _ = parse_frontmatter(inside(working, "project/PROJECT_STATE.md"))
+        entry = (state.get("active_artifacts") or {}).get("current_draft")
+    except (OSError, ValueError):
+        entry = None
+    if isinstance(entry, dict) and entry.get("sha256"):
+        result["reconciled_sha256"] = str(entry["sha256"]).casefold()
+    elif isinstance(entry, str):
+        path = inside(working, entry)
+        result["reconciled_sha256"] = digest(path) if path.is_file() else None
+    try:
+        matches = sorted(p for p in home.iterdir() if p.is_file() and p.name.casefold() == DRAFT_NAME)
+    except OSError as exc:
+        return {**result, "error": str(exc)}
+    if not matches:
+        return {**result, "removed": result["reconciled_sha256"] is not None}
+    if len(matches) > 1:
+        return {**result, "present": True, "error": "keep one file named current_draft.docx: "
+                + ", ".join(p.name for p in matches)}
+    result.update(present=True, path=str(matches[0]))
+    try:
+        result["sha256"] = digest(matches[0])
+    except OSError as exc:
+        return {**result, "readable": False, "error": str(exc)}
+    result["changed"] = result["sha256"] != result["reconciled_sha256"]
+    return result
 
 
 def bind(home: Path, working: Path) -> dict:
@@ -504,7 +549,7 @@ def main() -> int:
         if args.dry_run and args.command != "setup":
             raise ValueError("Only setup supports --dry-run; status is read-only")
         if args.command == "status":
-            result = status(args.root)
+            result = {**status(args.root), "current_draft": current_draft(args.root)}
         elif args.command == "setup" and args.kit:
             result = setup(args.root, args.kit, no_install=args.no_install, dry_run=args.dry_run)
         elif args.command == "bind" and args.working_root:

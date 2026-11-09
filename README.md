@@ -368,6 +368,14 @@ the framing choices made, and every placeholder. The draft is labeled as
 illustrative: you rewrite it, and later versions keep numbers, cross-references,
 and transitions consistent as results arrive.
 
+You can also keep your own working draft in the project folder as
+`current_draft.docx`. ELARA treats its methods as your current instructions:
+whenever the file changes, the `elr-reconcile-draft` tool copies it, compares
+each methods passage with the decision log and the approved files, follows the
+draft wherever a choice is still open, asks you once before replacing an
+earlier unfrozen choice, and never lets it change frozen or preregistered
+methods. ELARA never edits that file.
+
 See [PIPELINE.md](PIPELINE.md) for the stage-by-stage map.
 
 ## What ground rules does ELARA follow?
@@ -413,6 +421,7 @@ scripts/build_preemption_review.py  Build the formatted Stage 02 report
 scripts/build_feasibility_audit.py   Build the question-led Stage 03 report
 scripts/build_skeleton_draft.py Build and validate Stage 17 Word, LaTeX, or Markdown skeletons
 scripts/build_article_draft.py  Build and check illustrative law review drafts (Word or Markdown)
+scripts/current_draft.py        Copy, read, and check reconciliation of the researcher's current_draft.docx
 .agents/skills/                 Codex wrappers ($elr-...)
 .claude/skills/                 Claude wrappers (/elr-...)
 .claude/agents/                 Claude restricted worker sub-agents

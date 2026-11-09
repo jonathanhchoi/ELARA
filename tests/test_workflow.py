@@ -537,7 +537,8 @@ class WorkflowContractTests(unittest.TestCase):
 
         self.assertEqual(
             set(UTILITY_SKILLS),
-            {"elr-add-citations", "elr-proofread", "elr-apply-markup", "elr-draft-article"},
+            {"elr-add-citations", "elr-proofread", "elr-apply-markup", "elr-draft-article",
+             "elr-reconcile-draft"},
         )
         for name, spec in UTILITY_SKILLS.items():
             canonical = ROOT / spec["canonical"]
@@ -583,6 +584,28 @@ class WorkflowContractTests(unittest.TestCase):
         stages = {meta["stage_id"]: body for _, meta, body in load_stages(ROOT)}
         self.assertIn("elr-draft-article", stages["18-integrate-manuscript"])
         self.assertIn("Version 2.20.0", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
+
+    def test_current_draft_is_a_bounded_source_of_truth(self) -> None:
+        agents = " ".join((ROOT / "AGENTS.md").read_text(encoding="utf-8").split())
+        self.assertIn("`current_draft.docx`", agents)
+        self.assertIn("elr-reconcile-draft", agents)
+        self.assertIn("never approves a gate", agents)
+        self.assertIn("ELARA never edits it", agents)
+        utility = (ROOT / "workflow" / "utilities" / "reconcile-draft.md").read_text(encoding="utf-8")
+        for required in (
+            "scripts/current_draft.py snapshot",
+            "scripts/current_draft.py check",
+            "never edits, moves, or renames it",
+            "A draft never approves a gate",
+            "exploratory",
+            "artifact-contract.md` section 7",
+        ):
+            self.assertIn(required, utility, required)
+        stages = {meta["stage_id"]: body for _, meta, body in load_stages(ROOT)}
+        for stage_id in ("04-methods-design", "05-codebook-and-schema", "09-freeze-and-preregister",
+                         "14-analysis-and-correction", "18-integrate-manuscript"):
+            self.assertIn("current_draft", stages[stage_id], stage_id)
+        self.assertIn("Version 2.21.0", (ROOT / "PIPELINE.md").read_text(encoding="utf-8"))
 
     def test_fresh_review_protocol_is_shared(self) -> None:
         protocol = ROOT / "workflow" / "shared" / "fresh-review.md"
@@ -685,7 +708,8 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("| `menu`, `tools` |", pipeline)
         for stage_id in EXPECTED_STAGE_IDS[1:]:
             self.assertIn(f"`elr-{stage_id}`", pipeline, stage_id)
-        for utility in ("elr-add-citations", "elr-proofread", "elr-apply-markup", "elr-draft-article"):
+        for utility in ("elr-add-citations", "elr-proofread", "elr-apply-markup", "elr-draft-article",
+                        "elr-reconcile-draft"):
             self.assertIn(f"| `{utility}` |", pipeline, utility)
         contract = (ROOT / "workflow" / "shared" / "artifact-contract.md").read_text(encoding="utf-8")
         self.assertIn("researcher-asserted", contract)

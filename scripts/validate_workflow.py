@@ -521,6 +521,7 @@ def validate_repository(root: Path) -> list[str]:
         "workflow/utilities/proofread.md",
         "workflow/utilities/apply-markup.md",
         "workflow/utilities/draft-article.md",
+        "workflow/utilities/reconcile-draft.md",
         "project/DECISIONS.md",
         "project/RUN_LEDGER.md",
         "project/DEVIATIONS.md",
@@ -530,6 +531,7 @@ def validate_repository(root: Path) -> list[str]:
         "scripts/model_readiness.py",
         "scripts/build_skeleton_draft.py",
         "scripts/build_article_draft.py",
+        "scripts/current_draft.py",
     ):
         if not (root / required).exists():
             errors.append(f"missing {required}")

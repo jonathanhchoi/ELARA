@@ -80,6 +80,20 @@ UTILITY_SKILLS = {
         "short_description": "Write an illustrative law review draft to rewrite",
         "default_prompt": "Use $elr-draft-article to write an illustrative draft of the article from this project's records.",
     },
+    "elr-reconcile-draft": {
+        "canonical": "workflow/utilities/reconcile-draft.md",
+        "route": "workflow/stages/04-methods-design.md",
+        "description": (
+            "Copy and read the researcher's current_draft.docx from the project folder, compare "
+            "its methods passage by passage with DECISIONS.md and the approved files, follow it "
+            "where a choice is still open, and ask once about conflicts. Runs automatically when "
+            "storage status reports the draft changed; use also when the researcher asks to sync "
+            "the records with their draft."
+        ),
+        "display_name": "ELARA Reconcile Draft",
+        "short_description": "Bring the records into line with current_draft.docx",
+        "default_prompt": "Use $elr-reconcile-draft to reconcile current_draft.docx with this project's records.",
+    },
 }
 
 

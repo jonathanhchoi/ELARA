@@ -24,6 +24,15 @@ waits, and is re-run once under "When something breaks" in
 recorded software.
 Status, help, and menu-only requests remain read-only and need no check.
 
+A researcher may keep `current_draft.docx` in the project home as their current
+statement of the methods they intend. When `scripts/storage.py status` reports
+it `changed`, run `elr-reconcile-draft` (`workflow/utilities/reconcile-draft.md`)
+before starting any stage or tool; status, help, and Plan Mode only mention it.
+The draft governs methods choices still open and, once the researcher confirms,
+unfrozen recorded ones. It never approves a gate, changes a frozen or
+preregistered instrument, or overrides the record of work already done, and
+ELARA never edits it.
+
 1. Read `project/PROJECT_STATE.md` before doing research work.
 2. Read `workflow/shared/guardrails.md` and
    `workflow/shared/artifact-contract.md`, then

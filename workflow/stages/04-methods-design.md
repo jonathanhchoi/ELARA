@@ -22,9 +22,10 @@ Turn the accepted project into a decision-complete empirical design without outs
 
 1. Read AGENTS.md and PROJECT_STATE.md, then confirm that the preemption and feasibility gates are approved and load their exact active versions and conditions.
 2. Verify that the proposed research question, contribution, collection, and resource limits still match those reviews. Flag any material change for an earlier-stage rerun. Compare the current date to the recommended novelty recheck date recorded with the preemption disposition; if it has passed and the review flagged medium-or-high scoop risk, rerun the Stage 02 searches that test whether further searching still finds relevant work and the closest-author searches before designing methods against an outdated verdict.
-3. Identify all researcher-owned choices that remain open. Do not hide them in technical defaults. Power and significance defaults, precision targets, and corrections for multiple comparisons are researcher decisions to approve explicitly, not silent settings.
-4. Confirm that no study outcome has been computed or inspected beyond the exposure recorded in the Stage 03 probe-exposure manifest. Feasibility probes legitimately produce outcome information; load the manifest, record its extent, and account for it when deciding which hypotheses and analyses must be fully specified and preregistered before outcomes are examined and which analyses will be exploratory. If other outcome information is already known, record that fact as well.
-5. Read the actual metadata structure or representative authorized files before proposing fields or code. Do not assume the data shape.
+3. If `active_artifacts` records a reconciled `current_draft`, read its text and reconciliation table (`workflow/utilities/reconcile-draft.md`): start each recommendation from what the draft says and cite its passage.
+4. Identify all researcher-owned choices that remain open. Do not hide them in technical defaults. Power and significance defaults, precision targets, and corrections for multiple comparisons are researcher decisions to approve explicitly, not silent settings.
+5. Confirm that no study outcome has been computed or inspected beyond the exposure recorded in the Stage 03 probe-exposure manifest. Feasibility probes legitimately produce outcome information; load the manifest, record its extent, and account for it when deciding which hypotheses and analyses must be fully specified and preregistered before outcomes are examined and which analyses will be exploratory. If other outcome information is already known, record that fact as well.
+6. Read the actual metadata structure or representative authorized files before proposing fields or code. Do not assume the data shape.
 
 ## Researcher decisions
 
