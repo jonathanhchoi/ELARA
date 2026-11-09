@@ -1,0 +1,6 @@
+interface:
+  display_name: "ELARA Reconcile Draft"
+  short_description: "Bring the records into line with current_draft.docx"
+  default_prompt: "Use $elr-reconcile-draft to reconcile current_draft.docx with this project's records."
+policy:
+  allow_implicit_invocation: false

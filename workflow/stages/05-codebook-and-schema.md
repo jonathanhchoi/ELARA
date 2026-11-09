@@ -22,7 +22,7 @@ Translate the approved design into an unambiguous codebook a new research assist
 
 1. Read AGENTS.md and PROJECT_STATE.md, confirm methods-plan approval, and load the exact active methods, hypothesis, estimand, and sampling-plan versions.
 2. Inspect real authorized metadata or a public corpus index before defining identifiers and fields. Do not process restricted text before Stage 06. Worked examples and smell-test materials may expose text to a model only from three pre-gate sources: (a) researcher-supplied files inventoried at Stage 00 whose recorded authorization status permits model processing, (b) documents the researcher expressly confirms as public domain for this purpose in a logged decision, or (c) synthetic text. Enumerate in the run manifest every document whose text was exposed to a model during this stage; Stage 06 audits that enumeration rather than memory.
-3. Confirm that every proposed variable traces to an approved construct and estimand. New substantive variables require a methods revision.
+3. Confirm that every proposed variable traces to an approved construct and estimand. New substantive variables require a methods revision. When a reconciled `current_draft` is active, start definitions and edge cases from what it says and cite its passages.
 4. Confirm that the target universe can be enumerated without silent selection. If it cannot, stop with the exact missing index, metadata, or researcher rule.
 5. Identify variables that cannot be supported from one supplied document or cannot be checked by a human; route them to methods design rather than disguising them as labels.
 
